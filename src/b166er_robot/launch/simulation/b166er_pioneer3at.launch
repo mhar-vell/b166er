@@ -1,0 +1,74 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="use_gazebo" default="true"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+
+  <!-- Robot Description -->
+  <param name="robot_description" command="$(find xacro)/xacro $(find b166er_robot)/urdf/pioneer3at/pioneer3at.urdf.xacro"/>
+
+  <!-- Robot State Publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  <!-- Gazebo simulation (RoboStack compatible) -->
+  <group if="$(arg use_gazebo)">
+    <!-- Start Gazebo with macOS-friendly settings -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(find b166er_robot)/worlds/empty.world"/>
+      <arg name="paused" value="false"/>
+      <arg name="use_sim_time" value="true"/>
+      <arg name="gui" value="$(arg gui)"/>
+      <arg name="headless" value="$(arg headless)"/>
+      <arg name="debug" value="false"/>
+      <arg name="verbose" value="false"/>
+      <!-- macOS specific: disable hardware acceleration if needed -->
+      <arg name="extra_gazebo_args" value="--verbose"/>
+    </include>
+
+    <!-- Spawn robot in Gazebo -->
+    <node name="spawn_pioneer" pkg="gazebo_ros" type="spawn_model"
+          args="-urdf -model pioneer3at -param robot_description -x 0 -y 0 -z 0.15"
+          respawn="false" output="screen"/>
+  </group>
+
+  <!-- Alternative: Use simulated hardware nodes instead of Gazebo -->
+  <group unless="$(arg use_gazebo)">
+    <!-- Fake IMU publisher -->
+    <node name="fake_imu" pkg="b166er_robot" type="fake_imu_publisher.py" output="screen">
+      <param name="frame_id" value="imu_link"/>
+      <param name="publish_rate" value="50.0"/>
+    </node>
+
+    <!-- Fake mobile base controller -->
+    <node name="fake_mobile_base" pkg="b166er_robot" type="fake_pioneer_controller.py" output="screen">
+      <remap from="/cmd_vel" to="/cmd_vel"/>
+      <remap from="/odom" to="/odom"/>
+    </node>
+
+    <!-- Joint state publisher for visualization -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>
+  </group>
+
+  <!-- IMU Monitor -->
+  <node name="imu_monitor" pkg="b166er_robot" type="imu_monitor.py" output="screen">
+    <param name="print_interval" value="2.0"/>
+  </node>
+
+  <!-- Stability Controller -->
+  <node name="stability_controller" pkg="b166er_robot" type="stability_controller.py" output="screen">
+    <param name="max_tilt_angle" value="0.3"/>
+    <remap from="/cmd_vel_raw" to="/cmd_vel"/>
+    <remap from="/cmd_vel_filtered" to="/cmd_vel_safe"/>
+  </node>
+
+  <!-- RViz with macOS software rendering if needed -->
+  <node name="rviz" pkg="rviz" type="rviz" 
+        args="-d $(find b166er_robot)/config/pioneer_simulation.rviz"
+        launch-prefix="env LIBGL_ALWAYS_SOFTWARE=1" if="$(arg headless)"/>
+        
+  <node name="rviz" pkg="rviz" type="rviz" 
+        args="-d $(find b166er_robot)/config/pioneer_simulation.rviz"
+        unless="$(arg headless)"/>
+
+</launch>
