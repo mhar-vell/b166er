@@ -1,0 +1,26 @@
+digraph G {
+node [shape=box];
+"base_link" [label="base_link"];
+"camera_mount" [label="camera_mount"];
+"front_left_wheel" [label="front_left_wheel"];
+"front_right_wheel" [label="front_right_wheel"];
+"front_sonar_array" [label="front_sonar_array"];
+"laser_mount" [label="laser_mount"];
+"rear_left_wheel" [label="rear_left_wheel"];
+"rear_right_wheel" [label="rear_right_wheel"];
+node [shape=ellipse, color=blue, fontcolor=blue];
+"base_link" -> "camera_mount_joint" [label="xyz: 0.25 0 0.25 \nrpy: 0 -0 0"]
+"camera_mount_joint" -> "camera_mount"
+"base_link" -> "front_left_wheel_joint" [label="xyz: 0.2 0.17 0.09 \nrpy: 0 -0 0"]
+"front_left_wheel_joint" -> "front_left_wheel"
+"base_link" -> "front_right_wheel_joint" [label="xyz: 0.2 -0.17 0.09 \nrpy: 0 -0 0"]
+"front_right_wheel_joint" -> "front_right_wheel"
+"base_link" -> "front_sonar_joint" [label="xyz: 0.25 0 0.15 \nrpy: 0 -0 0"]
+"front_sonar_joint" -> "front_sonar_array"
+"base_link" -> "laser_mount_joint" [label="xyz: 0.1 0 0.234 \nrpy: 0 -0 0"]
+"laser_mount_joint" -> "laser_mount"
+"base_link" -> "rear_left_wheel_joint" [label="xyz: -0.2 0.17 0.09 \nrpy: 0 -0 0"]
+"rear_left_wheel_joint" -> "rear_left_wheel"
+"base_link" -> "rear_right_wheel_joint" [label="xyz: -0.2 -0.17 0.09 \nrpy: 0 -0 0"]
+"rear_right_wheel_joint" -> "rear_right_wheel"
+}

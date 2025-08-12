@@ -1,0 +1,15 @@
+<launch>
+  
+  <!-- Robot Description -->
+  <param name="robot_description" command="cat $(find b166er_robot)/urdf/pioneer3at/pioneer3at.urdf"/>
+
+  <!-- Robot State Publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+
+  <!-- Joint State Publisher GUI -->
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+
+  <!-- RViz -->
+  <node name="rviz" pkg="rviz" type="rviz"/>
+
+</launch>

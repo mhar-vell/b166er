@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosaria/share/roseus/ros/rosaria/manifest.l

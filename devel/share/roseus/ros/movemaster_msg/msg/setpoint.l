@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/movemaster_msg/share/roseus/ros/movemaster_msg/msg/setpoint.l

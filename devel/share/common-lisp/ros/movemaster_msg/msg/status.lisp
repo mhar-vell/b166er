@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/movemaster_msg/share/common-lisp/ros/movemaster_msg/msg/status.lisp
