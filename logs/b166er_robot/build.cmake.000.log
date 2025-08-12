@@ -1,13 +1,4 @@
 Not searching for unused variables given on the command line.
-[0mCMake Deprecation Warning at CMakeLists.txt:1 (cmake_minimum_required):
-  Compatibility with CMake < 3.10 will be removed from a future version of
-  CMake.
-
-  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
-  to tell CMake that the project requires at least <min> but has been updated
-  to work with policies introduced by <max> or earlier.
-
-[0m
 [36m--[0m The C compiler identification is Clang 18.1.8
 [36m--[0m The CXX compiler identification is Clang 18.1.8
 [36m--[0m Detecting C compiler ABI info
@@ -31,7 +22,7 @@ Not searching for unused variables given on the command line.
 [36mCall Stack (most recent call first):[0m
   /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/all.cmake:164 (include)
   /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/catkinConfig.cmake:20 (include)
-  CMakeLists.txt:4 (find_package)
+  CMakeLists.txt:5 (find_package)
 This warning is for project developers.  Use -Wno-dev to suppress it.
 [0m
 [36m--[0m Found PythonInterp: /Users/marcoreis/miniforge3/envs/ros_env11/bin/python3.11 (found suitable version "3.11.13", minimum required is "3.11")
@@ -47,8 +38,12 @@ This warning is for project developers.  Use -Wno-dev to suppress it.
 [36m--[0m catkin 0.8.10
 [36m--[0m BUILD_SHARED_LIBS is on
 [36m--[0m Using these message generators: gencpp;geneus;genlisp;gennodejs;genpy
-[36m--[0m Installing devel-space wrapper /Users/marcoreis/b166er/src/b166er_robot/scripts/imu_monitor.py to /Users/marcoreis/b166er/devel/.private/b166er_robot/lib/b166er_robot
-[36m--[0m Installing devel-space wrapper /Users/marcoreis/b166er/src/b166er_robot/scripts/stability_controller.py to /Users/marcoreis/b166er/devel/.private/b166er_robot/lib/b166er_robot
-[36m--[0m Configuring done (3.9s)
-[36m--[0m Generating done (0.1s)
-[36m--[0m Build files have been written to: /Users/marcoreis/b166er/build/b166er_robot
+[31mCMake Error at /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/catkin_package.cmake:196 (message):
+  catkin_package() the catkin package 'tf2_ros' has been find_package()-ed
+  but is not listed as a build dependency in the package.xml
+[36mCall Stack (most recent call first):[0m
+  /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/catkin_package.cmake:102 (_catkin_package)
+  CMakeLists.txt:17 (catkin_package)
+
+[0m
+[36m--[0m Configuring incomplete, errors occurred!

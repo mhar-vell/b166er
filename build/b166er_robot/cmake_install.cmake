@@ -144,27 +144,27 @@ if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/launch" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/launch/" FILES_MATCHING REGEX "/[^/]*\\.launch$")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/urdf" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/urdf/" FILES_MATCHING REGEX "/[^/]*\\.urdf$" REGEX "/[^/]*\\.xacro$")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/worlds" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/worlds/" FILES_MATCHING REGEX "/[^/]*\\.world$")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/config" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/config/" FILES_MATCHING REGEX "/[^/]*\\.yaml$" REGEX "/[^/]*\\.rviz$")
-endif()
-
-if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/b166er_robot" TYPE PROGRAM FILES "/Users/marcoreis/b166er/build/b166er_robot/catkin_generated/installspace/imu_monitor.py")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/b166er_robot" TYPE PROGRAM FILES "/Users/marcoreis/b166er/build/b166er_robot/catkin_generated/installspace/stability_controller.py")
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/launch" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/launch/" FILES_MATCHING REGEX "/[^/]*\\.launch$")
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/config" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/config/" REGEX "/\\.svn$" EXCLUDE)
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/urdf" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/urdf/" REGEX "/\\.svn$" EXCLUDE)
+endif()
+
+if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/b166er_robot/rviz" TYPE DIRECTORY FILES "/Users/marcoreis/b166er/src/b166er_robot/rviz/" REGEX "/\\.svn$" EXCLUDE)
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT

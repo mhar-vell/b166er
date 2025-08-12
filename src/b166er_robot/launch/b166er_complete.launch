@@ -1,0 +1,24 @@
+<!-- launch/b166er_complete.launch -->
+<launch>
+  <arg name="use_hardware" default="false"/>
+  <arg name="use_simulation" default="true"/>
+  <arg name="enable_arm" default="true"/>
+  <arg name="enable_stability" default="true"/>
+
+  <!-- Hardware setup -->
+  <group if="$(arg use_hardware)">
+    <include file="$(find b166er_robot)/launch/hardware/pioneer_hardware.launch"/>
+    <include file="$(find b166er_robot)/launch/hardware/imu_hardware.launch"/>
+    <include file="$(find b166er_robot)/launch/hardware/movemaster_hardware.launch" if="$(arg enable_arm)"/>
+  </group>
+
+  <!-- Simulation setup -->
+  <group if="$(arg use_simulation)">
+    <include file="$(find b166er_robot)/launch/simulation/pioneer_rviz.launch"/>
+    <include file="$(find b166er_robot)/launch/simulation/movemaster_simulation.launch" if="$(arg enable_arm)"/>
+  </group>
+
+  <!-- Control systems -->
+  <include file="$(find b166er_robot)/launch/control/stability_control.launch" if="$(arg enable_stability)"/>
+
+</launch>
