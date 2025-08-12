@@ -51,6 +51,11 @@ install(DIRECTORY config/
   PATTERN ".svn" EXCLUDE
 )
 
+## Install meshes files
+install(DIRECTORY meshes/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/meshes
+)
+
 ## Install URDF files
 install(DIRECTORY urdf/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/urdf
