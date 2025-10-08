@@ -1,3 +1,8 @@
+#include <ros.h>
+
+#include <setpoint.h>
+#include <status.h>
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                        //
 //    Developed by: Jonathan Cerbaro, Dieisson Martinelli                                 //
@@ -19,8 +24,8 @@
 /////////////////////
 
 #include <ros.h>
-#include <movemaster_msg/setpoint.h>
-#include <movemaster_msg/status.h>
+#include <setpoint.h>
+#include <status.h>
 
 
 //////////////////////////////////////////

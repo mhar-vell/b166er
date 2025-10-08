@@ -6,6 +6,11 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stdlib.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__config \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__config_site \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__configuration/abi.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__configuration/compiler.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__configuration/platform.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__configuration/availability.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__configuration/language.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdlib.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdlib.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/Availability.h \
@@ -52,7 +57,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_uid_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stdint.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdint.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdint.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdint.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h \
@@ -83,18 +88,17 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/string \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/max.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/comp.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/integral_constant.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/operation_traits.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/desugars_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/comp_ref_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__assert \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__assertion_handler \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__verbose_abort \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__availability \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/declval.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/max_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/iterator_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/arithmetic.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_floating_point.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/integral_constant.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_cv.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_const.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_volatile.h \
@@ -106,37 +110,32 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/convertible_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_array.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/destructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_destructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_destructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_function.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_reference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_all_extents.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstddef \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/enable_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/version \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stddef.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stddef.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_ptrdiff_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_size_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_rsize_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_wchar_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_null.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_nullptr_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_max_align_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_offsetof.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_reference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_void.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_same.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_reference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_all_extents.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_scalar.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_enum.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_member_function_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_null_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_pointer.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stddef.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stddef.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_ptrdiff_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_size_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_rsize_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_wchar_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_null.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_nullptr_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_max_align_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_offsetof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_lvalue_reference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_referenceable.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_same.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_rvalue_reference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/copyable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/common_reference_with.h \
@@ -146,49 +145,42 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/conditional.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/decay.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_referenceable.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_void.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_reference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_extent.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_cvref.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/void_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/copy_cv.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_cv.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_volatile.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/copy_cvref.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_lvalue_reference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_rvalue_reference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/make_const_lvalue_ref.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/forward.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/movable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/swappable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/class_or_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_class.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/extent.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_move_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/exchange.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__undef_macros \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/swap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_move_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_swappable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/nat.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_object.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/equality_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/boolean_testable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/totally_ordered.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/pair.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/tuple.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/incrementable_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_primary_template.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_valid_expansion.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/make_signed.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/apply_cv.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_volatile.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/nat.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/type_list.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/readable_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/disjunction.h \
@@ -196,17 +188,13 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/min.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/min_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/identity.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/reference_wrapper.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/functional.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/invoke.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/invoke.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_base_of.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_member_object_pointer.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_member_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_reference_wrapper.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/weak_result_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/binary_function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/unary_function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/addressof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_callable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/remove.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find.h \
@@ -214,66 +202,48 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/segmented_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unwrap_iter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/pointer_traits.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/addressof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/conjunction.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/countr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/rotate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/limits \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/type_traits \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/hash.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_const.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_cv.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/add_volatile.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/aligned_storage.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/aligned_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/alignment_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/can_extract_key.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_const_ref.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/dependent_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/has_unique_object_representation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/has_virtual_destructor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_abstract.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_aggregate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_bounded_array.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_char_like_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_standard_layout.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivial.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_compound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_fundamental.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_constant_evaluated.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_default_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_null_pointer.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_const.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_empty.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_final.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_literal_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/lazy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_copy_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_nothrow_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_pod.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_polymorphic.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_scoped_enum.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/underlying_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_specialization.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_scalar.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_standard_layout.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivial.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_copyable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstdint \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_move_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_unbounded_array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_unsigned.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_volatile.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/make_unsigned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/maybe_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/negation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/rank.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/result_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/type_identity.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/unwrap_ref.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/underlying_type.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_final.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/has_unique_object_representation.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_aggregate.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/negation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/invert_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/bit_reference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__string/constexpr_c_functions.h \
@@ -285,9 +255,11 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstdlib \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/datasizeof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_always_bitcastable.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_constant_evaluated.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_equality_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/is_pointer_in_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/is_valid_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cwchar \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cwctype \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cctype \
@@ -307,12 +279,13 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mbstate_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdarg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___gnuc_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___va_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdarg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___gnuc_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_arg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stdio.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdio.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdio.h \
@@ -330,28 +303,30 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/remove_if.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__debug_utils/sanitizers.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/enable_insertable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/hash.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/sfinae_helpers.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/tuple.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/make_tuple_types.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/array.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_indices.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/integer_sequence.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_types.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_size.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_like_ext.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/unary_function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/pair.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/common_comparison_category.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/ordering.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/synth_three_way.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/three_way_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/different_from.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/get.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/subrange.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/pair_like.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_like.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/array.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/sfinae_helpers.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/make_tuple_types.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_element.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_indices.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/integer_sequence.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_types.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_size.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_like_ext.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/tuple_like_no_subrange.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/complex.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_trivially_relocatable.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/unwrap_ref.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/piecewise_construct.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstring \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/string.h \
@@ -361,9 +336,11 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_errno_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_strings.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/string.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/memory.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/memory_resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ios/fpos.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/ios.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/bounded_iter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/distance.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/derived_from.h \
@@ -390,6 +367,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/next.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/prev.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/subrange.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/dangling.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/view_interface.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/empty.h \
@@ -398,6 +376,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocator_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/compressed_pair.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/dependent_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/swap_allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory_resource/polymorphic_allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory_resource/memory_resource.h \
@@ -405,40 +384,35 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/tuple \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocator_arg_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/uses_allocator.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/find_index.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__tuple/ignore.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/lazy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/maybe_const.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/compare \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/compare_partial_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/partial_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/compare_three_way.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/weak_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/strong_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_cast.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/priority_tag.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cmath \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/hypot.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/abs.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/exponential_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/promote.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/roots.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/special_functions.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/copysign.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/math.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/abs.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/copysign.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/error_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/exponential_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/fdim.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/fma.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/gamma.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/hyperbolic_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/hypot.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/inverse_hyperbolic_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/inverse_trigonometric_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/logarithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/min_max.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/modulo.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/remainder.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/roots.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/rounding_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__math/trigonometric_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/compare_strong_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/compare_weak_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/is_eq.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/exception \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__exception/exception_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__exception/operations.h \
@@ -454,26 +428,17 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__std_mbstate_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__mbstate_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/utility \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/as_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/as_lvalue.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/cmp.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/forward_like.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/in_place.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/rel_ops.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/to_underlying.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/as_const.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/in_place.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/container_compatible_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/from_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__string/char_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_move_common.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/fill_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find_end.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/iterator_operations.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/iter_swap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_iterator_concept.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unwrap_range.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/for_each_segment.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/fill_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find_end.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/search.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find_first_of.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstdio \
@@ -481,7 +446,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/noexcept_move_assign_container.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/climits \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/limits.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/limits.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/limits.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/limits.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/limits.h \
@@ -490,7 +455,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stdexcept \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/string_view \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/string_view.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/bounded_iter.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/type_identity.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/data.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/empty.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/reverse_access.h \
@@ -502,9 +467,13 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/binary_search.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/lower_bound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/half_positive.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/clamp.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_move_common.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unwrap_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/for_each_segment.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_backward.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_if.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/copy_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/count.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/popcount.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/count_if.h \
@@ -513,7 +482,6 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/upper_bound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/fill.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/find_if_not.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/fold.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/for_each.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/movable_box.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/optional \
@@ -524,8 +492,8 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/atomic_sync.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/contention_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/cxx_atomic_impl.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/is_always_lock_free.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/memory_order.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/to_gcc_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__chrono/duration.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/ratio \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__thread/poll_with_backoff.h \
@@ -534,7 +502,8 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__chrono/time_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__chrono/system_clock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/ctime \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__threading_support \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__thread/support.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__thread/support/pthread.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__chrono/convert_to_timespec.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/errno.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/errno.h \
@@ -556,62 +525,50 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mach_port_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sched.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/check_memory_order.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/is_always_lock_free.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/operations.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/binary_function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/atomic_lock_free.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/atomic_flag.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/atomic_init.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/fence.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__atomic/kill_dependency.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/concepts \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__concepts/common_with.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/iterator \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/back_insert_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/common_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/variant \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__variant/monostate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/counted_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/default_sentinel.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/erase_if_container.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/front_insert_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/indirectly_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/projected.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/istream_iterator.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/default_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/istreambuf_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/mergeable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/ranges_operations.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/move_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/move_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/ostream_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/ostreambuf_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/permutable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/sortable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/unreachable_sentinel.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/variant \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/forward_like.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__variant/monostate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/memory \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/align.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocation_guard.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/assume_aligned.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/auto_ptr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/ranges_construct_at.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/ranges_uninitialized_algorithms.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_out_result.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/inout_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/shared_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__compare/compare_three_way.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/reference_wrapper.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/weak_result_type.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocation_guard.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocator_destructor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/uninitialized_algorithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/raw_storage_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/shared_ptr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/allocator_destructor.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_unbounded_array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/unique_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_bounded_array.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_specialization.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/out_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/raw_storage_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/temporary_buffer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/uses_allocator_construction.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/for_each_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/generate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/generate_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_found_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_fun_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_in_out_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_in_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_out_out_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/includes.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/inplace_merge.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/rotate.h \
@@ -625,15 +582,16 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/is_sorted.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/is_sorted_until.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/lexicographical_compare.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/three_way_comp_ref_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/make_heap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/sift_down.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/min_max_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/minmax.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/minmax_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/mismatch.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/simd_utils.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_cast.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/countl.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/aliasing_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/next_permutation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/reverse.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/none_of.h \
@@ -646,183 +604,48 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__debug_utils/strict_weak_ordering_check.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__debug_utils/randomize_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/blsr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/countl.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/ranges_operations.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/partial_sort_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/make_projected.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/partition.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/partition_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/partition_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_any_all_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/thread.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/empty.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_execution_policy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__numeric/transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/execution \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_frontend_dispatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/cpp17_iterator_concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__numeric/pstl_transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_adjacent_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_all_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_binary_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_clamp.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_contains.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_count_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_ends_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_starts_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_mismatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_equal_range.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_fill_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_find_end.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_find_first_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_find_if_not.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_for_each_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_generate_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_includes.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_inplace_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_heap_until.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_sorted.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_is_sorted_until.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_lexicographical_compare.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_lower_bound.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_make_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_max.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_min_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_max_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_min.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_minmax.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_minmax_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_move_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_next_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_nth_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_partial_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_partial_sort_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_partition_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_partition_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_pop_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_push_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_remove.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_remove_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_remove_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_remove_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/remove_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_replace_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_replace_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_replace_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_reverse.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_reverse_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_rotate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_sample.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/sample.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/uniform_int_distribution.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/is_valid.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/log2.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/uniform_random_bit_generator_adaptor.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/uniform_random_bit_generator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_search_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/search_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_set_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_set_intersection.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_intersection.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_set_symmetric_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_symmetric_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_shuffle.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/shuffle.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_sort_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_stable_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/stable_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_swap_ranges.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_unique.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unique.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_unique_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unique_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_upper_bound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/remove_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/remove_copy_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/replace.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/replace_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/replace_copy_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/replace_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/reverse_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/shift_left.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/shift_right.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/search_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_difference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_intersection.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_symmetric_difference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/set_union.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/shuffle.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/uniform_int_distribution.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/is_valid.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__random/log2.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/stable_partition.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/stable_sort.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/transform.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unique.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/unique_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/clamp.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/for_each_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/pstl.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/sample.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/bit \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_ceil.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_floor.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_log2.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/bit_width.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/byteswap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/endian.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit/has_single_bit.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/iostream \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/ios \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__locale \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__mutex/once_flag.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/no_destroy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/clocale \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/locale.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/locale.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale.h \
-  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_locale_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__locale_dir/locale_base_api.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_xlocale.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_locale_t.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/__xlocale.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_mb_cur_max.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_ctype.h \
@@ -833,6 +656,12 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_time.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_wchar.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_wctype.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__mutex/once_flag.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/no_destroy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/private_constructor_tag.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/clocale \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/locale.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/locale.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__system_error/error_category.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__system_error/error_code.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__system_error/errc.h \
@@ -848,25 +677,10 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__thread/id.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/system_error \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/istream \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/ostream \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ostream/basic_ostream.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/bitset \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__bit_reference \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/format \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/buffer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_fwd.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_parse_context.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_error.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_to_n_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/container_adaptor.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/range_default_formatter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__chrono/statically_widen.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/range_formatter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_context.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_arg_store.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_args.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/is_char_like_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/locale \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/streambuf \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/nl_types.h \
@@ -898,34 +712,50 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_nl_item.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cstdarg \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_output.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/parser_std_format_spec.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_string.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/unicode.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/extended_grapheme_cluster_table.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/width_estimation_table.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__ranges/ref_view.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/ostream \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/format \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/array \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/lexicographical_compare_three_way.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/three_way_comp_ref_type.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__utility/empty.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/queue \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_out_result.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/deque.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/queue.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/vector.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/deque \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/temp_value.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__split_buffer \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/functional \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/binary_negate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/bind.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/bind_back.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/perfect_forward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/bind_front.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/binder1st.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/binder2nd.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/mem_fn.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/mem_fun_ref.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/pointer_to_binary_function.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/pointer_to_unary_function.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/unary_negate.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/function.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/builtin_new_allocator.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/strip_signature.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/array \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/unordered_map \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/is_transparent.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__hash_table \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/can_extract_key.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/remove_const_ref.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/erase_if_container.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/ranges_iterator_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__node_handle \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/vector \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/format.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_bool.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/concepts.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_parse_context.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_error.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/to_chars_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/tables.h \
@@ -933,29 +763,30 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/to_chars_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/make_32_64_or_128_bit.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/compose.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_output.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_fill_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_transform.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/in_in_out_result.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/projected.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/buffer.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_copy_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__iterator/unreachable_sentinel.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_to_n_result.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/ranges_construct_at.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/concepts.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/parser_std_format_spec.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_arg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_string.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/unicode.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/extended_grapheme_cluster_table.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__algorithm/ranges_upper_bound.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/indic_conjunct_break_table.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/width_estimation_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/default_searcher.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__memory/builtin_new_allocator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__type_traits/strip_signature.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/mem_fn.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/mem_fun_ref.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/not_fn.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/pointer_to_binary_function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/pointer_to_unary_function.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/unary_negate.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__functional/perfect_forward.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stack \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/format_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_char.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/write_escaped.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/escaped_output_table.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_floating_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/chars_format.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__charconv/to_chars_floating_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_integer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_string.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__format/formatter_tuple.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/__fwd/stack.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/print \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/unistd.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/exception.h \
@@ -991,11 +822,12 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/any \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/memory_resource \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/charconv \
+  /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/execution \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/filesystem \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/detail/cxx_composite.hpp \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/cfloat \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/float.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/float.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/float.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/float.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/user.hpp \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/detail/config.hpp \
@@ -1652,7 +1484,7 @@ CMakeFiles/draw_square_cpp.dir/src/draw_square.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/kern_return.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_statistics.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/bin/../include/c++/v1/stdbool.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdbool.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdbool.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/time_value.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/host_notify.h \

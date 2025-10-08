@@ -8,6 +8,8 @@
 
 # modified environment variables
 export CMAKE_PREFIX_PATH="/Users/marcoreis/b166er/devel/.private/movemaster_msg:$CMAKE_PREFIX_PATH"
+export PKG_CONFIG_PATH="/Users/marcoreis/b166er/devel/.private/movemaster_msg/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD='/Users/marcoreis/b166er/build/movemaster_msg'
+export PYTHONPATH="/Users/marcoreis/b166er/devel/.private/movemaster_msg/lib/python3.11/site-packages:$PYTHONPATH"
 export ROSLISP_PACKAGE_DIRECTORIES="/Users/marcoreis/b166er/devel/.private/movemaster_msg/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
 export ROS_PACKAGE_PATH="/Users/marcoreis/b166er/src/movemaster_msg:$ROS_PACKAGE_PATH"

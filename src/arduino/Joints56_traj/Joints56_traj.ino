@@ -19,8 +19,8 @@
 /////////////////////
 
 #include <ros.h>
-#include <movemaster_msg/setpoint.h>
-#include <movemaster_msg/status.h>
+#include <aio.h>
+#include <status.h>
 
 
 //////////////////////////////////////////

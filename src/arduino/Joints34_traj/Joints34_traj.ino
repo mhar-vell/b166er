@@ -1,3 +1,17 @@
+#include <ros.h>
+
+#include <setpoint.h>
+#include <status.h>
+
+#include <duration.h>
+#include <msg.h>
+#include <node_handle.h>
+#include <publisher.h>
+#include <service_client.h>
+#include <service_server.h>
+#include <subscriber.h>
+#include <time.h>
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 //                                                                                        //
 //    Developed by: Jonathan Cerbaro, Dieisson Martinelli                                 //
@@ -19,8 +33,8 @@
 /////////////////////
 
 #include <ros.h>
-#include <movemaster_msg/setpoint.h>
-#include <movemaster_msg/status.h>
+#include <setpoint.h>
+#include <status.h>
 
 
 //////////////////////////////////////////

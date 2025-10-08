@@ -67,7 +67,7 @@ include CMakeFiles/clean_test_results.dir/compiler_depend.make
 include CMakeFiles/clean_test_results.dir/progress.make
 
 CMakeFiles/clean_test_results:
-	/Users/marcoreis/miniforge3/envs/ros_env11/bin/python3.11 /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/test/remove_test_results.py /Users/marcoreis/b166er/build/catkin_tools_prebuild/test_results
+	/Users/marcoreis/miniforge3/envs/ros_env11/bin/python /Users/marcoreis/miniforge3/envs/ros_env11/share/catkin/cmake/test/remove_test_results.py /Users/marcoreis/b166er/build/catkin_tools_prebuild/test_results
 
 CMakeFiles/clean_test_results.dir/codegen:
 .PHONY : CMakeFiles/clean_test_results.dir/codegen
