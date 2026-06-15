@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_chibios/share/rosserial_chibios/cmake/rosserial_chibiosConfig.cmake

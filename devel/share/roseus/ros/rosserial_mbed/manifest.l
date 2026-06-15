@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_mbed/share/roseus/ros/rosserial_mbed/manifest.l

@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_python/lib/rosserial_python/message_info_service.py

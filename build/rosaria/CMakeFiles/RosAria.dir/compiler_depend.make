@@ -15,6 +15,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctype.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale_posix2008.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_mb_cur_max.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_printf.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
@@ -134,6 +135,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet6/in6.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/nl_types.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/os/base.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/pthread_impl.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/qos.h \
@@ -141,6 +143,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/runetype.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sched.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/signal.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdint.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdio.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdlib.h \
@@ -301,18 +304,13 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_if_not.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_segment_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fold.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_segment.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/half_positive.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_found_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_fun_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_out_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_out_out_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_out_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/includes.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/inplace_merge.h \
@@ -334,7 +332,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/merge.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_max_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/minmax.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/minmax_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/mismatch.h \
@@ -350,124 +347,13 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partition_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pop_heap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_any_all_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/thread.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_frontend_dispatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_transform.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/push_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_adjacent_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_all_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_binary_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_clamp.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_contains.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_ends_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal_range.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_end.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_first_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if_not.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_includes.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_inplace_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap_until.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted_until.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_iterator_concept.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lexicographical_compare.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lower_bound.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_make_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_mismatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_next_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_nth_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_pop_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_push_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sample.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_intersection.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_symmetric_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_shuffle.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_starts_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_swap_ranges.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_upper_bound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_copy.h \
@@ -488,10 +374,9 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_intersection.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_symmetric_difference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_left.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_right.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shuffle.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sift_down.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/simd_utils.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort_heap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/stable_partition.h \
@@ -499,7 +384,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/swap_ranges.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/uniform_random_bit_generator_adaptor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_iter.h \
@@ -521,55 +405,37 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/is_always_lock_free.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/kill_dependency.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/memory_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__availability \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/to_gcc_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_cast.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_ceil.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_floor.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_log2.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_width.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/blsr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/byteswap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/endian.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/has_single_bit.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/invert_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/popcount.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/rotate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit_reference \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/chars_format.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/tables.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_base_10.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_floating_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/convert_to_timespec.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/duration.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/high_resolution_clock.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/statically_widen.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/steady_clock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/system_clock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/time_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/common_comparison_category.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_partial_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_strong_order_fallback.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_weak_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/is_eq.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/ordering.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/partial_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/strong_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/synth_three_way.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/three_way_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/weak_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/arithmetic.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/boolean_testable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/class_or_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_reference_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_with.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/convertible_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/copyable.h \
@@ -589,8 +455,14 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__condition_variable/condition_variable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__config \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__config_site \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/abi.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/availability.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/compiler.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/language.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/platform.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__cxxabi_config.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/randomize_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/sanitizers.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/strict_weak_ordering_check.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception_ptr.h \
@@ -599,45 +471,27 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/terminate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/buffer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/container_adaptor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/enable_insertable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/escaped_output_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/extended_grapheme_cluster_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg_store.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_args.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_context.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_error.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_fwd.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_parse_context.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_string.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_to_n_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_bool.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_char.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_floating_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_output.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_string.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_tuple.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/indic_conjunct_break_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/parser_std_format_spec.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_default_formatter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_formatter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/unicode.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/width_estimation_table.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/write_escaped.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_negate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_back.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_front.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder1st.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder2nd.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/compose.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/default_searcher.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/hash.h \
@@ -658,30 +512,34 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/weak_result_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/bit_reference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/complex.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/deque.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/format.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/fstream.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/get.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/hash.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/functional.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ios.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/istream.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory_resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ostream.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/pair.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/queue.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/sstream.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/stack.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/streambuf.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/tuple.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/vector.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__hash_table \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ios/fpos.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/access.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/advance.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/aliasing_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/back_insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/bounded_iter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/common_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/counted_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/cpp17_iterator_concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/data.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/default_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/distance.h \
@@ -689,7 +547,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/erase_if_container.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/front_insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/incrementable_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/indirectly_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istream_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istreambuf_iterator.h \
@@ -697,13 +554,11 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iter_swap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iterator_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/mergeable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/next.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ostream_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ostreambuf_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/permutable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/prev.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/projected.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ranges_iterator_traits.h \
@@ -712,10 +567,10 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/reverse_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/segmented_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/size.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/sortable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/unreachable_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/wrap_iter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/abs.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/copysign.h \
@@ -734,6 +589,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/remainder.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/roots.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/rounding_functions.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/special_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/trigonometric_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mbstate_t.h \
@@ -745,16 +601,16 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_arg_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_destructor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/assume_aligned.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/auto_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/builtin_new_allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/compressed_pair.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/construct_at.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/destruct_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/inout_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/out_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/pointer_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_construct_at.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_uninitialized_algorithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/raw_storage_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/shared_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/swap_allocator.h \
@@ -763,7 +619,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uninitialized_algorithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/unique_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator_construction.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/voidify.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/memory_resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/monotonic_buffer_resource.h \
@@ -777,12 +632,10 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/tag_types.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/unique_lock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__node_handle \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/pstl_transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/transform_reduce.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ostream/basic_ostream.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/is_valid.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/log2.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_int_distribution.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_random_bit_generator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/access.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/container_compatible_range.h \
@@ -793,7 +646,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/enable_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/from_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/movable_box.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/ref_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/size.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/view_interface.h \
@@ -809,15 +661,17 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/system_error.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/id.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/poll_with_backoff.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__threading_support \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support/pthread.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tree \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/find_index.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/ignore.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/make_tuple_types.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/pair_like.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/sfinae_helpers.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_indices.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_ext.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_no_subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_size.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_types.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_const.h \
@@ -829,7 +683,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_storage.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/alignment_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/apply_cv.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/can_extract_key.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_reference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_type.h \
@@ -840,6 +693,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/datasizeof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/decay.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/dependent_type.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/desugars_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/disjunction.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/enable_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/extent.h \
@@ -864,15 +718,11 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constant_evaluated.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_destructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_empty.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_equality_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_execution_policy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_final.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_floating_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_function.h \
@@ -880,20 +730,10 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_literal_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_function_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_object_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_null_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_object.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_pod.h \
@@ -905,7 +745,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_referenceable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_same.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scalar.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scoped_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed_integer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_specialization.h \
@@ -914,14 +753,10 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivial.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copyable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_destructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_relocatable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unbounded_array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned.h \
@@ -938,7 +773,6 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/nat.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/negation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/noexcept_move_assign_container.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/operation_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/promote.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/rank.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_all_extents.h \
@@ -959,9 +793,7 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/void_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__undef_macros \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_lvalue.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/auto_cast.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/cmp.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/convert_to_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/declval.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/empty.h \
@@ -972,14 +804,14 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/in_place.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/integer_sequence.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/is_pointer_in_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/is_valid_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/move.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/no_destroy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/pair.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/piecewise_construct.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/priority_tag.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/private_constructor_tag.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/rel_ops.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/swap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/to_underlying.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/unreachable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__variant/monostate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__verbose_abort \
@@ -2360,25 +2192,27 @@ CMakeFiles/RosAria.dir/LaserPublisher.cpp.o: /Users/marcoreis/b166er/src/rosaria
   /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_ros/transform_broadcaster.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/xmlrpcpp/XmlRpcDecl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/xmlrpcpp/XmlRpcValue.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___gnuc_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___va_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_max_align_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_null.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_nullptr_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_offsetof.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_ptrdiff_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_rsize_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_size_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_wchar_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/float.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/limits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdarg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdbool.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stddef.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdint.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___gnuc_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_arg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_max_align_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_null.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_nullptr_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_offsetof.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_ptrdiff_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_rsize_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_size_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_wchar_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/float.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/limits.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdarg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdbool.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stddef.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdint.h \
   /usr/local/include/Aria/ArASyncTask.h \
   /usr/local/include/Aria/ArAction.h \
   /usr/local/include/Aria/ArActionAvoidFront.h \
@@ -2520,6 +2354,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctermid.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctype.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale_posix2008.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_mb_cur_max.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_printf.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_static_assert.h \
@@ -2639,6 +2474,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet6/in6.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/nl_types.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/os/base.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/pthread_impl.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/qos.h \
@@ -2646,6 +2482,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/runetype.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sched.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/signal.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stddef.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdint.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdio.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdlib.h \
@@ -2807,18 +2644,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_if_not.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_segment_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fold.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_segment.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate_n.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/half_positive.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_found_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_fun_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_out_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_out_out_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_out_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/includes.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/inplace_merge.h \
@@ -2840,7 +2672,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/merge.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_max_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/minmax.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/minmax_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/mismatch.h \
@@ -2856,124 +2687,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partition_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pop_heap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_any_all_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/backend.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/thread.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_fill.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_frontend_dispatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_transform.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/push_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_adjacent_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_all_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_any_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_binary_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_clamp.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_contains.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_ends_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal_range.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_end.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_first_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if_not.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_includes.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_inplace_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap_until.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_partitioned.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted_until.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_iterator_concept.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lexicographical_compare.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lower_bound.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_make_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_merge.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_mismatch.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move_backward.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_next_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_none_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_nth_element.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_pop_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_prev_permutation.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_push_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_if.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sample.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search_n.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_intersection.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_symmetric_difference.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_shuffle.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort_heap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_partition.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_sort.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_starts_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_swap_ranges.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_upper_bound.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_copy.h \
@@ -2994,10 +2714,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_intersection.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_symmetric_difference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_union.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_left.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_right.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shuffle.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sift_down.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/simd_utils.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort_heap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/stable_partition.h \
@@ -3005,7 +2724,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/swap_ranges.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/three_way_comp_ref_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/transform.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/uniform_random_bit_generator_adaptor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique_copy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_iter.h \
@@ -3027,55 +2745,37 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/is_always_lock_free.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/kill_dependency.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/memory_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__availability \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/to_gcc_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_cast.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_ceil.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_floor.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_log2.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_width.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/blsr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/byteswap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countr.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/endian.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/has_single_bit.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/invert_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/popcount.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/rotate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit_reference \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/chars_format.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/tables.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_base_10.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_floating_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/convert_to_timespec.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/duration.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/high_resolution_clock.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/statically_widen.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/steady_clock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/system_clock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/time_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/common_comparison_category.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_partial_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_strong_order_fallback.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way_result.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_weak_order_fallback.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/is_eq.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/ordering.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/partial_order.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/strong_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/synth_three_way.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/three_way_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/weak_order.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/arithmetic.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/boolean_testable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/class_or_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_reference_with.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_with.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/convertible_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/copyable.h \
@@ -3095,8 +2795,14 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__condition_variable/condition_variable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__config \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__config_site \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/abi.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/availability.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/compiler.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/language.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/platform.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__cxxabi_config.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/randomize_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/sanitizers.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/strict_weak_ordering_check.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception_ptr.h \
@@ -3105,45 +2811,27 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/terminate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/buffer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/container_adaptor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/enable_insertable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/escaped_output_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/extended_grapheme_cluster_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg_store.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_args.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_context.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_error.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_functions.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_fwd.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_parse_context.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_string.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_to_n_result.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_bool.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_char.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_floating_point.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_output.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_string.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_tuple.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/indic_conjunct_break_table.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/parser_std_format_spec.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_default_formatter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_formatter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/unicode.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/width_estimation_table.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/write_escaped.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_negate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_back.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_front.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder1st.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder2nd.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/boyer_moore_searcher.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/compose.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/default_searcher.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/function.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/hash.h \
@@ -3164,30 +2852,34 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/weak_result_type.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/bit_reference.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/complex.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/deque.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/format.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/fstream.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/get.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/hash.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/functional.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ios.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/istream.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory_resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ostream.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/pair.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/queue.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/sstream.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/stack.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/streambuf.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/tuple.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/vector.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__hash_table \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ios/fpos.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/access.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/advance.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/aliasing_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/back_insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/bounded_iter.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/common_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/concepts.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/counted_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/cpp17_iterator_concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/data.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/default_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/distance.h \
@@ -3195,7 +2887,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/erase_if_container.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/front_insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/incrementable_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/indirectly_comparable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/insert_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istream_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istreambuf_iterator.h \
@@ -3203,13 +2894,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iter_swap.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iterator_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/mergeable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/next.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ostream_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ostreambuf_iterator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/permutable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/prev.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/projected.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ranges_iterator_traits.h \
@@ -3218,10 +2907,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/reverse_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/segmented_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/size.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/sortable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/unreachable_sentinel.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/wrap_iter.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/abs.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/copysign.h \
@@ -3240,6 +2929,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/remainder.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/roots.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/rounding_functions.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/special_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/trigonometric_functions.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mbstate_t.h \
@@ -3251,16 +2941,16 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_arg_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_destructor.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_traits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/assume_aligned.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/auto_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/builtin_new_allocator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/compressed_pair.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/construct_at.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/destruct_n.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/inout_ptr.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/out_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/pointer_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_construct_at.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_uninitialized_algorithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/raw_storage_iterator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/shared_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/swap_allocator.h \
@@ -3269,7 +2959,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uninitialized_algorithms.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/unique_ptr.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator_construction.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/voidify.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/memory_resource.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/monotonic_buffer_resource.h \
@@ -3283,12 +2972,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/tag_types.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/unique_lock.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__node_handle \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/pstl_transform_reduce.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/transform_reduce.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ostream/basic_ostream.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/is_valid.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/log2.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_int_distribution.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_random_bit_generator.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/access.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/concepts.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/container_compatible_range.h \
@@ -3299,7 +2986,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/enable_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/from_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/movable_box.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/ref_view.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/size.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/view_interface.h \
@@ -3315,15 +3001,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/system_error.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/id.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/poll_with_backoff.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__threading_support \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support/pthread.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tree \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/find_index.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/ignore.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/make_tuple_types.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/pair_like.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/sfinae_helpers.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_element.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_indices.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_ext.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_no_subrange.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_size.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_types.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_const.h \
@@ -3335,7 +3023,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_storage.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/alignment_of.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/apply_cv.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/can_extract_key.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_reference.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_type.h \
@@ -3346,6 +3033,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/datasizeof.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/decay.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/dependent_type.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/desugars_to.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/disjunction.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/enable_if.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/extent.h \
@@ -3370,15 +3058,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constant_evaluated.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_core_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_destructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_empty.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_equality_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_execution_policy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_final.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_floating_point.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_function.h \
@@ -3386,20 +3070,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_implicitly_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_literal_type.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_function_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_object_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_pointer.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_convertible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_destructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_null_pointer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_object.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_pod.h \
@@ -3411,7 +3085,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_referenceable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_same.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scalar.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scoped_enum.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed_integer.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_specialization.h \
@@ -3420,14 +3093,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivial.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_assignable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_constructible.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copyable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_default_constructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_destructible.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_assignable.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_constructible.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_relocatable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unbounded_array.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_union.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned.h \
@@ -3444,7 +3113,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/nat.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/negation.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/noexcept_move_assign_container.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/operation_traits.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/promote.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/rank.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_all_extents.h \
@@ -3465,9 +3133,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/void_t.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__undef_macros \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_const.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_lvalue.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/auto_cast.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/cmp.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/convert_to_integral.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/declval.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/empty.h \
@@ -3478,14 +3144,14 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/in_place.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/integer_sequence.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/is_pointer_in_range.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/is_valid_range.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/move.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/no_destroy.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/pair.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/piecewise_construct.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/priority_tag.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/private_constructor_tag.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/rel_ops.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/swap.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/to_underlying.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/unreachable.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__variant/monostate.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__verbose_abort \
@@ -4985,25 +4651,27 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
   /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_ros/transform_listener.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/xmlrpcpp/XmlRpcDecl.h \
   /Users/marcoreis/miniforge3/envs/ros_env11/include/xmlrpcpp/XmlRpcValue.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___gnuc_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___va_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_arg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_copy.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_list.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_max_align_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_null.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_nullptr_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_offsetof.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_ptrdiff_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_rsize_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_size_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_wchar_t.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/float.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/limits.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdarg.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdbool.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stddef.h \
-  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdint.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___gnuc_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_arg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_copy.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_list.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_header_macro.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_max_align_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_null.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_nullptr_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_offsetof.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_ptrdiff_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_rsize_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_size_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_wchar_t.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/float.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/limits.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdarg.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdbool.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stddef.h \
+  /Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdint.h \
   /usr/local/include/Aria/ArASyncTask.h \
   /usr/local/include/Aria/ArAction.h \
   /usr/local/include/Aria/ArActionAvoidFront.h \
@@ -5163,6 +4831,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/config_tools.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/config_init_mutex.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/StrParameter.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/ReconfigureResponse.h:
@@ -5182,8 +4852,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/BoolParameter.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_fundamental.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/tss.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/thread.hpp:
 
@@ -5229,6 +4897,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/cv_status.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/unique_ptr.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/config.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/allocator_traits.hpp:
@@ -5252,6 +4922,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/type_info.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/requires_cxx11.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/object_hex_dump.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/is_output_streamable.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/error_info_impl.hpp:
 
@@ -5301,6 +4975,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/gcc_atomic_memory_order_utils.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/fp_ops_generic.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/fp_ops_emulated.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/fp_operations_fwd.hpp:
@@ -5328,10 +5004,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_fp_ops_generic.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_fp_ops_emulated.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/tuple.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_fp_operations.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/core_ops_gcc_atomic.hpp:
 
@@ -5393,11 +5065,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /usr/local/include/Aria/ArSonarDevice.h:
 
+/usr/local/include/Aria/ArSZSeries.h:
+
 /usr/local/include/Aria/ArSonarConnector.h:
 
 /usr/local/include/Aria/ArS3Series.h:
 
-/usr/local/include/Aria/ArRobotPacketReceiver.h:
+/usr/local/include/Aria/ArRobotPacket.h:
 
 /usr/local/include/Aria/ArRobotConnector.h:
 
@@ -5422,6 +5096,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /usr/local/include/Aria/ArNovatelGPS.h:
 
 /usr/local/include/Aria/ArMutex.h:
+
+/usr/local/include/Aria/ArMapObject.h:
 
 /usr/local/include/Aria/ArMapInterface.h:
 
@@ -5473,6 +5149,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /usr/local/include/Aria/ArArg.h:
 
+/usr/local/include/Aria/ArActionTurn.h:
+
 /usr/local/include/Aria/ArActionTriangleDriveTo.h:
 
 /usr/local/include/Aria/ArActionStop.h:
@@ -5505,19 +5183,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /usr/local/include/Aria/ArASyncTask.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stddef.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/tss.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/float.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdint.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_wchar_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stddef.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_size_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdarg.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_ptrdiff_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/limits.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___va_copy.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_wchar_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg___gnuc_va_list.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_rsize_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_offsetof.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_max_align_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_header_macro.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___va_copy.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg___gnuc_va_list.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/xmlrpcpp/XmlRpcValue.h:
 
@@ -5530,6 +5218,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_ros/buffer_interface.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_ros/buffer.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_msgs/FrameGraphRequest.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/transform_datatypes.h:
 
@@ -5582,6 +5272,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/steady_timer_options.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/steady_timer.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/static_assert.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/service_server.h:
 
@@ -5669,6 +5361,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/enable_recursive_fwd.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/apply_visitor_unary.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/apply_visitor_delayed.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/apply_visitor.hpp:
@@ -5681,9 +5375,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/compare_pointees.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/binary.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered_map.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/unordered_map.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/type_traits.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/throw_exception.hpp:
 
@@ -5692,8 +5390,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/opt_storage.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/narrow_cast.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdint.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/map.hpp:
 
@@ -5704,6 +5400,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/bad_archive_exception.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/same_traits.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_volatile.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_pointer.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_extent.hpp:
 
@@ -5725,15 +5425,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_same.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_pod.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_nothrow_move_constructible.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/limits.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_nothrow_move_assignable.hpp:
+
+/usr/local/include/Aria/ArActionIRs.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_member_pointer.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_member_function_pointer.hpp:
 
 /usr/local/include/Aria/ArSimulatedLaser.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdarg.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_lvalue_reference.hpp:
 
@@ -5745,7 +5449,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_destructible.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_arg.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_copy_constructible.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_constructible.hpp:
 
@@ -5805,13 +5509,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_volatile.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_max_align_t.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_rvalue_reference.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_pointer.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_lvalue_reference.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_index/stl_type_index.hpp:
 
@@ -5863,6 +5563,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/shared_array.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/scoped_ptr.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/yield_k.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/weak_ptr.hpp:
@@ -5888,8 +5590,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/sp_counted_base.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/sp_convertible.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_nullptr_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/shared_count.hpp:
 
@@ -5933,6 +5633,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/slot_template.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/slot_groups.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/slot_call_iterator.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/variadic_footer.hpp:
@@ -5955,6 +5657,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/scoped_ptr.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/to_string.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/ratio/ratio.hpp:
@@ -5973,13 +5677,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/size_type.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_header_macro.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/reverse_iterator.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/rend.hpp:
 
 /usr/local/include/Aria/ArNMEAParser.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/range_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/mutable_iterator.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/has_range_iterator.hpp:
 
@@ -6000,6 +5710,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/detail/implementation_help.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/detail/extract_optional_type.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/detail/common.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/config.hpp:
 
@@ -6033,6 +5745,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/seq.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/limits/size_256.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/variadic_arg_type.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/limits/fold_left_256.hpp:
@@ -6044,6 +5758,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/condition_variable_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/detail/is_empty.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_arg.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/cat.hpp:
 
@@ -6064,8 +5780,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/condition_variable.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/enum.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/detail/for.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repeat.hpp:
 
@@ -6109,6 +5823,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/enum.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/ratio/detail/is_ratio.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/detail/is_binary.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/detail/check.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/trackable.hpp:
@@ -6141,9 +5859,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/config/config.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/not_equal.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/equal.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comma_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/cat.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/array/data.hpp:
 
@@ -6153,7 +5875,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/inc.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_rsize_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/detail/is_minimum_number.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/detail/is_maximum_number.hpp:
 
@@ -6183,13 +5905,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/mingw64.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/mingw32.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/ios.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/android.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/other/workaround.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/other/endian.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/tuple/detail/tuple_basic.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/unix.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/service_client_options.h:
 
@@ -6271,13 +5995,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86_amd/versions.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/arm/versions.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86/versions.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert_range_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/iter_apply.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/ppc/versions.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/arm.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_reference.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/view_interface.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/detail/os_detected.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd.h:
 
 /usr/local/include/Aria/ArActionGotoStraight.h:
 
@@ -6285,35 +6017,49 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/visualc.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/LinearMath/Quaternion.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_config.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/tendra.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/sunpro.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/sgi_mipspro.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/pgi.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/palm.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/mpw.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/nvcc.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/microtec.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/metrowerks.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/metaware.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/memory_order_utils.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/iar.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception_ptr.h:
 
-/Users/marcoreis/b166er/src/rosaria/RosAria.cpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/llvm.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/gcc.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/merge.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/scoped_allocator.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/kai.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/edg.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/error_condition.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/dignus.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/sign_mixture.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/ibm.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/adjacent_find.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/greenhills.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/replace.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/gcc_xml.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/level.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/ekopath.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/shared_ptr.hpp:
 
@@ -6321,25 +6067,45 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/z.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_indices.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/x86/64.h:
-
-/usr/local/include/Aria/ArPTZConnector.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/x86.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/sys390.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/sys370.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/pyramid.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/preprocessed/numeric_cast_traits_long_long.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/superh.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/iter_fold_impl.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/sparc.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsblkcnt_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/policies/error_handling.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ptx.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/use_default.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ppc.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/parisc.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/gregorian_types.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/void.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/exceptions.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/loongarch.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ia64.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/sequence_traits.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/e2k.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/limits/not_equal_256.hpp:
 
@@ -6347,53 +6113,25 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/alpha.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/value_type.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/ipc_atomic_ref.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/template_keyword.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/required.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/optional.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/keyword_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/deduced.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/config.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/yesno.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/windows.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/use_default_tag.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ppc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/use_default.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/unwrap_cv_reference.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/template_keyword.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/make_tuple_types.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tagged_argument_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tag.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/set.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/mach_time.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/result_of0.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/unmatched_argument.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_template_keyword_arg.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_keyword_arg.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_deduced.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/satisfies.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/preprocessor/nullptr.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/predicate.hpp:
 
@@ -6401,17 +6139,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/parameter_requirements.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_parameter_spec_items.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/format.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_items.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_deduced_items.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_arg_list.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/insert_tagged.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/deduced_item.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/repeat_from_to.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/arrays.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/deduce_tag.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/as_parameter_requirements.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/lambda_tag.hpp:
 
@@ -6423,61 +6167,47 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/is_maybe.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/default.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/has_nested_template_fn.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/augment_predicate.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/complex.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/arg_list.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/helpers/transcoder.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/variant_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/always_true_predicate.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/abs.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_swap.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/optional_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/enable_borrowed_range.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_reference_spec.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/interop_category.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_hash.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/integral_conversions.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/negation.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_config.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_factory_support.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/transport_hints.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_aligned_storage.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/z.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/bad_optional_access.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/callback_queue.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/duration.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/push_front_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/is_named_argument.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/operators.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/udt_builtin_mixture_enum.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/conversion_traits.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/sign_mixture_enum.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/Pose.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/unordered_map_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/numeric_cast_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/std/msvc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/udt_builtin_mixture.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/error_condition.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/ibm.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/sign_mixture.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/superh.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/preprocessed/numeric_cast_traits_long_long.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/preprocessed/numeric_cast_traits_common.hpp:
 
@@ -6485,25 +6215,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/meta.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/is_subranged.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/int_float_mixture.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/converter.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/conversion_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/builtin_message_traits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/bounds.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/converter_policies.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/converter.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/conversion_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/bounds.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/none_t.hpp:
 
@@ -6511,29 +6227,35 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/none.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/void_fwd.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/thread_status.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/next_prior.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/void.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/transform.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/is_transparent.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/stdbool.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/value_type_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sizeof.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_setsize.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/template_arity.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/tag.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size_t_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/facilities/limits/intercept_256.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_reference_with.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sequence_tag_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/current_exception_cast.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/FrameGraph.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/move.h:
 
-/usr/local/include/Aria/ArSonarAutoDisabler.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sequence_tag.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/same_as.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/reverse_fold.hpp:
 
@@ -6569,6 +6291,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/long.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/ipc_atomic_ref.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/template_keyword.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/futures/future_status.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/mutex.hpp:
@@ -6581,11 +6307,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/logical.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/integral_conversions.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_config.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/list0.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_result.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/size.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/default.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/stringize.hpp:
 
@@ -6593,19 +6325,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/push_back.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_deduced.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/item.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/clear.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/begin_end.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/noinit_adaptor.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/O1_size_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/hypot.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/O1_size.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partial_sort.h:
 
@@ -6627,8 +6353,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/delete.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_contains.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/iter_fold.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/bool.hpp:
@@ -6638,10 +6362,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/integral_c.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/inserter.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert_fwd.hpp:
 
 /usr/local/include/Aria/ArRangeDevice.h:
 
@@ -6654,8 +6374,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/fold.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_limits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_shuffle.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/find_if.hpp:
 
@@ -6689,6 +6407,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/value_wknd.hpp:
 
+/usr/local/include/Aria/ArRobotJoyHandler.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/template_arity_fwd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/rs6k.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/pop_front_fwd.hpp:
@@ -6705,11 +6427,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/list/detail/limits/fold_left_256.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate_n.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/detail/posix_features.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessor/params.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessor/enum.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/inc.hpp:
 
@@ -6725,19 +6447,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert_range.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/tag.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_setsize.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternal.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/template_arity.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/nested_exception.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/quote.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each_n.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/apply_wrap.hpp:
 
@@ -6757,6 +6469,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/equal_to.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/bind_fwd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/bind.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/replace_slot_function.hpp:
@@ -6769,6 +6483,12 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/apply_fwd.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/futures/launch.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/sensor_msgs/ChannelFloat32.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/advance_forward.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/advance_backward.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_wint_t.h:
@@ -6776,6 +6496,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_reference.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/numeric_op.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/plus.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/nttp_decl.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/static_constant.hpp:
 
@@ -6790,6 +6514,12 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/eti.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/msvc_eti_base.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/find.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/inverse_hyperbolic_functions.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_trivially_copyable_base.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/largest_int.hpp:
 
@@ -6807,19 +6537,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/iter_fold_impl.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/ppc/versions.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/iter_apply.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/nttp_decl.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/plus.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/insert_range_impl.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/insert_impl.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_wctype.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/platform.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/copyable.h:
 
@@ -6835,11 +6559,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/has_begin.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/has_apply.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/byteswap.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/front_impl.hpp:
 
@@ -6859,6 +6579,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/nttp.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/deque.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/msvc.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/has_apply.hpp:
@@ -6869,11 +6591,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/gcc.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/ctps.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/service.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/compiler.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/adl.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/comparison_op.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/template_keyword.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/begin_end_impl.hpp:
 
@@ -6891,8 +6619,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/if.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_constructible.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/O1_size_impl.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/at_fwd.hpp:
@@ -6905,21 +6631,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/apply_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_n.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/always.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_constructible.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/version.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/next.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_assignable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/int_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert_range_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/has_xxx.hpp:
 
@@ -6943,13 +6661,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_list.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/lambda.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_is_value_list.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_is_list.hpp:
+
 /usr/local/include/Aria/ArRangeBuffer.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/serialization.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_front.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/common_iterator.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__string/char_traits.h:
 
@@ -6962,6 +6684,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_append.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/config.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/bind.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_difference.h:
 
@@ -6987,11 +6711,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/memory:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integer.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/move/detail/addressof.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/move/core.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mem_fn.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/promotion.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/precision.hpp:
 
@@ -6999,29 +6725,27 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/is_constant_evaluated.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/c/gnu.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/config.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/assert.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/functions.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/math_fwd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/fpclassify.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessor/def_params_tail.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_caddr_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_fold.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/is_iterator.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_base_10.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/policies/policy.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ptx.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsblkcnt_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/policies/error_handling.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/detail/round_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/detail/config.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/variant_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/optional_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/abs.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/make_shared.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/unicode.h:
 
@@ -7029,9 +6753,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/widest_char.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/hp_acc.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/nested_type_wknd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/hp_acc.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/lcast_unsigned_converters.hpp:
 
@@ -7067,11 +6791,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/comeau.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/functional.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/apply.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/iterator_categories.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_list.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/iterator_adaptor.hpp:
 
@@ -7079,11 +6803,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/distance.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/parameter_requirements.hpp:
-
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int32_t.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/parameter_requirements.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/detail/enable_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/advance.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/boyer_moore_searcher.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/is_placeholder.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/integer_traits.hpp:
 
@@ -7125,6 +6855,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/std/vacpp.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/availability.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/detail/indirect_traits.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/AvailabilityInternalLegacy.h:
@@ -7149,6 +6881,22 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/describe/detail/config.hpp:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/net/if_var.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/_structs.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/watcom.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/year_month_day.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/lambda_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/riscv.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/type_traits/conditional.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/function.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/helpers/widelife.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/error_code.hpp:
@@ -7161,15 +6909,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/special_defs.hpp:
 
+/usr/local/include/Aria/ArSonarAutoDisabler.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sequence_tag.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/enable_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_storage.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/diab.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_system.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_duration.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/sparc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/iter_fold_impl.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/sunpro.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_config.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/microsec_time_clock.hpp:
 
@@ -7177,13 +6929,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/locale_config.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/int_adapter.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_ymd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_year.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/initializer.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_weekday.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/ref_view.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_calendar.hpp:
 
@@ -7194,12 +6948,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/digitalmars.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date_duration_types.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/time_defs.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date_defs.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stdarg_va_copy.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/mutex.hpp:
 
@@ -7217,21 +6965,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/adjust_functors.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/cstdint.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/binary_search.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/typeinfo.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/snprintf.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/serialization.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/time_clock.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/nvp.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/size.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/std/modena.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/no_exceptions_support.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/invoke_swap.hpp:
 
@@ -7240,6 +6986,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_size_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/ignore_unused.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/result_of0.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/isinf.hpp:
 
@@ -7275,9 +7023,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/is_unordered_range.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_none_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__threading_support:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/udt_builtin_mixture_enum.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/is_tuple_like.hpp:
 
@@ -7289,9 +7035,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/is_contiguous_range.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/hash.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/hash_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_strong_order_fallback.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/hash.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/detail/hash_range.hpp:
 
@@ -7323,13 +7069,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/stdlib/libcpp.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/mpw.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_default_constructible.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/requires_threads.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libkern/arm/_OSByteOrder.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if_not.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/pragma_message.hpp:
 
@@ -7345,11 +7091,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/detail/cxx_composite.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/compiler/clang_version.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/compiler/clang.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/vm_param.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/abi_suffix.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/allocator_constructed.hpp:
 
@@ -7363,8 +7113,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/concept/detail/general.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/concept/detail/concept_def.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/concepts:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/concept/detail/backward_compatibility.hpp:
@@ -7377,19 +7125,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/preprocessor.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_offsetof.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/config.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/detail/system.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/detail/static_assert.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/detail/is_evenly_divisible_by.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_fp_operations_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/function.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_copy_assignable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/time_period.hpp:
 
@@ -7411,6 +7157,12 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/arg.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/advertise_service_options.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/socket.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/cast.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_day_of_year.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/assert.hpp:
@@ -7425,6 +7177,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/yes_no_type.hpp:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/resource.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/std/list_traits.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/split.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/enum_shifted_params.hpp:
@@ -7432,6 +7188,16 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/predicate_facade.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/predicate.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_assert.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_month.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/describe/detail/void_t.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/mach_types.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/iter_find.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/formatter.hpp:
 
@@ -7444,6 +7210,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/slot_base.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/sequence.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/LinearMath/Matrix3x3.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/formatter.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/wait_ops_generic.hpp:
 
@@ -7459,8 +7229,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/find_format.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backend.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/case_conv.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/constants.hpp:
@@ -7471,7 +7239,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/case_conv.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_inplace_merge.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stdio.h:
 
@@ -7495,6 +7263,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/tuple:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/void_fwd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/system_error:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/config.hpp:
@@ -7507,11 +7277,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stdlib.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/std/msvc.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/udt_builtin_mixture.hpp:
+
 /Users/marcoreis/b166er/devel/.private/rosaria/include/rosaria/RosAriaConfig.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_char.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stdbool.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/sstream:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/exceptions.h:
 
@@ -7521,11 +7297,11 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/begin.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_default_formatter.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_equality_comparable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/shared_mutex:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/converter_policies.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/fences.hpp:
 
@@ -7538,6 +7314,14 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/mutex:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/math.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/builtin_message_traits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/bounds.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date_defs.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/time_defs.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/call_traits.hpp:
 
@@ -7567,9 +7351,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ios:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/find_if.h:
+/usr/local/include/Aria/ArActionGroups.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/format:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/iomanip:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutex_t.h:
 
@@ -7631,12 +7415,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/charconv:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/void.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/gregorian_types.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/scoped_enum.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cerrno:
@@ -7677,17 +7455,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/swap.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/pointer_traits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/priority_tag.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/required.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/pair.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/FrameGraph.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/convert_to_timespec.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/same_as.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/no_destroy.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/move.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/arm/versions.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/is_valid_range.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/in_place.h:
 
@@ -7707,37 +7485,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/exchange.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/std_placeholders.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/O1_size.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/declval.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stdexcept:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/advance.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/make_unsigned.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/scoped_ptr.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/trim.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/cmp.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_constructible.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/convert_to_integral.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/empty.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/rosconsole/macros_generated.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_const.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/convert_to_integral.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/bit.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/auto_cast.h:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/libkern/_OSByteOrder.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/void_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/boolean_testable.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/extent.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/config.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/mutex.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/unwrap_ref.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/thread_info.h:
 
@@ -7745,59 +7515,41 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/underlying_type.h:
 
-/usr/local/include/Aria/ArThread.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/thread_only.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/type_identity.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/type_list.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/has_trivial_constructor.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/alloca.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/hyperbolic_functions.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/strip_signature.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/variadic/size.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/for_each_i.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_volatile.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/clear_impl.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/lockable_wrapper.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_extent.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/tuple/detail/is_single_return.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/time_point.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/segmented_iterator.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_cvref.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_symbol_aliasing.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_all_extents.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_const.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_out_out_result.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/std_placeholders.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/declval.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/promote.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/nvcc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/operation_traits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax_element.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/noexcept_move_assign_container.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ctype.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/or.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_factory_support.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/negation.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/nat.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/maybe_const.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/O1_size.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stdexcept:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/trim.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/empty.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/make_unsigned.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/variadic_signal.hpp:
 
@@ -7819,93 +7571,87 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_volatile.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_void.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/time_duration.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_valid_expansion.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_arg_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/generic_category.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/dyld_kernel.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_union.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/detail/_exception.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unbounded_array.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/comparison_op.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_date.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_constructible.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/int_adapter.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/not_equal.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_default_constructible.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/ratio/ratio_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copyable.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/year_month_day.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_element.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/exception.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_standard_layout.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/message.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/repeat.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_constructible.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/nl_types.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/allocator_arg.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/int_float_mixture_enum.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/insert_iterator.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_intersection.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_copy_assignable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_specialization.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/optional:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sigaltstack.h:
 
-/usr/local/include/Aria/ArFunctorASyncTask.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_int32_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_swappable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/key_type_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/c/uc.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partial_sort_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed_integer.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scoped_enum.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_same.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scalar.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_referenceable.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_reference_wrapper.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/detail/sp_thread_yield.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_reference.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator_range_io.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/rel_ops.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_polymorphic.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/helpers/transcoder.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/always_true_predicate.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_behavior.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fold.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_pointer.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/type_traits/conditional.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/constrained_ctypes.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/function.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/vm_types.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/swappable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_object.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_move_assignable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_cvref.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/time_point.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/lock_guard.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/make_signed.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_destructible.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/noexcept_move_assign_container.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_constructible.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_max_result.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/set.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/capabilities.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/function/function_template.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/time_iterator.hpp:
 
@@ -7913,53 +7659,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_pointer.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_object_pointer.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ios/fpos.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/poll_with_backoff.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_integral.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/limits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_implicitly_default_constructible.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/callback_queue.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/is_named_argument.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/duration.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/push_front_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/e2k.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/sequence_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_fundamental.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/TwistWithCovariance.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_function.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/escaped_output_table.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_final.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_execution_policy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/front.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/dtp.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/helper_macros.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_front.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_enum.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/caps_gcc_atomic.hpp:
 
@@ -7969,13 +7669,25 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_core_convertible.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/ios.h:
+/usr/local/include/Aria/ArThread.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_assignable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/expired_slot.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/type_list.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_convertible.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctype.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_compound.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/x86/64.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_n.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/filetime_functions.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/abs.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_class.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size_t.hpp:
 
@@ -7987,17 +7699,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_char_like_type.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/times.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_callable.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_assignable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_array.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_default_constructible.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/Vector3Stamped.h:
 
@@ -8017,19 +7721,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_allocator.h:
 
+/usr/local/include/Aria/ArPTZConnector.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/x86.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_keyword_arg.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/thread_heap_alloc.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_aggregate.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/new:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_arg_list.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/endian.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_member_function_pointer.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/list/fold_right.hpp:
 
@@ -8037,23 +7739,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_abstract.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_copy_constructible.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/transport_hints.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_aligned_storage.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/integral_constant.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/windows_phone.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/is_sequence.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/as_parameter_requirements.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/arrays.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/has_virtual_destructor.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/enable_if.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/disjunction.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/dependent_type.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/clock_string.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/decay.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/make_projected.h:
 
@@ -8063,13 +7763,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/detail/mulx.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/backend.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/randomize_range.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/copy_cvref.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/copy_cv.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_reference.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_fundamental.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_bounded_array.hpp:
 
@@ -8077,31 +7779,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/conditional.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/enum_params.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/reverse_iterator.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container/detail/std_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/has_nothrow_constructor.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/alignment_of.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_key_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/enable_if.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/diab.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_system.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_storage.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/abi.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_volatile.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/move/detail/std_ns_begin.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_pointer.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_lvalue_reference.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/subrange.h:
 
@@ -8125,55 +7811,51 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_ext.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/version.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_wctrans_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/mem_fn.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_clamp.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_int16_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/concepts.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/pair_like.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/ignore.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/find_index.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/front_fwd.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_key_t.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tree:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_wctype_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/type_traits/is_trivially_default_constructible.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/allocator_access.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_integral.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/poll_with_backoff.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/fence_arch_ops_gcc_aarch64.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/id.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/move/detail/std_ns_begin.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_copy.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_pointer.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/system_error.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_rename.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_nothrow_convertible.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_make_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/error_code.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/checked_delete.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_strings.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/error_category.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/quote.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/errc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/nullary_function.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/lockable_traits.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_time.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__string/extern_template_lists.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/roscpp_serialization_macros.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__string/constexpr_c_functions.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_base_of.h:
 
@@ -8187,25 +7869,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/sp_typeinfo_.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/size.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/from_range.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_null_pointer.h:
 
 /usr/local/include/Aria/ArMapComponents.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/enable_view.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/clock_string.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_all_extents.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/decay.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_reference_wrapper.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_reference_spec.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_rename.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/enable_borrowed_range.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/error_code.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/dangling.h:
 
@@ -8213,7 +7893,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/container_compatible_range.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_random_bit_generator.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/punctuation/comma_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/concepts.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/convertible_to.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_cv.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/compiler.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/termios.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__thread/support/pthread.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_pointer.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/lock_types.hpp:
 
@@ -8225,17 +7921,27 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/is_valid.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_ymd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ostream/basic_ostream.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/other/workaround.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/tuple.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/transform_reduce.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_fp_operations.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_const.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/private_constructor_tag.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_flag.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/unique_lock.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__numeric/pstl_transform_reduce.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_blkcnt_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/less_equal.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_reference.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/boolean_testable.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/config.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/extent.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/integer_fwd.hpp:
 
@@ -8246,6 +7952,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/next.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/once_flag.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/unsynchronized_pool_resource.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__node_handle:
 
@@ -8259,27 +7967,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/polymorphic_allocator.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ios/fpos.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_lexicographically_comparable.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/memory_resource.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/unique_ptr.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/control/detail/limits/while_256.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/advance_fwd.hpp:
-
-/usr/local/include/Aria/ArActionGroups.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/iomanip:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shuffle.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_count.h:
-
-/usr/local/include/Aria/ArActionIRs.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_member_pointer.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_uninitialized_algorithms.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/sortable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/spinner.h:
 
@@ -8287,9 +7985,33 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/ranges_construct_at.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/pointer_traits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ratio:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/out_ptr.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/monotonic_buffer_resource.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/format:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/multiplies.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/inout_ptr.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/placeholders.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/compare:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/is_member_function_pointer_cxx_11.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/thread_safety.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/task_special_ports.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/max_element.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/sanitizers.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/function/function_fwd.hpp:
 
@@ -8307,27 +8029,33 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/typeindex:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator_construction.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/builtin_new_allocator.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/serialization.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/repeat_from_to.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/unique_ptr.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/assume_aligned.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_generate.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/deduce_tag.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/wait_operations_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_traits.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/mutex.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/unwrap_ref.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_destructor.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/eval_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_arg_t.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/user.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/unary_function.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/replace_copy.h:
 
@@ -8343,10 +8071,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/no_tr1/cmath.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86/versions.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_swap_ranges.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/addressof.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mbstate_t.h:
@@ -8355,17 +8079,37 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/tables.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/lambda_support.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/trigonometric_functions.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_trivially_copyable_base.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_negate.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/find.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/inverse_hyperbolic_functions.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/special_functions.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/remainder.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutexattr_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/types.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/enable_if.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/compressed_pair.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/const_iterator.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/modulo.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_union.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/push_front.hpp:
 
@@ -8379,17 +8123,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/temporary_buffer.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/noinit_adaptor.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/O1_size_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/O1_size.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/hypot.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/gamma.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/contention_t.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_ctype.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/arithmetic_op.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_mismatch.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/to_gcc_order.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_rune_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/indirectly_comparable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/exponential_functions.h:
 
@@ -8397,51 +8147,67 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/snprintf.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/permutable.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/copysign.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_n.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/bounds.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/filetime_functions.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/intptr.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_class.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/classification.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/abs.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/c/uc.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_signed_integer.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partial_sort_copy.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/limits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/push_heap.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_iter.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/conjunction.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/select.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/size.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/function_output_iterator.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/none_of.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/voidify.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max_element.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/lockable_wrapper.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/tuple/detail/is_single_return.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_symbol_aliasing.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/segmented_iterator.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/get_error_info.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/readable_traits.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_wchar.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ranges_iterator_traits.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cfloat:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/projected.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_caddr_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/is_iterator.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/detail/round_fwd.hpp:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iter_move.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/checked_delete.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_strings.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/error_category.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_iterator_concept.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/is_placeholder.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istream_iterator.h:
 
@@ -8451,11 +8217,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/reference_wrapper.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/allocator_arg.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/insert_iterator.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/incrementable_traits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/expired_slot.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_convertible.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/front_insert_iterator.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/erase_if_container.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_char.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/empty.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/detail/select_platform_config.hpp:
 
@@ -8465,13 +8241,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/data.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/empty.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_purgable.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/preprocessed/plain/list20.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/counted_iterator.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/aliasing_iterator.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_param.h:
 
@@ -8493,6 +8263,26 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/access.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/deduced.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_purgable.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/preprocessed/plain/list20.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__hash_table:
+
+/usr/local/include/Aria/ArStringInfoGroup.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder1st.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/vector.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/find_if_pred.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_union.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_empty.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_reference.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/qnxnto.h:
@@ -8511,14 +8301,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/rounding_functions.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/sub.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/mips.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_condattr_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sample.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/message_traits.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int64_t.h:
@@ -8533,19 +8315,31 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory_resource.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/mutex.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/cygwin.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/limits.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/memory.h:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/processor_info.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/istream.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/atomic_flag.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sizeof.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/transform_storage.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/size.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/advance.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/std/modena.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/no_exceptions_support.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/pointer_to_binary_function.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_printf.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/ranges_operations.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/error_code.hpp:
 
@@ -8553,17 +8347,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/numeric_cast_utils.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/thread_state.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/is_eq.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/operations.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/not_fn.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/mem_fun_ref.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/intel.h:
 
@@ -8571,31 +8357,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/empty.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/mem_fn.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_cond_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_prev_permutation.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/time_cache.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/mutex.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/wctype.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_prot.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/hash.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_transform.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/initializer_list:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/LinearMath/Quaternion.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/tendra.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/raw_storage_iterator.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/metaware.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/int_float_mixture.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/helpers/makeunique.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_permutation.h:
-
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_clock_t.h:
-
-/usr/local/include/Aria/ArStringInfoGroup.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binder1st.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/binary_negate.h:
 
 /Users/marcoreis/b166er/src/rosaria/LaserPublisher.h:
 
@@ -8605,15 +8389,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/width_estimation_table.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_tuple.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_ptrdiff_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uses_allocator.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/transform.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocator_destructor.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/parser_std_format_spec.h:
 
-/usr/local/include/Aria/ArSZSeries.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/thread_special_ports.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_pointer.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/desugars_to.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ostream:
+
+/usr/local/include/Aria/ArRobotParams.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/ordering.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/exception_guard.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/platform_time.hpp:
 
@@ -8621,27 +8413,47 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_output.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/result_of.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/swap_allocator.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_endian.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/bcc.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/any/fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integral.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/move/detail/meta_utils.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/std_containers_traits.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/__wctype.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_count.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_backward.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/aliases.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/mismatch.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/aliases.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_bool.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/atomic_flag.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2/transform_storage.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/advance.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_iovec_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_functions.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/Pose.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/unordered_map_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/numeric_cast_traits.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_string.h:
 
@@ -8665,12 +8477,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/buffer.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/memory_order_utils.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/llvm.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/exception_ptr.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/lambda.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/has_unique_object_representation.h:
@@ -8683,7 +8489,33 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__debug_utils/strict_weak_ordering_check.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/pyramid.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/iterator.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/keyword_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessor/def_params_tail.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_copy.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_fold.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_base_10.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/policies/policy.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/futures/wait_for_all.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__configuration/language.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/mem_fun_ref.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/sub.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_condattr_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/mips.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date_generators.hpp:
 
@@ -8697,7 +8529,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__condition_variable/condition_variable.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/relation.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/quote.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__system_error/errc.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/predicate.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/optional:
+
+/usr/local/include/Aria/ArFunctorASyncTask.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_swappable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/movable.h:
 
@@ -8713,27 +8557,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/equality_comparable.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/current_exception_cast.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_type.h:
+
 /usr/local/include/Aria/ArBumpers.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/isnan.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/futures/wait_for_all.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_ceil.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/serialize_fca_container.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/constructible.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_cv.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/convertible_to.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/iar.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/date_duration_operators.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/sequence_tag_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_reference_with.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/net/net_kev.h:
 
@@ -8742,6 +8582,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy_move_common.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/traits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/tag_template_keyword_arg.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/unary_negate.h:
 
@@ -8779,81 +8621,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/synth_three_way.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_mutexattr_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/enable_if.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/compressed_pair.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/const_iterator.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/modulo.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/has_nested_template_fn.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_binary_search.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/strong_order.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tag.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/make_tuple_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/partial_order.h:
-
-/usr/local/include/Aria/ArRobotParams.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/exception_guard.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/ordering.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/resource.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/std/list_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_weak_order_fallback.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind_back.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way_result.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/intptr.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_n.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/classification.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/always.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/limits.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_like_no_subrange.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/push_heap.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/scoped_allocator.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__locale_dir/locale_base_api/bsd_locale_defaults.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/edg.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/object_hex_dump.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_right.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/get.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/compiler/clang_version.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/ppc.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/integer/common_factor_ct.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_partial_order_fallback.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/view_interface.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/lock_guard.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/make_signed.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_same.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/empty.hpp:
 
@@ -8865,65 +8645,35 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/high_resolution_clock.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_segment.h:
+
+/usr/local/include/Aria/ArMTXIO.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_literal_type.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_integral.h:
 
-/usr/local/include/Aria/ArRobotJoyHandler.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ios.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/template_arity_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tagged_argument.hpp:
 
-/usr/local/include/Aria/ArActionTurn.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/ppc.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_stable_sort.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/integer/common_factor_ct.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/limits/size_256.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/to_chars_floating_point.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/abi_prefix.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/mergeable.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/distance.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__charconv/chars_format.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_size_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/platform/macos.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/popcount.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/conjunction.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/select.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/size.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_difference.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_primary_template.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countl.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/blsr.h:
 
-/usr/local/include/Aria/ArRVisionPTZ.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/concepts.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/numeric_cast.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ctype.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istreambuf_iterator.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/compose.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_width.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/thread.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_log2.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/value_type.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/conversion.hpp:
 
@@ -8932,26 +8682,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/auto_ptr.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/find_format_store.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/arm.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_pop_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_sort.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/monotonic_buffer_resource.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/LinearMath/Matrix3x3.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/formatter.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__availability:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_month.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_assert.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/fence.h:
 
@@ -8965,25 +8695,35 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/cxx_atomic_impl.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/syslimits.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/blackfin.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/signals_common.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/check_memory_order.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_iterator.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/pause.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_lock_free.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/clocale:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/optional_last_value.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/ReconfigureRequest.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_init.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/is_function_cxx_11.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/deconstruct_ptr.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/stable_sort.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stdarg_va_list.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/last_value.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_sync.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_ino_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/stack:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/insert_tagged.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_time_t.h:
 
@@ -8993,77 +8733,63 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/bit_reference.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/transform.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constant_evaluated.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_socklen_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/transform.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_stdio.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__assert:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_iter.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/arithmetic_op.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique_copy.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/pointer_to_binary_function.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_stdlib.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/memory_object_types.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_nullptr_t.h:
 
-/usr/local/include/Aria/ArRobotPacket.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stddef.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/uniform_random_bit_generator_adaptor.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/std_srvs/EmptyResponse.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/limits/for_256.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/sched.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/data.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_segment_if.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/strings.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort_heap.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/swap_ranges.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_iterator.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian_calendar.ipp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_lock_free.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/gamma.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/sfinae_helpers.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique_copy.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uintmax_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/concept/detail/concept_def.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_floating_point.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/simd_utils.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_operations_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/erase.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/steady_clock.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/task_info.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shift_left.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/kill_dependency.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_endian.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/shuffle.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/detail/has_member_size.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/joint_view.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_find.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_union.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/make_shared_object.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/buffer_view.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/next_prior.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/thread_status.h:
-
-/usr/local/include/Aria/ArMapUtils.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/totally_ordered.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_specialization.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/set_intersection.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/compare_three_way.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/arm.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/roots.h:
 
@@ -9071,17 +8797,35 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int8_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_intersection.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sample.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__undef_macros:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/hpux.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/___wctype.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_destructible.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/rotate.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/platform.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/reverse.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/task_policy.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/kill_dependency.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/satisfies.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_generate.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/termios.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/replace_copy_if.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/exception.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/for_each_i.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/clear_impl.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_extent.h:
 
 /usr/local/include/Aria/ArSocket.h:
 
@@ -9089,355 +8833,51 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_copy_if.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/erase.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/task_info.h:
-
 /usr/local/include/Aria/ArActionDesired.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/make_heap.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/destructible.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/exception.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned_integer.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/message.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_starts_with.h:
+/usr/local/include/Aria/ArRobot.h:
 
-/usr/local/include/Aria/ArExitErrorSource.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_upper_bound.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_const_ref.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/nav_msgs/Odometry.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_sort.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_abort.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_stable_partition.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_string.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/time.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_ct_rune_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/yes_no_type.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_transform.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/fcntl.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/thread_state.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/make_shared.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/empty_impl.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/join.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/prev_permutation.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_sort_heap.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/front.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/result_of.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/dtp.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_endian.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/helper_macros.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/bcc.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/swap_allocator.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/has_single_bit.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_rwlockattr_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_union.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_wchar.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ranges_iterator_traits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/memory_resource.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_volatile.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_pointer.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search_n.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_rotate_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_reverse.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/bind.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_if.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_printf.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/ranges_operations.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/slot_groups.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_remove_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_bounded_array.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/detail/is_minimum_number.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_push_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__hash_table:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/mingw32.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/apply_cv.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition_point.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdint.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partition.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_partial_sort_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/reverse_iterator.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/common_with.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/exception/detail/is_output_streamable.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_nth_element.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/promotion.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_next_permutation.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/any/fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_integral.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_minmax.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/cast_storage.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/__xlocale.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_equal.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_max.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/thread_status.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf2_msgs/FrameGraphRequest.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lexicographical_compare.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_pod.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/initializer_list:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/watcom.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/net/if_var.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/_structs.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/boyer_moore_searcher.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/is_placeholder.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/incrementable_traits.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/service.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/compiler.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_partitioned.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/error_functions.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/pointer_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/ldexp.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_id_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/less.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_heap_until.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__compare/weak_order.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_includes.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill_n.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_dev_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_fwd.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/lambda.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_is_value_list.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/thread_only.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/type_identity.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_copy_constructible.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_first_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/is_member_function_pointer_cxx_11.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/thread_safety.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/task_special_ports.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/max_element.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/sfinae_helpers.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_port_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/find_if_pred.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_empty.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/aligned_union.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/common_type.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_find_end.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_pointer.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/termios.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_set.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/make_variant_list.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/equal.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_standard_layout.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_ends_with.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy_backward.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/thread_special_ports.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ostream:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_merge.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/eval_if.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/sstream:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_all_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/config.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_adjacent_find.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/punctuation/comma_if.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/concepts.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_rotate_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/round.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_endian.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_replace.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/detail/static_assert.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/type_traits.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_for_each.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_assignable.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/signal.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_equal_range.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/remainder.h:
-
-/Users/marcoreis/b166er/src/rosaria/ArTimeToROSTime.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/describe/detail/void_t.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/mach_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/iter_find.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_copy.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_found_result.h:
-
-/usr/local/include/Aria/ArMapObject.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/any_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/detail/integer_sequence.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backend.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_move_backward.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/fp_ops_generic.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_any_all_none_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/sort_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_segment_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/relation.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_frontend_dispatch.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_enum.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/mach_voucher_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/assert.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/18/include/__stddef_null.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/time_point.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sched.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/move.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory_resource/unsynchronized_pool_resource.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/static_assert.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__random/uniform_int_distribution.h:
 
@@ -9457,6 +8897,8 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/describe/bases.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/detail/integer_sequence.hpp:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_posix_vdisable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/detail/requires_cxx11.hpp:
@@ -9473,21 +8915,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/iterator_operations.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/conversion_traits.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/detail/scope_guard.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_o_sync.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/is_sorted_until.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uintmax_t.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/is_permutation.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_move_assignable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constructible.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/algorithm:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/is_heap.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_const.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/log4cxx.h:
 
@@ -9499,53 +8943,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/inplace_merge.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/comp_ref_type.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/includes.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/empty_impl.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/prev_permutation.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_short.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/c/gnu.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/tools/config.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_replace_copy_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/countl.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/generic_category_message.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_intptr_t.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_any_of.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocate_at_least.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/set.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/capabilities.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/function/function_template.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/half_positive.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/upper_bound.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/disjunction.h:
+/Users/marcoreis/b166er/src/rosaria/RosAria.cpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform/windows_phone.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate.h:
-
-/usr/local/include/Aria/ArMTXIO.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_literal_type.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/for_each_segment.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/gcc.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/tag.hpp:
 
@@ -9553,7 +8961,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/chrono/ceil.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/statically_widen.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/tuple/tuple.hpp:
+
+/usr/local/include/Aria/ArSignalHandler.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/detail/config_def.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86_amd.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/time.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_const.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/link.hpp:
 
@@ -9563,7 +8981,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/filio.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/for_each.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/make_shared.hpp:
 
@@ -9575,11 +8993,45 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fill_n.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_set.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/make_variant_list.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/equal.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partition.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/find_end.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/windows.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/use_default_tag.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/rotate.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/times.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_callable.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/param.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/wait_operations.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/local_counted_base.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/queue.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/date.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy_backward.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/wrap_iter.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/distance.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_types.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/order_fwd.hpp:
 
@@ -9593,23 +9045,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/memory_resource:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/greenhills.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/adjacent_find.h:
-
 /usr/local/include/Aria/Aria.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/type_traits:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/scoped_ptr.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_search.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_param.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/all_of.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_set_symmetric_difference.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/nullary_function.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/lockable_traits.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__string/extern_template_lists.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_time.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/replace_copy_if.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/regular.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/optional.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/facilities/expand.hpp:
 
@@ -9617,13 +9075,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/___wctype.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_cond_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/hash.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/time_cache.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/wctype.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_void.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/ttydefaults.h:
 
@@ -9635,29 +9087,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet6/in6.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/tuple/tuple.hpp:
-
-/usr/local/include/Aria/ArSignalHandler.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/iterator/detail/config_def.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_const.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/hardware/simd/x86_amd.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/time.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/detail/limits/auto_rec_256.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_types.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/wait.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_rwlock_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_reference.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/bind.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/integral_constant.h:
 
 /usr/local/include/Aria/ArActionConstantVelocity.h:
 
@@ -9667,9 +9103,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/time.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/exception.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/roscpp_serialization_macros.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/termios.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__string/constexpr_c_functions.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/cast_storage.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale.h:
+
+/usr/local/include/Aria/ArRobotPacketReceiver.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_relocatable.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/is_sequence.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/has_virtual_destructor.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/sensor_msgs/PointCloud2.h:
 
@@ -9677,9 +9125,9 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/stat.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/default_searcher.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/palm.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/min_element.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/default_searcher.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/distance.h:
 
@@ -9695,41 +9143,37 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/host_special_ports.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/advertise_service_options.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_assignable.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/cast.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/signal.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/socket.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/value_type_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/make_shared_object.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/is_transparent.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/buffer_view.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/rotate.h:
+/usr/local/include/Aria/ArMapUtils.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/ratio:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_blkcnt_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__mutex/unique_lock.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/totally_ordered.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/ioccom.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/thread_state.h:
+/usr/local/include/Aria/ArRVisionPTZ.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/is_convertible.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/concepts.h:
 
-/usr/local/include/Aria/ArAnalogGyro.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/ctype.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_sync.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/numeric_cast.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_rsize_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/ros/time.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/TwistStamped.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/yes_no_type.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate_n.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/fcntl.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_mb_cur_max.h:
 
@@ -9737,17 +9181,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/appleapiopts.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/errno.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/augment_predicate.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/preprocessed/plain/list10.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/detail/maximum_number.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/subrange.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/nat.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/write_escaped.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_fun_result.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/detail/is_subranged.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/posix_time_types.hpp:
 
@@ -9779,17 +9223,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_wchar_t.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_int16_t.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval64.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/concepts.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator_range_core.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/three_way_comp_ref_type.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/iter_swap.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/exception_types.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/convert_to_timespec.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/no_destroy.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_rwlockattr_t.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_uuid_t.h:
 
@@ -9799,25 +9243,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cstdio:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/generic_category.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/detail/_exception.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/dyld_kernel.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/clang.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_s_ifmt.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_uid_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/comparison/less_equal.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_parameter_spec_items.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_reference.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_short.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/kai.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/strings.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/merge.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/swap_ranges.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/full_lambda.hpp:
 
@@ -9827,43 +9265,37 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_u_int16_t.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/remove_reference.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/detail/os_detected.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/seq/limits/enum_256.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/period.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/vm_types.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/constrained_ctypes.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/locale:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator_range_core.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/default_sentinel.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/three_way_comp_ref_type.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/na_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/hash.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/float.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval64.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_constructible.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/is_sorted.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_if.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/workaround.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timeval32.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_args.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/TwistStamped.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/variant/detail/apply_visitor_unary.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_fill.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_nothrow_move_assignable.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/transform_reduce.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/generate_n.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_out_result.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_int32_t.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sigaltstack.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/std/string_traits.hpp:
 
@@ -9887,37 +9319,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_off_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_is_sorted_until.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/apply.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/repeat.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_posix_availability.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/numeric/conversion/int_float_mixture_enum.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsid_t.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/nl_types.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cassert:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/limits.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mode_t.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_mcontext.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mach_port_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/preprocessor/nullptr.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_timespec.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/mach_time.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__bit/bit_floor.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_ct_rune_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_transform.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/nav_msgs/Odometry.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_abort.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_string.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/istreambuf_iterator.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/yield_primitives.hpp:
 
@@ -9926,8 +9338,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/append_int.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/kern_return.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_default_constructible.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/machine/kern_return.h:
 
@@ -9953,14 +9363,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy_n.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/futures/launch.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/sensor_msgs/ChannelFloat32.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/advance_forward.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_is_partitioned.h:
-
 /usr/local/include/Aria/ArBasePacket.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/service_traits.h:
@@ -9969,15 +9371,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsobj_id_t.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/signal.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/set.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_count_if.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/stdint.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_in_addr_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cassert:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fsid_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/invoke.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/partition_point.h:
 
@@ -9988,8 +9388,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/converter_numeric.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_static_assert.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_for_each.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/clock_types.h:
 
@@ -10005,6 +9403,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/compare.hpp:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/insert.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/thread_status.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/full_lambda.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/assignable.h:
@@ -10013,37 +9415,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_page_size.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/detail/common.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/to_underlying.h:
-
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/malloc/_malloc.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/param.h:
+
+/usr/local/include/Aria/ArExitErrorSource.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_const_ref.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/weak_result_type.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_blksize_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/gcc_xml.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/replace.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/prev.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/cstdint.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/ratio/detail/is_ratio.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/detail/is_binary.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_lower_bound.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/functions.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/math_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/stable_sort.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/count.h:
 
@@ -10059,35 +9443,25 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/cstdarg:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mode_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/apply.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_posix_availability.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/empty.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/int.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/formatter_string.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/unordered/detail/serialization_version.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_useconds_t.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_xlocale.h:
 
-/usr/local/include/Aria/ArRobot.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/special_functions/round.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_upper_bound.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_endian.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_unique.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/dignus.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_scalar.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string_view.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/key_type_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_const.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_flag.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_fill_n.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/executor.hpp:
 
@@ -10095,7 +9469,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/signal.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/alloca.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/strip_signature.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/detail/optional_swap.hpp:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_gid_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/enum_params.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container/detail/std_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/alignment_of.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/add_lvalue_reference.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/ros/wall_timer_options.h:
 
@@ -10117,21 +9505,27 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_def.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/has_nothrow_constructor.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_key_t.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/list10.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/stdbool.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/base_from_member.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/runetype.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/xlocale/_stdlib.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_bounded_array.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/std_srvs/EmptyResponse.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/arm/thread_state.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/sched.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/is_convertible.hpp:
+
+/usr/local/include/Aria/ArAnalogGyro.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_sync.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_rsize_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/swappable.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/concept/assert.hpp:
 
@@ -10143,33 +9537,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_once_t.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/signal.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/helpers/object.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread/pthread_impl.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessor/enum.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/merge.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/riscv.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/lambda_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/posix_time/conversion.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/wait_operations.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/limits.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/detail/local_counted_base.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_implicitly_default_constructible.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/copy.h:
+/usr/local/include/Aria/ArLMS1XX.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/log4cxx/level.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/LinearMath/Transform.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/compiler/ekopath.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_sentinel.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/math.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_range.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/advance_backward.hpp:
 
@@ -10181,11 +9571,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__cxxabi_config.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/bit.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/auto_cast.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/in_in_result.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_count.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_wctype.h:
 
@@ -10207,19 +9593,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/signal.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/default_sentinel.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/remove_if.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/na_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_constructible.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/is_sorted.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/blackfin.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/syslimits.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unique_copy.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/arg.hpp:
 
@@ -10231,13 +9605,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/ostream_iterator.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/facilities/limits/intercept_256.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/size_fwd.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/is_character.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_errno_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/comp_ref_type.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_mach_port_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_null_pointer.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_mcontext.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/core_arch_operations.hpp:
 
@@ -10249,25 +9627,7 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_fd_zero.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/last_value.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_sync.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/pause.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/clocale:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/ReconfigureRequest.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/detail/is_function_cxx_11.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/deconstruct_ptr.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/stable_sort.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/config_init_mutex.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_min_element.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/make_unsigned.hpp:
 
@@ -10279,7 +9639,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_statistics.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/join.hpp:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/different_from.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_lvalue_reference.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale_posix2008.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/uninitialized_algorithms.h:
 
@@ -10287,13 +9653,15 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_attr_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/range_formatter.h:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_prot.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/functional:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/max.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_attributes.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/less.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/dynamic_reconfigure/ConfigDescription.h:
 
@@ -10315,12 +9683,6 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/user.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/bind_fwd.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_compound.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_ctype.h:
-
 /usr/local/include/Aria/ArActionRatioInput.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/is_error_condition_enum.hpp:
@@ -10331,6 +9693,10 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/policy.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/netinet/in.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/memory_object_types.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/version:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator_range.hpp:
@@ -10339,27 +9705,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/bind.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/multiplies.hpp:
-
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_sigset_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/cygwin.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/operators.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/limits.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/csbl/memory/pointer_traits.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/math/ccmath/ldexp.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_id_t.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint64_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_function.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/thread_data.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/clear_fwd.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/locale.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/cpp17_iterator_concepts.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_constructible.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/rank.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/utility:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/string_view.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/ia64.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/limits.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/processor_info.h:
 
@@ -10367,33 +9735,17 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/algorithm/string/detail/finder.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tagged_argument.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/ios.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/enable_insertable.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/core/detail/sp_thread_yield.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/iterator_range_io.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/rel_ops.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_polymorphic.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/and.hpp:
 
 /usr/local/include/Aria/ArRobotPacketReaderThread.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/lib/clang/19/include/__stddef_null.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/has_nothrow_assign.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_types.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/architecture/sys390.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tuple/tuple_indices.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_wctrans_t.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/make_shared_array.hpp:
 
@@ -10401,27 +9753,21 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/boolean.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/enable_if.h:
+
 /usr/local/include/Aria/ArActionMovementParametersDebugging.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_locale.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/preprocessed/gcc/fold_impl.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/parser_std_format_spec.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/make_deduced_items.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/destructible.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/range/rend.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_unsigned_integer.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_move.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/is_placeholder.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_iterator_concept.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/utility/binary.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_move_assignable.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/error_functions.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/tf/transform_broadcaster.h:
 
@@ -10429,11 +9775,13 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/thread_policy.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/detail/for.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/indic_conjunct_break_table.h:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/string.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/access.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__utility/as_lvalue.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__functional/identity.h:
 
@@ -10443,27 +9791,35 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/assert.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/rotate.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/tuple/detail/tuple_basic.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/container_hash/hash_fwd.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/unix.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__undef_macros:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/os/base.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/os/hpux.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__memory/allocate_at_least.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/___wctype.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/signals2/optional_last_value.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_trivially_destructible.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__atomic/atomic_init.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_object.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/geometry_msgs/TwistWithCovariance.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/is_function.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/bind/detail/result_traits.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/list/aux_/iterator.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__tree:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian/greg_date.hpp:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint8_t.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/generic_category_message.hpp:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/mach/vm_types.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_intptr_t.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/stack.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/system/detail/is_same.hpp:
 
@@ -10471,15 +9827,19 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/fcntl.h:
 
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/extra_operations_fwd.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__chrono/steady_clock.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/detail/thread_group.hpp:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_types/_uint16_t.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_dev_t.h:
+
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/lexical_cast/detail/lcast_basic_unlockedbuf.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/optional/optional.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__concepts/regular.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/tagged_argument_fwd.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/comp.h:
 
@@ -10487,15 +9847,29 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/reverse_access.h:
 
-/usr/local/include/Aria/ArLMS1XX.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/empty.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/tf/LinearMath/Transform.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/platform.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__iterator/move_sentinel.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/int.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/unwrap_range.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fill.h:
 
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/_types.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/wrapping_int.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/any_of.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/repetition/limits/for_256.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__ranges/data.h:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/limits/dec_256.hpp:
+
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/begin_end.hpp:
+
+/usr/local/include/Aria/ArIRs.h:
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdlib.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/arm/endian.h:
 
@@ -10505,57 +9879,23 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/reverse_copy.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/rank.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/thread/pthread/thread_data.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/locale.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/invoke.h:
-
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/equal_range.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/cat.hpp:
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_rwlock_t.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_arg_store.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/front_fwd.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_pthread/_pthread_key_t.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/container_adaptor.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/config/abi_prefix.hpp:
 
 /Users/marcoreis/b166er/src/rosaria/LaserPublisher.cpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__fwd/fstream.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__format/format_context.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_merge.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mp11/detail/mp_is_list.hpp:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/machine/_endian.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/atomic/detail/platform.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/reverse.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/ranges_copy_if.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/gregorian_calendar.ipp:
 
 /usr/local/include/Aria/ArFunctor.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__exception/operations.h:
 
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_string.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/arithmetic/limits/dec_256.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/begin_end.hpp:
-
-/usr/local/include/Aria/ArIRs.h:
-
-/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_stdlib.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/smart_ptr/shared_ptr.hpp:
 
@@ -10567,26 +9907,22 @@ CMakeFiles/RosAria.dir/RosAria.cpp.o: /Users/marcoreis/b166er/src/rosaria/RosAri
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/fma.h:
 
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/__xlocale.h:
+
 /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/_bounds.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/fill.h:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/date_time/wrapping_int.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/any_of.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/parameter/aux_/pack/unmatched_argument.hpp:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/boost/predef/library/c/cloudabi.h:
 
 /Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/inverse_trigonometric_functions.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/preprocessor/variadic/size.hpp:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/is_function.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__type_traits/remove_volatile.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/clear_fwd.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/has_trivial_constructor.hpp:
+/Users/marcoreis/b166er/src/rosaria/ArTimeToROSTime.h:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__math/hyperbolic_functions.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/type_traits/add_reference.hpp:
 
-/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mem_fn.hpp:
-
-/Users/marcoreis/miniforge3/envs/ros_env11/include/c++/v1/__algorithm/pstl_backends/cpu_backends/fill.h:
+/Users/marcoreis/miniforge3/envs/ros_env11/include/boost/mpl/aux_/config/bind.hpp:

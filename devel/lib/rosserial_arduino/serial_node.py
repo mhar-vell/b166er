@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_arduino/lib/rosserial_arduino/serial_node.py

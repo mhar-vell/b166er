@@ -62,11 +62,11 @@ ENV_VAR_SUBFOLDERS = {
     # 'LD_LIBRARY_PATH' if not IS_DARWIN else 'DYLD_LIBRARY_PATH': 'lib',
     'PATH': PATH_TO_ADD_SUFFIX,
     'PKG_CONFIG_PATH': os.path.join('lib', 'pkgconfig'),
-    # 'PYTHONPATH': 'lib/python3.12/site-packages',
+    # 'PYTHONPATH': 'lib/python3.11/site-packages',
 }
 
 if IS_WINDOWS or os.path.dirname(os.path.realpath(__file__)) != sys.prefix:
-    ENV_VAR_SUBFOLDERS['PYTHONPATH'] = 'lib/python3.12/site-packages'
+    ENV_VAR_SUBFOLDERS['PYTHONPATH'] = 'lib/python3.11/site-packages'
 
 def rollback_env_variables(environ, env_var_subfolders):
     """
@@ -270,7 +270,7 @@ if __name__ == '__main__':
 
         if not args.local:
             # environment at generation time
-            CMAKE_PREFIX_PATH = r'/Users/marcoreis/miniforge3'.split(';')
+            CMAKE_PREFIX_PATH = r''.split(';')
         else:
             # don't consider any other prefix path than this one
             CMAKE_PREFIX_PATH = []

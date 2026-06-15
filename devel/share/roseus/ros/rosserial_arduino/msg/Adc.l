@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_arduino/share/roseus/ros/rosserial_arduino/msg/Adc.l

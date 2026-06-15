@@ -13,7 +13,7 @@ try:
 except ImportError:
     # search for catkin package in all workspaces and prepend to path
     for workspace in ''.split(';'):
-        python_path = os.path.join(workspace, 'lib/python3.12/site-packages')
+        python_path = os.path.join(workspace, 'lib/python3.11/site-packages')
         if os.path.isdir(os.path.join(python_path, 'catkin')):
             sys.path.insert(0, python_path)
             break

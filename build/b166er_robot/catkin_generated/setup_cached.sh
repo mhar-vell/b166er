@@ -8,7 +8,6 @@
 
 # modified environment variables
 export CMAKE_PREFIX_PATH="/Users/marcoreis/b166er/devel/.private/b166er_robot:$CMAKE_PREFIX_PATH"
-export PKG_CONFIG_PATH="/Users/marcoreis/b166er/devel/.private/b166er_robot/lib/pkgconfig:$PKG_CONFIG_PATH"
 export PWD='/Users/marcoreis/b166er/build/b166er_robot'
 export ROSLISP_PACKAGE_DIRECTORIES="/Users/marcoreis/b166er/devel/.private/b166er_robot/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
 export ROS_PACKAGE_PATH="/Users/marcoreis/b166er/src/b166er_robot:$ROS_PACKAGE_PATH"

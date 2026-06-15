@@ -1,0 +1,1 @@
+/Users/marcoreis/b166er/devel/.private/rosserial_mbed/share/gennodejs/ros/rosserial_mbed/msg/_index.js
