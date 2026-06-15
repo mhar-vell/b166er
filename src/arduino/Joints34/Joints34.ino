@@ -19,8 +19,8 @@
 /////////////////////
 
 #include <ros.h>
-#include <setpoint.h>
-#include <status.h>
+#include <movemaster_msg/setpoint.h>
+#include <movemaster_msg/status.h>
 
 
 //////////////////////////////////////////
@@ -149,7 +149,7 @@ movemaster_msg::status pub_msg_4;                                       //ROS me
 ros::Publisher pub_3("/status_3", &pub_msg_3);                          //ROS publisher for the status of joint 3.
 ros::Publisher pub_4("/status_4", &pub_msg_4);                          //ROS publisher for the status of joint 4.
 void Callback(const movemaster_msg::setpoint &rec_msg);                 //ROS callback function for received setpoints. 
-ros::Subscriber<movemaster_msg::setpoint> sub("/setpoints", &Callback); //ROS subscriber for received setpoints.
+ros::Subscriber<movemaster_msg::setpoint> sub("setpoints", &Callback); //ROS subscriber for received setpoints.
 
 
 ////////////////////////
@@ -200,6 +200,7 @@ void setup()
   //Starts serial communication and ROS network.
   Serial.begin(9600);  
   nh.initNode();
+  delay(1000);
   nh.subscribe(sub);
   nh.advertise(pub_3);
   nh.advertise(pub_4);
@@ -216,6 +217,7 @@ void setup()
 void loop()
 { 
   nh.spinOnce();
+  delay(10);
 
   //Executes the control loop only if ROS is conencted.
   if(nh.connected()){

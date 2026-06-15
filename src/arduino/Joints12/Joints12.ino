@@ -19,8 +19,8 @@
 /////////////////////
 
 #include <ros.h>
-#include <setpoint.h>
-#include <status.h>
+#include <movemaster_msg/setpoint.h>
+#include <movemaster_msg/status.h>
 
 
 //////////////////////////////////////////
@@ -209,6 +209,7 @@ void setup()
   //Starts serial communication and ROS network.
   Serial.begin(9600);  
   nh.initNode();
+  delay(1000);
   nh.subscribe(sub);
   nh.advertise(pub_1);
   nh.advertise(pub_2);
