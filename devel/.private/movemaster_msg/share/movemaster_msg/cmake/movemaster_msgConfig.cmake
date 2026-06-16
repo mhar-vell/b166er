@@ -67,14 +67,14 @@ set(movemaster_msg_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(movemaster_msg_SOURCE_PREFIX /Users/marcoreis/b166er/src/movemaster_msg)
-  set(movemaster_msg_DEVEL_PREFIX /Users/marcoreis/b166er/devel/.private/movemaster_msg)
+  set(movemaster_msg_SOURCE_PREFIX /home/marco/b166er/src/movemaster_msg)
+  set(movemaster_msg_DEVEL_PREFIX /home/marco/b166er/devel/.private/movemaster_msg)
   set(movemaster_msg_INSTALL_PREFIX "")
   set(movemaster_msg_PREFIX ${movemaster_msg_DEVEL_PREFIX})
 else()
   set(movemaster_msg_SOURCE_PREFIX "")
   set(movemaster_msg_DEVEL_PREFIX "")
-  set(movemaster_msg_INSTALL_PREFIX /Users/marcoreis/b166er/install)
+  set(movemaster_msg_INSTALL_PREFIX /home/marco/b166er/install)
   set(movemaster_msg_PREFIX ${movemaster_msg_INSTALL_PREFIX})
 endif()
 
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(movemaster_msg_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/Users/marcoreis/b166er/devel/.private/movemaster_msg/include " STREQUAL " ")
+if(NOT "/home/marco/b166er/devel/.private/movemaster_msg/include " STREQUAL " ")
   set(movemaster_msg_INCLUDE_DIRS "")
-  set(_include_dirs "/Users/marcoreis/b166er/devel/.private/movemaster_msg/include")
+  set(_include_dirs "/home/marco/b166er/devel/.private/movemaster_msg/include")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -110,7 +110,7 @@ if(NOT "/Users/marcoreis/b166er/devel/.private/movemaster_msg/include " STREQUAL
         message(FATAL_ERROR "Project 'movemaster_msg' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  ${_report}")
       endif()
     else()
-      message(FATAL_ERROR "Project 'movemaster_msg' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/Users/marcoreis/b166er/src/movemaster_msg/${idir}'.  ${_report}")
+      message(FATAL_ERROR "Project 'movemaster_msg' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/marco/b166er/src/movemaster_msg/${idir}'.  ${_report}")
     endif()
     _list_append_unique(movemaster_msg_INCLUDE_DIRS ${include})
   endforeach()
@@ -156,7 +156,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /Users/marcoreis/b166er/devel/.private/movemaster_msg/lib;/Users/marcoreis/b166er/devel/lib;/Users/marcoreis/miniforge3/envs/ros_env11/lib)
+    foreach(path /home/marco/b166er/devel/.private/movemaster_msg/lib;/home/marco/b166er/devel/lib;/home/marco/miniforge3/envs/ros_env/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

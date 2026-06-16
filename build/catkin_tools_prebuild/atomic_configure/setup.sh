@@ -21,7 +21,7 @@ else
   CATKIN_SHELL=sh
 fi
 
-: ${_CATKIN_SETUP_DIR:=/Users/marcoreis/b166er/devel/.private/catkin_tools_prebuild}
+: ${_CATKIN_SETUP_DIR:=/home/marco/b166er/devel/.private/catkin_tools_prebuild}
 : ${_CONDA_SETUP_DIR:=$CONDA_PREFIX/etc/conda/activate.d/}
 _SETUP_UTIL="$_CATKIN_SETUP_DIR/_setup_util.py"
 

@@ -7,7 +7,7 @@
 # new environment variables
 
 # modified environment variables
-export CMAKE_PREFIX_PATH="/Users/marcoreis/b166er/devel/.private/rosaria:$CMAKE_PREFIX_PATH"
-export PWD='/Users/marcoreis/b166er/build/rosaria'
-export ROSLISP_PACKAGE_DIRECTORIES="/Users/marcoreis/b166er/devel/.private/rosaria/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
-export ROS_PACKAGE_PATH="/Users/marcoreis/b166er/src/rosaria:$ROS_PACKAGE_PATH"
+export CMAKE_PREFIX_PATH="/home/marco/b166er/devel/.private/rosaria:$CMAKE_PREFIX_PATH"
+export PWD='/home/marco/b166er/build/rosaria'
+export ROSLISP_PACKAGE_DIRECTORIES="/home/marco/b166er/devel/.private/rosaria/share/common-lisp:$ROSLISP_PACKAGE_DIRECTORIES"
+export ROS_PACKAGE_PATH="/home/marco/b166er/src/rosaria:$ROS_PACKAGE_PATH"
