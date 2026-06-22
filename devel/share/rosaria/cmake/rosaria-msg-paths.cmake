@@ -1,1 +1,0 @@
-/home/marco/b166er/devel/.private/rosaria/share/rosaria/cmake/rosaria-msg-paths.cmake

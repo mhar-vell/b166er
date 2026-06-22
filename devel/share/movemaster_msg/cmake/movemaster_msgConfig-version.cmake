@@ -1,1 +1,0 @@
-/home/marco/b166er/devel/.private/movemaster_msg/share/movemaster_msg/cmake/movemaster_msgConfig-version.cmake
