@@ -1,1 +1,1 @@
-/Users/marcoreis/b166er/devel/.private/rosaria/share/rosaria/cmake/rosariaConfig.cmake
+/home/marco/b166er/devel/.private/rosaria/share/rosaria/cmake/rosariaConfig.cmake

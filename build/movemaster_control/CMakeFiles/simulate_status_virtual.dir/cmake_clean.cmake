@@ -1,6 +1,7 @@
 file(REMOVE_RECURSE
-  "/Users/marcoreis/b166er/devel/.private/movemaster_control/lib/movemaster_control/simulate_status_virtual"
-  "/Users/marcoreis/b166er/devel/.private/movemaster_control/lib/movemaster_control/simulate_status_virtual.pdb"
+  "CMakeFiles/simulate_status_virtual.dir/link.d"
+  "/home/marco/b166er/devel/.private/movemaster_control/lib/movemaster_control/simulate_status_virtual"
+  "/home/marco/b166er/devel/.private/movemaster_control/lib/movemaster_control/simulate_status_virtual.pdb"
   "CMakeFiles/simulate_status_virtual.dir/src/simulate_status_virtual.cpp.o"
   "CMakeFiles/simulate_status_virtual.dir/src/simulate_status_virtual.cpp.o.d"
 )

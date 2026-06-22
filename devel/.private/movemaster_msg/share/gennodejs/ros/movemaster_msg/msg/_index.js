@@ -1,10 +1,10 @@
 
 "use strict";
 
-let setpoint = require('./setpoint.js');
 let status = require('./status.js');
+let setpoint = require('./setpoint.js');
 
 module.exports = {
-  setpoint: setpoint,
   status: status,
+  setpoint: setpoint,
 };

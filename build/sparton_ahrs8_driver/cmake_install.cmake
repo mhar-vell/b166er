@@ -1,8 +1,8 @@
-# Install script for directory: /Users/marcoreis/b166er/src/sparton_ahrs8_driver
+# Install script for directory: /home/marco/b166er/src/sparton_ahrs8_driver
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
-  set(CMAKE_INSTALL_PREFIX "/Users/marcoreis/b166er/install")
+  set(CMAKE_INSTALL_PREFIX "/home/marco/b166er/install")
 endif()
 string(REGEX REPLACE "/$" "" CMAKE_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
 
@@ -27,6 +27,11 @@ if(NOT CMAKE_INSTALL_COMPONENT)
   endif()
 endif()
 
+# Install shared libraries without execute permission?
+if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
+  set(CMAKE_INSTALL_SO_NO_EXE "1")
+endif()
+
 # Is this installation the result of a crosscompile?
 if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "FALSE")
@@ -34,7 +39,7 @@ endif()
 
 # Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/marcoreis/miniforge3/envs/ros_env11/bin/llvm-objdump")
+  set(CMAKE_OBJDUMP "/home/marco/miniforge3/envs/ros_env/bin/x86_64-conda-linux-gnu-objdump")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
@@ -49,104 +54,104 @@ endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/_setup_util.py")
+   "/home/marco/b166er/install/_setup_util.py")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE PROGRAM FILES "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/_setup_util.py")
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE PROGRAM FILES "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/_setup_util.py")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/env.sh")
+   "/home/marco/b166er/install/env.sh")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE PROGRAM FILES "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/env.sh")
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE PROGRAM FILES "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/env.sh")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/setup.bash;/Users/marcoreis/b166er/install/local_setup.bash")
+   "/home/marco/b166er/install/setup.bash;/home/marco/b166er/install/local_setup.bash")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE FILE FILES
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.bash"
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.bash"
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE FILE FILES
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.bash"
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.bash"
     )
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/setup.sh;/Users/marcoreis/b166er/install/local_setup.sh")
+   "/home/marco/b166er/install/setup.sh;/home/marco/b166er/install/local_setup.sh")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE FILE FILES
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.sh"
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.sh"
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE FILE FILES
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.sh"
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.sh"
     )
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/setup.zsh;/Users/marcoreis/b166er/install/local_setup.zsh")
+   "/home/marco/b166er/install/setup.zsh;/home/marco/b166er/install/local_setup.zsh")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE FILE FILES
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.zsh"
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.zsh"
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE FILE FILES
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/setup.zsh"
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/local_setup.zsh"
     )
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   list(APPEND CMAKE_ABSOLUTE_DESTINATION_FILES
-   "/Users/marcoreis/b166er/install/.rosinstall")
+   "/home/marco/b166er/install/.rosinstall")
   if(CMAKE_WARN_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(WARNING "ABSOLUTE path INSTALL DESTINATION : ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
   if(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION)
     message(FATAL_ERROR "ABSOLUTE path INSTALL DESTINATION forbidden (by caller): ${CMAKE_ABSOLUTE_DESTINATION_FILES}")
   endif()
-  file(INSTALL DESTINATION "/Users/marcoreis/b166er/install" TYPE FILE FILES "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/.rosinstall")
+  file(INSTALL DESTINATION "/home/marco/b166er/install" TYPE FILE FILES "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/.rosinstall")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driver.pc")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/lib/pkgconfig" TYPE FILE FILES "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driver.pc")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
   file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/sparton_ahrs8_driver/cmake" TYPE FILE FILES
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driverConfig.cmake"
-    "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driverConfig-version.cmake"
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driverConfig.cmake"
+    "/home/marco/b166er/build/sparton_ahrs8_driver/catkin_generated/installspace/sparton_ahrs8_driverConfig-version.cmake"
     )
 endif()
 
 if(CMAKE_INSTALL_COMPONENT STREQUAL "Unspecified" OR NOT CMAKE_INSTALL_COMPONENT)
-  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/sparton_ahrs8_driver" TYPE FILE FILES "/Users/marcoreis/b166er/src/sparton_ahrs8_driver/package.xml")
+  file(INSTALL DESTINATION "${CMAKE_INSTALL_PREFIX}/share/sparton_ahrs8_driver" TYPE FILE FILES "/home/marco/b166er/src/sparton_ahrs8_driver/package.xml")
 endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/install_local_manifest.txt"
+  file(WRITE "/home/marco/b166er/build/sparton_ahrs8_driver/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -162,6 +167,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/Users/marcoreis/b166er/build/sparton_ahrs8_driver/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/home/marco/b166er/build/sparton_ahrs8_driver/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

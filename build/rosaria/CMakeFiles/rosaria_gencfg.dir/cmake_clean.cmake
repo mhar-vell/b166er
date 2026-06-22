@@ -1,9 +1,9 @@
 file(REMOVE_RECURSE
-  "/Users/marcoreis/b166er/devel/.private/rosaria/include/rosaria/RosAriaConfig.h"
-  "/Users/marcoreis/b166er/devel/.private/rosaria/lib/python3.11/site-packages/rosaria/cfg/RosAriaConfig.py"
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig-usage.dox"
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig.dox"
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig.wikidoc"
+  "/home/marco/b166er/devel/.private/rosaria/include/rosaria/RosAriaConfig.h"
+  "/home/marco/b166er/devel/.private/rosaria/lib/python3.11/site-packages/rosaria/cfg/RosAriaConfig.py"
+  "/home/marco/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig-usage.dox"
+  "/home/marco/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig.dox"
+  "/home/marco/b166er/devel/.private/rosaria/share/rosaria/docs/RosAriaConfig.wikidoc"
   "CMakeFiles/rosaria_gencfg"
 )
 

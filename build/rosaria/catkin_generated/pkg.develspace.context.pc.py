@@ -1,8 +1,8 @@
 # generated from catkin/cmake/template/pkg.context.pc.in
 CATKIN_PACKAGE_PREFIX = ""
-PROJECT_PKG_CONFIG_INCLUDE_DIRS = "/Users/marcoreis/b166er/devel/.private/rosaria/include".split(';') if "/Users/marcoreis/b166er/devel/.private/rosaria/include" != "" else []
+PROJECT_PKG_CONFIG_INCLUDE_DIRS = "/home/marco/b166er/devel/.private/rosaria/include".split(';') if "/home/marco/b166er/devel/.private/rosaria/include" != "" else []
 PROJECT_CATKIN_DEPENDS = "roscpp;nav_msgs;geometry_msgs;sensor_msgs;tf".replace(';', ' ')
 PKG_CONFIG_LIBRARIES_WITH_PREFIX = "".split(';') if "" != "" else []
 PROJECT_NAME = "rosaria"
-PROJECT_SPACE_DIR = "/Users/marcoreis/b166er/devel/.private/rosaria"
+PROJECT_SPACE_DIR = "/home/marco/b166er/devel/.private/rosaria"
 PROJECT_VERSION = "0.9.0"

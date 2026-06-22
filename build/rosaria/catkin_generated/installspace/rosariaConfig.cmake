@@ -67,14 +67,14 @@ set(rosaria_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("FALSE" STREQUAL "TRUE")
-  set(rosaria_SOURCE_PREFIX /Users/marcoreis/b166er/src/rosaria)
-  set(rosaria_DEVEL_PREFIX /Users/marcoreis/b166er/devel/.private/rosaria)
+  set(rosaria_SOURCE_PREFIX /home/marco/b166er/src/rosaria)
+  set(rosaria_DEVEL_PREFIX /home/marco/b166er/devel/.private/rosaria)
   set(rosaria_INSTALL_PREFIX "")
   set(rosaria_PREFIX ${rosaria_DEVEL_PREFIX})
 else()
   set(rosaria_SOURCE_PREFIX "")
   set(rosaria_DEVEL_PREFIX "")
-  set(rosaria_INSTALL_PREFIX /Users/marcoreis/b166er/install)
+  set(rosaria_INSTALL_PREFIX /home/marco/b166er/install)
   set(rosaria_PREFIX ${rosaria_INSTALL_PREFIX})
 endif()
 
@@ -156,7 +156,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /Users/marcoreis/b166er/install/lib;/Users/marcoreis/b166er/devel/lib;/Users/marcoreis/miniforge3/envs/ros_env11/lib)
+    foreach(path /home/marco/b166er/install/lib;/home/marco/b166er/devel/lib;/home/marco/miniforge3/envs/ros_env/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)

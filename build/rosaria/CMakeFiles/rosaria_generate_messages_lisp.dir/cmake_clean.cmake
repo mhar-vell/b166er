@@ -1,5 +1,5 @@
 file(REMOVE_RECURSE
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/common-lisp/ros/rosaria/msg/BumperState.lisp"
+  "/home/marco/b166er/devel/.private/rosaria/share/common-lisp/ros/rosaria/msg/BumperState.lisp"
   "CMakeFiles/rosaria_generate_messages_lisp"
 )
 

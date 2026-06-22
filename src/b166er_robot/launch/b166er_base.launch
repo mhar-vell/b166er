@@ -1,0 +1,16 @@
+<!-- Stack ROS base — roda localmente sem hardware nem simulação.
+     Carrega o URDF combinado e sobe robot_state_publisher + joint_state_publisher.
+     Uso: roslaunch b166er_robot b166er_base.launch -->
+<launch>
+  <!-- URDF combinado Pioneer 3-AT + RV-M2 -->
+  <param name="robot_description"
+         textfile="$(find b166er_robot)/urdf/combined/pioneer_movemaster.urdf"/>
+
+  <!-- Publica TF a partir do robot_description -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher"
+        type="robot_state_publisher" output="screen"/>
+
+  <!-- Publica joint_states para todas as juntas (gui para testes manuais) -->
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui"
+        type="joint_state_publisher_gui" output="screen"/>
+</launch>

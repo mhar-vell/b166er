@@ -1,0 +1,12 @@
+<launch>
+  <!-- Pioneer 3-AT via rosaria — porta fixada por udev em /dev/ttyPioneer -->
+  <arg name="port" default="/dev/ttyPioneer"/>
+
+  <node name="rosaria" pkg="rosaria" type="RosAria" output="screen">
+    <param name="port" value="$(arg port)"/>
+    <!-- Publica odometria, sonar, bumpers e aceita /cmd_vel -->
+    <remap from="~cmd_vel" to="/cmd_vel"/>
+    <remap from="~pose"    to="/pioneer/pose"/>
+    <remap from="~sonar"   to="/pioneer/sonar"/>
+  </node>
+</launch>

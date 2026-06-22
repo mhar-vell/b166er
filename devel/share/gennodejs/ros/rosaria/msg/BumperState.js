@@ -1,1 +1,1 @@
-/Users/marcoreis/b166er/devel/.private/rosaria/share/gennodejs/ros/rosaria/msg/BumperState.js
+/home/marco/b166er/devel/.private/rosaria/share/gennodejs/ros/rosaria/msg/BumperState.js

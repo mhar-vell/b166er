@@ -1,9 +1,9 @@
-#!/Users/marcoreis/miniforge3/envs/ros_env11/bin/python3.11
+#!/home/marco/miniforge3/envs/ros_env/bin/python3.11
 # -*- coding: utf-8 -*-
 # generated from catkin/cmake/template/script.py.in
 # creates a relay to a python script source file, acting as that file.
 # The purpose is that of a symlink
-python_script = '/Users/marcoreis/b166er/src/b166er_robot/scripts/imu_monitor.py'
+python_script = '/home/marco/b166er/src/b166er_robot/scripts/imu_monitor.py'
 with open(python_script, 'r') as fh:
     context = {
         '__builtins__': __builtins__,

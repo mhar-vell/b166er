@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/roseus/ros/rosaria/manifest.l"
-  "/Users/marcoreis/b166er/devel/.private/rosaria/share/roseus/ros/rosaria/msg/BumperState.l"
+  "/home/marco/b166er/devel/.private/rosaria/share/roseus/ros/rosaria/manifest.l"
+  "/home/marco/b166er/devel/.private/rosaria/share/roseus/ros/rosaria/msg/BumperState.l"
   "CMakeFiles/rosaria_generate_messages_eus"
 )
 

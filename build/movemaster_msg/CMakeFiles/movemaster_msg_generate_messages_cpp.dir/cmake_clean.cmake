@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/Users/marcoreis/b166er/devel/.private/movemaster_msg/include/movemaster_msg/setpoint.h"
-  "/Users/marcoreis/b166er/devel/.private/movemaster_msg/include/movemaster_msg/status.h"
+  "/home/marco/b166er/devel/.private/movemaster_msg/include/movemaster_msg/setpoint.h"
+  "/home/marco/b166er/devel/.private/movemaster_msg/include/movemaster_msg/status.h"
   "CMakeFiles/movemaster_msg_generate_messages_cpp"
 )
 

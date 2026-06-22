@@ -1,1 +1,1 @@
-/Users/marcoreis/b166er/devel/.private/rosaria/share/common-lisp/ros/rosaria/msg/rosaria-msg.asd
+/home/marco/b166er/devel/.private/rosaria/share/common-lisp/ros/rosaria/msg/rosaria-msg.asd
