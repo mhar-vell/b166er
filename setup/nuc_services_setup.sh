@@ -9,14 +9,25 @@ ROS_ENV_PREFIX="/home/robo/miniforge3/envs/ros_env"
 NUC_HOSTNAME="b166er-nuc"
 
 # ---------------------------------------------------------------------------
-# 1. Auto-login do usuário robo no console (tty1)
+# 1a. Auto-login GDM (interface gráfica)
 # ---------------------------------------------------------------------------
-echo "==> Configurando auto-login para robo em tty1..."
+echo "==> Configurando auto-login GDM para robo..."
+sudo sed -i 's/^#\s*AutomaticLoginEnable\s*=.*/AutomaticLoginEnable = true/' /etc/gdm3/custom.conf
+sudo sed -i 's/^#\s*AutomaticLogin\s*=.*/AutomaticLogin = robo/' /etc/gdm3/custom.conf
+# Garante que as linhas existam caso o sed não tenha encontrado
+grep -q '^AutomaticLoginEnable' /etc/gdm3/custom.conf || \
+  sudo sed -i '/^\[daemon\]/a AutomaticLoginEnable = true\nAutomaticLogin = robo' /etc/gdm3/custom.conf
+echo "    ok — GDM fará login automático como robo no próximo boot."
+
+# ---------------------------------------------------------------------------
+# 1b. Auto-login getty tty1 (fallback sem interface gráfica)
+# ---------------------------------------------------------------------------
+echo "==> Configurando auto-login getty tty1 (fallback)..."
 sudo mkdir -p /etc/systemd/system/getty@tty1.service.d
 printf '[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin robo --noclear %%I $TERM\n' \
   | sudo tee /etc/systemd/system/getty@tty1.service.d/override.conf > /dev/null
 sudo systemctl daemon-reload
-echo "    ok — robo fará login automático no próximo boot."
+echo "    ok — getty tty1 também configurado."
 
 # ---------------------------------------------------------------------------
 # 2. Script wrapper para roscore (ativa PATH do conda antes do source)
