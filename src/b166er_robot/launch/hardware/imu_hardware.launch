@@ -1,0 +1,14 @@
+<launch>
+  <!-- Sparton AHRS-8 — porta fixada por udev em /dev/ttyAHRS -->
+  <arg name="port"         default="/dev/ttyAHRS"/>
+  <arg name="baud"         default="115200"/>
+  <arg name="frame_id"     default="ahrs8"/>
+  <arg name="polling_rate" default="10"/>
+
+  <include file="$(find sparton_ahrs8_driver)/launch/ahrs-8.launch">
+    <arg name="port"         value="$(arg port)"/>
+    <arg name="baud"         value="$(arg baud)"/>
+    <arg name="frame_id"     value="$(arg frame_id)"/>
+    <arg name="polling_rate" value="$(arg polling_rate)"/>
+  </include>
+</launch>

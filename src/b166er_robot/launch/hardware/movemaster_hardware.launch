@@ -1,0 +1,17 @@
+<launch>
+  <!-- Mitsubishi RV-M2 via Arduino (rosserial) -->
+  <!-- Porta fixada por udev em /dev/ttyArduino -->
+  <arg name="arduino_port" default="/dev/ttyArduino"/>
+  <arg name="baud"         default="115200"/>
+
+  <!-- Comunicação serial com o Arduino -->
+  <node name="rosserial_arduino" pkg="rosserial_python" type="serial_node.py"
+        output="screen">
+    <param name="port" value="$(arg arduino_port)"/>
+    <param name="baud" value="$(arg baud)"/>
+  </node>
+
+  <!-- Estado das juntas do braço (publica /joint_states do RV-M2) -->
+  <node name="movemaster_state_publisher" pkg="movemaster_control"
+        type="state_publisher" output="screen"/>
+</launch>

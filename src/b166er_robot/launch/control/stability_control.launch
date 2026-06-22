@@ -1,0 +1,10 @@
+<launch>
+  <!-- Controle de estabilidade — monitora CG durante movimento da base -->
+  <!-- Garante que o RV-M2 permaneça recolhido enquanto a base navega -->
+  <arg name="max_arm_extension" default="0.3"/>
+
+  <node name="stability_monitor" pkg="b166er_robot"
+        type="stability_monitor.py" output="screen">
+    <param name="max_arm_extension" value="$(arg max_arm_extension)"/>
+  </node>
+</launch>
