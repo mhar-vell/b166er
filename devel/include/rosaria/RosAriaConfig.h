@@ -1,1 +1,0 @@
-/home/marco/b166er/devel/.private/rosaria/include/rosaria/RosAriaConfig.h
