@@ -58,6 +58,12 @@ conda activate ros_env
 BASHRC
 fi
 
+# --- 6. Instala pacotes de hardware ---
+echo "==> Instalando ros-noetic-realsense2-camera (T265)..."
+"${MINIFORGE_DIR}/bin/mamba" install -n ros_env \
+  -c robostack-noetic \
+  ros-noetic-realsense2-camera -y
+
 echo ""
 echo "======================================"
 echo " ROS Noetic (RoboStack) configurado!"
