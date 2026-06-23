@@ -1,28 +1,20 @@
 <launch>
   <!-- Intel RealSense T265 Tracking Camera -->
-  <!-- Publica pose em /t265/odom/sample e TF camera_pose_frame -->
+  <!-- Delega ao launch oficial do realsense2_camera (nodelet) -->
+  <!-- Publica: /t265/odom/sample, /t265/accel/sample, /t265/gyro/sample -->
 
-  <arg name="camera"       default="t265"/>
-  <arg name="tf_prefix"    default=""/>
-  <arg name="publish_odom" default="true"/>
+  <arg name="camera"          default="t265"/>
+  <arg name="serial_no"       default=""/>
+  <arg name="publish_odom_tf" default="true"/>
 
-  <node name="t265" pkg="realsense2_camera" type="realsense2_camera_node"
-        output="screen">
-    <param name="serial_no"           value=""/>
-    <param name="camera"              value="$(arg camera)"/>
-    <param name="tf_prefix"           value="$(arg tf_prefix)"/>
-
-    <!-- T265: habilita tracking, desabilita streams de profundidade -->
-    <param name="enable_pose"         value="true"/>
-    <param name="enable_fisheye1"     value="false"/>
-    <param name="enable_fisheye2"     value="false"/>
-    <param name="enable_accel"        value="true"/>
-    <param name="enable_gyro"         value="true"/>
-
-    <!-- Frequência de publicação da pose -->
-    <param name="pose_fps"            value="200"/>
-
-    <!-- Publica odometria como nav_msgs/Odometry -->
-    <param name="publish_odom_tf"     value="$(arg publish_odom)"/>
-  </node>
+  <include file="$(find realsense2_camera)/launch/rs_t265.launch">
+    <arg name="camera"          value="$(arg camera)"/>
+    <arg name="serial_no"       value="$(arg serial_no)"/>
+    <arg name="enable_pose"     value="true"/>
+    <arg name="enable_accel"    value="true"/>
+    <arg name="enable_gyro"     value="true"/>
+    <arg name="enable_fisheye1" value="false"/>
+    <arg name="enable_fisheye2" value="false"/>
+    <arg name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
+  </include>
 </launch>
