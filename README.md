@@ -28,11 +28,29 @@ catkin build
 > **Note:** `src/Aria/` contains the original ARIA headers (macOS ARM64 binaries).
 > Always use `src/AriaCoda/` when building on Linux x86_64.
 
+## Machines
+
+| Machine | Shell | Role |
+|---|---|---|
+| **Shiroi** (laptop) | `zsh` | operação, RViz, desenvolvimento |
+| **NUC** (`b166er-nuc.local`) | `bash` | ROS master, hardware embarcado |
+
+Comandos na NUC são sempre `bash -c "..."`. Comandos no Shiroi usam `zsh`.
+
 ## Environment setup
 
 ```bash
-# on the laptop — points ROS at the NUC as master
-source ~/b166er/setup/ros_env.sh
+# Shiroi — aponta ROS para a NUC como master
+source ~/miniforge3/envs/ros_env/setup.zsh
+source ~/b166er/devel/setup.zsh
+export ROS_MASTER_URI=http://b166er-nuc.local:11311
+export ROS_HOSTNAME=shiroi.local
+
+# NUC (via SSH)
+source ~/miniforge3/envs/ros_env/setup.bash
+source ~/b166er/devel/setup.bash
+export ROS_MASTER_URI=http://localhost:11311
+export ROS_HOSTNAME=b166er-nuc.local
 ```
 
 ## NUC initial setup (one-time)
