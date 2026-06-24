@@ -1,0 +1,15 @@
+<launch>
+  <!-- Visualização cinemática unificada do b166er (sem física):
+       Pioneer 3-AT + braço RV-M2 + T265 + Hokuyo UST-05LX. -->
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  <!-- Permite mover manualmente J1-J5 do braço e a direção das rodas -->
+  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
+
+  <node name="rviz" pkg="rviz" type="rviz"
+        args="-d $(find b166er_robot)/config/b166er.rviz"/>
+</launch>

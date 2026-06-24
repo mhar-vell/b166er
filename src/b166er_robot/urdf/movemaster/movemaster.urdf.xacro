@@ -1,0 +1,219 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Mitsubishi RV-M2, xacro-izado a partir de src/movemaster_urdf.xml.
+       Mantém os mesmos nomes de junta (J1..J5, JGrip1/2) usados pelo
+       movemaster_state_publisher real, para que o mesmo /joint_states
+       sirva tanto a simulação quanto o hardware. -->
+  <xacro:macro name="movemaster_rv_m2" params="parent xyz:='0 0 0' rpy:='0 0 0'">
+
+    <joint name="movemaster_mount_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="Base"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <link name="Base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/Base.stl" scale="1 1 1.7"/>
+        </geometry>
+        <material name="BaseColor">
+          <color rgba="0.50 0.53 0.47 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="J1" type="revolute">
+      <axis xyz="0 0 1"/>
+      <origin xyz="0 0 0.400" rpy="0 0 0"/>
+      <parent link="Base"/>
+      <child link="L1"/>
+      <limit upper="6.28" lower="-6.28" effort="10" velocity="10" />
+    </joint>
+
+    <link name="L1">
+      <visual>
+        <origin xyz="0 0 -0.160" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/L1.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="L1Color">
+          <color rgba="0.15 0.2 0.8 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="J2" type="revolute">
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.120 0 0" rpy="1.57 0 0"/>
+      <parent link="L1"/>
+      <child link="L2"/>
+      <limit upper="6.28" lower="-6.28" effort="10" velocity="10" />
+    </joint>
+
+    <link name="L2">
+      <visual>
+        <origin xyz="0 0 0" rpy="-1.57 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/L2.stl"/>
+        </geometry>
+        <material name="L2Color">
+          <color rgba="0.86 0.86 0.86 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="J3" type="revolute">
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.250 0 0" rpy="0 0 0"/>
+      <parent link="L2"/>
+      <child link="L3"/>
+      <limit upper="6.28" lower="-6.28" effort="10" velocity="10" />
+    </joint>
+
+    <link name="L3">
+      <visual>
+        <origin xyz="0 0 0" rpy="-1.57 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/L3.stl"/>
+        </geometry>
+        <material name="L3Color">
+          <color rgba="0.86 0.86 0.86 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="J4" type="revolute">
+      <axis xyz="0 0 1"/>
+      <origin xyz="0.200 0 0" rpy="0 0 0"/>
+      <parent link="L3"/>
+      <child link="L4"/>
+      <limit upper="6.28" lower="-6.28" effort="10" velocity="10" />
+    </joint>
+
+    <link name="L4">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/L4.stl"/>
+        </geometry>
+        <material name="L4Color">
+          <color rgba="0.86 0.86 0.86 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="J5" type="revolute">
+      <axis xyz="0 0 1"/>
+      <origin xyz="0 0 0" rpy="0 -1.57 0"/>
+      <parent link="L4"/>
+      <child link="L5"/>
+      <limit upper="6.28" lower="-6.28" effort="10" velocity="10" />
+    </joint>
+
+    <link name="L5">
+      <visual>
+        <origin xyz="0 0 -0.08" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/L5.stl"/>
+        </geometry>
+        <material name="L5Color">
+          <color rgba="0.25 0.25 0.25 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="JCam" type="fixed">
+      <origin xyz="0 0 -0.080" rpy="0 0 0"/>
+      <parent link="L5"/>
+      <child link="CameraSupport"/>
+    </joint>
+
+    <link name="CameraSupport">
+      <visual>
+        <origin xyz="0.255 -0.18 0" rpy="0 3.14 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/suporte_movemaster_com_cameras.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="CameraSupportColor">
+          <color rgba="0.15 0.2 0.8 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="DepthCamera" type="fixed">
+      <origin xyz="0 0.075 -0.070" rpy="0 2.1 1.57"/>
+      <parent link="CameraSupport"/>
+      <child link="d400_link"/>
+    </joint>
+
+    <link name="d400_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/realsense.stl"/>
+        </geometry>
+        <material name="realsensecolor">
+          <color rgba="0.25 0.25 0.25 0"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="JGripCube" type="fixed">
+      <origin xyz="0 0 -0.005" rpy="0 0 0"/>
+      <parent link="CameraSupport"/>
+      <child link="GripCube"/>
+    </joint>
+
+    <link name="GripCube">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 1.57 0" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/GripCube.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="GripCubeColor">
+          <color rgba="0.25 0.25 0.25 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="JGrip1" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="GripCube"/>
+      <child link="Grip1"/>
+    </joint>
+
+    <joint name="JGrip2" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <parent link="GripCube"/>
+      <child link="Grip2"/>
+    </joint>
+
+    <link name="Grip1">
+      <visual>
+        <origin xyz="0.03 0 -0.08" rpy="0 1.57 -1.57" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/Grip1.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="L1Color">
+          <color rgba="0.15 0.2 0.8 1"/>
+        </material>
+      </visual>
+    </link>
+
+    <link name="Grip2">
+      <visual>
+        <origin xyz="-0.03 0 -0.08" rpy="0 1.57 -1.57" />
+        <geometry>
+          <mesh filename="package://movemaster_control/3D_Models/Grip2.stl" scale="0.001 0.001 0.001"/>
+        </geometry>
+        <material name="L1Color">
+          <color rgba="0.15 0.2 0.8 1"/>
+        </material>
+      </visual>
+    </link>
+
+  </xacro:macro>
+</robot>
