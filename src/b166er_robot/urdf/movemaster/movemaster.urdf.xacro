@@ -23,6 +23,13 @@
           <color rgba="0.50 0.53 0.47 1"/>
         </material>
       </visual>
+      <!-- Massa/inércia provisórias, só para o Gazebo não instabilizar.
+           Substituir pelos valores reais quando medidos no laboratório. -->
+      <inertial>
+        <mass value="2.0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/>
+      </inertial>
     </link>
 
     <joint name="J1" type="revolute">
@@ -43,6 +50,11 @@
           <color rgba="0.15 0.2 0.8 1"/>
         </material>
       </visual>
+      <inertial>
+        <mass value="1.5"/>
+        <origin xyz="0 0 -0.16" rpy="0 0 0"/>
+        <inertia ixx="0.015" ixy="0" ixz="0" iyy="0.015" iyz="0" izz="0.015"/>
+      </inertial>
     </link>
 
     <!-- Sparton AHRS-8 IMU — montada na face traseira de L1, primeiro elo
@@ -88,6 +100,11 @@
           <color rgba="0.86 0.86 0.86 1"/>
         </material>
       </visual>
+      <inertial>
+        <mass value="1.2"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.012" ixy="0" ixz="0" iyy="0.012" iyz="0" izz="0.012"/>
+      </inertial>
     </link>
 
     <joint name="J3" type="revolute">
@@ -108,6 +125,11 @@
           <color rgba="0.86 0.86 0.86 1"/>
         </material>
       </visual>
+      <inertial>
+        <mass value="1.0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+      </inertial>
     </link>
 
     <joint name="J4" type="revolute">
@@ -128,6 +150,11 @@
           <color rgba="0.86 0.86 0.86 1"/>
         </material>
       </visual>
+      <inertial>
+        <mass value="0.6"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.006" ixy="0" ixz="0" iyy="0.006" iyz="0" izz="0.006"/>
+      </inertial>
     </link>
 
     <joint name="J5" type="revolute">
@@ -148,6 +175,11 @@
           <color rgba="0.25 0.25 0.25 1"/>
         </material>
       </visual>
+      <inertial>
+        <mass value="0.4"/>
+        <origin xyz="0 0 -0.08" rpy="0 0 0"/>
+        <inertia ixx="0.004" ixy="0" ixz="0" iyy="0.004" iyz="0" izz="0.004"/>
+      </inertial>
     </link>
 
     <joint name="JCam" type="fixed">

@@ -1,0 +1,21 @@
+<launch>
+  <!-- Preview estético do b166er no Gazebo (sem controle, massas/inércias
+       provisórias) — só para confirmar que o modelo spawna corretamente.
+       Não serve para validar física real; trocar as inertials por valores
+       medidos antes de usar para controle/planejamento. -->
+
+  <param name="robot_description"
+         command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find b166er_robot)/worlds/empty.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+  </include>
+
+  <node name="spawn_b166er" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model b166er -param robot_description -z 0.05"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+</launch>
