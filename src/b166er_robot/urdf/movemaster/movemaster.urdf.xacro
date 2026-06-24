@@ -45,6 +45,31 @@
       </visual>
     </link>
 
+    <!-- Sparton AHRS-8 IMU — montada na face traseira de L1, primeiro elo
+         do braço logo após a torre giratória (confirmado por foto do robô real) -->
+    <joint name="imu_mount_joint" type="fixed">
+      <origin xyz="-0.05 0 -0.1" rpy="0 0 ${PI}"/>
+      <parent link="L1"/>
+      <child link="ahrs8_link"/>
+    </joint>
+
+    <link name="ahrs8_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="0.025 0.025 0.025"/>
+        </geometry>
+        <material name="imu_color">
+          <color rgba="1.0 1.0 0.0 1.0"/>
+        </material>
+      </visual>
+      <inertial>
+        <mass value="1e-5"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6"/>
+      </inertial>
+    </link>
+
     <joint name="J2" type="revolute">
       <axis xyz="0 0 1"/>
       <origin xyz="0.120 0 0" rpy="1.57 0 0"/>
