@@ -143,20 +143,21 @@
       </visual>
     </link>
 
-    <joint name="DepthCamera" type="fixed">
+    <!-- T265 montada no end-effector, mesma região do gripper (confirmado por foto do robô real) -->
+    <joint name="t265_mount_joint" type="fixed">
       <origin xyz="0 0.075 -0.070" rpy="0 2.1 1.57"/>
       <parent link="CameraSupport"/>
-      <child link="d400_link"/>
+      <child link="t265_link"/>
     </joint>
 
-    <link name="d400_link">
+    <link name="t265_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
           <mesh filename="package://movemaster_control/3D_Models/realsense.stl"/>
         </geometry>
-        <material name="realsensecolor">
-          <color rgba="0.25 0.25 0.25 0"/>
+        <material name="t265_color">
+          <color rgba="0.1 0.1 0.1 1.0"/>
         </material>
       </visual>
     </link>

@@ -2,34 +2,17 @@
 <robot name="b166er" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <!-- Modelo unificado do b166er: base Pioneer 3-AT (com sonares e rodas
-       reais) + braço Mitsubishi RV-M2 + câmera T265 + laser Hokuyo
-       UST-05LX. Reaproveita os dois modelos já existentes com malhas
-       reais em vez de recriar geometria do zero. -->
+       reais) + braço Mitsubishi RV-M2 (com a T265 montada no end-effector,
+       na região do gripper) + laser Hokuyo UST-05LX na base superior do
+       Pioneer. Reaproveita os dois modelos já existentes com malhas reais
+       em vez de recriar geometria do zero. -->
 
   <xacro:include filename="$(find b166er_robot)/urdf/pioneer3at/pioneer3at-m.urdf.xacro"/>
   <xacro:include filename="$(find b166er_robot)/urdf/movemaster/movemaster.urdf.xacro"/>
 
-  <!-- Braço montado sobre o top_plate do Pioneer -->
+  <!-- Braço montado sobre o top_plate do Pioneer (a T265 vem junto, montada
+       no end-effector do braço — ver t265_mount_joint em movemaster.urdf.xacro) -->
   <xacro:movemaster_rv_m2 parent="top_plate" xyz="0.05 0 0.02" rpy="0 0 0"/>
-
-  <!-- Intel RealSense T265 — sensor de pose visual-inercial (Pilar 1: navegação) -->
-  <joint name="t265_mount_joint" type="fixed">
-    <parent link="top_plate"/>
-    <child link="t265_link"/>
-    <origin xyz="0.26 0 0.05" rpy="0 0 0"/>
-  </joint>
-
-  <link name="t265_link">
-    <visual>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://movemaster_control/3D_Models/realsense.stl"/>
-      </geometry>
-      <material name="t265_color">
-        <color rgba="0.1 0.1 0.1 1.0"/>
-      </material>
-    </visual>
-  </link>
 
   <!-- Hokuyo UST-05LX (Smart URG) — FOV 270°, alcance 0.06-5.0 m,
        resolução angular 0.25° (1081 amostras). Reaproveita o macro
