@@ -370,82 +370,6 @@
   </xacro:macro>
 
 
-  <xacro:macro name="custom_camera" params="name color x y z roll pitch yaw h_fov width height near far">
-    <joint name="camera_${name}_joint" type="fixed">
-      <axis xyz = "1 0 0"/>
-      <origin xyz="${x} ${y} ${z}" rpy="${roll} ${pitch} ${yaw}"/>
-      <parent link="top_plate"/>
-      <child link="camera_${name}_link"/>
-    </joint>
-
-    <link name="camera_${name}_link">
-        <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <box size="0.025 0.025 0.025"/>
-          </geometry>
-        </collision>
-
-        <visual>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <geometry>
-            <box size="0.025 0.025 0.025"/>
-          </geometry>
-          <material name="red"/>
-        </visual>
-
-        <inertial>
-          <mass value="1e-5" />
-          <origin xyz="0 0 0" rpy="0 0 0"/>
-          <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
-        </inertial>
-    </link>
-
-    <gazebo reference="camera_${name}_link">
-      <material value="Gazebo/${color}"/>
-      <sensor type="camera" name="camera_${name}">
-        <update_rate>30.0</update_rate>
-        <camera name="camera_${name}">
-          <pose> 0.025 0 0 0 0 0</pose>
-          <horizontal_fov>${h_fov}</horizontal_fov>
-          <image>
-            <width>${width}</width>
-            <height>${height}</height>
-            <format>R8G8B8</format>
-          </image>
-          <clip>
-            <near>${near}</near>
-            <far>${far}</far>
-          </clip>
-          <noise>
-            <type>gaussian</type>
-            <!-- Noise is sampled independently per pixel on each frame.
-                 That pixel's noise value is added to each of its color
-                 channels, which at that point lie in the range [0,1]. -->
-            <mean>0.0</mean>
-            <stddev>0.007</stddev>
-          </noise>
-        </camera>
-        <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
-          <alwaysOn>true</alwaysOn>
-          <updateRate>0.0</updateRate>
-          <cameraName>/${robot_name}/camera_${name}</cameraName>
-          <imageTopicName>image_raw</imageTopicName>
-          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-          <frameName>camera_${name}_link</frameName>
-          <hackBaseline>0.07</hackBaseline>
-          <distortionK1>0.0</distortionK1>
-          <distortionK2>0.0</distortionK2>
-          <distortionK3>0.0</distortionK3>
-          <distortionT1>0.0</distortionT1>
-          <distortionT2>0.0</distortionT2>
-        </plugin>
-      </sensor>
-    </gazebo>
-
-  </xacro:macro>
-
-
   <xacro:macro name="custom_laser" params="name color x y z roll pitch yaw samples resolution min_angle max_angle min_range max_range range_resolution">
     <joint name="laser_${name}_joint" type="fixed">
       <axis xyz = "1 0 0"/>
@@ -554,18 +478,6 @@
     </gazebo>
   </xacro:macro>
 
-
-  <!-- RGB cameras -->
-  <xacro:custom_camera name="one" color="Red" x="0.24" y="0" z="0.04" roll="0" pitch="0.0" yaw="0" h_fov="1.3962634" width="800" height="800" near="0.02" far="100"/>
-  <xacro:custom_camera name="two" color="Blue" x="0.22" y="0.09" z="0.015" roll="0.2" pitch="0.1" yaw="-0.1" h_fov="1.3962634" width="800" height="800" near="0.02" far="100"/>
-  <xacro:custom_camera name="three" color="Yellow" x="0.22" y="-0.1" z="0.015" roll="-0.2" pitch="0.1" yaw="0.2" h_fov="1.3962634" width="800" height="800" near="0.02" far="100"/>
-
-  <!-- 'RGB' downward sensor -->
-  <xacro:custom_camera name="down" color="White" x="0.0" y="0.0" z="-0.17" roll="0.0" pitch="1.57" yaw="0.0" h_fov="1.0" width="100" height="100" near="0.01" far="1.0"/>
-
-  <!-- laser sensors -->
-  <xacro:custom_laser name="one" color="White" x="0.24" y="0" z="0.014" roll="0" pitch="0" yaw="0" samples="3" resolution="1" min_angle="${-PI/100}" max_angle="${PI/100}" min_range="0.10" max_range="5.0" range_resolution="0.01"/>
-  <xacro:custom_laser name="two" color="White" x="-0.22" y="0" z="0.014" roll="0" pitch="0" yaw="${PI}" samples="3" resolution="1" min_angle="${-PI/100}" max_angle="${PI/100}" min_range="0.10" max_range="5.0" range_resolution="0.01"/>
 
   <!-- skid steer controller -->
   <xacro:p3at_drive_side side="left" reflect="1"/>
