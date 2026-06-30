@@ -38,8 +38,8 @@ class StateEstimator:
     def __init__(self):
         rospy.init_node('state_estimator')
 
-        self._t265_topic    = rospy.get_param('~t265_odom_topic',    '/camera/odom/sample')
-        self._pioneer_topic = rospy.get_param('~pioneer_odom_topic', '/RosAria/pose')
+        self._t265_topic    = rospy.get_param('~t265_odom_topic',    '/t265/odom/sample')
+        self._pioneer_topic = rospy.get_param('~pioneer_odom_topic', '/pioneer/pose')
         self._world_frame   = rospy.get_param('~world_frame',        'odom')
         self._pub_rate      = rospy.get_param('~rate', 20.0)
 
