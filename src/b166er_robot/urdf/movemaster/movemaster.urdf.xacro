@@ -60,10 +60,11 @@
       </inertial>
     </link>
 
-    <!-- Sparton AHRS-8 IMU — montada na face traseira de L1, primeiro elo
-         do braço logo após a torre giratória (confirmado por foto do robô real) -->
+    <!-- Sparton AHRS-8 — face traseira de L1 (bunda do manipulador, eixo 2),
+         confirmado por foto do robô real. Offset: 5 cm atrás do eixo J1,
+         10 cm abaixo; orientado 180° em yaw (face para trás do braço). -->
     <joint name="imu_mount_joint" type="fixed">
-      <origin xyz="-0.05 0 -0.1" rpy="0 0 ${PI}"/>
+      <origin xyz="-0.05 0 0.02" rpy="0 0 ${PI}"/>
       <parent link="L1"/>
       <child link="ahrs8_link"/>
     </joint>

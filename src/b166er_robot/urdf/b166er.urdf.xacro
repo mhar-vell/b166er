@@ -10,18 +10,18 @@
   <xacro:include filename="$(find b166er_robot)/urdf/pioneer3at/pioneer3at-m.urdf.xacro"/>
   <xacro:include filename="$(find b166er_robot)/urdf/movemaster/movemaster.urdf.xacro"/>
 
-  <!-- Braço montado sobre o top_plate do Pioneer (a T265 vem junto, montada
-       no end-effector do braço — ver t265_mount_joint em movemaster.urdf.xacro) -->
-  <xacro:movemaster_rv_m2 parent="top_plate" xyz="0.05 0 0.02" rpy="0 0 0"/>
+  <!-- Braço montado sobre o top_plate do Pioneer, centralizado no meio dos
+       eixos da plataforma original (x≈0 no base_link, z=0.02 de folga de
+       montagem). A T265 vem junto, no end-effector — ver movemaster.urdf.xacro. -->
+  <xacro:movemaster_rv_m2 parent="top_plate" xyz="0 0 0.02" rpy="0 0 0"/>
 
-  <!-- Hokuyo UST-05LX (Smart URG) — FOV 270°, alcance 0.06-5.0 m,
-       resolução angular 0.25° (1081 amostras). Reaproveita o macro
-       custom_laser já existente no xacro do Pioneer (placeholder visual
-       em caixa, sem malha própria do sensor). -->
+  <!-- Hokuyo UST-05LX — centralizado (y=0), 2.5 cm da frente da plataforma
+       em direção ao centro. FOV 270°, alcance 0.06-5.0 m, 0.25°/amostra. -->
   <xacro:custom_laser name="hokuyo" color="Black"
-                      x="0.24" y="0" z="0.05" roll="0" pitch="0" yaw="0"
+                      x="0.215" y="0" z="0.025" roll="0" pitch="0" yaw="0"
                       samples="1081" resolution="1"
                       min_angle="${-3*PI/4}" max_angle="${3*PI/4}"
                       min_range="0.06" max_range="5.0" range_resolution="0.001"/>
+
 
 </robot>
