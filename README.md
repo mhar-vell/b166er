@@ -9,6 +9,8 @@ Pioneer 3-AT base + Mitsubishi RV-M2 arm, controlled via ROS Noetic (RoboStack) 
 | Pioneer 3-AT base | USB-serial | `/dev/ttyPioneer` |
 | Mitsubishi RV-M2 | Arduino via rosserial | `/dev/ttyArduino` |
 | Sparton AHRS-8 IMU | USB-serial | `/dev/ttyAHRS` |
+| Intel RealSense T265 | USB | câmera `t265` |
+| Hokuyo UST-05LX (Smart URG) | Ethernet | IP a definir |
 | Intel NUC 5i5RYH | ROS master | `b166er-nuc.local` |
 
 ## Build

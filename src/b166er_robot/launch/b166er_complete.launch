@@ -12,10 +12,9 @@
     <include file="$(find b166er_robot)/launch/hardware/movemaster_hardware.launch" if="$(arg enable_arm)"/>
   </group>
 
-  <!-- Simulation setup -->
+  <!-- Simulation setup (visualização cinemática unificada: base + braço + sensores) -->
   <group if="$(arg use_simulation)">
-    <include file="$(find b166er_robot)/launch/simulation/pioneer_rviz.launch"/>
-    <include file="$(find b166er_robot)/launch/simulation/movemaster_simulation.launch" if="$(arg enable_arm)"/>
+    <include file="$(find b166er_robot)/launch/simulation/b166er_rviz.launch"/>
   </group>
 
   <!-- Control systems -->

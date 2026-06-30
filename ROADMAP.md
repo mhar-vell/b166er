@@ -43,7 +43,8 @@ do RV-M2 para atingir alvo visual sem encoders.
 |---|---|
 | NUC: auto-login GDM + roscore systemd | ✅ |
 | Sparton AHRS-8 IMU: driver + launch | ⬜ |
-| URDF unificado (Pioneer + RV-M2 + T265 + IMU) | ⬜ |
+| URDF unificado (Pioneer + RV-M2 + T265 + Hokuyo + IMU) | ✅ |
+| Hokuyo UST-05LX: IP fixo na rede Ethernet | ⬜ |
 | E-Stop físico (relé) + watchdog ROS | ⬜ |
 
 ---

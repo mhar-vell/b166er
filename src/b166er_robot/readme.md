@@ -17,12 +17,12 @@ Complete robot package for the B166ER mobile manipulator system.
 ## Quick Start
 
 ```bash
-# Complete system (simulation)
+# Simulação cinemática unificada (base + braço + T265 + Hokuyo), sem física
+roslaunch b166er_robot b166er_rviz.launch
+
+# Sistema completo via launch guarda-chuva (simulação por padrão)
 roslaunch b166er_robot b166er_complete.launch
 
 # Hardware only
 roslaunch b166er_robot b166er_complete.launch use_hardware:=true use_simulation:=false
-
-# Simulation without arm
-roslaunch b166er_robot b166er_complete.launch enable_arm:=false
 ```
