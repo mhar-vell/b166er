@@ -1,0 +1,20 @@
+<launch>
+  <!-- state_estimator: funde T265 + odometria do Pioneer para estimar
+       o estado completo do b166er (q_base + q_arm) sem encoders. -->
+
+  <node name="state_estimator" pkg="b166er_whole_body_control"
+        type="state_estimator.py" output="screen">
+
+    <!-- Tópico de odometria da T265 (Intel RealSense) -->
+    <param name="t265_odom_topic"    value="/camera/odom/sample"/>
+
+    <!-- Tópico de odometria do Pioneer (RosAria) -->
+    <param name="pioneer_odom_topic" value="/RosAria/pose"/>
+
+    <!-- Frame de referência global -->
+    <param name="world_frame"        value="odom"/>
+
+    <!-- Taxa de publicação do RobotState (Hz) -->
+    <param name="rate"               value="20.0"/>
+  </node>
+</launch>
