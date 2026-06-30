@@ -36,5 +36,6 @@ catkin_package(
 catkin_install_python(PROGRAMS
   nodes/state_estimator.py
   nodes/whole_body_planner.py
+  nodes/fuzzy_wb_controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
