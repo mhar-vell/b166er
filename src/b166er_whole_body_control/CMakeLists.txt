@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
 )
 
+catkin_python_setup()
+
 add_message_files(
   FILES
   RobotState.msg
@@ -40,5 +42,6 @@ catkin_install_python(PROGRAMS
   nodes/arm_vel_integrator.py
   nodes/gazebo_sensor_sim.py
   nodes/gazebo_arm_bridge.py
+  nodes/arm_controller_loader.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

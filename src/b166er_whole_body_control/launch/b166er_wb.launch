@@ -93,22 +93,22 @@
   <!-- ── Modo GAZEBO ─────────────────────────────────────────────── -->
   <group if="$(eval arg('mode') == 'gazebo')">
 
-    <!-- Gazebo com o b166er completo -->
+    <!-- Gazebo com o b166er completo (headless; robot_state_pub já sobe acima) -->
     <include
-      file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch"/>
+      file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch">
+      <arg name="gui"             value="false"/>
+      <arg name="robot_state_pub" value="false"/>
+    </include>
 
     <!-- Controladores ros_control das juntas do braço -->
     <rosparam file="$(find b166er_whole_body_control)/config/arm_controllers.yaml"
               command="load"/>
 
-    <node name="arm_controller_spawner"
-          pkg="controller_manager" type="spawner"
-          args="joint_state_controller
-                J1_velocity_controller
-                J2_velocity_controller
-                J3_velocity_controller
-                J4_velocity_controller
-                J5_velocity_controller"
+    <!-- arm_controller_loader usa rospy.init_node(disable_rostime=True)
+         para evitar o deadlock do spawner padrão aguardando /clock -->
+    <node name="arm_controller_loader"
+          pkg="b166er_whole_body_control"
+          type="arm_controller_loader.py"
           output="screen"/>
 
     <!-- Simula /t265/odom/sample e /pioneer/pose a partir do Gazebo -->

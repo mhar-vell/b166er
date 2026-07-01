@@ -4,18 +4,26 @@
        Não serve para validar física real; trocar as inertials por valores
        medidos antes de usar para controle/planejamento. -->
 
+  <!-- gui:=false para rodar headless (ex: chamado pelo b166er_wb.launch) -->
+  <arg name="gui"              default="true"/>
+  <!-- robot_state_pub:=false quando o launch pai já sobe o nó -->
+  <arg name="robot_state_pub" default="true"/>
+
   <param name="robot_description"
          command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
-    <arg name="world_name" value="$(find b166er_robot)/worlds/empty.world"/>
-    <arg name="paused" value="false"/>
+    <arg name="world_name"   value="$(find b166er_robot)/worlds/empty.world"/>
+    <arg name="paused"       value="false"/>
     <arg name="use_sim_time" value="true"/>
-    <arg name="gui" value="true"/>
+    <arg name="gui"          value="$(arg gui)"/>
   </include>
 
   <node name="spawn_b166er" pkg="gazebo_ros" type="spawn_model"
         args="-urdf -model b166er -param robot_description -z 0.05"/>
 
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+  <node if="$(arg robot_state_pub)"
+        name="robot_state_publisher"
+        pkg="robot_state_publisher"
+        type="robot_state_publisher"/>
 </launch>

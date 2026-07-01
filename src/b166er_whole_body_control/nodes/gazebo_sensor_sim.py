@@ -5,7 +5,7 @@ gazebo_sensor_sim — ponte de sensores para validação no Gazebo.
 Substitui hardware real por dados sintéticos derivados do simulador:
 
   • /joint_states (Gazebo) → FK do braço → /t265/odom/sample (Odometry)
-  • /odom (Pioneer diff-drive) → /pioneer/pose (Odometry)
+  • /gazebo/model_states[b166er] → /pioneer/pose (Odometry)
 
 Permite rodar o stack completo (state_estimator + fuzzy_wb_controller)
 sem modificar nenhum nó de controle: apenas os tópicos de fonte mudam.
@@ -19,6 +19,7 @@ import numpy as np
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Quaternion
+from gazebo_msgs.msg import ModelStates
 from tf.transformations import quaternion_from_matrix
 
 from b166er_whole_body_control.kinematics import (
@@ -59,19 +60,35 @@ class GazeboSensorSim:
         # Subscritores
         rospy.Subscriber('/joint_states', JointState,
                          self._cb_joints, queue_size=5)
-        rospy.Subscriber('/odom', Odometry,
-                         self._cb_odom, queue_size=5)
+        rospy.Subscriber('/gazebo/model_states', ModelStates,
+                         self._cb_model_states, queue_size=5)
 
-        # Estado da base (do diff-drive) para montar T_world_base
+        # Estado da base (do Gazebo) para montar T_world_base
         self._base_odom = None
+        self._model_name = 'b166er'
 
         rospy.loginfo('[gazebo_sensor_sim] pronto')
 
     # ------------------------------------------------------------------
-    def _cb_odom(self, msg):
-        """Republica /odom como /pioneer/pose (sem alteração)."""
-        self._base_odom = msg
-        self._pub_pioneer.publish(msg)
+    def _cb_model_states(self, msg):
+        """Extrai pose do modelo b166er de /gazebo/model_states → /pioneer/pose."""
+        try:
+            idx = msg.name.index(self._model_name)
+        except ValueError:
+            return   # modelo ainda não spawnou
+
+        pose  = msg.pose[idx]
+        twist = msg.twist[idx]
+
+        odom = Odometry()
+        odom.header.stamp    = rospy.Time.now()
+        odom.header.frame_id = self._world_frame
+        odom.child_frame_id  = 'base_link'
+        odom.pose.pose       = pose
+        odom.twist.twist     = twist
+
+        self._base_odom = odom
+        self._pub_pioneer.publish(odom)
 
     def _cb_joints(self, msg):
         """Computa FK do braço e publica pose do T265 como Odometry."""
