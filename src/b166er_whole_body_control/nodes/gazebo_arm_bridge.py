@@ -45,16 +45,27 @@ class GazeboArmBridge:
 
     # ------------------------------------------------------------------
     def _cb_joint_states(self, msg):
+        name_to_pos = dict(zip(msg.name, msg.position))
+        if not all(n in name_to_pos for n in JOINT_NAMES):
+            return
+        q_actual = np.array([name_to_pos[n] for n in JOINT_NAMES])
+
         if self._q_arm is None:
-            name_to_pos = dict(zip(msg.name, msg.position))
-            if all(n in name_to_pos for n in JOINT_NAMES):
-                self._q_arm = np.array([name_to_pos[n] for n in JOINT_NAMES])
-                rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
-                              np.round(self._q_arm, 3))
+            self._q_arm = q_actual.copy()
+            rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
+                          np.round(self._q_arm, 3))
+            return
+
+        # Sem comando ativo: rastreia posição real para não lutar contra
+        # deriva gravitacional ou posição inicial do Gazebo
+        age = (rospy.Time.now() - self._t_last_cmd).to_sec() \
+              if self._t_last_cmd is not None else _VEL_TIMEOUT + 1.0
+        if age >= _VEL_TIMEOUT:
+            self._q_arm = q_actual.copy()
 
     def _cb_vel_cmd(self, msg):
         if len(msg.velocity) == 5:
-            self._dq_cmd    = np.array(msg.velocity, dtype=float)
+            self._dq_cmd     = np.array(msg.velocity, dtype=float)
             self._t_last_cmd = rospy.Time.now()
 
     # ------------------------------------------------------------------
