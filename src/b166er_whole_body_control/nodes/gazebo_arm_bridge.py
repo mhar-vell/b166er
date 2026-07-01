@@ -18,10 +18,6 @@ from b166er_whole_body_control.kinematics import JOINT_NAMES, JOINT_LOWER, JOINT
 
 _VEL_TIMEOUT = 0.5   # s sem comando → zera velocidade
 
-# Pose inicial não-singular: em q=0 os eixos de J2/J3/J4 são paralelos → singularidade.
-# HOME_Q quebra essa degenerescência para que o IK do state_estimator convirja.
-HOME_Q = np.array([0.0, -0.5, 0.8, 0.0, 0.0])
-
 
 class GazeboArmBridge:
 
@@ -53,16 +49,9 @@ class GazeboArmBridge:
             return   # warm-start one-shot
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
-            q_actual = np.array([name_to_pos[n] for n in JOINT_NAMES])
-            # q=0 é configuração singular (J2/J3/J4 coaxiais) → usa HOME_Q
-            if np.linalg.norm(q_actual) < 0.05:
-                self._q_arm = HOME_Q.copy()
-                rospy.loginfo('[gazebo_arm_bridge] braço em q≈0 (singular) → home=%s rad',
-                              np.round(self._q_arm, 3))
-            else:
-                self._q_arm = q_actual
-                rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
-                              np.round(self._q_arm, 3))
+            self._q_arm = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
+                          np.round(self._q_arm, 3))
 
     def _cb_vel_cmd(self, msg):
         if len(msg.velocity) == 5:
