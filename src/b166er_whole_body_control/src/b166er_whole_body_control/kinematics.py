@@ -20,10 +20,10 @@ JOINT_LOWER   = np.array([-2.61799, -1.13446, -1.04720, -1.91986, -3.14159])
 JOINT_UPPER   = np.array([ 2.61799,  1.13446,  1.04720,  1.91986,  3.14159])
 
 # IK
-IK_MAX_ITER   = 200
-IK_TOL_POS    = 1e-4   # m
-IK_TOL_ORIENT = 1e-3   # rad
-IK_LAMBDA     = 0.05
+IK_MAX_ITER   = 300
+IK_TOL_POS    = 3e-3   # m  — 3 mm suficiente para estimação de estado
+IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
+IK_LAMBDA     = 0.02
 IK_DQ_STEP    = 1e-6
 
 

@@ -40,7 +40,8 @@
       <parent link="Base"/>
       <child link="L1"/>
       <!-- Cintura (waist): 300° de curso total no manual, assumido ±150° -->
-      <limit upper="2.61799" lower="-2.61799" effort="10" velocity="10" />
+      <limit upper="2.61799" lower="-2.61799" effort="30" velocity="3.14" />
+      <dynamics damping="0.5" friction="0.0"/>
     </joint>
 
     <link name="L1">
@@ -92,7 +93,8 @@
       <parent link="L1"/>
       <child link="L2"/>
       <!-- Ombro (shoulder): 130° de curso total no manual, assumido ±65° -->
-      <limit upper="1.13446" lower="-1.13446" effort="10" velocity="10" />
+      <limit upper="1.13446" lower="-1.13446" effort="80" velocity="2.09" />
+      <dynamics damping="1.0" friction="0.0"/>
     </joint>
 
     <link name="L2">
@@ -118,7 +120,8 @@
       <parent link="L2"/>
       <child link="L3"/>
       <!-- Cotovelo (elbow): 120° de curso total no manual, assumido ±60° -->
-      <limit upper="1.04720" lower="-1.04720" effort="10" velocity="10" />
+      <limit upper="1.04720" lower="-1.04720" effort="50" velocity="2.09" />
+      <dynamics damping="0.5" friction="0.0"/>
     </joint>
 
     <link name="L3">
@@ -144,7 +147,8 @@
       <parent link="L3"/>
       <child link="L4"/>
       <!-- Punho pitch (wrist pitch): ±110° no manual -->
-      <limit upper="1.91986" lower="-1.91986" effort="10" velocity="10" />
+      <limit upper="1.91986" lower="-1.91986" effort="20" velocity="3.14" />
+      <dynamics damping="0.3" friction="0.0"/>
     </joint>
 
     <link name="L4">
@@ -170,7 +174,8 @@
       <parent link="L4"/>
       <child link="L5"/>
       <!-- Punho roll (wrist roll): ±180° no manual -->
-      <limit upper="3.14159" lower="-3.14159" effort="10" velocity="10" />
+      <limit upper="3.14159" lower="-3.14159" effort="10" velocity="6.28" />
+      <dynamics damping="0.1" friction="0.0"/>
     </joint>
 
     <link name="L5">
@@ -280,6 +285,36 @@
         </material>
       </visual>
     </link>
+
+    <!-- ── Transmissões para ros_control (Gazebo) ───────────────────── -->
+    <!-- VelocityJointInterface: controladores de velocidade para cada junta -->
+
+    <xacro:macro name="arm_transmission" params="joint_name">
+      <transmission name="${joint_name}_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="${joint_name}">
+          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="${joint_name}_motor">
+          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+    </xacro:macro>
+
+    <xacro:arm_transmission joint_name="J1"/>
+    <xacro:arm_transmission joint_name="J2"/>
+    <xacro:arm_transmission joint_name="J3"/>
+    <xacro:arm_transmission joint_name="J4"/>
+    <xacro:arm_transmission joint_name="J5"/>
+
+    <!-- Plugin gazebo_ros_control para ativar as transmissões acima -->
+    <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        <robotNamespace>/</robotNamespace>
+        <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      </plugin>
+    </gazebo>
 
   </xacro:macro>
 </robot>

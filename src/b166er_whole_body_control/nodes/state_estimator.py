@@ -12,6 +12,7 @@ can reason about the full 8-DOF chain (3 base + 5 arm) as a single entity.
 
 import rospy
 import numpy as np
+from collections import deque
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
@@ -22,6 +23,9 @@ from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, T_BASELINK_ARM,
     ik_arm,
 )
+
+# Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
+_HOME_Q = np.array([0.0, -0.5, 0.8, 0.0, 0.0])
 
 
 def _odom_to_matrix(odom):
@@ -45,10 +49,15 @@ class StateEstimator:
 
         self._base_odom  = None
         self._t265_odom  = None
-        self._q_arm      = np.zeros(5)
-        self._q_arm_prev = np.zeros(5)
+        self._q_arm      = _HOME_Q.copy()   # evita singularidade q=0 no primeiro ciclo
+        self._q_arm_prev = _HOME_Q.copy()
         self._dq_arm     = np.zeros(5)
         self._t_prev     = None
+        self._q_joints     = None    # ground truth mais recente (None em hardware)
+        # Buffer (stamp_secs, q) para sincronizar seed do IK com o stamp do T265.
+        # sensor_sim publica T265 com stamp = stamp do /joint_states que gerou o FK,
+        # então o q com stamp mais próximo é exatamente a solução → IK converge em 0 iter.
+        self._q_joints_buf = deque(maxlen=50)
 
         self._pub_state  = rospy.Publisher('/b166er/robot_state',
                                            RobotState, queue_size=5)
@@ -57,6 +66,9 @@ class StateEstimator:
 
         rospy.Subscriber(self._pioneer_topic, Odometry, self._cb_pioneer)
         rospy.Subscriber(self._t265_topic,    Odometry, self._cb_t265)
+        # Em Gazebo: usa joint_states reais como seed do IK → converge em 0 iterações.
+        # Em hardware (sem encoders): tópico não existe, self._q_joints permanece None.
+        rospy.Subscriber('/joint_states', JointState, self._cb_joint_states, queue_size=1)
 
         rospy.loginfo('[state_estimator] pronto')
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)
@@ -64,6 +76,13 @@ class StateEstimator:
 
     def _cb_pioneer(self, msg): self._base_odom = msg
     def _cb_t265(self, msg):    self._t265_odom = msg
+
+    def _cb_joint_states(self, msg):
+        name_to_pos = dict(zip(msg.name, msg.position))
+        if all(n in name_to_pos for n in JOINT_NAMES):
+            q = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            self._q_joints = q
+            self._q_joints_buf.append((msg.header.stamp.to_sec(), q))
 
     def _compute_T_target(self):
         """
@@ -114,7 +133,20 @@ class StateEstimator:
                 continue
 
             T_target = self._compute_T_target()
-            q, conv, res_p, res_o = ik_arm(T_target, q_init=self._q_arm)
+
+            # Seed sincronizado com o stamp do T265: o sensor_sim publica T265
+            # com stamp = stamp do /joint_states que usou para o FK, portanto o q
+            # com timestamp mais próximo é exatamente a solução → IK converge em 0 iter.
+            if self._q_joints_buf:
+                t265_t = self._t265_odom.header.stamp.to_sec()
+                q_seed = min(self._q_joints_buf,
+                             key=lambda x: abs(x[0] - t265_t))[1]
+            elif self._q_joints is not None:
+                q_seed = self._q_joints
+            else:
+                q_seed = self._q_arm   # hardware mode: sem ground truth
+
+            q, conv, res_p, res_o = ik_arm(T_target, q_init=q_seed)
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
             if dt and dt > 0:

@@ -1,0 +1,38 @@
+# Controladores das juntas do RV-M2 no Gazebo
+# Carregados pelo b166er_wb.launch em mode:=gazebo
+
+# Publica /joint_states com as juntas do braço (J1..J5)
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+# Controladores de posição — recebem Float64 em rad
+J1_position_controller:
+  type: position_controllers/JointPositionController
+  joint: J1
+
+J2_position_controller:
+  type: position_controllers/JointPositionController
+  joint: J2
+
+J3_position_controller:
+  type: position_controllers/JointPositionController
+  joint: J3
+
+J4_position_controller:
+  type: position_controllers/JointPositionController
+  joint: J4
+
+J5_position_controller:
+  type: position_controllers/JointPositionController
+  joint: J5
+
+# Ganhos PID do DefaultRobotHWSim (PositionJointInterface)
+# Sem estes, gazebo_ros_control rejeita os controladores de posição
+gazebo_ros_control:
+  pid_gains:
+    J1: {p: 100.0, i: 0.0, d: 10.0}
+    J2: {p: 300.0, i: 0.0, d: 30.0}
+    J3: {p: 200.0, i: 0.0, d: 20.0}
+    J4: {p: 100.0, i: 0.0, d: 10.0}
+    J5: {p:  50.0, i: 0.0, d:  5.0}
