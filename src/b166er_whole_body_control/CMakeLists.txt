@@ -43,5 +43,6 @@ catkin_install_python(PROGRAMS
   nodes/gazebo_sensor_sim.py
   nodes/gazebo_arm_bridge.py
   nodes/arm_controller_loader.py
+  nodes/kill_gui_zombie.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

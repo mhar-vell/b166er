@@ -97,8 +97,9 @@
 
     <!-- Mata joint_state_publisher_gui de sessões anteriores para não
          contaminar /joint_states com valores errados (warm-start / IK) -->
-    <node name="kill_gui_zombie" pkg="rosnode" type="rosnode"
-          args="kill /joint_state_publisher_gui"
+    <node name="kill_gui_zombie"
+          pkg="b166er_whole_body_control"
+          type="kill_gui_zombie.py"
           output="screen"/>
 
     <!-- Gazebo com o b166er completo (headless; robot_state_pub já sobe acima) -->
