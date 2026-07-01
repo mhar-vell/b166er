@@ -23,6 +23,9 @@ from b166er_whole_body_control.kinematics import (
     ik_arm,
 )
 
+# Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
+_HOME_Q = np.array([0.0, -0.5, 0.8, 0.0, 0.0])
+
 
 def _odom_to_matrix(odom):
     """nav_msgs/Odometry → 4×4 homogeneous transform."""
@@ -45,8 +48,8 @@ class StateEstimator:
 
         self._base_odom  = None
         self._t265_odom  = None
-        self._q_arm      = np.zeros(5)
-        self._q_arm_prev = np.zeros(5)
+        self._q_arm      = _HOME_Q.copy()   # evita singularidade q=0 no primeiro ciclo
+        self._q_arm_prev = _HOME_Q.copy()
         self._dq_arm     = np.zeros(5)
         self._t_prev     = None
 
