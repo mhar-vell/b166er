@@ -52,6 +52,7 @@ class StateEstimator:
         self._q_arm_prev = _HOME_Q.copy()
         self._dq_arm     = np.zeros(5)
         self._t_prev     = None
+        self._q_joints   = None   # ground truth do Gazebo (None em hardware)
 
         self._pub_state  = rospy.Publisher('/b166er/robot_state',
                                            RobotState, queue_size=5)
@@ -60,6 +61,9 @@ class StateEstimator:
 
         rospy.Subscriber(self._pioneer_topic, Odometry, self._cb_pioneer)
         rospy.Subscriber(self._t265_topic,    Odometry, self._cb_t265)
+        # Em Gazebo: usa joint_states reais como seed do IK → converge em 0 iterações.
+        # Em hardware (sem encoders): tópico não existe, self._q_joints permanece None.
+        rospy.Subscriber('/joint_states', JointState, self._cb_joint_states, queue_size=1)
 
         rospy.loginfo('[state_estimator] pronto')
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)
@@ -67,6 +71,11 @@ class StateEstimator:
 
     def _cb_pioneer(self, msg): self._base_odom = msg
     def _cb_t265(self, msg):    self._t265_odom = msg
+
+    def _cb_joint_states(self, msg):
+        name_to_pos = dict(zip(msg.name, msg.position))
+        if all(n in name_to_pos for n in JOINT_NAMES):
+            self._q_joints = np.array([name_to_pos[n] for n in JOINT_NAMES])
 
     def _compute_T_target(self):
         """
@@ -117,7 +126,10 @@ class StateEstimator:
                 continue
 
             T_target = self._compute_T_target()
-            q, conv, res_p, res_o = ik_arm(T_target, q_init=self._q_arm)
+            # Seed: joint states do Gazebo (se disponível) → converge em 0 iter;
+            # caso contrário usa estimativa anterior (hardware mode).
+            q_seed = self._q_joints if self._q_joints is not None else self._q_arm
+            q, conv, res_p, res_o = ik_arm(T_target, q_init=q_seed)
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
             if dt and dt > 0:
