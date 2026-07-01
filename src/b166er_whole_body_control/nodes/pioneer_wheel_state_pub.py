@@ -24,12 +24,18 @@ WHEEL_JOINTS = [
 def main():
     rospy.init_node('pioneer_wheel_state_pub')
     pub = rospy.Publisher('/joint_states', JointState, queue_size=1)
-    rate = rospy.Rate(20)
 
+    # Aguarda /clock não-zero para não inundar TF com stamp=0 antes do Gazebo iniciar.
+    # rospy.WallDuration.sleep() usa tempo real — seguro antes do /clock chegar.
+    rospy.loginfo('[pioneer_wheel_state_pub] aguardando /clock...')
+    while not rospy.is_shutdown() and rospy.Time.now().is_zero():
+        rospy.WallDuration(0.05).sleep()
+
+    rate = rospy.Rate(10)   # 10 Hz é suficiente para rodas estáticas
     while not rospy.is_shutdown():
         msg = JointState()
         msg.header.stamp = rospy.Time.now()
-        msg.name = WHEEL_JOINTS
+        msg.name     = WHEEL_JOINTS
         msg.position = [0.0] * len(WHEEL_JOINTS)
         pub.publish(msg)
         rate.sleep()

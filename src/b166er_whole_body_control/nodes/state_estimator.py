@@ -12,6 +12,7 @@ can reason about the full 8-DOF chain (3 base + 5 arm) as a single entity.
 
 import rospy
 import numpy as np
+from collections import deque
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
@@ -52,7 +53,11 @@ class StateEstimator:
         self._q_arm_prev = _HOME_Q.copy()
         self._dq_arm     = np.zeros(5)
         self._t_prev     = None
-        self._q_joints   = None   # ground truth do Gazebo (None em hardware)
+        self._q_joints     = None    # ground truth mais recente (None em hardware)
+        # Buffer (stamp_secs, q) para sincronizar seed do IK com o stamp do T265.
+        # sensor_sim publica T265 com stamp = stamp do /joint_states que gerou o FK,
+        # então o q com stamp mais próximo é exatamente a solução → IK converge em 0 iter.
+        self._q_joints_buf = deque(maxlen=50)
 
         self._pub_state  = rospy.Publisher('/b166er/robot_state',
                                            RobotState, queue_size=5)
@@ -75,7 +80,9 @@ class StateEstimator:
     def _cb_joint_states(self, msg):
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
-            self._q_joints = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            q = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            self._q_joints = q
+            self._q_joints_buf.append((msg.header.stamp.to_sec(), q))
 
     def _compute_T_target(self):
         """
@@ -126,9 +133,19 @@ class StateEstimator:
                 continue
 
             T_target = self._compute_T_target()
-            # Seed: joint states do Gazebo (se disponível) → converge em 0 iter;
-            # caso contrário usa estimativa anterior (hardware mode).
-            q_seed = self._q_joints if self._q_joints is not None else self._q_arm
+
+            # Seed sincronizado com o stamp do T265: o sensor_sim publica T265
+            # com stamp = stamp do /joint_states que usou para o FK, portanto o q
+            # com timestamp mais próximo é exatamente a solução → IK converge em 0 iter.
+            if self._q_joints_buf:
+                t265_t = self._t265_odom.header.stamp.to_sec()
+                q_seed = min(self._q_joints_buf,
+                             key=lambda x: abs(x[0] - t265_t))[1]
+            elif self._q_joints is not None:
+                q_seed = self._q_joints
+            else:
+                q_seed = self._q_arm   # hardware mode: sem ground truth
+
             q, conv, res_p, res_o = ik_arm(T_target, q_init=q_seed)
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
