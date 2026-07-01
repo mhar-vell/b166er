@@ -95,6 +95,12 @@
   <!-- ── Modo GAZEBO ─────────────────────────────────────────────── -->
   <group if="$(eval arg('mode') == 'gazebo')">
 
+    <!-- Mata joint_state_publisher_gui de sessões anteriores para não
+         contaminar /joint_states com valores errados (warm-start / IK) -->
+    <node name="kill_gui_zombie" pkg="rosnode" type="rosnode"
+          args="kill /joint_state_publisher_gui"
+          output="screen"/>
+
     <!-- Gazebo com o b166er completo (headless; robot_state_pub já sobe acima) -->
     <include
       file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch">
