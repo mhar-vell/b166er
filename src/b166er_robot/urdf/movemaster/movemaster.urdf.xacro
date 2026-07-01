@@ -281,5 +281,35 @@
       </visual>
     </link>
 
+    <!-- ── Transmissões para ros_control (Gazebo) ───────────────────── -->
+    <!-- VelocityJointInterface: controladores de velocidade para cada junta -->
+
+    <xacro:macro name="arm_transmission" params="joint_name">
+      <transmission name="${joint_name}_trans">
+        <type>transmission_interface/SimpleTransmission</type>
+        <joint name="${joint_name}">
+          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+        </joint>
+        <actuator name="${joint_name}_motor">
+          <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+          <mechanicalReduction>1</mechanicalReduction>
+        </actuator>
+      </transmission>
+    </xacro:macro>
+
+    <xacro:arm_transmission joint_name="J1"/>
+    <xacro:arm_transmission joint_name="J2"/>
+    <xacro:arm_transmission joint_name="J3"/>
+    <xacro:arm_transmission joint_name="J4"/>
+    <xacro:arm_transmission joint_name="J5"/>
+
+    <!-- Plugin gazebo_ros_control para ativar as transmissões acima -->
+    <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        <robotNamespace>/</robotNamespace>
+        <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+      </plugin>
+    </gazebo>
+
   </xacro:macro>
 </robot>

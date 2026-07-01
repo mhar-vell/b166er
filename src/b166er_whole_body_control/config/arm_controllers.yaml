@@ -1,0 +1,28 @@
+# Controladores de velocidade para as juntas do RV-M2 no Gazebo
+# Carregados pelo b166er_wb.launch em mode:=gazebo via rosparam + controller_manager
+
+# Publica /joint_states com as juntas do braço (J1..J5)
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+# Controladores de velocidade — recebem Float64 em rad/s
+J1_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J1
+
+J2_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J2
+
+J3_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J3
+
+J4_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J4
+
+J5_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J5

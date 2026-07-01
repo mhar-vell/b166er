@@ -1,43 +1,33 @@
 <launch>
   <!--
   ═══════════════════════════════════════════════════════════════════════
-  b166er Whole-Body Control — Launch Unificado (Fase 1)
+  b166er Whole-Body Control — Launch Unificado (Fase 2)
 
   Grafo de nós:
 
-    [t265_hardware]          [pioneer_hardware]    [movemaster_hardware]
-          |                        |                       |
-   /t265/odom/sample       /pioneer/pose          /joint_states (RV-M2)
-          |                        |                       |
-          └──────────┬─────────────┘                       |
-                     ▼                                     |
-             [state_estimator]                             |
-              (IK → q_arm_est)                             |
-                     |                                     |
-                     ▼                                     |
-              /b166er/robot_state                          |
-                     |                                     |
-  /b166er/ee_target ─┤                                     |
-                     ▼                                     |
-          [fuzzy_wb_controller]                            |
-             (Mamdani + J_wb)                              |
-            /          \                                   |
-       /cmd_vel    /b166er/arm_vel_cmd                     |
-           |              |                                |
-      [Pioneer]    [arm_vel_integrator]  (TODO: fase 2)    |
-                          |                                |
-                   /b166er/arm_pos_cmd ──────────────────► [movemaster]
+    [sensores]               [estado]             [atuadores]
+         |                     |                      |
+  /t265/odom/sample   /b166er/robot_state    /cmd_vel → Pioneer
+  /pioneer/pose               |              /b166er/arm_vel_cmd
+         |                    |                      |
+         └──[state_estimator]─┘          ┌──[arm_vel_integrator] (hardware)
+             (IK → q_arm_est)            │  → /setpoints → Arduino
+                   |                     │
+          [fuzzy_wb_controller]──────────┘
+            (Mamdani + J_wb)             └──[gazebo_arm_bridge] (gazebo)
+                                            → /Jx_velocity_controller/command
 
   Modos
   ─────
-    sim      : RViz + joint_state_publisher_gui (sem hardware real)
-    hardware : drivers reais (Pioneer + T265 + RV-M2)
+    sim      : RViz + joint_state_publisher_gui (sem hardware nem Gazebo)
+    hardware : drivers reais Pioneer + T265 + RV-M2 + IMU + arm_vel_integrator
+    gazebo   : Gazebo + controladores ros_control + gazebo_sensor_sim + arm_vel_bridge
   ═══════════════════════════════════════════════════════════════════════
   -->
 
   <!-- ── Argumentos globais ──────────────────────────────────────── -->
   <arg name="mode"          default="sim"
-       doc="Modo de operação: sim | hardware"/>
+       doc="Modo de operação: sim | hardware | gazebo"/>
   <arg name="rviz"          default="true"
        doc="Abrir RViz de monitoramento"/>
   <arg name="rate"          default="20"
@@ -46,7 +36,8 @@
        default="$(find b166er_robot)/config/b166er.rviz"/>
 
   <!-- ── Robot description ───────────────────────────────────────── -->
-  <param name="use_sim_time" value="false"/>
+  <param name="use_sim_time"
+         value="$(eval 'true' if arg('mode') == 'gazebo' else 'false')"/>
   <param name="robot_description"
          command="$(find xacro)/xacro
                   $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
@@ -56,15 +47,13 @@
         type="robot_state_publisher"
         output="screen"/>
 
-  <!-- ── Modo SIMULAÇÃO ──────────────────────────────────────────── -->
+  <!-- ── Modo SIMULAÇÃO CINEMÁTICA (RViz) ───────────────────────── -->
   <group if="$(eval arg('mode') == 'sim')">
 
-    <!-- GUI para mover as juntas manualmente (desenvolvimento) -->
     <node name="joint_state_publisher_gui"
           pkg="joint_state_publisher_gui"
           type="joint_state_publisher_gui"/>
 
-    <!-- RViz de monitoramento -->
     <node if="$(arg rviz)"
           name="rviz" pkg="rviz" type="rviz"
           args="-d $(arg rviz_config)" output="screen"/>
@@ -74,65 +63,98 @@
   <!-- ── Modo HARDWARE ───────────────────────────────────────────── -->
   <group if="$(eval arg('mode') == 'hardware')">
 
-    <!-- Pioneer 3-AT -->
     <include
       file="$(find b166er_robot)/launch/hardware/pioneer_hardware.launch"/>
 
-    <!-- Intel RealSense T265 -->
     <include
       file="$(find b166er_robot)/launch/hardware/t265_hardware.launch"/>
 
-    <!-- Mitsubishi RV-M2 (rosserial + Arduino) -->
     <include
       file="$(find b166er_robot)/launch/hardware/movemaster_hardware.launch"/>
 
-    <!-- IMU Sparton AHRS-8 -->
     <include
       file="$(find b166er_robot)/launch/hardware/imu_hardware.launch"/>
 
-    <!-- RViz opcional em modo hardware -->
+    <node if="$(arg rviz)"
+          name="rviz" pkg="rviz" type="rviz"
+          args="-d $(arg rviz_config)" output="screen"/>
+
+    <!-- Integra vel → posição em graus → Arduino rosserial -->
+    <node name="arm_vel_integrator"
+          pkg="b166er_whole_body_control"
+          type="arm_vel_integrator.py"
+          output="screen">
+      <param name="rate"      value="$(arg rate)"/>
+      <param name="goto_home" value="false"/>
+    </node>
+
+  </group>
+
+  <!-- ── Modo GAZEBO ─────────────────────────────────────────────── -->
+  <group if="$(eval arg('mode') == 'gazebo')">
+
+    <!-- Gazebo com o b166er completo -->
+    <include
+      file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch"/>
+
+    <!-- Controladores ros_control das juntas do braço -->
+    <rosparam file="$(find b166er_whole_body_control)/config/arm_controllers.yaml"
+              command="load"/>
+
+    <node name="arm_controller_spawner"
+          pkg="controller_manager" type="spawner"
+          args="joint_state_controller
+                J1_velocity_controller
+                J2_velocity_controller
+                J3_velocity_controller
+                J4_velocity_controller
+                J5_velocity_controller"
+          output="screen"/>
+
+    <!-- Simula /t265/odom/sample e /pioneer/pose a partir do Gazebo -->
+    <node name="gazebo_sensor_sim"
+          pkg="b166er_whole_body_control"
+          type="gazebo_sensor_sim.py"
+          output="screen"/>
+
+    <!-- Roteia /b166er/arm_vel_cmd → Jx_velocity_controller/command -->
+    <node name="gazebo_arm_bridge"
+          pkg="b166er_whole_body_control"
+          type="gazebo_arm_bridge.py"
+          output="screen"/>
+
     <node if="$(arg rviz)"
           name="rviz" pkg="rviz" type="rviz"
           args="-d $(arg rviz_config)" output="screen"/>
 
   </group>
 
-  <!-- ── Stack de controle whole-body (sim + hardware) ───────────── -->
+  <!-- ── Stack de controle whole-body (todos os modos exceto sim) ── -->
+  <group unless="$(eval arg('mode') == 'sim')">
 
-  <!-- 1 · State estimator: funde T265 + Pioneer → q_arm (sem encoders) -->
-  <node name="state_estimator"
-        pkg="b166er_whole_body_control"
-        type="state_estimator.py"
-        output="screen">
-    <param name="t265_odom_topic"    value="/t265/odom/sample"/>
-    <param name="pioneer_odom_topic" value="/pioneer/pose"/>
-    <param name="world_frame"        value="odom"/>
-    <param name="rate"               value="$(arg rate)"/>
-  </node>
+    <!-- 1 · State estimator: T265 + Pioneer → q_arm (IK sem encoders) -->
+    <node name="state_estimator"
+          pkg="b166er_whole_body_control"
+          type="state_estimator.py"
+          output="screen">
+      <param name="t265_odom_topic"    value="/t265/odom/sample"/>
+      <param name="pioneer_odom_topic" value="/pioneer/pose"/>
+      <param name="world_frame"        value="odom"/>
+      <param name="rate"               value="$(arg rate)"/>
+    </node>
 
-  <!-- 2 · Controlador Fuzzy whole-body: Pioneer + RV-M2 como 8-DOF único -->
-  <node name="fuzzy_wb_controller"
-        pkg="b166er_whole_body_control"
-        type="fuzzy_wb_controller.py"
-        output="screen">
-    <param name="rate"             value="$(arg rate)"/>
-    <param name="nonholonomic"     value="true"/>
-    <param name="null_space_gain"  value="0.3"/>
-    <param name="tol_pos"          value="0.005"/>   <!-- 5 mm -->
-    <param name="tol_orient"       value="0.02"/>    <!-- ~1.1° -->
-  </node>
+    <!-- 2 · Fuzzy whole-body controller: Pioneer + RV-M2 como 8-DOF -->
+    <node name="fuzzy_wb_controller"
+          pkg="b166er_whole_body_control"
+          type="fuzzy_wb_controller.py"
+          output="screen">
+      <param name="rate"            value="$(arg rate)"/>
+      <param name="nonholonomic"    value="true"/>
+      <param name="null_space_gain" value="0.3"/>
+      <param name="tol_pos"         value="0.005"/>
+      <param name="tol_orient"      value="0.02"/>
+    </node>
 
-  <!--
-  3 · arm_vel_integrator (TODO Fase 2):
-      Integra /b166er/arm_vel_cmd (rad/s) → /b166er/arm_pos_cmd
-      para interface com movemaster_control via rosserial.
-
-  <node name="arm_vel_integrator"
-        pkg="b166er_whole_body_control"
-        type="arm_vel_integrator.py"
-        output="screen">
-    <param name="rate" value="$(arg rate)"/>
-  </node>
-  -->
+  </group>
 
 </launch>
