@@ -102,6 +102,14 @@
           type="kill_gui_zombie.py"
           output="screen"/>
 
+    <!-- Publica as 4 rodas do Pioneer a posição zero para que
+         robot_state_publisher calcule o TF completo e o RViz
+         exiba o modelo correto (rodas não têm transmission ros_control) -->
+    <node name="pioneer_wheel_state_pub"
+          pkg="b166er_whole_body_control"
+          type="pioneer_wheel_state_pub.py"
+          output="screen"/>
+
     <!-- Gazebo com o b166er completo (headless; robot_state_pub já sobe acima) -->
     <include
       file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch">
