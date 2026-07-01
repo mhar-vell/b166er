@@ -10,6 +10,7 @@ modelo completo do Pioneer.
 Este nó publica as 4 rodas a posição=0 para fechar a árvore TF sem
 interferir nos estados reais do braço.
 """
+import time
 import rospy
 from sensor_msgs.msg import JointState
 
@@ -29,7 +30,7 @@ def main():
     # rospy.WallDuration.sleep() usa tempo real — seguro antes do /clock chegar.
     rospy.loginfo('[pioneer_wheel_state_pub] aguardando /clock...')
     while not rospy.is_shutdown() and rospy.Time.now().is_zero():
-        rospy.WallDuration(0.05).sleep()
+        time.sleep(0.05)   # wall-time sleep — válido antes do /clock chegar
 
     rate = rospy.Rate(10)   # 10 Hz é suficiente para rodas estáticas
     while not rospy.is_shutdown():
