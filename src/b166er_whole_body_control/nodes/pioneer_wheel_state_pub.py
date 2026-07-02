@@ -29,8 +29,14 @@ def main():
     # bloquearia indefinidamente; WallRate publica sempre a 10 Hz de tempo real.
     rate = rospy.WallRate(10)
     while not rospy.is_shutdown():
+        stamp = rospy.Time.now()
+        # tf2 rejeita transforms com stamp=0 (Gazebo ainda pausado).
+        # Aguarda até o clock avançar antes de publicar.
+        if stamp.is_zero():
+            rate.sleep()
+            continue
         msg = JointState()
-        msg.header.stamp = rospy.Time.now()
+        msg.header.stamp = stamp
         msg.name     = WHEEL_JOINTS
         msg.position = [0.0] * len(WHEEL_JOINTS)
         pub.publish(msg)
