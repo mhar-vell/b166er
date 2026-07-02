@@ -10,7 +10,6 @@ modelo completo do Pioneer.
 Este nó publica as 4 rodas a posição=0 para fechar a árvore TF sem
 interferir nos estados reais do braço.
 """
-import time
 import rospy
 from sensor_msgs.msg import JointState
 
@@ -26,13 +25,9 @@ def main():
     rospy.init_node('pioneer_wheel_state_pub')
     pub = rospy.Publisher('/joint_states', JointState, queue_size=1)
 
-    # Aguarda /clock não-zero para não inundar TF com stamp=0 antes do Gazebo iniciar.
-    # rospy.WallDuration.sleep() usa tempo real — seguro antes do /clock chegar.
-    rospy.loginfo('[pioneer_wheel_state_pub] aguardando /clock...')
-    while not rospy.is_shutdown() and rospy.Time.now().is_zero():
-        time.sleep(0.05)   # wall-time sleep — válido antes do /clock chegar
-
-    rate = rospy.Rate(10)   # 10 Hz é suficiente para rodas estáticas
+    # WallRate: independente de sim_time. Com Gazebo pausado (clock=0), rospy.Rate
+    # bloquearia indefinidamente; WallRate publica sempre a 10 Hz de tempo real.
+    rate = rospy.WallRate(10)
     while not rospy.is_shutdown():
         msg = JointState()
         msg.header.stamp = rospy.Time.now()
