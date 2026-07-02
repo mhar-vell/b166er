@@ -18,7 +18,6 @@ from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, gravity_torque_arm)
 
 _VEL_TIMEOUT = 0.5   # s sem comando → zera velocidade
-_FF_RAMP_S   = 2.0   # s para rampar o feedforward de 0 → k_ff (evita degrau no warm-start)
 
 # Ganhos P dos controladores (arm_controllers.yaml) — usados no feedforward
 _P_GAINS = np.array([100.0, 300.0, 200.0, 100.0, 50.0])
@@ -31,10 +30,9 @@ class GazeboArmBridge:
 
         self._rate_hz    = rospy.get_param('~rate', 20.0)
         self._k_ff       = rospy.get_param('~k_gravity_ff', 0.5)
-        self._q_arm      = None          # rad — warm-start do /joint_states
+        self._q_arm      = None          # rad — estado interno (ajustado pelo ff)
         self._dq_cmd     = np.zeros(5)   # rad/s
         self._t_last_cmd = None
-        self._t_warmup   = None          # instante do warm-start (para rampa do ff)
 
         # publicadores para cada controlador de posição
         self._pubs = [
@@ -56,9 +54,13 @@ class GazeboArmBridge:
             return   # warm-start one-shot
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
-            self._q_arm = np.array([name_to_pos[n] for n in JOINT_NAMES])
-            rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
-                          np.round(self._q_arm, 3))
+            q_init = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            # q_arm = q_init − q_ff  →  q_pub = q_arm + q_ff = q_init
+            # O braço não se move no warm-start (sem forças de reação na base).
+            q_ff_init  = -self._k_ff * gravity_torque_arm(q_init) / _P_GAINS
+            self._q_arm = np.clip(q_init - q_ff_init, JOINT_LOWER, JOINT_UPPER)
+            rospy.loginfo('[gazebo_arm_bridge] warm-start q_init=%s q_arm=%s rad',
+                          np.round(q_init, 3), np.round(self._q_arm, 3))
 
     def _cb_vel_cmd(self, msg):
         if len(msg.velocity) == 5:
@@ -84,14 +86,11 @@ class GazeboArmBridge:
             self._q_arm = np.clip(self._q_arm + dq * dt,
                                   JOINT_LOWER, JOINT_UPPER)
 
-            # Feedforward de gravidade com rampa: evita degrau no warm-start que
-            # excitaria a ressonância natural do braço. Rampa de _FF_RAMP_S s.
-            if self._t_warmup is None:
-                self._t_warmup = rospy.Time.now()
-            ff_scale = min(1.0, (rospy.Time.now() - self._t_warmup).to_sec()
-                           / _FF_RAMP_S)
+            # Feedforward de gravidade: offset estático que compensa τ_grav/P.
+            # q_arm é inicializado no warm-start tal que q_pub = q_actual (sem
+            # movimento do braço e sem forças de reação na base no startup).
             tau_g = gravity_torque_arm(self._q_arm)
-            q_ff  = -self._k_ff * ff_scale * tau_g / _P_GAINS
+            q_ff  = -self._k_ff * tau_g / _P_GAINS
             q_pub = np.clip(self._q_arm + q_ff, JOINT_LOWER, JOINT_UPPER)
 
             for i, pub in enumerate(self._pubs):
