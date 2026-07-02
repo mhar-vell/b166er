@@ -2,13 +2,15 @@
 """
 arm_controller_loader — carrega controladores de posição sem esperar por sim_time.
 
-Substitui o spawner padrão que fica preso aguardando /clock em modo gazebo.
-Aguarda o serviço controller_manager/load_controller usando tempo real,
-depois carrega e inicia os controladores, e então despausa o Gazebo.
+Sequência crítica:
+  1. load_controller  (com Gazebo pausado — não depende de física)
+  2. unpause_physics  (física começa a rodar)
+  3. switch_controller (depois do unpause — switch_controller bloqueia
+                        internamente aguardando o loop de física do
+                        gazebo_ros_control; chamar enquanto pausado → deadlock)
 
 O Gazebo é iniciado pausado (paused=true no launch) para garantir que o
 braço não caia sob gravidade antes dos controladores estarem prontos.
-O unpause é garantido via try/finally, mesmo em caso de falha no load.
 """
 
 import time
@@ -44,7 +46,7 @@ def wait_service_real(name, timeout=WAIT_TIMEOUT):
 
 
 def unpause_gazebo():
-    """Despausa o Gazebo. Chamado sempre, mesmo em caso de falha no load."""
+    """Despausa o Gazebo."""
     try:
         if wait_service_real('/gazebo/unpause_physics', timeout=10.0):
             rospy.ServiceProxy('/gazebo/unpause_physics', Empty)()
@@ -61,15 +63,18 @@ def main():
 
     rospy.loginfo('[arm_controller_loader] aguardando controller_manager...')
 
+    loaded = []
+
+    # ── Fase 1: load com Gazebo pausado ────────────────────────────────
+    # load_controller chama init() no plugin, que lê parâmetros e registra
+    # handles de hardware. Não precisa de física rodando.
     try:
         if not wait_service_real('/controller_manager/load_controller'):
             rospy.logerr('[arm_loader] timeout: controller_manager não encontrado')
             return
 
-        load_svc   = rospy.ServiceProxy('/controller_manager/load_controller', LoadController)
-        switch_svc = rospy.ServiceProxy('/controller_manager/switch_controller', SwitchController)
+        load_svc = rospy.ServiceProxy('/controller_manager/load_controller', LoadController)
 
-        loaded = []
         for ctrl in CONTROLLERS:
             try:
                 resp = load_svc(name=ctrl)
@@ -81,21 +86,32 @@ def main():
             except rospy.ServiceException as e:
                 rospy.logerr('[arm_loader] erro ao carregar %s: %s', ctrl, e)
 
-        if loaded:
-            req = SwitchControllerRequest()
-            req.start_controllers = loaded
-            req.stop_controllers  = []
-            req.strictness        = SwitchControllerRequest.BEST_EFFORT
-            if switch_svc(req).ok:
-                rospy.loginfo('[arm_loader] controladores iniciados: %s', loaded)
-            else:
-                rospy.logwarn('[arm_loader] switch_controller retornou False')
-        else:
+        if not loaded:
             rospy.logerr('[arm_loader] nenhum controlador foi carregado')
 
     finally:
-        # Sempre despausa — mesmo se load/switch falharem ou lançarem exceção.
+        # ── Fase 2: unpause ANTES do switch ────────────────────────────
+        # CRÍTICO: switch_controller bloqueia no loop de física do
+        # gazebo_ros_control. Com Gazebo pausado esse loop nunca roda
+        # e o switch nunca retorna → deadlock. O unpause deve vir antes.
         unpause_gazebo()
+
+    # ── Fase 3: switch com física rodando ──────────────────────────────
+    if not loaded:
+        return
+
+    switch_svc = rospy.ServiceProxy('/controller_manager/switch_controller', SwitchController)
+    req = SwitchControllerRequest()
+    req.start_controllers = loaded
+    req.stop_controllers  = []
+    req.strictness        = SwitchControllerRequest.BEST_EFFORT
+    try:
+        if switch_svc(req).ok:
+            rospy.loginfo('[arm_loader] controladores iniciados: %s', loaded)
+        else:
+            rospy.logwarn('[arm_loader] switch_controller retornou False')
+    except rospy.ServiceException as e:
+        rospy.logerr('[arm_loader] erro no switch_controller: %s', e)
 
 
 if __name__ == '__main__':
