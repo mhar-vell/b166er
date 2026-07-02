@@ -18,6 +18,7 @@ from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, gravity_torque_arm)
 
 _VEL_TIMEOUT = 0.5   # s sem comando → zera velocidade
+_FF_RAMP_S   = 2.0   # s para rampar o feedforward de 0 → k_ff (evita degrau no warm-start)
 
 # Ganhos P dos controladores (arm_controllers.yaml) — usados no feedforward
 _P_GAINS = np.array([100.0, 300.0, 200.0, 100.0, 50.0])
@@ -29,10 +30,11 @@ class GazeboArmBridge:
         rospy.init_node('gazebo_arm_bridge')
 
         self._rate_hz    = rospy.get_param('~rate', 20.0)
-        self._k_ff       = rospy.get_param('~k_gravity_ff', 1.0)
+        self._k_ff       = rospy.get_param('~k_gravity_ff', 0.5)
         self._q_arm      = None          # rad — warm-start do /joint_states
         self._dq_cmd     = np.zeros(5)   # rad/s
         self._t_last_cmd = None
+        self._t_warmup   = None          # instante do warm-start (para rampa do ff)
 
         # publicadores para cada controlador de posição
         self._pubs = [
@@ -82,11 +84,14 @@ class GazeboArmBridge:
             self._q_arm = np.clip(self._q_arm + dq * dt,
                                   JOINT_LOWER, JOINT_UPPER)
 
-            # Feedforward de gravidade: offset estático que compensa o erro
-            # de regime τ_grav/P do controlador PID de posição do Gazebo.
-            # q_ff = -τ_grav / P  →  faz o Gazebo segurar a posição desejada.
+            # Feedforward de gravidade com rampa: evita degrau no warm-start que
+            # excitaria a ressonância natural do braço. Rampa de _FF_RAMP_S s.
+            if self._t_warmup is None:
+                self._t_warmup = rospy.Time.now()
+            ff_scale = min(1.0, (rospy.Time.now() - self._t_warmup).to_sec()
+                           / _FF_RAMP_S)
             tau_g = gravity_torque_arm(self._q_arm)
-            q_ff  = -self._k_ff * tau_g / _P_GAINS
+            q_ff  = -self._k_ff * ff_scale * tau_g / _P_GAINS
             q_pub = np.clip(self._q_arm + q_ff, JOINT_LOWER, JOINT_UPPER)
 
             for i, pub in enumerate(self._pubs):
