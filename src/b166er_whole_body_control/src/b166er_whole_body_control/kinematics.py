@@ -26,6 +26,10 @@ IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
 IK_DQ_STEP    = 1e-6
 
+# Compensação de gravidade
+_G           = 9.81                                # m/s²
+_LINK_MASSES = np.array([6.3, 5.0, 4.2, 2.5, 1.7])  # L1..L5 kg (do URDF)
+
 
 # ---------------------------------------------------------------------------
 # Primitivas de transformação homogênea (4×4)
@@ -285,3 +289,29 @@ def ik_arm(T_target, q_init=None):
 
     T_cur = fk_arm(q); err = pose_error(T_cur, T_target)
     return q, False, np.linalg.norm(err[:3]), np.linalg.norm(err[3:])
+
+
+# ---------------------------------------------------------------------------
+# Compensação de gravidade
+# ---------------------------------------------------------------------------
+
+def gravity_torque_arm(q):
+    """
+    Torque gravitacional em cada junta do RV-M2 (N·m).
+    Assume frame Base do braço com eixo z alinhado com world up (Pioneer nivelado).
+    CoM de cada elo aproximado na origem do frame da junta filha (consistente
+    com os inertiais do URDF, todos em <origin xyz="0 0 0">).
+
+    Retorna tau_grav (5,) — positivo = direção de aumento do ângulo da junta.
+    """
+    joint_frames, _ = fk_arm_joint_frames(q)
+    p_joints = [T[:3, 3] for T in joint_frames]
+    g_vec = np.array([0.0, 0.0, -_G])
+    tau = np.zeros(5)
+    for i in range(5):
+        z_i = joint_frames[i][:3, 2]   # eixo de rotação da junta i no frame Base
+        p_i = p_joints[i]
+        for j in range(i + 1, 5):      # elos a jusante (CoM em p_joints[j])
+            r = p_joints[j] - p_i
+            tau[i] += _LINK_MASSES[j] * np.dot(g_vec, np.cross(z_i, r))
+    return tau
