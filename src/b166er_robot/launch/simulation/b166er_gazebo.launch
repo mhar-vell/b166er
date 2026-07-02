@@ -1,9 +1,4 @@
 <launch>
-  <!-- Preview estético do b166er no Gazebo (sem controle, massas/inércias
-       provisórias) — só para confirmar que o modelo spawna corretamente.
-       Não serve para validar física real; trocar as inertials por valores
-       medidos antes de usar para controle/planejamento. -->
-
   <!-- gui:=false para rodar headless (ex: chamado pelo b166er_wb.launch) -->
   <arg name="gui"              default="true"/>
   <!-- robot_state_pub:=false quando o launch pai já sobe o nó -->
@@ -12,16 +7,15 @@
   <param name="robot_description"
          command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
 
+  <!-- Inicia pausado: garante que o braço não cai antes dos controladores
+       carregarem. O arm_controller_loader despausa após carregar tudo. -->
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name"   value="$(find b166er_robot)/worlds/empty.world"/>
-    <arg name="paused"       value="false"/>
+    <arg name="paused"       value="true"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="gui"          value="$(arg gui)"/>
   </include>
 
-  <!-- -J J2 0.5: braço começa com ombro elevado (29°) para não cair
-       dentro do chassi do Pioneer durante os ~0.5 s antes dos controladores
-       ros_control carregarem. Posição segura após a queda: J2 ≈ 0.33 rad. -->
   <node name="spawn_b166er" pkg="gazebo_ros" type="spawn_model"
         args="-urdf -model b166er -param robot_description -z 0.05 -J J2 0.5"/>
 

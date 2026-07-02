@@ -12,6 +12,7 @@ import rospy
 from controller_manager_msgs.srv import (
     LoadController, SwitchController, SwitchControllerRequest
 )
+from std_srvs.srv import Empty
 
 CONTROLLERS = [
     'joint_state_controller',
@@ -77,6 +78,16 @@ def main():
             rospy.logwarn('[arm_loader] switch_controller retornou False')
     else:
         rospy.logerr('[arm_loader] nenhum controlador foi carregado')
+
+    # Despausa o Gazebo. A simulação foi iniciada pausada para garantir que
+    # o braço não caia sob gravidade antes dos controladores estarem prontos.
+    try:
+        rospy.wait_for_service('/gazebo/unpause_physics', timeout=5.0)
+        unpause = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+        unpause()
+        rospy.loginfo('[arm_loader] Gazebo despausado.')
+    except Exception as e:
+        rospy.logwarn('[arm_loader] não foi possível despauser: %s', e)
 
 
 if __name__ == '__main__':
