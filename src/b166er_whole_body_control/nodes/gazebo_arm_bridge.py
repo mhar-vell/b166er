@@ -29,7 +29,7 @@ class GazeboArmBridge:
         rospy.init_node('gazebo_arm_bridge')
 
         self._rate_hz    = rospy.get_param('~rate', 20.0)
-        self._k_ff       = rospy.get_param('~k_gravity_ff', 0.5)
+        self._k_ff       = rospy.get_param('~k_gravity_ff', 1.0)
         self._q_arm      = None          # rad — estado interno (ajustado pelo ff)
         self._dq_cmd     = np.zeros(5)   # rad/s
         self._t_last_cmd = None
@@ -55,12 +55,11 @@ class GazeboArmBridge:
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
             q_init = np.array([name_to_pos[n] for n in JOINT_NAMES])
-            # q_arm = q_init − q_ff  →  q_pub = q_arm + q_ff = q_init
-            # O braço não se move no warm-start (sem forças de reação na base).
-            q_ff_init  = -self._k_ff * gravity_torque_arm(q_init) / _P_GAINS
-            self._q_arm = np.clip(q_init - q_ff_init, JOINT_LOWER, JOINT_UPPER)
-            rospy.loginfo('[gazebo_arm_bridge] warm-start q_init=%s q_arm=%s rad',
-                          np.round(q_init, 3), np.round(self._q_arm, 3))
+            # q_arm = q_init → q_pub = q_init + q_ff ≈ q_spawn (sem step no PID)
+            # O braço não se move ao fazer takeover: sem forças de reação na base.
+            self._q_arm = np.clip(q_init, JOINT_LOWER, JOINT_UPPER)
+            rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
+                          np.round(self._q_arm, 3))
 
     def _cb_vel_cmd(self, msg):
         if len(msg.velocity) == 5:
@@ -86,9 +85,9 @@ class GazeboArmBridge:
             self._q_arm = np.clip(self._q_arm + dq * dt,
                                   JOINT_LOWER, JOINT_UPPER)
 
-            # Feedforward de gravidade: offset estático que compensa τ_grav/P.
-            # q_arm é inicializado no warm-start tal que q_pub = q_actual (sem
-            # movimento do braço e sem forças de reação na base no startup).
+            # Feedforward de gravidade: q_pub = q_arm − τ_grav/P compensa o
+            # erro estático do PID. Com k_ff=1 e warm-start q_arm=q_actual,
+            # q_pub ≈ q_spawn → sem step no PID ao fazer takeover.
             tau_g = gravity_torque_arm(self._q_arm)
             q_ff  = -self._k_ff * tau_g / _P_GAINS
             q_pub = np.clip(self._q_arm + q_ff, JOINT_LOWER, JOINT_UPPER)
