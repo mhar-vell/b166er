@@ -128,9 +128,12 @@ manobra lateral acima, antes de implementar a escolhida no controlador.
 |---|---|
 | Pioneer 3-AT: validar `/cmd_vel` em hardware | ⬜ |
 | `robot_localization`: fusão odometria Pioneer + T265 + IMU | ⬜ |
-| Hokuyo UST-05LX: IP fixo na rede Ethernet + launch | ⬜ |
+| Hokuyo UST-05LX: IP fixo na rede Ethernet + driver `urg_node` + launch | ⬜ |
+| Hokuyo: validar TF real (`laser_hokuyo_link` no top_plate) contra o URDF — scan alinhado no RViz | ⬜ |
+| Hokuyo: obstacle layer nos costmaps do `move_base` (desvio de obstáculos nas missões) | ⬜ |
+| Hokuyo: zona de parada de segurança por scan (obstáculo < d_min à frente → parada suave via watchdog) | ⬜ |
 | `move_base`: planejamento de trajetória com mapa local | ⬜ |
-| Teste integrado: ponto A → ponto B autônomo | ⬜ |
+| Teste integrado: ponto A → ponto B autônomo desviando de obstáculos | ⬜ |
 
 ---
 
