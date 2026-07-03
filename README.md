@@ -13,6 +13,16 @@ Pioneer 3-AT base + Mitsubishi RV-M2 arm, controlled via ROS Noetic (RoboStack) 
 | Hokuyo UST-05LX (Smart URG) | Ethernet | IP a definir |
 | Intel NUC 5i5RYH | ROS master | `b166er-nuc.local` |
 
+## Packages
+
+| Package | Description |
+|---|---|
+| `b166er_robot` | URDF, launch files, hardware drivers |
+| `b166er_whole_body_control` | Whole-body controller (8-DOF: Pioneer + RV-M2) |
+| `movemaster_control` | RV-M2 driver (serial) |
+| `sparton_ahrs8_driver` | IMU driver |
+| `rosaria` | Pioneer driver (AriaCoda) |
+
 ## Build
 
 ROS Noetic is provided by [RoboStack](https://robostack.github.io/) (conda-based).
@@ -66,15 +76,48 @@ bash setup/udev_pioneer.sh     # /dev/ttyPioneer udev rule
 
 ## Launch
 
+### Whole-body control (unified launch)
+
+```bash
+source devel/setup.zsh
+
+# Gazebo simulation (recommended for development)
+roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo gui:=true rviz:=true
+
+# Hardware (Pioneer + T265 + RV-M2 + IMU)
+roslaunch b166er_whole_body_control b166er_wb.launch mode:=hardware rviz:=true
+
+# Kinematic preview only (RViz + joint_state_publisher_gui)
+roslaunch b166er_whole_body_control b166er_wb.launch mode:=sim
+```
+
+### Send an EE target (Gazebo, safe workspace: z ≥ 0.60 m in odom frame)
+
+```bash
+rostopic pub -r 5 /b166er/ee_target geometry_msgs/PoseStamped \
+  '{header: {frame_id: odom}, pose: {position: {x: 0.55, y: 0.10, z: 0.70}, orientation: {w: 1.0}}}'
+```
+
+### Legacy launches
+
 ```bash
 # RViz preview (no hardware)
 roslaunch b166er_robot b166er_base.launch
 
-# Pioneer base
+# Pioneer base only
 roslaunch b166er_robot pioneer_hardware.launch
-
-# Full hardware stack
-roslaunch b166er_robot pioneer_hardware.launch &
-roslaunch b166er_robot imu_hardware.launch &
-roslaunch b166er_robot movemaster_hardware.launch
 ```
+
+## Whole-body control architecture
+
+The RV-M2 arm has no accessible joint encoders. Control is performed in
+**task space** using the T265 camera on the end-effector as a 6-DOF position sensor,
+with an 8-DOF Mamdani fuzzy controller (Pioneer base + arm joints):
+
+```
+T265 (EE pose) ──► state_estimator (IK) ──► fuzzy_wb_controller ──► cmd_vel + arm_vel_cmd
+Pioneer odom  ──►                                                 └──► arm_vel_integrator
+```
+
+See [`src/b166er_whole_body_control/docs/controle_sem_encoders.md`](src/b166er_whole_body_control/docs/controle_sem_encoders.md)
+for the full technical description.

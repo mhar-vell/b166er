@@ -49,6 +49,16 @@ MAX_BASE_ANG = 0.5    # rad/s
 MAX_ARM_VEL  = 0.8    # rad/s por junta
 K_NULL       = 0.3    # ganho do objetivo secundário (espaço nulo)
 
+# Piso de velocidade linear da base. Com o braço horizontal, a direção x do
+# EE é singular para o braço (∂x/∂J2 = 0) e só a base corrige o erro — mas
+# comandos < ~5 mm/s não vencem o escorregamento estático do contato
+# (Gazebo/ODE) nem folgas reais, e a base estaciona fora da tolerância
+# (~7 mm observados). Fora da tolerância, o comando preserva o sentido mas
+# nunca fica abaixo deste módulo. Sem risco de ciclo-limite: a banda de
+# parada (tol_pos=5 mm para cada lado) é maior que o passo por ciclo
+# (10 mm/s ÷ 20 Hz = 0,5 mm).
+MIN_BASE_LIN = 0.010  # m/s
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -76,6 +86,17 @@ def _saturate_base(v_lin, v_ang):
     return v_lin, v_ang
 
 
+def _lin_floor(v):
+    """Aplica o piso MIN_BASE_LIN preservando o sentido.
+
+    Só atua quando o comando é significativo (>1e-5): um v≈0 legítimo
+    (erro ortogonal ao heading, a corrigir por rotação) não é inflado.
+    """
+    if 1e-5 < abs(v) < MIN_BASE_LIN:
+        return MIN_BASE_LIN if v > 0 else -MIN_BASE_LIN
+    return v
+
+
 # ---------------------------------------------------------------------------
 # Nó principal
 # ---------------------------------------------------------------------------
@@ -97,6 +118,7 @@ class FuzzyWBController:
         self._robot_state = None
         self._target      = None
         self._enabled     = False
+        self._reached     = False
 
         # Erro anterior (para derivada)
         self._err_prev  = None
@@ -129,6 +151,7 @@ class FuzzyWBController:
     def _cb_target(self, msg):
         self._target   = _pose_stamped_to_matrix(msg)
         self._enabled  = True
+        self._reached  = False
         self._err_prev = None   # reset derivada ao mudar alvo
         rospy.loginfo('[fuzzy_wb_ctrl] novo alvo: pos=(%.3f, %.3f, %.3f)',
                       msg.pose.position.x,
@@ -167,11 +190,11 @@ class FuzzyWBController:
         if self._nonholo:
             v, w = self._project_nonholo(q_dot_base, theta)
             v, w = _saturate_base(v, w)
-            msg.linear.x  = v
+            msg.linear.x  = _lin_floor(v)
             msg.angular.z = w
         else:
-            msg.linear.x  = float(np.clip(q_dot_base[0], -MAX_BASE_LIN, MAX_BASE_LIN))
-            msg.linear.y  = float(np.clip(q_dot_base[1], -MAX_BASE_LIN, MAX_BASE_LIN))
+            msg.linear.x  = _lin_floor(float(np.clip(q_dot_base[0], -MAX_BASE_LIN, MAX_BASE_LIN)))
+            msg.linear.y  = _lin_floor(float(np.clip(q_dot_base[1], -MAX_BASE_LIN, MAX_BASE_LIN)))
             msg.angular.z = float(np.clip(q_dot_base[2], -MAX_BASE_ANG, MAX_BASE_ANG))
         self._pub_cmdvel.publish(msg)
 
@@ -221,8 +244,15 @@ class FuzzyWBController:
 
             self._update_delta_err(err_total_norm, now)
 
-            # Critério de parada
+            # Critério de parada com histerese: entra em "alcançado" dentro
+            # da tolerância e só reativa se o erro crescer 50% além dela —
+            # evita chaveamento 0 ↔ MIN_BASE_LIN quando o erro paira na borda.
             if err_pos_norm < self._tol_pos and err_orient_norm < self._tol_orient:
+                self._reached = True
+            elif (err_pos_norm > 1.5 * self._tol_pos
+                  or err_orient_norm > 1.5 * self._tol_orient):
+                self._reached = False
+            if self._reached:
                 rospy.loginfo_throttle(2.0,
                     '[fuzzy_wb_ctrl] alvo alcançado — pos=%.4fm ori=%.4frad',
                     err_pos_norm, err_orient_norm)
