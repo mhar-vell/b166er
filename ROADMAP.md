@@ -120,6 +120,23 @@ manobra lateral acima, antes de implementar a escolhida no controlador.
 | Teste de rastreamento: alvo em movimento lento (servovisão) | ⬜ |
 | Ajuste PID / feedforward para dinâmica real (diferente da simulação) | ⬜ |
 
+### 4.x Otimização do Fuzzy com dados reais
+
+Duas sintonias distintas, nesta ordem: primeiro a camada de junta (PID/
+feedforward, item acima), depois a camada de tarefa (fuzzy) — senão o
+fuzzy compensa defeito de PID. Os ganhos sim-tuned não transferem direto:
+latência rosserial→PWM, folgas/zona morta das pontes-H, ruído e drift do
+T265 (δerr ruidoso chaveia os ganhos do Mamdani erraticamente).
+
+| Etapa | Status |
+|---|---|
+| Coleta: rosbags de resposta ao degrau por junta + rastreamentos com o fuzzy sim-tuned (velocidade reduzida, E-Stop na mão) | ⬜ |
+| Medir latência real da malha: timestamp do comando → movimento visto pelo T265 (`rostopic delay`) | ⬜ |
+| Baseline quantificado no hardware: erro final (mm), tempo de convergência, overshoot — mesmas métricas da Fase 3 | ⬜ |
+| Calibrar a bancada PyBullet com os dados reais (latência, fricção/folga identificadas dos bags) | ⬜ |
+| Varredura de ganhos fuzzy (k_pos, k_orient, λ, funções de pertinência) em lote na bancada calibrada | ⬜ |
+| Validar candidatos finais no robô com critério realista (iniciar em 10-15 mm; 5 mm pode ser otimista com as folgas do RV-M2) | ⬜ |
+
 ---
 
 ## Fase 5 — Navegação Autônoma (Pilar 1)
