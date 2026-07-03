@@ -220,7 +220,7 @@
       <axis xyz="0 1 0"/>
       <anchor xyz="0 0 0"/>
       <limit effort="10" velocity="10"/>
-      <joint_properties damping="0.7"/>
+      <dynamics damping="1.0" friction="3.0"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <parent link="p3at_front_${side}_hub"/>
       <child link="p3at_front_${side}_wheel"/>
@@ -268,7 +268,9 @@
         <geometry name="pioneer_geom">
           <mesh filename="package://b166er_robot/meshes/pioneer3at/${side}_hubcap.stl"/>
         </geometry>
-        <material name="HubcapYellow"/>
+        <material name="HubcapYellow">
+          <color rgba="1.0 0.811 0.151 1.0"/>
+        </material>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -302,7 +304,9 @@
         <geometry name="pioneer_geom">
           <mesh filename="package://b166er_robot/meshes/pioneer3at/wheel.stl" scale="0.75 0.66 0.75"/>
         </geometry>
-        <material name="WheelBlack"/>
+        <material name="WheelBlack">
+          <color rgba="0.117 0.117 0.117 1"/>
+        </material>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="${-3.1415927/2} 0 0"/>
@@ -321,7 +325,7 @@
       <axis xyz="0 1 0"/>
       <anchor xyz="0 0 0"/>
       <limit effort="10" velocity="10"/>
-      <joint_properties damping="0.7"/>
+      <dynamics damping="1.0" friction="3.0"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <parent link="p3at_back_${side}_hub"/>
       <child link="p3at_back_${side}_wheel"/>
@@ -412,7 +416,7 @@
 
     <gazebo reference="laser_${name}_link">
         <material value="Gazebo/${color}"/>
-        <sensor type="gpu_ray" name="laser_${name}">
+        <sensor type="ray" name="laser_${name}">
           <pose>0 0 0 0 0 0</pose>
           <!-- visualize=true desenha os 1081 raios como disco branco no Gazebo,
                confundindo a inspeção visual do robô. Desabilitado. -->
@@ -442,7 +446,7 @@
               <stddev>0.01</stddev>
             </noise>
           </ray>
-          <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_gpu_laser.so">
+          <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
             <topicName>/${robot_name}/laser_${name}/scan</topicName>
             <frameName>laser_${name}_link</frameName>
           </plugin>
@@ -497,8 +501,5 @@
   <xacro:p3at_drive_side side="left" reflect="1"/>
   <xacro:p3at_drive_side side="right" reflect="-1"/>
   <xacro:p3at_gazebo_ext/>
-
-  <!-- contacts and extra robot_state -->
-  <xacro:p3at_gazebo_contacts/>
 
 </robot>
