@@ -46,7 +46,7 @@ T265 (EE) + Pioneer odom → state_estimator (IK) → Fuzzy WB Controller (8-DOF
 
 ---
 
-## Fase 3 — Estabilização do braço e da simulação ✅ concluída
+## Fase 3 — Estabilização do braço e da simulação ✅ concluída (PR #20)
 
 **Problema original:** braço oscilava em torno do equilíbrio após o warm-start
 (PID de posição sem compensação de gravidade). Durante a fase, o escopo cresceu:
