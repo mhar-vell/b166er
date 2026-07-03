@@ -46,40 +46,49 @@ T265 (EE) + Pioneer odom → state_estimator (IK) → Fuzzy WB Controller (8-DOF
 
 ---
 
-## Fase 3 — Redução do Shaking (braço) 🔄 próxima etapa
+## Fase 3 — Estabilização do braço e da simulação ✅ concluída
 
-**Problema:** braço oscila em torno da posição de equilíbrio após o warm-start
-porque os controladores PID de posição (ros_control) não têm compensação de
-gravidade — o torque gravitacional não é cancelado, gerando oscilação amortecida.
+**Problema original:** braço oscilava em torno do equilíbrio após o warm-start
+(PID de posição sem compensação de gravidade). Durante a fase, o escopo cresceu:
+o Pioneer deslocava sozinho no Gazebo e as rodas apareciam colapsadas na origem
+do RViz — ambos exigiram diagnóstico ao vivo na simulação.
 
-**Abordagem em etapas:**
-
-### 3.1 Diagnóstico (medir a oscilação)
+### 3.1 Shaking do braço (causa: gravidade não compensada)
 | Etapa | Status |
 |---|---|
-| Gravar `ros_bag` dos tópicos `/joint_states` e `/b166er/robot_state` | ⬜ |
-| Plotar q(t) por junta e identificar frequência natural e amplitude | ⬜ |
-| Identificar quais juntas oscilam mais (esperado: J2 e J3, mais pesadas) | ⬜ |
+| Feedforward de gravidade no `gazebo_arm_bridge`: q_cmd = q + K_ff·τ_grav/P | ✅ |
+| `gravity_torque_arm(q)` em `kinematics.py` (massas do manual Mitsubishi) | ✅ |
+| Ganhos PID por junta em `arm_controllers.yaml` (P/D dimensionados, I=0) | ✅ |
+| Sequência load → unpause → switch no `arm_controller_loader` (sem deadlock) | ✅ |
 
-### 3.2 Feedforward de gravidade no bridge (simulação)
+### 3.2 Rodas colapsadas no RViz ("roda branca")
 | Etapa | Status |
 |---|---|
-| Calcular torque gravitacional por junta: τ_grav(q) = ∂U/∂q | ⬜ |
-| Adicionar termo feedforward em `gazebo_arm_bridge`: `q_cmd += K_ff · τ_grav · dt` | ⬜ |
-| Validar redução da oscilação no Gazebo (comparar bag antes/depois) | ⬜ |
+| Causa: `rospy.WallRate` inexistente matava o `pioneer_wheel_state_pub` após 1 publish | ✅ |
+| TF das rodas publicado a 50 Hz em wall-time (imune a pausas do sim_time) | ✅ |
 
-### 3.3 Ajuste PID (se feedforward não for suficiente)
+### 3.3 Deslocamento espontâneo do Pioneer no Gazebo
 | Etapa | Status |
 |---|---|
-| Reduzir P de J2/J3 (menos agressividade) e aumentar D (mais amortecimento) | ⬜ |
-| Testar combinação P/D para criticamente amortecido sem lentidão excessiva | ⬜ |
+| Diagnóstico ao vivo: robô inteiro em queda perpétua (vz≈-0.08 m/s), rodas paradas | ✅ |
+| Causa: contato subamortecido (kp=1e6, kd=100 → ζ≈1,6%) + braço horizontal retificando a vibração | ✅ |
+| kd 100 → 1e4 nas 4 rodas; remoção de bloco `<gazebo>` duplicado; spawn a 1 mm do chão | ✅ |
+| Spawn em q=0 (sem `-J J2 0.5`, que corria contra o unpause e chutava o chassi) | ✅ |
+| Fricção de junta das rodas 0,5 N·m (frenagem passiva sem stiction no ajuste fino) | ✅ |
 
-### 3.4 Validação final
-| Etapa | Status |
+### 3.4 Validação final (medida no Gazebo)
+| Critério | Resultado |
 |---|---|
-| Amplitude de oscilação < 0.05 rad em steady-state | ⬜ |
-| IK converge sem warnings por ≥ 60 s contínuos | ⬜ |
-| EE tracking de alvo estático com erro < 5 mm | ⬜ |
+| Amplitude de oscilação < 0.05 rad em steady-state | ✅ dq ≈ 0.0002 rad/s |
+| IK converge sem warnings por ≥ 60 s contínuos | ✅ `ik_converged` estável em sessão longa |
+| EE tracking de alvo estático com erro < 5 mm | ✅ 4,7 mm (alvo longitudinal, base+braço) |
+| Piso de velocidade da base (10 mm/s) + histerese no fuzzy | ✅ |
+
+**Limitação conhecida (decisão de projeto em aberto):** alvos com erro
+puramente lateral estacionam a ~99 mm — a projeção não-holonômica não gera
+esterçamento (v_fwd ≈ 0 para erro ⊥ heading) e o braço não compensa sem
+violar a orientação do EE. Estratégias candidatas: manobra girar-avançar-girar,
+relaxamento transitório da orientação, ou alinhamento de heading via espaço nulo.
 
 ---
 
