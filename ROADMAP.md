@@ -94,13 +94,17 @@ relaxamento transitório da orientação, ou alinhamento de heading via espaço 
 
 ## Fase 4 — Validação em Hardware Real
 
-**Pré-requisito:** Fases 2 e 3 concluídas.
+**Pré-requisito:** Fases 2 e 3 concluídas. ✅ (Fase 3 mergeada no PR #20)
 
 | Etapa | Status |
 |---|---|
+| RealSense T265 no NUC: bringup `realsense2_camera` (udev `8087:0b37` + Myriad VPU) | ⬜ |
+| Validar `/t265/odom/sample` real com a câmera montada no EE do braço | ⬜ |
 | Conectar braço RV-M2 via rosserial (Arduino) | ⬜ |
 | Validar `arm_vel_integrator` em hardware (velocidade → posição serial) | ⬜ |
 | Calibração hand-eye: T265 → flange do RV-M2 | ⬜ |
+| Validar ambiente py312 + gazebo-ros 2.9.3 com hardware real (pendência do PR #16) | ⬜ |
+| RealSense de profundidade: pipeline de visão (Nodelets/PCL) para o erro visual da servovisão Fuzzy | ⬜ |
 | Teste de rastreamento: alvo estático com braço real | ⬜ |
 | Teste de rastreamento: alvo em movimento lento (servovisão) | ⬜ |
 | Ajuste PID / feedforward para dinâmica real (diferente da simulação) | ⬜ |
