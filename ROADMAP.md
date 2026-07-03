@@ -104,7 +104,7 @@ relaxamento transitório da orientação, ou alinhamento de heading via espaço 
 | Validar `arm_vel_integrator` em hardware (velocidade → posição serial) | ⬜ |
 | Calibração hand-eye: T265 → flange do RV-M2 | ⬜ |
 | Validar ambiente py312 + gazebo-ros 2.9.3 com hardware real (pendência do PR #16) | ⬜ |
-| RealSense de profundidade: pipeline de visão (Nodelets/PCL) para o erro visual da servovisão Fuzzy | ⬜ |
+| Fonte do erro visual da servovisão: fisheye da T265 (ArUco/AprilTag) — única RealSense disponível (T265C, s/n 925122110468); avaliar aquisição de D435/D455 se profundidade for necessária | ⬜ |
 | Teste de rastreamento: alvo estático com braço real | ⬜ |
 | Teste de rastreamento: alvo em movimento lento (servovisão) | ⬜ |
 | Ajuste PID / feedforward para dinâmica real (diferente da simulação) | ⬜ |
