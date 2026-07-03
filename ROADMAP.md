@@ -90,6 +90,17 @@ esterçamento (v_fwd ≈ 0 para erro ⊥ heading) e o braço não compensa sem
 violar a orientação do EE. Estratégias candidatas: manobra girar-avançar-girar,
 relaxamento transitório da orientação, ou alinhamento de heading via espaço nulo.
 
+**Estratégia de simulação (decidido em 2026-07-03):** o **Gazebo permanece**
+como digital twin de sistema — expõe as mesmas interfaces ROS do hardware
+(`/cmd_vel`, `ros_control`, TF, sensores sintéticos), permitindo validar o
+pipeline end-to-end sem alterar nenhum nó. **PyBullet não substitui** o Gazebo
+(exigiria reescrever toda a ponte ROS já depurada, com um conjunto novo de
+quirks de física), mas fica aprovado como **bancada complementar de tuning
+sem ROS**: carregar o mesmo URDF e importar `kinematics.py` + lógica fuzzy
+diretamente, rodando centenas de episódios por minuto para varredura de
+ganhos (k_pos, k_orient, λ) e comparação quantitativa das estratégias de
+manobra lateral acima, antes de implementar a escolhida no controlador.
+
 ---
 
 ## Fase 4 — Validação em Hardware Real
