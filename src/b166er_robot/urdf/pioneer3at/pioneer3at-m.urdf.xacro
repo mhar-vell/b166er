@@ -395,7 +395,11 @@
           <geometry>
             <box size="0.025 0.025 0.025"/>
           </geometry>
-          <material name="red"/>
+          <!-- "red" sem <color> = material indefinido no RViz → link renderizado branco.
+               Definição explícita garante cor vermelha em vez do branco padrão. -->
+          <material name="red">
+            <color rgba="0.8 0.1 0.1 1"/>
+          </material>
         </visual>
 
         <inertial>
@@ -410,7 +414,9 @@
         <material value="Gazebo/${color}"/>
         <sensor type="gpu_ray" name="laser_${name}">
           <pose>0 0 0 0 0 0</pose>
-          <visualize>true</visualize>
+          <!-- visualize=true desenha os 1081 raios como disco branco no Gazebo,
+               confundindo a inspeção visual do robô. Desabilitado. -->
+          <visualize>false</visualize>
           <update_rate>40</update_rate>
           <ray>
             <scan>
