@@ -16,9 +16,10 @@
     <arg name="gui"          value="$(arg gui)"/>
   </include>
 
-  <!-- z=-0.02: rodas a 6 mm do chão (base_link descansa em z≈-0.026).
-       Antes era z=0.05 → Pioneer caía 7,6 cm após o unpause, causando
-       deslocamento horizontal pela inércia do braço.
+  <!-- z=-0.025: rodas a ~1 mm do chão (base_link descansa em z≈-0.026),
+       minimizando o impulso vertical no unpause que excitava o modo de
+       quicar do contato. Antes era z=0.05 → Pioneer caía 7,6 cm após o
+       unpause, causando deslocamento horizontal pela inércia do braço.
        Sem -J: o set_model_configuration do spawn_model corre contra o
        unpause do arm_controller_loader e o J2=0.5 não era aplicado — o
        braço ficava em 0 enquanto o gazebo_arm_bridge comandava 0.5,
@@ -26,7 +27,7 @@
        Spawn em q=0 (dentro dos limites ±1.13 rad de J2) é determinístico
        e coincide com o q_spawn do bridge. -->
   <node name="spawn_b166er" pkg="gazebo_ros" type="spawn_model"
-        args="-urdf -model b166er -param robot_description -z -0.02"/>
+        args="-urdf -model b166er -param robot_description -z -0.025"/>
 
   <node if="$(arg robot_state_pub)"
         name="robot_state_publisher"
