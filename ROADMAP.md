@@ -90,17 +90,32 @@ esterçamento (v_fwd ≈ 0 para erro ⊥ heading) e o braço não compensa sem
 violar a orientação do EE. Estratégias candidatas: manobra girar-avançar-girar,
 relaxamento transitório da orientação, ou alinhamento de heading via espaço nulo.
 
+**Estratégia de simulação (decidido em 2026-07-03):** o **Gazebo permanece**
+como digital twin de sistema — expõe as mesmas interfaces ROS do hardware
+(`/cmd_vel`, `ros_control`, TF, sensores sintéticos), permitindo validar o
+pipeline end-to-end sem alterar nenhum nó. **PyBullet não substitui** o Gazebo
+(exigiria reescrever toda a ponte ROS já depurada, com um conjunto novo de
+quirks de física), mas fica aprovado como **bancada complementar de tuning
+sem ROS**: carregar o mesmo URDF e importar `kinematics.py` + lógica fuzzy
+diretamente, rodando centenas de episódios por minuto para varredura de
+ganhos (k_pos, k_orient, λ) e comparação quantitativa das estratégias de
+manobra lateral acima, antes de implementar a escolhida no controlador.
+
 ---
 
 ## Fase 4 — Validação em Hardware Real
 
-**Pré-requisito:** Fases 2 e 3 concluídas.
+**Pré-requisito:** Fases 2 e 3 concluídas. ✅ (Fase 3 mergeada no PR #20)
 
 | Etapa | Status |
 |---|---|
+| RealSense T265 no NUC: bringup `realsense2_camera` (udev `8087:0b37` + Myriad VPU) | ⬜ |
+| Validar `/t265/odom/sample` real com a câmera montada no EE do braço | ⬜ |
 | Conectar braço RV-M2 via rosserial (Arduino) | ⬜ |
 | Validar `arm_vel_integrator` em hardware (velocidade → posição serial) | ⬜ |
 | Calibração hand-eye: T265 → flange do RV-M2 | ⬜ |
+| Validar ambiente py312 + gazebo-ros 2.9.3 com hardware real (pendência do PR #16) | ⬜ |
+| Fonte do erro visual da servovisão: fisheye da T265 (ArUco/AprilTag) — única RealSense disponível (T265C, s/n 925122110468); avaliar aquisição de D435/D455 se profundidade for necessária | ⬜ |
 | Teste de rastreamento: alvo estático com braço real | ⬜ |
 | Teste de rastreamento: alvo em movimento lento (servovisão) | ⬜ |
 | Ajuste PID / feedforward para dinâmica real (diferente da simulação) | ⬜ |
@@ -113,9 +128,12 @@ relaxamento transitório da orientação, ou alinhamento de heading via espaço 
 |---|---|
 | Pioneer 3-AT: validar `/cmd_vel` em hardware | ⬜ |
 | `robot_localization`: fusão odometria Pioneer + T265 + IMU | ⬜ |
-| Hokuyo UST-05LX: IP fixo na rede Ethernet + launch | ⬜ |
+| Hokuyo UST-05LX: IP fixo na rede Ethernet + driver `urg_node` + launch | ⬜ |
+| Hokuyo: validar TF real (`laser_hokuyo_link` no top_plate) contra o URDF — scan alinhado no RViz | ⬜ |
+| Hokuyo: obstacle layer nos costmaps do `move_base` (desvio de obstáculos nas missões) | ⬜ |
+| Hokuyo: zona de parada de segurança por scan (obstáculo < d_min à frente → parada suave via watchdog) | ⬜ |
 | `move_base`: planejamento de trajetória com mapa local | ⬜ |
-| Teste integrado: ponto A → ponto B autônomo | ⬜ |
+| Teste integrado: ponto A → ponto B autônomo desviando de obstáculos | ⬜ |
 
 ---
 
