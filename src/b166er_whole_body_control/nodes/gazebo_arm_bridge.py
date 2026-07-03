@@ -33,9 +33,9 @@ class GazeboArmBridge:
         self._rate_hz = rospy.get_param('~rate', 20.0)
         self._k_ff    = rospy.get_param('~k_gravity_ff', 1.0)
 
-        # Posição de spawn (deve bater com -J no spawn_model).
+        # Posição de spawn (deve bater com o spawn_model — sem -J, q=0).
         # Usada para calcular o feedforward antes do warm-start real.
-        q_spawn_list  = rospy.get_param('~q_spawn', [0.0, 0.5, 0.0, 0.0, 0.0])
+        q_spawn_list  = rospy.get_param('~q_spawn', [0.0, 0.0, 0.0, 0.0, 0.0])
         self._q_spawn = np.clip(np.array(q_spawn_list, dtype=float),
                                 JOINT_LOWER, JOINT_UPPER)
 

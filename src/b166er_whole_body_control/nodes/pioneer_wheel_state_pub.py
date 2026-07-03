@@ -58,13 +58,14 @@ def main():
             break
         time.sleep(0.002)   # 2ms — independente de sim_time
 
-    # ── Fase 2: manutenção a 50 Hz (WallRate independe de sim_time) ────
-    rate = rospy.WallRate(50)
+    # ── Fase 2: manutenção a 50 Hz em tempo de parede ──────────────────
+    # rospy não tem WallRate; time.sleep é o equivalente independente de
+    # sim_time (rospy.Rate bloquearia se o Gazebo pausasse de novo).
     while not rospy.is_shutdown():
         stamp = rospy.Time.now()
         if not stamp.is_zero():
             _publish(pub, stamp)
-        rate.sleep()
+        time.sleep(0.02)
 
 
 if __name__ == '__main__':
