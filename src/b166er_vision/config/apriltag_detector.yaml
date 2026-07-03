@@ -1,0 +1,23 @@
+# Parâmetros do apriltag_detector (servovisão Fase 4)
+# Regra do projeto: nada de hardcoding — tudo aqui.
+
+# Tópicos da T265 (realsense2_camera com enable_fisheye1:=true)
+image_topic: /t265/fisheye1/image_raw
+camera_info_topic: /t265/fisheye1/camera_info
+
+# Lado do quadrado PRETO externo do tag impresso, em metros.
+# Com 848×800 e FOV ~163°, usar >= 0.10 m para detecção confiável a ~0.5 m.
+tag_size: 0.10
+
+# ID do tag alvo (família 36h11). -1 = usa o de menor erro de reprojeção.
+target_tag_id: 0
+
+# Escala da focal da pinhole virtual (1.0 = mesma resolução angular
+# central do fisheye ≈ 112° de FOV útil; >1 aproxima e reduz o FOV)
+pinhole_zoom: 1.0
+
+# Rejeita poses com erro médio de reprojeção acima disso (pixels)
+max_reproj_error_px: 2.0
+
+# Publica ~debug_image com os tags desenhados (custo de CPU; só p/ ajuste)
+publish_debug_image: false
