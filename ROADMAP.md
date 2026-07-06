@@ -109,16 +109,42 @@ manobra lateral acima, antes de implementar a escolhida no controlador.
 
 | Etapa | Status |
 |---|---|
-| RealSense T265 no NUC: bringup `realsense2_camera` (udev `8087:0b37` + Myriad VPU) | ⬜ |
+| RealSense T265 no NUC: bringup `realsense2_camera` (udev `8087:0b37` + Myriad VPU) — bringup validado no shiroi (2026-07-06): odom 200 Hz, fisheye 30 Hz; falta replicar no NUC | ⬜ |
 | Validar `/t265/odom/sample` real com a câmera montada no EE do braço | ⬜ |
 | Conectar braço RV-M2 via rosserial (Arduino) | ⬜ |
 | Validar `arm_vel_integrator` em hardware (velocidade → posição serial) | ⬜ |
 | Calibração hand-eye: T265 → flange do RV-M2 | ⬜ |
 | Validar ambiente py312 + gazebo-ros 2.9.3 com hardware real (pendência do PR #16) | ⬜ |
-| Fonte do erro visual da servovisão: fisheye da T265 (ArUco/AprilTag) — única RealSense disponível (T265C, s/n 925122110468); avaliar aquisição de D435/D455 se profundidade for necessária | ⬜ |
+| Fonte do erro visual da servovisão: fisheye da T265 (AprilTag 36h11, PR #23) — única RealSense disponível (T265C, s/n 925122110468); avaliar aquisição de D435/D455 se profundidade for necessária | ✅ |
 | Teste de rastreamento: alvo estático com braço real | ⬜ |
 | Teste de rastreamento: alvo em movimento lento (servovisão) | ⬜ |
 | Ajuste PID / feedforward para dinâmica real (diferente da simulação) | ⬜ |
+
+### Validação de bancada do pipeline AprilTag (shiroi, 2026-07-06)
+
+Câmera T265 real + tag 36h11 id 0 (132 mm) exibido em tela. Pipeline do
+PR #23 (`b166er_vision`) de ponta a ponta: fisheye → pinhole virtual →
+detecção → pose em `/b166er/tag_pose` + TF `tag_0`.
+
+| Distância real (trena) | Estimada | Erro | px/módulo | Taxa |
+|---|---|---|---|---|
+| 33,8 cm (tag no eixo óptico) | 33,3 cm | **−1,5%** | 14,1 | 30 Hz |
+| 60 cm | 61,2 cm | +2,0% | 8,0 | 30 Hz (todos os frames) |
+| 147 cm | 155 cm | +5,7% | 3,1 | ~24 Hz (frames perdidos) |
+
+- O ponto de 33,8 cm é o de referência: tag centralizado no eixo óptico
+  (elimina a ambiguidade de ancoragem da trena com alvo fora do eixo) e
+  resolução ideal — erro dentro da incerteza da própria trena, sem erro
+  sistemático de escala residual.
+- Ruído com tag fixo: σ < 0,5 mm em x/y (0,1 mm a 33 cm) e ~4 mm em z
+  a 1,5 m (0,35 mm a 33 cm).
+- Erro de reprojeção ~0,1 px; ambiguidade IPPE 0,16 com tag inclinado.
+- **Requisito operacional descoberto:** o erro de escala é dominado pela
+  resolução do tag na imagem — viés de fração de pixel nos cantos
+  (agravado pelo bloom da tela em câmera mono) dilui com o tamanho em px.
+  Regra prática: lado do tag ≥ d/11 (13 cm serve até ~1 m; para 1,5 m,
+  imprimir ≥ 20 cm). Tag impresso em papel fosco deve reduzir o viés de
+  bloom observado na tela.
 
 ### 4.x Otimização do Fuzzy com dados reais
 
