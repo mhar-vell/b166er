@@ -1,0 +1,13 @@
+<launch>
+  <!-- Detector de AprilTag nas fisheye da T265 (servovisão Fase 4).
+       Pré-requisito: realsense2_camera rodando com enable_fisheye1:=true. -->
+
+  <arg name="config" default="$(find b166er_vision)/config/apriltag_detector.yaml"/>
+  <arg name="debug"  default="false"/>
+
+  <node name="apriltag_detector" pkg="b166er_vision"
+        type="apriltag_detector.py" output="screen">
+    <rosparam command="load" file="$(arg config)"/>
+    <param name="publish_debug_image" value="$(arg debug)"/>
+  </node>
+</launch>
