@@ -1,0 +1,52 @@
+<launch>
+  <!-- Bringup de bancada para a Fase 4: calibração hand-eye T265 -> flange do
+       RV-M2 (ver ROADMAP.md, seção "Fase 4 — Validação em Hardware Real").
+       Sobe só o necessário para esta etapa: braço (rosserial) + T265
+       (fisheye) + detector de AprilTag. Sem Pioneer, sem D400 (não
+       disponível na bancada — única RealSense é a T265, s/n 925122110468).
+
+       Não publica nenhuma TF fixa entre a T265 e o flange (L5/CameraSupport
+       na URDF): essa transformação é justamente o que a calibração de hoje
+       vai determinar. -->
+
+  <arg name="port_arduino1" default="/dev/ttyACM2"/>
+  <arg name="port_arduino2" default="/dev/ttyACM1"/>
+  <arg name="port_arduino3" default="/dev/ttyACM0"/>
+  <arg name="launch_rviz" default="true"/>
+  <arg name="apriltag_debug" default="false"/>
+
+  <!-- Braço RV-M2: 3 Arduinos via rosserial -->
+  <node name="Arduino_1" pkg="movemaster_control" type="Arduino_1.py">
+    <param name="port" value="$(arg port_arduino1)"/>
+  </node>
+  <node name="Arduino_2" pkg="movemaster_control" type="Arduino_2.py">
+    <param name="port" value="$(arg port_arduino2)"/>
+  </node>
+  <node name="Arduino_3" pkg="movemaster_control" type="Arduino_3.py">
+    <param name="port" value="$(arg port_arduino3)"/>
+  </node>
+
+  <param name="robot_description" command="cat $(find movemaster_control)/src/movemaster_urdf.xml" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+  <node name="state_publisher" pkg="movemaster_control" type="state_publisher" output="screen"/>
+  <node name="simulate_status_real" pkg="movemaster_control" type="simulate_status_real" output="screen"/>
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find movemaster_control)/rviz/display.rviz" if="$(arg launch_rviz)"/>
+
+  <!-- T265: só fisheye + pose, sem D400 -->
+  <group ns="t265">
+    <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
+      <arg name="device_type" value="t265"/>
+      <arg name="tf_prefix" value="t265"/>
+      <arg name="enable_fisheye1" value="true"/>
+      <arg name="enable_fisheye2" value="true"/>
+      <arg name="enable_pose" value="true"/>
+    </include>
+  </group>
+
+  <!-- Detector de AprilTag (PR #23) -->
+  <include file="$(find b166er_vision)/launch/apriltag_detector.launch">
+    <arg name="debug" value="$(arg apriltag_debug)"/>
+  </include>
+
+</launch>
