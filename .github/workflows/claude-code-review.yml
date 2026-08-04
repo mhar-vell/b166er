@@ -40,12 +40,6 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # DEBUG TEMPORÁRIO (2026-08-04): logs completos para diagnosticar
-          # is_error:true reprodutível na PR #25 (14 execuções anteriores em
-          # outras PRs sempre passaram em 30-45s; nesta falhou 2x em ~3m30s,
-          # num_turns=1, custo $0 — plugin instala com sucesso, falha depois,
-          # durante a execução do SDK). Remover assim que a causa for achada.
-          show_full_output: true
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
 
