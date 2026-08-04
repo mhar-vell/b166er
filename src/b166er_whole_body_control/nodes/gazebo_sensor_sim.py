@@ -6,9 +6,15 @@ Substitui hardware real por dados sintéticos derivados do simulador:
 
   • /joint_states (Gazebo) → FK do braço → /t265/odom/sample (Odometry)
   • /gazebo/model_states[b166er] → /pioneer/pose (Odometry)
+                                 → TF world_frame→base_link
 
 Permite rodar o stack completo (state_estimator + fuzzy_wb_controller)
 sem modificar nenhum nó de controle: apenas os tópicos de fonte mudam.
+
+A TF world_frame→base_link existe só para visualização em RViz (a
+posição real do Pioneer no Gazebo). O state_estimator NÃO depende dela —
+ele calcula tudo por matrizes a partir de /pioneer/pose e /t265/odom/sample
+diretamente, sem lookup de TF.
 
 Atenção: /joint_states do Gazebo pode conter as juntas de rodas do Pioneer
 além das juntas do braço (J1-J5). Este nó filtra pelo nome.
@@ -16,9 +22,10 @@ além das juntas do braço (J1-J5). Este nó filtra pelo nome.
 
 import rospy
 import numpy as np
+import tf2_ros
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, TransformStamped
 from gazebo_msgs.msg import ModelStates
 from tf.transformations import quaternion_from_matrix
 
@@ -66,6 +73,7 @@ class GazeboSensorSim:
         # Estado da base (do Gazebo) para montar T_world_base
         self._base_odom = None
         self._model_name = 'b166er'
+        self._tf_broadcaster = tf2_ros.TransformBroadcaster()
 
         rospy.loginfo('[gazebo_sensor_sim] pronto')
 
@@ -89,6 +97,17 @@ class GazeboSensorSim:
 
         self._base_odom = odom
         self._pub_pioneer.publish(odom)
+
+        # TF só para visualização (RViz) — o state_estimator não usa isto.
+        t = TransformStamped()
+        t.header.stamp    = odom.header.stamp
+        t.header.frame_id = self._world_frame
+        t.child_frame_id  = 'base_link'
+        t.transform.translation.x = pose.position.x
+        t.transform.translation.y = pose.position.y
+        t.transform.translation.z = pose.position.z
+        t.transform.rotation      = pose.orientation
+        self._tf_broadcaster.sendTransform(t)
 
     def _cb_joints(self, msg):
         """Computa FK do braço e publica pose do T265 como Odometry."""
