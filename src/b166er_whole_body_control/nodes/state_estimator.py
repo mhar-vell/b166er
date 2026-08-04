@@ -47,6 +47,16 @@ class StateEstimator:
         self._world_frame   = rospy.get_param('~world_frame',        'odom')
         self._pub_rate      = rospy.get_param('~rate', 20.0)
 
+        # Atalho de conveniência (Gazebo apenas): usa /joint_states real como
+        # seed do IK. NÃO é fiel ao robô sem encoder — nem em Gazebo (o braço
+        # real não tem essa informação) nem em modo hardware, onde o mesmo
+        # tópico hoje existe mas carrega ruído do pino de encoder desconectado
+        # (movemaster_control/state_publisher, ver ROADMAP Fase 4). Default
+        # false: a estimativa recursiva (self._q_arm do ciclo anterior) é o
+        # único seed condizente com o hardware real. Ligar só para demos de
+        # tracking puro em Gazebo que não dizem respeito ao tuning do Fuzzy.
+        self._use_joint_states_seed = rospy.get_param('~use_joint_states_seed', False)
+
         self._base_odom  = None
         self._t265_odom  = None
         self._q_arm      = _HOME_Q.copy()   # evita singularidade q=0 no primeiro ciclo
@@ -66,9 +76,11 @@ class StateEstimator:
 
         rospy.Subscriber(self._pioneer_topic, Odometry, self._cb_pioneer)
         rospy.Subscriber(self._t265_topic,    Odometry, self._cb_t265)
-        # Em Gazebo: usa joint_states reais como seed do IK → converge em 0 iterações.
-        # Em hardware (sem encoders): tópico não existe, self._q_joints permanece None.
-        rospy.Subscriber('/joint_states', JointState, self._cb_joint_states, queue_size=1)
+        if self._use_joint_states_seed:
+            rospy.Subscriber('/joint_states', JointState,
+                             self._cb_joint_states, queue_size=1)
+            rospy.logwarn('[state_estimator] use_joint_states_seed=true — '
+                          'seed via ground truth, NÃO fiel ao robô sem encoder')
 
         rospy.loginfo('[state_estimator] pronto')
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)

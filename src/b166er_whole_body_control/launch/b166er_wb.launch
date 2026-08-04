@@ -36,6 +36,13 @@
        doc="Taxa de controle do stack WB (Hz)"/>
   <arg name="rviz_config"
        default="$(find b166er_robot)/config/b166er.rviz"/>
+  <arg name="ik_seed_ground_truth" default="false"
+       doc="Usa /joint_states real como seed do IK do state_estimator — atalho
+            só de conveniência p/ Gazebo (convergência em 0 iter), NÃO fiel ao
+            robô real sem encoder. Em modo hardware o mesmo tópico hoje
+            carrega ruído (state_publisher sem encoder, ver ROADMAP Fase 4) —
+            nunca ligar lá. Default false: estimativa recursiva, a mesma que
+            o hardware real vai ter disponível."/>
 
   <!-- ── Robot description ───────────────────────────────────────── -->
   <param name="use_sim_time"
@@ -154,10 +161,11 @@
           pkg="b166er_whole_body_control"
           type="state_estimator.py"
           output="screen">
-      <param name="t265_odom_topic"    value="/t265/odom/sample"/>
-      <param name="pioneer_odom_topic" value="/pioneer/pose"/>
-      <param name="world_frame"        value="odom"/>
-      <param name="rate"               value="$(arg rate)"/>
+      <param name="t265_odom_topic"       value="/t265/odom/sample"/>
+      <param name="pioneer_odom_topic"    value="/pioneer/pose"/>
+      <param name="world_frame"           value="odom"/>
+      <param name="rate"                  value="$(arg rate)"/>
+      <param name="use_joint_states_seed" value="$(arg ik_seed_ground_truth)"/>
     </node>
 
     <!-- 2 · Fuzzy whole-body controller: Pioneer + RV-M2 como 8-DOF -->
