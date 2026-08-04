@@ -49,6 +49,18 @@ catkin build
 
 Comandos na NUC são sempre `bash -c "..."`. Comandos no Shiroi usam `zsh`.
 
+## Git workflow
+
+`local-state` is the persistent working branch — not a one-off feature
+branch. Day-to-day work accumulates there across sessions; it's pushed
+and opened as a PR to `main` whenever a batch of work is ready for
+review (usually once per session, sometimes more). After merge,
+`local-state` stays alive: pull `main` back into it (or fast-forward)
+before starting the next round of work, rather than deleting and
+recreating it. `main` has no branch protection configured, but the
+convention holds anyway: **only Marco approves and merges PRs**, never
+via `gh pr merge`/`gh pr review --approve`.
+
 ## Environment setup
 
 ```bash
