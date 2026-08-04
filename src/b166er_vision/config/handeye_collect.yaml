@@ -1,0 +1,31 @@
+# Parâmetros do handeye_collect (calibração hand-eye T265 -> flange RV-M2)
+# Regra do projeto: nada de hardcoding — tudo aqui.
+
+# Perturbação máxima por junta (graus) em torno da pose inicial (seed).
+# A pose inicial é a pose ATUAL do braço quando o nó inicia — posicione
+# o braço manualmente com o tag visível antes de rodar.
+delta_deg: [15.0, 10.0, 10.0, 15.0, 25.0]
+
+# Frames da FK (URDF) usados como par "A" da calibração (AX=XB)
+base_frame: Base
+flange_frame: L5
+
+# Tempo máximo esperando IsDone em /status_1..5 após comandar uma pose (s)
+settle_timeout: 8.0
+# Espera extra depois do IsDone antes de capturar, p/ assentamento mecânico (s)
+settle_dwell: 0.6
+
+# Idade máxima aceita do último /b166er/tag_pose p/ considerar "visível" (s)
+tag_timeout: 1.5
+# Se não visível na primeira checagem, espera isso e tenta de novo antes de descartar (s)
+tag_retry_wait: 2.0
+
+# Pede confirmação manual (Enter) antes de CADA movimento — desligar por
+# conta e risco, é a única rede de segurança do script num braço real.
+confirm_each_move: true
+
+# Volta pra pose inicial (seed) ao final da coleta
+return_to_seed: true
+
+# Onde salvar o .npz com os pares coletados
+output_dir: "~/b166er_handeye"

@@ -191,6 +191,21 @@ T265 (δerr ruidoso chaveia os ganhos do Mamdani erraticamente).
 | E-Stop físico (relé) + watchdog ROS | ⬜ |
 | Demonstração completa: navegação + manipulação autônoma | ⬜ |
 
+### 6.x Segurança: tombamento e força de contato (item futuro, 2026-07-08)
+
+Motivado por tarefas de manipulação que exigirão o braço aplicar força
+contra resistência mecânica (ex.: romper uma trava), não só movimento
+livre — muda o perfil de risco (tombamento) e expõe uma lacuna maior
+(ausência total de sensoriamento de força).
+
+| Etapa | Status |
+|---|---|
+| Existe protótipo órfão `b166er_robot/scripts/stability_controller.py` (IMU → tilt → fator de estabilidade → `/emergency_stop`) — não incluído em nenhum launch atual, não conectado ao `fuzzy_wb_controller` | ⬜ |
+| Métrica de tombamento deve considerar a configuração do braço (CoM e braço de alavanca mudam com o braço estendido), não só tilt fixo do chassi | ⬜ |
+| Sem F/T sensor no punho e sem encoder de junta: hoje não há nenhuma realimentação de força — aplicar força contra uma trava seria em malha aberta (só PWM/velocidade comandados) | ⬜ |
+| Avaliar proxy indireto de força de contato (ex.: corrente/PWM saturado do motor) até haver sensor de força real | ⬜ |
+| Decidir e integrar `stability_controller.py` (ou reescrita) no `b166er_wb.launch`, com `/emergency_stop` de fato consumido pelo `fuzzy_wb_controller` | ⬜ |
+
 ---
 
 ## Scripts de Setup

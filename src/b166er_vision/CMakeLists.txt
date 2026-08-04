@@ -12,5 +12,6 @@ catkin_package(
 catkin_install_python(
   PROGRAMS
     nodes/apriltag_detector.py
+    nodes/handeye_collect.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
