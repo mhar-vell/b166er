@@ -11,6 +11,12 @@ Lei de controle:
   K_fuzzy = diag(k_pos, k_pos, k_pos, k_orient, k_orient, k_orient)
   λ       = lambda_dls adaptativo
 
+Manobra girar-avançar-girar (ver ~maneuver_enable): o DLS resolve a base
+como holonômica; quando isso pede componente lateral que uma base
+skid-steer não realiza, o controlador entra em ALIGN (para, gira até
+apontar pra direção que o DLS pediu) antes de voltar a ADVANCE (controle
+whole-body normal). Só ativo com ~nonholonomic=true.
+
 Tópicos
 -------
   Subscreve:
@@ -114,6 +120,34 @@ class FuzzyWBController:
         self._tol_pos    = rospy.get_param('~tol_pos',    0.005)   # m
         self._tol_orient = rospy.get_param('~tol_orient', 0.02)    # rad
 
+        # Manobra girar-avançar-girar: a base é skid-steer (2 DOF de
+        # controle — avanço + giro), mas o DLS resolve o erro tratando-a
+        # como holonômica (x, y, θ livres, ver base_jacobian_world). Sempre
+        # que a solução holonômica pede componente lateral significativa
+        # (perpendicular ao heading), a base sozinha não consegue realizar
+        # isso — historicamente ela "empacava" com o piso de velocidade sem
+        # convergir (ver ROADMAP, limitação da Fase 3). Em vez de deixar
+        # essa componente ser descartada silenciosamente na projeção não-
+        # -holonômica, entra em ALIGN: para, gira até apontar pra direção
+        # que o DLS pediu, e só então retoma o avanço normal (ADVANCE) —
+        # cria um ponto de parada determinístico, também o lugar certo para
+        # travas de segurança futuras (tilt do IMU) antes de aplicar força.
+        self._maneuver_enable       = rospy.get_param('~maneuver_enable', True)
+        self._heading_engage_tol    = rospy.get_param('~heading_engage_tol', 0.35)  # rad (~20°)
+        self._heading_exit_tol      = rospy.get_param('~heading_exit_tol',  0.08)   # rad (~4.5°)
+        self._align_min_planar_dist = rospy.get_param('~align_min_planar_dist', 0.05)  # m, piso p/ confiar no rumo até o alvo
+        self._align_k                = rospy.get_param('~align_k', 1.5)  # rad/s por rad de erro de heading
+        # Teto de tempo do ALIGN: numa base skid-steer real (e no ODE do
+        # Gazebo) girar "no lugar" desliza — em giros longos e sustentados
+        # o deslocamento translacional real desloca o rumo até o alvo mais
+        # rápido do que o giro consegue alcançar, e o ALIGN nunca satisfaz
+        # a tolerância de saída (observado em Gazebo com alvo muito
+        # lateral). Ao vencer o teto, desiste e libera o ADVANCE — girar
+        # pra sempre é pior que seguir com o melhor esforço contínuo.
+        self._align_max_duration    = rospy.get_param('~align_max_duration', 8.0)  # s
+        self._maneuver_state        = 'ADVANCE'   # ou 'ALIGN' — histerese entre os dois
+        self._align_t_start         = None
+
         # Estado
         self._robot_state = None
         self._target      = None
@@ -210,6 +244,76 @@ class FuzzyWBController:
         msg.data = [k_pos, k_orient, lam]
         self._pub_gains.publish(msg)
 
+    # ------------------------------------------------------------------
+    def _update_maneuver_state(self, base_xy, target_xy, theta, now):
+        """Decide ALIGN vs ADVANCE com histerese.
+
+        Usa o rumo (bearing) da base até a posição XY do alvo como
+        referência — não a direção crua da solução holonômica do DLS.
+        A primeira versão usava essa direção do DLS, mas ela some com o
+        próprio braço rígido preso na base: com o braço parado durante o
+        ALIGN, girar a base faz o EE orbitar em torno do centro de giro,
+        deslocando a direção "ótima" a cada ciclo — o controlador perseguia
+        um alvo que se movia por causa do próprio giro e nunca convergia
+        (oscilação observada em Gazebo, heading_err indo a ±π sem cair). O
+        rumo até a posição XY do alvo é fixo enquanto a base só gira no
+        lugar (v=0), então não sofre desse acoplamento.
+
+        base_xy, target_xy : (x, y) mundial, metros.
+        """
+        if not (self._nonholo and self._maneuver_enable):
+            self._maneuver_state = 'ADVANCE'
+            return 0.0
+
+        dx, dy = target_xy[0] - base_xy[0], target_xy[1] - base_xy[1]
+        planar_dist = float(np.hypot(dx, dy))
+        if planar_dist < self._align_min_planar_dist:
+            # Base já está sobre a posição XY do alvo (erro é só em z ou
+            # orientação) — rumo indefinido/ruidoso, não força giro.
+            heading_error = 0.0
+        else:
+            desired_theta = float(np.arctan2(dy, dx))
+            heading_error = float(np.arctan2(np.sin(desired_theta - theta),
+                                             np.cos(desired_theta - theta)))
+
+        if self._maneuver_state == 'ADVANCE':
+            if abs(heading_error) > self._heading_engage_tol:
+                self._maneuver_state = 'ALIGN'
+                self._align_t_start  = now
+                rospy.loginfo('[fuzzy_wb_ctrl] manobra: ADVANCE -> ALIGN '
+                              '(heading_err=%.3frad)', heading_error)
+        else:
+            elapsed = (now - self._align_t_start).to_sec() if self._align_t_start else 0.0
+            if abs(heading_error) < self._heading_exit_tol:
+                self._maneuver_state = 'ADVANCE'
+                rospy.loginfo('[fuzzy_wb_ctrl] manobra: ALIGN -> ADVANCE')
+            elif elapsed > self._align_max_duration:
+                self._maneuver_state = 'ADVANCE'
+                rospy.logwarn('[fuzzy_wb_ctrl] manobra: ALIGN excedeu %.1fs sem '
+                              'convergir (heading_err=%.3frad) — desistindo, '
+                              'provável deslizamento da base durante o giro. '
+                              'ADVANCE segue com o melhor esforço.',
+                              self._align_max_duration, heading_error)
+
+        return heading_error
+
+    def _run_align(self, heading_error, stamp, k_pos, k_orient, lam):
+        """Fase ALIGN: gira em torno do próprio eixo, braço parado.
+
+        Não calcula J_wb (evita o custo do DLS quando só se está girando),
+        então não publica /b166er/wb_jacobian nesta fase.
+        """
+        omega = float(np.clip(self._align_k * heading_error,
+                              -MAX_BASE_ANG, MAX_BASE_ANG))
+        twist = Twist()
+        twist.angular.z = omega
+        self._pub_cmdvel.publish(twist)
+        self._publish_arm_vel(np.zeros(5), stamp)
+        self._publish_gains(k_pos, k_orient, lam)
+        rospy.loginfo_throttle(1.0,
+            '[fuzzy_wb] ALIGN heading_err=%.3frad omega=%.3f',
+            heading_error, omega)
+
     def _publish_jacobian(self, J):
         msg = Float64MultiArray()
         d0  = MultiArrayDimension(label='rows', size=J.shape[0],
@@ -270,17 +374,27 @@ class FuzzyWBController:
                 k_orient * err_EE[3:],
             ])
 
-            # ---- 3. Jacobiana whole-body e DLS --------------------------
+            # ---- 3. Pose da base + manobra girar-avançar-girar ----------
             T_world_base = _odom_to_matrix(state.base_odom)
             q_arm        = np.array(state.q_arm)
+            theta        = float(np.arctan2(T_world_base[1, 0], T_world_base[0, 0]))
 
+            # Se a base ainda não aponta na direção geral do alvo, para
+            # tudo e gira antes de deixar o DLS/projeção não-holonômica
+            # tentar (e falhar) corrigir erro lateral com a base andando.
+            heading_error = self._update_maneuver_state(
+                T_world_base[:2, 3], self._target[:2, 3], theta, now)
+            if self._maneuver_state == 'ALIGN':
+                self._run_align(heading_error, now, k_pos, k_orient, lam)
+                rate.sleep()
+                continue
+
+            # ---- 4. Jacobiana whole-body e DLS ---------------------------
             J_wb  = whole_body_jacobian(q_arm, T_world_base)
             J_pin = dls_pseudoinverse(J_wb, lam)
             N     = null_space_projector(J_wb, J_pin)
 
-            # ---- 4. Tarefa principal + espaço nulo ----------------------
             q_dot_task = J_pin @ xdot_d
-
             q_dot_null = N @ np.concatenate([
                 np.zeros(3),
                 self._ns_gain * joint_limit_gradient(q_arm),
@@ -289,8 +403,6 @@ class FuzzyWBController:
             q_dot_wb = q_dot_task + q_dot_null   # (8,)
 
             # ---- 5. Publica comandos ------------------------------------
-            theta = float(np.arctan2(T_world_base[1, 0], T_world_base[0, 0]))
-
             self._publish_cmd_vel(q_dot_wb[:3], theta)
             self._publish_arm_vel(q_dot_wb[3:], now)
             self._publish_gains(k_pos, k_orient, lam)
