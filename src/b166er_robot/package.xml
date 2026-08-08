@@ -26,4 +26,12 @@
   <depend>gazebo_ros_control</depend>
   <depend>rosaria</depend>
   <depend>movemaster_control</depend>
+
+  <export>
+    <!-- Expõe materials/ como caminho de mídia do Gazebo, para que o
+         script apriltag.material (materials/scripts/) e a textura
+         apriltag_36h11_id0.png (materials/textures/) sejam encontrados
+         pelo suporte de AprilTag em urdf/fixtures/apriltag_mount.urdf.xacro. -->
+    <gazebo_ros gazebo_media_path="${prefix}"/>
+  </export>
 </package>

@@ -1,0 +1,30 @@
+<launch>
+  <!-- Spawna a fixture (parede + chave seccionadora LF + tag AprilTag)
+       como modelo Gazebo separado do b166er (estático, não faz parte do
+       robot_description do robô). Requer um Gazebo já rodando
+       (ex.: roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo).
+
+       Padrão: 3 m de distância do ponto de spawn do robô (origem do
+       mundo, x=0 y=0), com yaw=π (3.14159 rad) para que a face frontal
+       da parede (onde a chave e a tag estão fixadas) fique voltada de
+       volta para -X, ou seja, de frente para onde o robô nasce — o
+       robô precisa navegar até lá antes de manipular, não só esticar o
+       braço parado. (Valor confirmado empiricamente via spawn de teste
+       e captura de tela em 2026-08-08 — a conta trigonométrica inicial
+       apontava π/2, mas não bateu com o eixo real da câmera padrão do
+       Gazebo; π é o que funciona de verdade.)
+  -->
+  <arg name="x"   default="3.0"/>
+  <arg name="y"   default="0.0"/>
+  <arg name="z"   default="0.0"/>
+  <arg name="yaw" default="3.14159"/>
+
+  <param name="chave_fixture_description"
+         command="$(find xacro)/xacro $(find b166er_robot)/urdf/fixtures/chave_com_tag.urdf.xacro"/>
+
+  <node name="spawn_chave_fixture" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model chave_seccionadora_fixture
+              -param chave_fixture_description
+              -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)"
+        output="screen"/>
+</launch>
