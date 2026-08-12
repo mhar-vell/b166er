@@ -33,9 +33,13 @@
        expõe propriedades de dentro de um macro para fora dele. Se os
        parâmetros dimensionais da chave mudarem lá, atualizar aqui
        também — olhal_height=0.810, blade_length=0.200,
-       blade_angle=0.349 rad, insulator_height=0.150, bracket_height=0.060. -->
+       blade_angle=0.349 rad, bracket_height=0.060. Sem isolador (ver
+       nota "SEM ISOLADOR" em chave_seccionadora_lf.urdf.xacro,
+       decisão do Marco em 2026-08-12): a lâmina pivota direto no
+       topo do bracket, então este valor subiu em relação à versão
+       anterior com isolador (que era ≈0,7879 m). -->
   <xacro:property name="chave_bracket_mount_z"
-    value="${0.810 + 0.200*cos(0.349) - 0.150 - 0.060}"/>  <!-- ≈ 0,7879 m -->
+    value="${0.810 + 0.200*cos(0.349) - 0.060}"/>  <!-- ≈ 0,9379 m -->
 
   <xacro:property name="tag_mount_z" value="1.030"/>
 
