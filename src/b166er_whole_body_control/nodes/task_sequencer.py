@@ -14,16 +14,25 @@ usando o mesmo critério de convergência dos dois controladores
 
 Fases (ver PHASE_ORDER): engage → release → pos1 → pos2.
 
-Pose do olhal: consultada UMA VEZ, no startup, via
-/gazebo/get_link_state (chave_olhal_link) — fonte única de verdade, em
-vez de recalcular a geometria do pivô em Python (ela já está duplicada
-entre o macro chave_seccionadora_lf.urdf.xacro e chave_com_tag.urdf.xacro;
-não faz sentido duplicar de novo aqui). Os offsets do YAML estão no
-frame local do fixture (X horizontal ao longo da parede, Z vertical —
-ver docs/chave_seccionadora_task.md); giramos esse offset pela
-orientação do link consultada (que é só o yaw de spawn do fixture,
-já que nenhum joint na cadeia bracket→blade→olhal aplica rotação de
-frame — blade_angle é só um offset visual, não gira o frame).
+Pose do olhal: NÃO dá pra consultar chave_olhal_link diretamente via
+/gazebo/get_link_state — confirmado ao vivo em testes no Gazebo
+(2026-08-12): a fixture inteira (bracket→blade→olhal, todos ligados só
+por juntas fixas) é fundida pelo Gazebo num único corpo rígido na
+conversão URDF→SDF, e só "wall_link" sobra como link consultável
+(/gazebo/get_model_properties mostra body_names=['wall_link'] — mesma
+fusão que já tinha forçado o uso de <gazebo reference><material> em vez
+de <material><color> no xacro, agora atingindo get_link_state também).
+
+Então: consultamos wall_link (que sempre existe) e aplicamos por cima
+o offset FIXO conhecido até o olhal (_OLHAL_OFFSET_FROM_WALL_LINK,
+replicado da geometria de chave_seccionadora_lf.urdf.xacro +
+chave_com_tag.urdf.xacro — SIM, é a terceira cópia dessa fórmula;
+inevitável dado o comportamento do Gazebo acima). Os offsets do YAML
+(pos1/pos2/release) estão no mesmo frame local do fixture (X horizontal
+ao longo da parede, Z vertical — ver docs/chave_seccionadora_task.md);
+giramos tudo pela orientação de wall_link consultada (só o yaw de
+spawn — nenhum joint na cadeia bracket→blade→olhal gira o frame,
+blade_angle é só um offset visual).
 
 Orientação do alvo: o documento da tarefa descreve só DIREÇÕES DE
 FORÇA (perpendicular/paralela ao eixo X), não uma orientação de
@@ -43,6 +52,8 @@ Tópicos
     /gazebo/get_link_state — consultado uma vez, no startup
 """
 
+import math
+
 import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped
@@ -54,6 +65,32 @@ from b166er_whole_body_control.kinematics import pose_error
 
 
 PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
+
+# ── Geometria replicada de urdf/fixtures/chave_seccionadora_lf.urdf.xacro
+#    e chave_com_tag.urdf.xacro (terceira cópia da fórmula do pivô — ver
+#    docstring do módulo para o motivo). Se os parâmetros dimensionais da
+#    chave mudarem lá, atualizar aqui também. ──
+_CHAVE_X_OFFSET     = -0.20    # chave_x_offset, chave_com_tag.urdf.xacro
+_OLHAL_HEIGHT       = 0.810    # olhal_height, spec do Marco
+_BLADE_LENGTH       = 0.200    # blade_length
+_BLADE_ANGLE_CLOSED = 0.349    # blade_angle, 20° em rad, posição fechada
+_WALL_STANDOFF      = 0.03     # wall_standoff
+
+_PIVOT_X = _BLADE_LENGTH * math.sin(_BLADE_ANGLE_CLOSED)
+
+# Offset fixo de wall_link (origem = pose de spawn do fixture) até
+# chave_olhal_link, no frame local do fixture (X horizontal ao longo
+# da parede, Y profundidade/normal da parede, Z vertical). O Z é
+# exatamente _OLHAL_HEIGHT porque wall_link nasce no chão (spawn z=0
+# por padrão) e toda a cadeia bracket→blade→olhal foi construída, de
+# propósito, para que o olhal caia exatamente nessa altura (ver nota
+# em chave_seccionadora_lf.urdf.xacro) — os termos de bracket_height/
+# pivot_z se cancelam por construção, não precisam ser repetidos aqui.
+OLHAL_OFFSET_FROM_WALL_LINK = np.array([
+    _CHAVE_X_OFFSET - _PIVOT_X,
+    _WALL_STANDOFF,
+    _OLHAL_HEIGHT,
+])
 
 
 def _quat_to_matrix(o):
@@ -68,13 +105,26 @@ class TaskSequencer:
         task_params = rospy.get_param('/chave_seccionadora_task')
         self._phases = [(name, task_params[name]) for name in PHASE_ORDER]
 
-        # ~target_link sobrescreve o target_frame do YAML só se setado
-        # explicitamente — o YAML é a fonte de verdade por padrão.
-        self._link_name   = rospy.get_param('~target_link',
-                                             task_params.get('target_frame',
-                                                              'chave_olhal_link'))
+        # Link REALMENTE consultável no Gazebo (ver docstring do módulo —
+        # a fixture inteira é fundida em wall_link na conversão URDF→SDF).
+        # ~target_link permite sobrescrever para outra fixture/link no
+        # futuro; não é mais o target_frame do YAML (esse continua
+        # documentando o frame ao qual os offsets do YAML se referem,
+        # não o link a consultar).
+        self._link_name   = rospy.get_param('~target_link', 'wall_link')
         self._model_name  = rospy.get_param('~fixture_model_name',
                                              'chave_seccionadora_fixture')
+
+        # DOIS frames diferentes, não confundir (bug encontrado ao vivo
+        # em testes no Gazebo, 2026-08-12): /gazebo/get_link_state só
+        # entende "world" como reference_frame (Gazebo não conhece o
+        # nome "odom") — já o resto do stack (fuzzy_wb_controller,
+        # state_estimator, /b166er/robot_state) usa "odom" como
+        # frame_id. Numericamente são o mesmo frame aqui (gazebo_sensor_sim
+        # publica /pioneer/pose direto do ground truth do Gazebo, sem
+        # nenhuma transformação — ver gazebo_sensor_sim.py), mas os
+        # NOMES não são intercambiáveis nas chamadas de serviço/mensagem.
+        self._gazebo_world_frame = 'world'
         self._world_frame = rospy.get_param('~world_frame', 'odom')
         self._dwell_time  = rospy.get_param('~dwell_time', 1.0)      # s parado em cada waypoint
         self._phase_timeout = rospy.get_param('~phase_timeout', 30.0)  # s — só gera aviso, não aborta
@@ -110,11 +160,11 @@ class TaskSequencer:
         rospy.wait_for_service('/gazebo/get_link_state')
         get_link_state = rospy.ServiceProxy('/gazebo/get_link_state', GetLinkState)
 
-        resp = get_link_state(self._link_name, self._world_frame)
+        resp = get_link_state(self._link_name, self._gazebo_world_frame)
         if not resp.success:
             # Gazebo às vezes só resolve com o nome com escopo do modelo
             scoped_name = '{}::{}'.format(self._model_name, self._link_name)
-            resp = get_link_state(scoped_name, self._world_frame)
+            resp = get_link_state(scoped_name, self._gazebo_world_frame)
 
         if not resp.success:
             raise RuntimeError(
@@ -125,11 +175,18 @@ class TaskSequencer:
 
         p = resp.link_state.pose.position
         o = resp.link_state.pose.orientation
-        pos = np.array([p.x, p.y, p.z])
-        R   = _quat_to_matrix(o)[:3, :3]
+        wall_pos = np.array([p.x, p.y, p.z])
+        R        = _quat_to_matrix(o)[:3, :3]
         rospy.loginfo('[task_sequencer] %s em (%.3f, %.3f, %.3f)',
-                      self._link_name, *pos)
-        return pos, R
+                      self._link_name, *wall_pos)
+
+        # wall_link + offset fixo (girado pela orientação de wall_link,
+        # que é a mesma orientação de toda a cadeia bracket→blade→olhal)
+        # = pose real de chave_olhal_link.
+        olhal_pos = wall_pos + R @ OLHAL_OFFSET_FROM_WALL_LINK
+        rospy.loginfo('[task_sequencer] chave_olhal_link (calculado) em '
+                      '(%.3f, %.3f, %.3f)', *olhal_pos)
+        return olhal_pos, R
 
     def _phase_target_matrix(self, phase_params):
         offset_local = np.array(phase_params['offset_xyz_m'], dtype=float)
