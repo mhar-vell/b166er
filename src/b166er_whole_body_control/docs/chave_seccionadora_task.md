@@ -84,12 +84,32 @@ fórmula de pivô, sinal do Z invertido para o sentido real (desce).
 do curso usada no cálculo, não corresponde mais a um ângulo de pivô
 literal.
 
-## Próximo passo (não implementado ainda)
+## Sequenciador (`task_sequencer.py`)
 
-Com os números confirmados, o próximo incremento é um nó
-sequenciador (`task_sequencer.py`, seguindo o padrão SMACH/BT já
-previsto na arquitetura do b166er) que carrega este YAML e publica
-os waypoints em sequência para `/b166er/ee_target`, avançando para o
-próximo waypoint quando o `whole_body_planner` reportar convergência
-(`err_norm_pos < 0.005` e `err_norm_orient < 0.02`, mesmos limiares
-já usados em `whole_body_planner.py`).
+Com curso e sentido confirmados, o nó `nodes/task_sequencer.py` carrega
+este YAML e publica os waypoints em sequência para `/b166er/ee_target`,
+avançando de fase quando o erro de pose (mesma `pose_error` usada por
+`fuzzy_wb_controller.py`/`whole_body_planner.py`) cai dentro das
+tolerâncias (`tol_pos`/`tol_orient`, mesmos defaults dos dois
+controladores).
+
+A pose de `chave_olhal_link` é consultada uma única vez, no startup,
+via `/gazebo/get_link_state` — não recalculada a partir da geometria
+do xacro em Python (evita duplicar a fórmula do pivô uma terceira
+vez). A orientação do EE no início da tarefa fica fixa durante toda a
+sequência — só a posição varia entre as fases (ver ressalva na
+docstring do nó: o documento da tarefa não especifica orientação de
+ferramenta para o engate).
+
+Uso:
+
+```bash
+# 1. stack whole-body completo + Gazebo
+roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo
+
+# 2. fixture da chave na parede
+roslaunch b166er_robot spawn_chave_fixture.launch
+
+# 3. sequência de abertura
+roslaunch b166er_whole_body_control chave_seccionadora_task.launch
+```
