@@ -47,34 +47,27 @@ chave_seccionadora_task:
   #    ao eixo X — "posição 1" (intermediária) e "posição 2" (final,
   #    chave aberta) ──
   #
-  # AINDA NÃO CONFIRMADO COM DADOS REAIS DA BANCADA. O documento do
-  # Marco mostra um arco tracejado (a lâmina pivotando em torno do
-  # ponto fixo no topo do bracket — mesmo pivô já modelado no xacro,
-  # blade_length=0.200m, blade_angle fechado=20°/0.349rad), mas não
-  # dá um número de curso/ângulo. Dois pontos importantes ficam em
-  # aberto até o Marco medir na chave real:
+  # Curso confirmado pelo Marco em 2026-08-12: 30° de giro total da
+  # lâmina, a partir do ângulo fechado (20°/0.349rad) — ou seja,
+  # posição 2 (totalmente aberta) = 50° absoluto. Posição 1
+  # (intermediária) segue sendo uma estimativa MINHA para dividir o
+  # curso em dois passos (metade do curso, 35° absoluto) — o
+  # documento não especifica esse ponto médio, só que ele existe a
+  # caminho da posição 2; ajustar se o Marco quiser outra proporção.
   #
-  #   1. Magnitude do curso (quantos graus a lâmina gira do fechado
-  #      até totalmente aberta) — os valores abaixo (45° e 95°) são
-  #      SÓ uma estimativa de proporção visual do diagrama, não uma
-  #      medição.
-  #   2. Sentido do arco: pela geometria do pivô já modelada no xacro
-  #      (olhal = pivô - blade_length·(sin θ, 0, cos θ)), girar a
-  #      lâmina para um ângulo θ MAIOR faz o olhal SUBIR (Z cresce,
-  #      lâmina indo de quase-vertical para mais horizontal). Mas o
-  #      desenho à mão do documento sugere o olhal DESCENDO até a
-  #      posição 2. Essas duas leituras se contradizem — não vou
-  #      travar um sentido sem o Marco confirmar olhando a chave real
-  #      abrindo (pode ser erro de proporção no desenho à mão, pode
-  #      ser que o pivô real não seja exatamente o mesmo ponto
-  #      modelado aqui). offset_xyz_m abaixo são placeholders
-  #      calculados pela fórmula do pivô (sentido "sobe"); se for o
-  #      contrário, inverter o sinal do Z.
+  # Sentido do arco AINDA NÃO CONFIRMADO: pela geometria do pivô já
+  # modelada no xacro (olhal = pivô - blade_length·(sin θ, 0, cos θ)),
+  # um ângulo θ MAIOR faz o olhal SUBIR (Z cresce, lâmina indo de
+  # quase-vertical para mais horizontal) — é essa a convenção usada
+  # abaixo. O desenho à mão do documento sugere o oposto (olhal
+  # descendo até a posição 2); o Marco ainda não resolveu essa
+  # divergência. Se o sentido real for "desce", inverter o sinal do Z
+  # em ambos os offsets abaixo.
   pos1:
-    # ESTIMATIVA — pivô girando de 20° (fechado) para ~45°
-    offset_xyz_m: [-0.073, 0.0, 0.047]   # placeholder, ver nota acima
-    blade_angle_deg_estimate: 45
+    # Metade do curso confirmado (20° + 15° = 35°)
+    offset_xyz_m: [-0.046, 0.0, 0.024]
+    blade_angle_deg: 35
   pos2:
-    # ESTIMATIVA — pivô girando de 20° (fechado) para ~95°
-    offset_xyz_m: [-0.131, 0.0, 0.205]   # placeholder, ver nota acima
-    blade_angle_deg_estimate: 95
+    # Curso completo confirmado pelo Marco (20° + 30° = 50°)
+    offset_xyz_m: [-0.085, 0.0, 0.059]
+    blade_angle_deg: 50

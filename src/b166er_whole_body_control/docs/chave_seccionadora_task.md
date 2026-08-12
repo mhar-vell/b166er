@@ -53,34 +53,34 @@ Frame escolhido por ser invariante ao yaw de spawn do fixture no
 mundo Gazebo (`spawn_chave_fixture.launch`) — só depende da geometria
 da própria chave, não de onde ela está no mundo.
 
-## Em aberto — precisa de dados reais da bancada
+## Curso confirmado
 
-Os `offset_xyz_m` de `pos1`/`pos2` no YAML são **placeholders**,
-calculados a partir da geometria de pivô já usada no xacro
-(`blade_length=0.200m`, ângulo fechado 20°/0.349rad), assumindo
-ângulos de abertura de 45° e 95° — só uma estimativa de proporção
-visual do diagrama, não uma medição.
+Marco confirmou em 2026-08-12: **30° de giro total** da lâmina, a
+partir do ângulo fechado (20°/0.349rad) — posição 2 (totalmente
+aberta) = 50° absoluto. Posição 1 (intermediária) fica na metade
+desse curso (35° absoluto) — divisão escolhida por mim para ter um
+waypoint intermediário, já que o documento não especifica essa
+proporção; ajustar se o Marco quiser outra divisão.
 
-Dois pontos específicos meu cálculo não conseguiu fechar com
-confiança, e por isso não travei nenhum valor definitivo:
+Os `offset_xyz_m` de `pos1`/`pos2` no YAML já refletem esse curso,
+calculados pela geometria de pivô do xacro (`blade_length=0.200m`).
 
-1. **Curso real de abertura** (quantos graus/mm a chave realmente
-   percorre até abrir) — só o Marco, com a chave física em mãos, tem
-   esse número.
-2. **Sentido do arco.** Pela fórmula de pivô já modelada no xacro
-   (`olhal = pivô - blade_length·(sin θ, 0, cos θ)`), um ângulo θ
-   *maior* faz o olhal *subir* (Z cresce, lâmina saindo de
-   quase-vertical para mais horizontal). O desenho à mão do documento,
-   por outro lado, mostra a posição 2 mais *baixa* que a posição do
-   olhal fechado. Além disso, a foto real da bancada (acima) mostra um
-   mecanismo com aparência de dobradiça/mola vertical, visualmente
-   diferente do desenho técnico do datasheet (que inclui o isolador,
-   removido na bancada) — não é certo que o mesmo ponto de pivô e o
-   mesmo sentido de giro se apliquem 1:1 ao rig de teste real.
+## Em aberto — sentido do arco
 
-**Ação pendente:** Marco vai medir o curso real na bancada física e
-passar os valores (graus de rotação da lâmina, ou deslocamento
-X/Z medido do olhal) para substituir os placeholders no
+Um ponto específico ainda não foi resolvido: pela fórmula de pivô já
+modelada no xacro (`olhal = pivô - blade_length·(sin θ, 0, cos θ)`),
+um ângulo θ *maior* faz o olhal *subir* (Z cresce, lâmina saindo de
+quase-vertical para mais horizontal) — é essa a convenção usada nos
+offsets do YAML. O desenho à mão do documento, por outro lado, mostra
+a posição 2 mais *baixa* que a posição do olhal fechado. Além disso,
+a foto real da bancada (acima) mostra um mecanismo com aparência de
+dobradiça/mola vertical, visualmente diferente do desenho técnico do
+datasheet (que inclui o isolador, removido na bancada) — não é certo
+que o mesmo ponto de pivô e o mesmo sentido de giro se apliquem 1:1
+ao rig de teste real.
+
+**Ação pendente:** se o sentido real observado na chave física for
+"desce" em vez de "sobe", inverter o sinal do Z em `pos1`/`pos2` no
 `chave_seccionadora_task.yaml`.
 
 ## Próximo passo (não implementado ainda)
