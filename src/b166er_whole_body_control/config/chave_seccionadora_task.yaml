@@ -1,0 +1,80 @@
+# Sequência de movimentos para abrir a chave seccionadora unipolar
+# (fixture urdf/fixtures/chave_com_tag.urdf.xacro), conforme descrito
+# pelo Marco em "Descrição do movimento de abertura da chave
+# seccionadora" (Google Docs, compartilhado em 2026-08-12).
+#
+# Frame de referência: local do fixture (mesmo frame do wall_link, não
+# o frame do mundo) — eixo X horizontal ao longo da parede (mesmo eixo
+# de chave_x_offset/tag_x_offset no xacro), eixo Z vertical (gravidade).
+# Isso bate com o X/Y do desenho técnico do documento (lá chamado de
+# X/Y; aqui, X/Z), e é invariante ao yaw com que o fixture é spawnado
+# no mundo Gazebo — só depende da geometria da própria chave.
+#
+# Documento original:
+#   "Uma ferramenta no end-efector do manipulador realizará o engate
+#    no olhal e o robot deverá realizar uma força perpendicular ao
+#    eixo X (este movimento fará com que a chave seja liberada para
+#    realizar o movimento seguinte). Logo após este movimento, o robot
+#    deverá realizar um movimento paralelo ao eixo X, ou seja o olhal
+#    descerá um pouco para a posição um e depois irá para a posição 2,
+#    realizando dessa forma a abertura da chave."
+#
+# NÃO tem isolador — ver nota "SEM ISOLADOR" em
+# urdf/fixtures/chave_seccionadora_lf.urdf.xacro.
+
+chave_seccionadora_task:
+
+  # Frame TF do olhal no fixture Gazebo (alvo que o whole_body_planner
+  # deve mirar via /b166er/ee_target).
+  target_frame: "chave_olhal_link"
+
+  # ── Fase 0: engate ──
+  # A ferramenta do end-effector se encaixa no olhal, sem deslocamento
+  # adicional — pose alvo = pose atual do frame chave_olhal_link.
+  engage:
+    offset_xyz_m: [0.0, 0.0, 0.0]
+
+  # ── Fase 1: força de liberação, perpendicular ao eixo X ──
+  # Pequeno empurrão para destravar a catraca/trava mecânica que
+  # segura a lâmina fechada, antes do movimento de abertura em si.
+  # Magnitude confirmada com o Marco: ~10-20mm; usando o meio da
+  # faixa (15mm) como valor de partida — ajustável aqui sem tocar
+  # em código.
+  release:
+    offset_xyz_m: [0.0, 0.0, -0.015]   # -Z (perpendicular a X), 15mm
+
+  # ── Fase 2: abertura, movimento com componente dominante paralela
+  #    ao eixo X — "posição 1" (intermediária) e "posição 2" (final,
+  #    chave aberta) ──
+  #
+  # AINDA NÃO CONFIRMADO COM DADOS REAIS DA BANCADA. O documento do
+  # Marco mostra um arco tracejado (a lâmina pivotando em torno do
+  # ponto fixo no topo do bracket — mesmo pivô já modelado no xacro,
+  # blade_length=0.200m, blade_angle fechado=20°/0.349rad), mas não
+  # dá um número de curso/ângulo. Dois pontos importantes ficam em
+  # aberto até o Marco medir na chave real:
+  #
+  #   1. Magnitude do curso (quantos graus a lâmina gira do fechado
+  #      até totalmente aberta) — os valores abaixo (45° e 95°) são
+  #      SÓ uma estimativa de proporção visual do diagrama, não uma
+  #      medição.
+  #   2. Sentido do arco: pela geometria do pivô já modelada no xacro
+  #      (olhal = pivô - blade_length·(sin θ, 0, cos θ)), girar a
+  #      lâmina para um ângulo θ MAIOR faz o olhal SUBIR (Z cresce,
+  #      lâmina indo de quase-vertical para mais horizontal). Mas o
+  #      desenho à mão do documento sugere o olhal DESCENDO até a
+  #      posição 2. Essas duas leituras se contradizem — não vou
+  #      travar um sentido sem o Marco confirmar olhando a chave real
+  #      abrindo (pode ser erro de proporção no desenho à mão, pode
+  #      ser que o pivô real não seja exatamente o mesmo ponto
+  #      modelado aqui). offset_xyz_m abaixo são placeholders
+  #      calculados pela fórmula do pivô (sentido "sobe"); se for o
+  #      contrário, inverter o sinal do Z.
+  pos1:
+    # ESTIMATIVA — pivô girando de 20° (fechado) para ~45°
+    offset_xyz_m: [-0.073, 0.0, 0.047]   # placeholder, ver nota acima
+    blade_angle_deg_estimate: 45
+  pos2:
+    # ESTIMATIVA — pivô girando de 20° (fechado) para ~95°
+    offset_xyz_m: [-0.131, 0.0, 0.205]   # placeholder, ver nota acima
+    blade_angle_deg_estimate: 95
