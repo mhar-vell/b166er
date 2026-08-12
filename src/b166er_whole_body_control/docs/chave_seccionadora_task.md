@@ -62,26 +62,27 @@ desse curso (35° absoluto) — divisão escolhida por mim para ter um
 waypoint intermediário, já que o documento não especifica essa
 proporção; ajustar se o Marco quiser outra divisão.
 
-Os `offset_xyz_m` de `pos1`/`pos2` no YAML já refletem esse curso,
-calculados pela geometria de pivô do xacro (`blade_length=0.200m`).
+Os `offset_xyz_m` de `pos1`/`pos2` no YAML usam a *magnitude*
+calculada pela geometria de pivô do xacro (`blade_length=0.200m`)
+para esse curso de 30°/15°.
 
-## Em aberto — sentido do arco
+## Sentido do arco — confirmado
 
-Um ponto específico ainda não foi resolvido: pela fórmula de pivô já
-modelada no xacro (`olhal = pivô - blade_length·(sin θ, 0, cos θ)`),
-um ângulo θ *maior* faz o olhal *subir* (Z cresce, lâmina saindo de
-quase-vertical para mais horizontal) — é essa a convenção usada nos
-offsets do YAML. O desenho à mão do documento, por outro lado, mostra
-a posição 2 mais *baixa* que a posição do olhal fechado. Além disso,
-a foto real da bancada (acima) mostra um mecanismo com aparência de
-dobradiça/mola vertical, visualmente diferente do desenho técnico do
-datasheet (que inclui o isolador, removido na bancada) — não é certo
-que o mesmo ponto de pivô e o mesmo sentido de giro se apliquem 1:1
-ao rig de teste real.
+Marco confirmou em 2026-08-12: **o olhal desce** para abrir a chave.
+Isso é o oposto do que a fórmula de pivô já modelada no xacro previa
+(`olhal = pivô - blade_length·(sin θ, 0, cos θ)`, que dá Z crescente
+para θ maior — a lâmina saindo de quase-vertical para mais
+horizontal) — ou seja, o pivô/sentido de giro real da bancada não é
+o mesmo que o desenho técnico do datasheet (que inclui o isolador,
+removido na bancada) sugeria. A foto real da bancada (acima), com seu
+mecanismo de dobradiça/mola vertical, é visualmente diferente do
+desenho técnico do datasheet — consistente com essa divergência.
 
-**Ação pendente:** se o sentido real observado na chave física for
-"desce" em vez de "sobe", inverter o sinal do Z em `pos1`/`pos2` no
-`chave_seccionadora_task.yaml`.
+Os offsets no YAML já refletem isso: mesma magnitude calculada pela
+fórmula de pivô, sinal do Z invertido para o sentido real (desce).
+`blade_angle_deg` nos waypoints ficou só como referência da magnitude
+do curso usada no cálculo, não corresponde mais a um ângulo de pivô
+literal.
 
 ## Próximo passo (não implementado ainda)
 

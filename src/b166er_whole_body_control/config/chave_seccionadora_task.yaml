@@ -55,19 +55,22 @@ chave_seccionadora_task:
   # documento não especifica esse ponto médio, só que ele existe a
   # caminho da posição 2; ajustar se o Marco quiser outra proporção.
   #
-  # Sentido do arco AINDA NÃO CONFIRMADO: pela geometria do pivô já
-  # modelada no xacro (olhal = pivô - blade_length·(sin θ, 0, cos θ)),
-  # um ângulo θ MAIOR faz o olhal SUBIR (Z cresce, lâmina indo de
-  # quase-vertical para mais horizontal) — é essa a convenção usada
-  # abaixo. O desenho à mão do documento sugere o oposto (olhal
-  # descendo até a posição 2); o Marco ainda não resolveu essa
-  # divergência. Se o sentido real for "desce", inverter o sinal do Z
-  # em ambos os offsets abaixo.
+  # Sentido do arco CONFIRMADO pelo Marco em 2026-08-12: o olhal desce
+  # para abrir a chave. Isso é o OPOSTO do que a fórmula de pivô já
+  # modelada no xacro previa (olhal = pivô - blade_length·(sin θ, 0,
+  # cos θ), que dá Z crescente para θ maior) — ou seja, o pivô/sentido
+  # de giro real da bancada não é o mesmo que o desenho técnico do
+  # datasheet (que inclui o isolador, removido na bancada) sugeria.
+  # Os offsets abaixo usam a MAGNITUDE calculada por aquela fórmula
+  # (curso de 30°/15° confirmado pelo Marco), mas com o sinal do Z
+  # invertido para refletir o sentido real (desce, não sobe).
+  # blade_angle_deg é só uma referência da magnitude do curso usada
+  # no cálculo, não corresponde mais literalmente a um ângulo de pivô.
   pos1:
-    # Metade do curso confirmado (20° + 15° = 35°)
-    offset_xyz_m: [-0.046, 0.0, 0.024]
+    # Metade do curso confirmado (equivalente a 15° de giro)
+    offset_xyz_m: [-0.046, 0.0, -0.024]
     blade_angle_deg: 35
   pos2:
-    # Curso completo confirmado pelo Marco (20° + 30° = 50°)
-    offset_xyz_m: [-0.085, 0.0, 0.059]
+    # Curso completo confirmado pelo Marco (equivalente a 30° de giro)
+    offset_xyz_m: [-0.085, 0.0, -0.059]
     blade_angle_deg: 50
