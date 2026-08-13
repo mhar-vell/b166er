@@ -66,7 +66,7 @@ _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([0, 0.075, -0.07], [0, 2.1, 1.57])
 _T_L5_TOOLTIP = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
                 @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
                 @ _trans(0, 0, -0.08)   # JTool:     GripCube → tool_rod
-                @ _trans(0, 0, -0.35))  # JToolTip:  tool_rod → tool_tip
+                @ _trans(0, 0, -0.20))  # JToolTip:  tool_rod → tool_tip (20cm, reduzida de 35cm em 2026-08-13)
 
 # Offset FIXO e conhecido de t265_link até a ponta da ferramenta —
 # ambos pendurados rigidamente no mesmo CameraSupport, então essa
