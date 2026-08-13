@@ -19,35 +19,46 @@ Pipeline
      — suportado nativamente pelo OpenCV ≥4.7, sem depender de
      apriltag_ros/pacote apriltag externo, nenhum dos dois instalados
      neste ambiente).
-  2. solvePnP com os 4 cantos detectados + tag_size conhecido (132mm) +
-     intrínsecos de /task_camera/camera_info → pose da tag relativa à
-     câmera (T_camera_tag).
+  2. solvePnP com os 4 cantos detectados + tag_size conhecido (132mm,
+     o QUADRADO PRETO — mesma medida da tag física) + intrínsecos de
+     /task_camera/camera_info → pose da tag no frame ÓPTICO da câmera
+     (T_optical_tag).
   3. T_world_camera = T_world_t265 (de /b166er/robot_state.ee_pose) @
      T_T265_TASKCAMERA (offset fixo conhecido, kinematics.py — mesma
      lógica de T_T265_TOOLTIP, câmera e T265 pendurados rigidamente no
      mesmo CameraSupport).
-  4. T_world_tag = T_world_camera @ T_camera_tag.
+  4. T_world_tag = T_world_camera @ R_LINK_OPTICAL @ T_optical_tag
+     (a rotação no meio converte do frame do link, X-forward, para o
+     frame óptico do OpenCV, Z-forward).
   5. wall_link = tag_plate menos o offset fixo conhecido do fixture
      (TAG_OFFSET_FROM_WALL_LINK — mesmos tag_x_offset/tag_mount_z de
      chave_com_tag.urdf.xacro).
 
-IMPORTANTE — status: código completo e compila, mas AINDA NÃO
-VALIDADO COM DETECÇÃO AO VIVO (2026-08-12). Cheguei a montar o sensor
-de câmera no Gazebo e confirmar que ele publica imagem, mas não
-consegui, na sessão em que este arquivo foi escrito, colocar a tag
-dentro do campo de visão da câmera de forma controlada (o braço tem
-muitos graus de liberdade e a geometria de montagem da câmera não é
-trivial — ver JTaskCamera em movemaster.urdf.xacro) para de fato ver
-uma detecção acontecer e conferir os números.
+VALIDADO COM DETECÇÃO AO VIVO em 2026-08-13, depois de três correções
+que só a execução real revelou (a versão de 2026-08-12 estava
+documentada como não-validada, e de fato tinha os três problemas):
 
-Por isso, a convenção de eixos do PnP abaixo é a MELHOR ESTIMATIVA
-(convenção comum X-direita/Y-cima/Z-saindo-da-tag de tutoriais de pose
-estimation com cv2.aruco, mapeada para os eixos do fixture assumindo a
-tag montada "em pé", sem giro) — NÃO uma correspondência confirmada.
-Pode estar com sinal ou eixo trocado. Antes de confiar neste nó pra
-navegação de verdade, validar comparando a saída de /b166er/wall_pose
-com /gazebo/get_link_state (~use_ground_truth:=true em
-task_sequencer.py) numa pose em que a tag esteja visível.
+1. FRAME ÓPTICO ≠ FRAME DO LINK: o sensor de câmera do Gazebo classic
+   olha ao longo do +X do link, mas o solvePnP devolve a pose no frame
+   óptico OpenCV (Z-forward, X-right, Y-down). Faltava a rotação
+   padrão link→óptico (R_LINK_OPTICAL abaixo) na composição — sem ela,
+   a pose da tag saía num lugar completamente errado do mundo.
+2. ESCALA DA TAG: a textura tem quiet zone branca — o quadrado preto
+   (o que o detector mede) ocupa 80% da placa. Com a placa antiga de
+   132mm, o preto renderizava 105,6mm e o PnP superestimava a
+   distância em exatamente 25% (medido: fator 1,25 no raio
+   câmera→tag). Corrigido no fixture (placa de 165mm, preto = 132mm,
+   igual à tag física validada) — o ~tag_size daqui segue 0.132 e vale
+   para simulação E hardware.
+3. ORIENTAÇÃO DA TEXTURA NA PLACA (_R_PNP_TO_FIXTURE): medida
+   empiricamente comparando R_world_tag do PnP com a orientação
+   conhecida do fixture (yaw=π): X_pnp = −X_fixture (textura
+   "espelhada" em relação ao chute original), Y_pnp = +Z_fixture (up),
+   Z_pnp = +Y_fixture (normal saindo da parede). O chute de
+   2026-08-12 tinha X e Z com sinais errados.
+
+Validação final (2026-08-13): wall_link estimado por visão vs
+/gazebo/get_link_state — ver números no commit correspondente.
 
 Tópicos
 -------
@@ -80,14 +91,24 @@ TAG_SIZE = 0.132  # m — mesma tag física já validada (project_fase4_apriltag
 # orientação de wall_link).
 TAG_OFFSET_FROM_WALL_LINK = np.array([0.20, 0.0, 1.030])
 
-# Permutação PnP(X-direita,Y-cima,Z-saindo-da-tag) → fixture(X,Y,Z).
-# X_fixture = X_pnp (horizontal, sem giro esquerda/direita)
-# Z_fixture = Y_pnp (vertical, tag montada em pé)
-# Y_fixture = -Z_pnp (normal/profundidade — ver docstring do módulo)
+# Rotação padrão link-da-câmera (X-forward, convenção Gazebo/ROS para
+# corpos) → frame óptico (Z-forward, X-right, Y-down, convenção
+# OpenCV/solvePnP). Colunas = eixos ópticos expressos no frame do link:
+# x_opt = -Y_link, y_opt = -Z_link, z_opt = +X_link.
+R_LINK_OPTICAL = np.array([
+    [0.0,  0.0, 1.0],
+    [-1.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0],
+])
+
+# Permutação frame-da-tag-no-PnP → frame do fixture, MEDIDA
+# empiricamente em 2026-08-13 (ver item 3 do histórico de validação na
+# docstring). Colunas = eixos do PnP expressos no frame do fixture:
+# X_pnp = -X_fixture, Y_pnp = +Z_fixture, Z_pnp = +Y_fixture.
 _R_PNP_TO_FIXTURE = np.array([
-    [1,  0,  0],
-    [0,  0, -1],
-    [0,  1,  0],
+    [-1.0, 0.0, 0.0],
+    [0.0,  0.0, 1.0],
+    [0.0,  1.0, 0.0],
 ])
 
 
@@ -161,10 +182,18 @@ class AprilTagLocalizer:
         if not ok:
             return
 
-        R_cam_tag, _ = cv2.Rodrigues(rvec)
-        T_camera_tag = np.eye(4)
-        T_camera_tag[:3, :3] = R_cam_tag
-        T_camera_tag[:3, 3]  = tvec.flatten()
+        # solvePnP devolve a pose no frame ÓPTICO (Z-forward); a cadeia
+        # cinemática (T_T265_TASKCAMERA) termina no frame do LINK
+        # (X-forward, convenção Gazebo). R_LINK_OPTICAL faz a ponte —
+        # sem ela a tag "aparece" num lugar completamente errado do
+        # mundo (bug nº 1 da validação de 2026-08-13, ver docstring).
+        R_opt_tag, _ = cv2.Rodrigues(rvec)
+        T_optical_tag = np.eye(4)
+        T_optical_tag[:3, :3] = R_opt_tag
+        T_optical_tag[:3, 3]  = tvec.flatten()
+
+        T_link_optical = np.eye(4)
+        T_link_optical[:3, :3] = R_LINK_OPTICAL
 
         T_world_t265   = _quat_to_matrix(self._t265_pose.orientation)
         T_world_t265[:3, 3] = [self._t265_pose.position.x,
@@ -172,7 +201,7 @@ class AprilTagLocalizer:
                                self._t265_pose.position.z]
 
         T_world_camera = T_world_t265 @ T_T265_TASKCAMERA
-        T_world_tag    = T_world_camera @ T_camera_tag
+        T_world_tag    = T_world_camera @ T_link_optical @ T_optical_tag
 
         # Reorienta do frame PnP (X-direita,Y-cima,Z-saindo-da-tag) para
         # o frame do fixture (X,Y,Z conforme chave_com_tag.urdf.xacro).
