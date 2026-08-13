@@ -25,6 +25,7 @@ IK_TOL_POS    = 3e-3   # m  — 3 mm suficiente para estimação de estado
 IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
 IK_DQ_STEP    = 1e-6
+IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 
 # Compensação de gravidade
 _G           = 9.81                                # m/s²
@@ -341,7 +342,7 @@ def pose_error(T_current, T_target):
 def ik_arm(T_target, q_init=None):
     """
     IK numérica para o braço RV-M2 (Base → t265_link).
-    DLS com Jacobiano central de diferenças finitas.
+    DLS com Jacobiano central de diferenças finitas e clamp de passo.
 
     Retorna (q, converged, res_pos, res_orient).
     """
@@ -355,14 +356,42 @@ def ik_arm(T_target, q_init=None):
         if rp < IK_TOL_POS and ro < IK_TOL_ORIENT:
             return q, True, rp, ro
 
-        # Jacobiano de FK (diferenças centrais)
+        # Jacobiano do ERRO (diferenças centrais de pose_error).
+        #
+        # BUG CORRIGIDO em 2026-08-13: a versão anterior derivava
+        # _T_to_6vec(fk_arm(q)) — cuja parte rotacional é a antissimétrica
+        # da orientação ABSOLUTA — enquanto o vetor conduzido (err) usa a
+        # antissimétrica da rotação RELATIVA (R_target·R_curᵀ). São
+        # parametrizações diferentes de rotação, então J não era a
+        # derivada do erro que estava sendo minimizado: as 3 linhas
+        # angulares apontavam numa direção inconsistente com as 3
+        # lineares. Em poses estendidas o acoplamento é fraco e o DLS
+        # ainda convergia (por isso passou despercebido desde a Fase 2);
+        # em posturas dobradas, não — com o home recolhido o estimador
+        # travava num mínimo local espelhado (real J2=+61°/J4=−103°,
+        # estimado J2=+18°/J4=+110°, resíduo fixo de 4,9cm).
+        #
+        # Derivar pose_error diretamente mantém as duas metades
+        # consistentes. Sinal negativo porque pose_error mede alvo −
+        # atual: ∂err/∂q = −J_movimento.
         J = np.zeros((6, 5))
         for i in range(5):
             dq_i    = np.zeros(5); dq_i[i] = IK_DQ_STEP
-            J[:, i] = (_T_to_6vec(fk_arm(q + dq_i))
-                       - _T_to_6vec(fk_arm(q - dq_i))) / (2 * IK_DQ_STEP)
+            err_p   = pose_error(fk_arm(q + dq_i), T_target)
+            err_m   = pose_error(fk_arm(q - dq_i), T_target)
+            J[:, i] = -(err_p - err_m) / (2 * IK_DQ_STEP)
 
         dq = J.T @ np.linalg.solve(J @ J.T + IK_LAMBDA**2 * np.eye(6), err)
+
+        # Clamp de passo: mesmo com o Jacobiano correto, posturas
+        # dobradas deixam a Jacobiana mal-condicionada e o DLS com λ fixo
+        # pode dar saltos que pulam para fora da bacia de atração do
+        # seed. Com 300 iterações, o alcance total (30 rad) não limita
+        # nenhum movimento real.
+        step = np.max(np.abs(dq))
+        if step > IK_MAX_STEP:
+            dq *= IK_MAX_STEP / step
+
         q  = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
 
     T_cur = fk_arm(q); err = pose_error(T_cur, T_target)
