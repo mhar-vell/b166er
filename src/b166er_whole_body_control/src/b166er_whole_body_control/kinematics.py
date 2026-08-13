@@ -77,6 +77,18 @@ _T_L5_TOOLTIP = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
 # num alvo equivalente para o T265 — nunca o contrário.
 T_T265_TOOLTIP = np.linalg.inv(_T_L5_T265) @ _T_L5_TOOLTIP
 
+# Câmera de tarefa (detecção de AprilTag, ver movemaster.urdf.xacro,
+# JTaskCamera) — mesma ideia do tool_tip acima: offset fixo e
+# conhecido a partir do T265, pendurada no mesmo GripCube (JCam +
+# JGripCube + JTaskCamera, todas fixed). NÃO é o T265 — é uma câmera
+# de imagem separada, proxy de simulação para o stream que a câmera
+# fisheye do T265 real também forneceria (ver apriltag_localizer.py).
+_T_L5_TASKCAMERA = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
+                    @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
+                    @ _trans(0, 0, -0.08))  # JTaskCamera: GripCube → task_camera_link
+
+T_T265_TASKCAMERA = np.linalg.inv(_T_L5_T265) @ _T_L5_TASKCAMERA
+
 
 def tooltip_target_to_t265_target(T_world_tooltip_target):
     """

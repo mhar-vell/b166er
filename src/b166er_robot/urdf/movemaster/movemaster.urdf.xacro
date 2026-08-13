@@ -232,6 +232,63 @@
       </visual>
     </link>
 
+    <!-- ═══ Câmera de tarefa (detecção de AprilTag) ═══
+         Adicionada em 2026-08-12 pra fechar o loop de percepção pedido
+         pelo Marco: "a tag deve ser utilizada para aproximação do
+         robot até a chave" — sem isso, task_sequencer.py só sabia onde
+         a chave estava porque perguntava direto pro Gazebo
+         (/gazebo/get_link_state, trapaça de ground-truth que nenhum
+         robô real teria).
+
+         NÃO é o T265 de novo — o t265_link continua sendo o único
+         sensor de POSE do EE (VIO, arquitetura sem encoders,
+         inalterado). Esta é uma câmera pinhole simples, proxy de
+         simulação para o STREAM DE IMAGEM que a câmera fisheye do
+         T265 real também forneceria (mesmo pipeline já validado com
+         hardware real — ver memória project_fase4_apriltag_validacao:
+         T265 real + AprilTag 36h11, regra tag≥d/11, tag física de
+         132mm — mesmo tamanho usado aqui). Modelar o FOV fisheye real
+         do T265 é desnecessário pra essa demonstração; pinhole padrão
+         do Gazebo já resolve.
+
+         Montada no mesmo ponto/direção do JTool (offset z=-0.08 a
+         partir do GripCube, mesmo "para frente" que a ferramenta
+         aponta) — olhando para onde o robô vai manipular, não para
+         onde o T265 fisicamente aponta (rotação tortuosa,
+         rpy="0 2.1 1.57", inconveniente para uma câmera de tarefa). ═══ -->
+    <joint name="JTaskCamera" type="fixed">
+      <origin xyz="0 0 -0.08" rpy="0 0 0"/>
+      <parent link="GripCube"/>
+      <child link="task_camera_link"/>
+    </joint>
+
+    <link name="task_camera_link">
+      <visual>
+        <geometry><box size="0.02 0.02 0.02"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+    </link>
+
+    <gazebo reference="task_camera_link">
+      <material>Gazebo/Yellow</material>
+      <sensor type="camera" name="task_camera">
+        <update_rate>15.0</update_rate>
+        <camera>
+          <!-- FOV largo (~86°) — compensar não ter as duas câmeras
+               fisheye do T265 real, que juntas cobrem bem mais campo. -->
+          <horizontal_fov>1.5</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.05</near><far>15.0</far></clip>
+        </camera>
+        <plugin name="task_camera_controller" filename="libgazebo_ros_camera.so">
+          <cameraName>task_camera</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+          <frameName>task_camera_link</frameName>
+        </plugin>
+      </sensor>
+    </gazebo>
+
     <joint name="JGripCube" type="fixed">
       <origin xyz="0 0 -0.005" rpy="0 0 0"/>
       <parent link="CameraSupport"/>

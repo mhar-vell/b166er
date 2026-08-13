@@ -46,5 +46,6 @@ catkin_install_python(PROGRAMS
   nodes/kill_gui_zombie.py
   nodes/pioneer_wheel_state_pub.py
   nodes/task_sequencer.py
+  nodes/apriltag_localizer.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

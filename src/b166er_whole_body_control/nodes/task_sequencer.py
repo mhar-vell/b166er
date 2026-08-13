@@ -14,25 +14,32 @@ usando o mesmo critério de convergência dos dois controladores
 
 Fases (ver PHASE_ORDER): engage → release → pos1 → pos2.
 
-Pose do olhal: NÃO dá pra consultar chave_olhal_link diretamente via
-/gazebo/get_link_state — confirmado ao vivo em testes no Gazebo
-(2026-08-12): a fixture inteira (bracket→blade→olhal, todos ligados só
-por juntas fixas) é fundida pelo Gazebo num único corpo rígido na
-conversão URDF→SDF, e só "wall_link" sobra como link consultável
-(/gazebo/get_model_properties mostra body_names=['wall_link'] — mesma
-fusão que já tinha forçado o uso de <gazebo reference><material> em vez
-de <material><color> no xacro, agora atingindo get_link_state também).
+Pose do olhal: vem de PERCEPÇÃO, não mais de ground-truth do Gazebo.
+Versão anterior (até 2026-08-12) consultava /gazebo/get_link_state
+direto — uma trapaça que nenhum robô real teria, e que também escondia
+o problema real: sem noção nenhuma do ambiente, o whole-body controller
+só perseguia um ponto cego e colidia com a parede (Marco pegou isso:
+"parece que o robo não está fazendo uma leitura do ambiente antes de
+se locomover"). Agora este nó assina /b166er/wall_pose, publicado por
+apriltag_localizer.py a partir da detecção real da tag na câmera de
+tarefa (ver esse nó para o pipeline completo: detecção → PnP →
+composição com a pose do T265). ~use_ground_truth:=true bypassa isso e
+volta a consultar /gazebo/get_link_state — só para debug/calibração
+(comparar a estimativa por visão com a verdade do simulador), nunca
+para uso normal.
 
-Então: consultamos wall_link (que sempre existe) e aplicamos por cima
-o offset FIXO conhecido até o olhal (_OLHAL_OFFSET_FROM_WALL_LINK,
-replicado da geometria de chave_seccionadora_lf.urdf.xacro +
-chave_com_tag.urdf.xacro — SIM, é a terceira cópia dessa fórmula;
-inevitável dado o comportamento do Gazebo acima). Os offsets do YAML
+Chave_olhal_link não existe como link consultável no Gazebo de todo
+jeito (mesmo por get_link_state) — a fixture inteira (bracket→blade→
+olhal, só juntas fixas) é fundida pelo Gazebo num único corpo rígido na
+conversão URDF→SDF, só "wall_link" sobra. Por isso tanto a via de
+percepção (que já publica a pose de wall_link, calculada a partir da
+tag) quanto o fallback de debug aplicam por cima o mesmo offset FIXO
+conhecido até o olhal (OLHAL_OFFSET_FROM_WALL_LINK, replicado da
+geometria de chave_seccionadora_lf.urdf.xacro + chave_com_tag.urdf.xacro
+— mais uma cópia dessa fórmula, inevitável). Os offsets do YAML
 (pos1/pos2/release) estão no mesmo frame local do fixture (X horizontal
-ao longo da parede, Z vertical — ver docs/chave_seccionadora_task.md);
-giramos tudo pela orientação de wall_link consultada (só o yaw de
-spawn — nenhum joint na cadeia bracket→blade→olhal gira o frame,
-blade_angle é só um offset visual).
+ao longo da parede, Z vertical); giramos tudo pela orientação de
+wall_link (por percepção ou por get_link_state).
 
 Orientação do alvo: o documento da tarefa descreve só DIREÇÕES DE
 FORÇA (perpendicular/paralela ao eixo X), não uma orientação de
@@ -60,10 +67,12 @@ Tópicos
 -------
   Subscreve:
     /b166er/robot_state    (RobotState)   — para monitorar convergência
+    /b166er/wall_pose      (PoseStamped)  — pose de wall_link por percepção
+                             (apriltag_localizer.py); só se ~use_ground_truth=false
   Publica:
     /b166er/ee_target      (PoseStamped)  — alvo Cartesiano da fase atual
   Serviços:
-    /gazebo/get_link_state — consultado uma vez, no startup
+    /gazebo/get_link_state — só com ~use_ground_truth:=true (debug/calibração)
 """
 
 import math
@@ -128,6 +137,11 @@ class TaskSequencer:
         self._link_name   = rospy.get_param('~target_link', 'wall_link')
         self._model_name  = rospy.get_param('~fixture_model_name',
                                              'chave_seccionadora_fixture')
+        # false (default) = pose de wall_link vem da percepção
+        # (apriltag_localizer.py); true = volta pro ground-truth do
+        # Gazebo — só para debug/calibração, ver docstring do módulo.
+        self._use_ground_truth = rospy.get_param('~use_ground_truth', False)
+        self._wall_pose_timeout = rospy.get_param('~wall_pose_timeout', 30.0)  # s
 
         # DOIS frames diferentes, não confundir (bug encontrado ao vivo
         # em testes no Gazebo, 2026-08-12): /gazebo/get_link_state só
@@ -170,7 +184,53 @@ class TaskSequencer:
         self._robot_state = msg
 
     def _query_olhal_pose(self):
-        rospy.loginfo('[task_sequencer] aguardando /gazebo/get_link_state...')
+        if self._use_ground_truth:
+            wall_pos, R = self._query_wall_pose_ground_truth()
+        else:
+            wall_pos, R = self._query_wall_pose_perception()
+
+        # wall_link + offset fixo (girado pela orientação de wall_link,
+        # que é a mesma orientação de toda a cadeia bracket→blade→olhal)
+        # = pose real de chave_olhal_link.
+        olhal_pos = wall_pos + R @ OLHAL_OFFSET_FROM_WALL_LINK
+        rospy.loginfo('[task_sequencer] chave_olhal_link (calculado) em '
+                      '(%.3f, %.3f, %.3f)', *olhal_pos)
+        return olhal_pos, R
+
+    def _query_wall_pose_perception(self):
+        """wall_link por percepção — assina /b166er/wall_pose (apriltag_localizer.py).
+
+        Bloqueia até a tag ser detectada pelo menos uma vez (ou até
+        ~wall_pose_timeout, caso em que levanta erro — sem detecção não
+        tem como saber onde manipular, não faz sentido seguir).
+        """
+        rospy.loginfo('[task_sequencer] aguardando detecção da tag em '
+                      '/b166er/wall_pose (apriltag_localizer precisa estar '
+                      'rodando e a tag visível pela task_camera)...')
+        try:
+            msg = rospy.wait_for_message('/b166er/wall_pose', PoseStamped,
+                                         timeout=self._wall_pose_timeout)
+        except rospy.ROSException:
+            raise RuntimeError(
+                '[task_sequencer] nenhuma detecção de tag em /b166er/wall_pose '
+                'depois de {:.0f}s — apriltag_localizer.py está rodando? a tag '
+                'está no campo de visão da task_camera?'.format(
+                    self._wall_pose_timeout))
+
+        p = msg.pose.position
+        o = msg.pose.orientation
+        wall_pos = np.array([p.x, p.y, p.z])
+        R        = _quat_to_matrix(o)[:3, :3]
+        rospy.loginfo('[task_sequencer] wall_link (por percepção) em '
+                      '(%.3f, %.3f, %.3f)', *wall_pos)
+        return wall_pos, R
+
+    def _query_wall_pose_ground_truth(self):
+        """wall_link via /gazebo/get_link_state — só debug/calibração
+        (~use_ground_truth:=true), nunca o caminho normal."""
+        rospy.logwarn('[task_sequencer] ~use_ground_truth=true — usando '
+                      '/gazebo/get_link_state, NÃO a percepção. Só para '
+                      'debug/calibração do apriltag_localizer.')
         rospy.wait_for_service('/gazebo/get_link_state')
         get_link_state = rospy.ServiceProxy('/gazebo/get_link_state', GetLinkState)
 
@@ -191,16 +251,9 @@ class TaskSequencer:
         o = resp.link_state.pose.orientation
         wall_pos = np.array([p.x, p.y, p.z])
         R        = _quat_to_matrix(o)[:3, :3]
-        rospy.loginfo('[task_sequencer] %s em (%.3f, %.3f, %.3f)',
+        rospy.loginfo('[task_sequencer] %s (ground-truth) em (%.3f, %.3f, %.3f)',
                       self._link_name, *wall_pos)
-
-        # wall_link + offset fixo (girado pela orientação de wall_link,
-        # que é a mesma orientação de toda a cadeia bracket→blade→olhal)
-        # = pose real de chave_olhal_link.
-        olhal_pos = wall_pos + R @ OLHAL_OFFSET_FROM_WALL_LINK
-        rospy.loginfo('[task_sequencer] chave_olhal_link (calculado) em '
-                      '(%.3f, %.3f, %.3f)', *olhal_pos)
-        return olhal_pos, R
+        return wall_pos, R
 
     def _tooltip_target_matrix(self, phase_params):
         """Pose alvo da PONTA DA FERRAMENTA (não do T265) para a fase."""
