@@ -16,6 +16,7 @@ from collections import deque
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Bool
 from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
@@ -82,12 +83,75 @@ class StateEstimator:
             rospy.logwarn('[state_estimator] use_joint_states_seed=true — '
                           'seed via ground truth, NÃO fiel ao robô sem encoder')
 
+        # Re-seed por postura comandada (2026-08-13): posturas dobradas
+        # (ex.: home recolhido) têm múltiplas soluções de IK, e o DLS
+        # recursivo pode cair no ramo espelhado do cotovelo e ESTABILIZAR
+        # lá (observado ao vivo: real J2=+61°/J4=-103°, estimado
+        # J2=+18°/J4=+110°, resíduo constante de 4,9cm sem nunca
+        # convergir). Quando o dono do estado de juntas (gazebo_arm_bridge
+        # em simulação; arm_vel_integrator no hardware, futuramente)
+        # conclui uma rampa de postura, o setpoint comandado é o melhor
+        # prior disponível — informação de COMANDO que o robô real sem
+        # encoders também tem, não ground truth de simulador. Usamos esse
+        # setpoint como seed one-shot do próximo ciclo do IK.
+        self._posture_target_q = None
+        rospy.Subscriber('/b166er/arm_posture_target', JointState,
+                         self._cb_posture_target, queue_size=1)
+        rospy.Subscriber('/b166er/arm_posture_reached', Bool,
+                         self._cb_posture_reached, queue_size=1)
+
         rospy.loginfo('[state_estimator] pronto')
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)
         rospy.loginfo('  t265:    %s', self._t265_topic)
 
     def _cb_pioneer(self, msg): self._base_odom = msg
     def _cb_t265(self, msg):    self._t265_odom = msg
+
+    def _cb_posture_target(self, msg):
+        if len(msg.position) == 5:
+            self._posture_target_q = np.array(msg.position, dtype=float)
+
+    def _cb_posture_reached(self, msg):
+        if msg.data and self._posture_target_q is not None:
+            # Seed imediato ao concluir a rampa. NÃO basta sozinho: a
+            # rampa se declara concluída quando o q integrado do dono do
+            # estado chega ao alvo, mas o braço FÍSICO ainda está
+            # assentando (droop do PID) — o alvo de IK desse instante
+            # corresponde a uma pose intermediária, e o seed bom pode
+            # cair numa bacia ruim mesmo assim. O retry em _solve_ik é
+            # que garante a recuperação depois que tudo assenta.
+            self._q_arm = self._posture_target_q.copy()
+            rospy.loginfo('[state_estimator] re-seed por postura concluída: %s rad',
+                          np.round(self._q_arm, 3))
+
+    def _solve_ik(self, T_target, q_seed):
+        """IK com retry a partir da última postura comandada.
+
+        O DLS é local: uma vez que a recursão cai num mínimo local (o
+        caso clássico é o ramo espelhado do cotovelo com uma junta
+        grudada no limite), ele vira um ponto fixo — cada ciclo parte do
+        resultado ruim do ciclo anterior e devolve exatamente o mesmo
+        resultado ruim, para sempre (observado ao vivo: q travado em
+        (37.7°, 22.3°, −110°) com resíduo constante de 0,213m). Sem um
+        seed alternativo, o estimador nunca se recupera sozinho.
+
+        A postura comandada é o prior disponível também no robô real
+        (é o setpoint que o firmware executou, não ground truth de
+        simulador), então serve de segunda tentativa. Fica com a melhor
+        das duas soluções pelo resíduo de posição.
+        """
+        q, conv, rp, ro = ik_arm(T_target, q_init=q_seed)
+        if conv or self._posture_target_q is None:
+            return q, conv, rp, ro
+
+        q2, conv2, rp2, ro2 = ik_arm(T_target,
+                                     q_init=self._posture_target_q.copy())
+        if conv2 or rp2 < rp:
+            rospy.loginfo_throttle(
+                5.0, '[state_estimator] IK recuperada via seed de postura '
+                     '(resíduo %.4f → %.4f m)', rp, rp2)
+            return q2, conv2, rp2, ro2
+        return q, conv, rp, ro
 
     def _cb_joint_states(self, msg):
         name_to_pos = dict(zip(msg.name, msg.position))
@@ -158,7 +222,7 @@ class StateEstimator:
             else:
                 q_seed = self._q_arm   # hardware mode: sem ground truth
 
-            q, conv, res_p, res_o = ik_arm(T_target, q_init=q_seed)
+            q, conv, res_p, res_o = self._solve_ik(T_target, q_seed)
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
             if dt and dt > 0:

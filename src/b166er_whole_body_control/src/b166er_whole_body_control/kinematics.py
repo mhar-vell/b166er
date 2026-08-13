@@ -25,6 +25,7 @@ IK_TOL_POS    = 3e-3   # m  — 3 mm suficiente para estimação de estado
 IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
 IK_DQ_STEP    = 1e-6
+IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 
 # Compensação de gravidade
 _G           = 9.81                                # m/s²
@@ -59,6 +60,84 @@ def _tf(xyz, rpy):
 
 T_BASELINK_ARM = _tf([0.003, 0, 0.294], [0, 0, 0])
 _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([0, 0.075, -0.07], [0, 2.1, 1.57])
+
+# Ferramenta de operação (vara + gancho, ver movemaster.urdf.xacro,
+# JTool/JToolTip) — mesma cadeia rígida do L5 até a ponta do gancho,
+# via GripCube (JCam + JGripCube + JTool + JToolTip, todas fixed).
+_T_L5_TOOLTIP = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
+                @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
+                @ _trans(0, 0, -0.08)   # JTool:     GripCube → tool_rod
+                @ _trans(0, 0, -0.20))  # JToolTip:  tool_rod → tool_tip (20cm, reduzida de 35cm em 2026-08-13)
+
+# Offset FIXO e conhecido de t265_link até a ponta da ferramenta —
+# ambos pendurados rigidamente no mesmo CameraSupport, então essa
+# transformação não muda com a pose do braço. T265 continua sendo o
+# único sensor de pose do EE (arquitetura sem encoders); quem precisa
+# de um alvo Cartesiano para a PONTA DA FERRAMENTA (ex.: task_sequencer.py
+# mirando chave_olhal_link) usa esta constante para converter esse alvo
+# num alvo equivalente para o T265 — nunca o contrário.
+T_T265_TOOLTIP = np.linalg.inv(_T_L5_T265) @ _T_L5_TOOLTIP
+
+# Câmera de tarefa (detecção de AprilTag, ver movemaster.urdf.xacro,
+# JTaskCamera) — mesma ideia do tool_tip acima: offset fixo e
+# conhecido a partir do T265, pendurada no mesmo GripCube (JCam +
+# JGripCube + JTaskCamera, todas fixed). NÃO é o T265 — é uma câmera
+# de imagem separada, proxy de simulação para o stream que a câmera
+# fisheye do T265 real também forneceria (ver apriltag_localizer.py).
+_T_L5_TASKCAMERA = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
+                    @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
+                    @ _trans(0, 0, -0.08))  # JTaskCamera: GripCube → task_camera_link
+
+T_T265_TASKCAMERA = np.linalg.inv(_T_L5_T265) @ _T_L5_TASKCAMERA
+
+
+def tooltip_target_to_t265_target(T_world_tooltip_target):
+    """
+    Converte um alvo Cartesiano de ORIENTAÇÃO EXPLÍCITA pensado para a
+    ponta da ferramenta no alvo equivalente para o T265 — o frame que o
+    whole-body controller realmente controla.
+
+    ATENÇÃO — rotação, não só posição: a rotação de T_world_tooltip_target
+    é tratada como a rotação DESEJADA DA PONTA DA FERRAMENTA, não do T265.
+    Como T_T265_TOOLTIP tem uma parte rotacional não-trivial (o mount da
+    ferramenta não é um alinhamento puro), a rotação resultante do T265
+    (T_world_t265_target[:3,:3]) sai DIFERENTE da rotação de entrada — é
+    a rotação de T265 necessária para que a FERRAMENTA atinja aquela
+    orientação, não uma cópia dela. Use esta função só quando a tarefa
+    realmente especifica a orientação da ferramenta.
+
+    Para o caso mais comum neste código (manter a orientação do PRÓPRIO
+    T265 fixa e só variar a posição-alvo da ponta da ferramenta — ver
+    task_sequencer.py), use tooltip_position_to_t265_position abaixo, não
+    esta função.
+
+    T_world_tooltip_target : ndarray (4,4) — pose alvo desejada da
+                              ponta da ferramenta, no frame mundial.
+
+    Retorna T_world_t265_target (4,4).
+    """
+    return T_world_tooltip_target @ np.linalg.inv(T_T265_TOOLTIP)
+
+
+def tooltip_position_to_t265_position(p_world_tooltip_target, R_world_t265_fixed):
+    """
+    Converte uma posição-alvo da ponta da ferramenta na posição-alvo
+    equivalente do T265, MANTENDO a orientação do T265 fixa em
+    R_world_t265_fixed (o caso comum: a tarefa não especifica
+    orientação de ferramenta, só mantém o EE numa orientação
+    constante — ver task_sequencer.py).
+
+    p_world_tooltip_target : array (3,)   — posição alvo da ponta da
+                              ferramenta, no frame mundial.
+    R_world_t265_fixed     : ndarray (3,3) — orientação do T265 a
+                              manter (mesma em toda a tarefa).
+
+    Retorna p_world_t265_target (3,), tal que comandar o T265 para essa
+    posição, nessa orientação, deixa a ponta da ferramenta exatamente
+    em p_world_tooltip_target.
+    """
+    offset_world = R_world_t265_fixed @ T_T265_TOOLTIP[:3, 3]
+    return np.asarray(p_world_tooltip_target) - offset_world
 
 
 def _adj(R):
@@ -263,7 +342,7 @@ def pose_error(T_current, T_target):
 def ik_arm(T_target, q_init=None):
     """
     IK numérica para o braço RV-M2 (Base → t265_link).
-    DLS com Jacobiano central de diferenças finitas.
+    DLS com Jacobiano central de diferenças finitas e clamp de passo.
 
     Retorna (q, converged, res_pos, res_orient).
     """
@@ -277,14 +356,42 @@ def ik_arm(T_target, q_init=None):
         if rp < IK_TOL_POS and ro < IK_TOL_ORIENT:
             return q, True, rp, ro
 
-        # Jacobiano de FK (diferenças centrais)
+        # Jacobiano do ERRO (diferenças centrais de pose_error).
+        #
+        # BUG CORRIGIDO em 2026-08-13: a versão anterior derivava
+        # _T_to_6vec(fk_arm(q)) — cuja parte rotacional é a antissimétrica
+        # da orientação ABSOLUTA — enquanto o vetor conduzido (err) usa a
+        # antissimétrica da rotação RELATIVA (R_target·R_curᵀ). São
+        # parametrizações diferentes de rotação, então J não era a
+        # derivada do erro que estava sendo minimizado: as 3 linhas
+        # angulares apontavam numa direção inconsistente com as 3
+        # lineares. Em poses estendidas o acoplamento é fraco e o DLS
+        # ainda convergia (por isso passou despercebido desde a Fase 2);
+        # em posturas dobradas, não — com o home recolhido o estimador
+        # travava num mínimo local espelhado (real J2=+61°/J4=−103°,
+        # estimado J2=+18°/J4=+110°, resíduo fixo de 4,9cm).
+        #
+        # Derivar pose_error diretamente mantém as duas metades
+        # consistentes. Sinal negativo porque pose_error mede alvo −
+        # atual: ∂err/∂q = −J_movimento.
         J = np.zeros((6, 5))
         for i in range(5):
             dq_i    = np.zeros(5); dq_i[i] = IK_DQ_STEP
-            J[:, i] = (_T_to_6vec(fk_arm(q + dq_i))
-                       - _T_to_6vec(fk_arm(q - dq_i))) / (2 * IK_DQ_STEP)
+            err_p   = pose_error(fk_arm(q + dq_i), T_target)
+            err_m   = pose_error(fk_arm(q - dq_i), T_target)
+            J[:, i] = -(err_p - err_m) / (2 * IK_DQ_STEP)
 
         dq = J.T @ np.linalg.solve(J @ J.T + IK_LAMBDA**2 * np.eye(6), err)
+
+        # Clamp de passo: mesmo com o Jacobiano correto, posturas
+        # dobradas deixam a Jacobiana mal-condicionada e o DLS com λ fixo
+        # pode dar saltos que pulam para fora da bacia de atração do
+        # seed. Com 300 iterações, o alcance total (30 rad) não limita
+        # nenhum movimento real.
+        step = np.max(np.abs(dq))
+        if step > IK_MAX_STEP:
+            dq *= IK_MAX_STEP / step
+
         q  = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
 
     T_cur = fk_arm(q); err = pose_error(T_cur, T_target)

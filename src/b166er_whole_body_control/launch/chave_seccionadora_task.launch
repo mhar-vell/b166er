@@ -1,0 +1,28 @@
+<launch>
+  <!-- Roda a sequência de abertura da chave seccionadora (task_sequencer.py),
+       ver docs/chave_seccionadora_task.md.
+
+       Pré-requisitos, já rodando antes deste launch:
+         1. roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo
+            (stack whole-body completo + Gazebo)
+         2. roslaunch b166er_robot spawn_chave_fixture.launch
+            (fixture da chave na parede)
+
+       Uso:
+         roslaunch b166er_whole_body_control chave_seccionadora_task.launch
+  -->
+
+  <arg name="dwell_time"    default="1.0"
+       doc="Segundos parado em cada waypoint antes de avançar para o próximo"/>
+  <arg name="phase_timeout" default="30.0"
+       doc="Segundos sem convergir antes de avisar (não aborta a tarefa)"/>
+
+  <rosparam file="$(find b166er_whole_body_control)/config/chave_seccionadora_task.yaml"
+            command="load"/>
+
+  <node name="task_sequencer" pkg="b166er_whole_body_control"
+        type="task_sequencer.py" output="screen">
+    <param name="dwell_time"    value="$(arg dwell_time)"/>
+    <param name="phase_timeout" value="$(arg phase_timeout)"/>
+  </node>
+</launch>

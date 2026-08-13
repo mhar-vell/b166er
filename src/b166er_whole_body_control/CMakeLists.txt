@@ -45,5 +45,8 @@ catkin_install_python(PROGRAMS
   nodes/arm_controller_loader.py
   nodes/kill_gui_zombie.py
   nodes/pioneer_wheel_state_pub.py
+  nodes/task_sequencer.py
+  nodes/apriltag_localizer.py
+  nodes/chave_mission.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -1,0 +1,50 @@
+# Posturas nomeadas do braço RV-M2 (espaço de juntas, rad, ordem J1..J5).
+# Carregado pelo b166er_wb.launch; consumido pelo gazebo_arm_bridge
+# (home inicial + comandos de postura) e pela máquina de estados da
+# tarefa da chave seccionadora.
+#
+# HOME RECOLHIDO (stow) — definido pelo Marco em 2026-08-13: "deslocar
+# o eixo 2 para cima e o eixo 3 pra baixo, dessa forma o manipulador
+# ficará como se estivesse recolhido, próximo ao ponto G [centro de
+# gravidade] do sistema". Motivação direta: o braço esticado na
+# horizontal (q=0) já tombou o robô duas vezes em testes no Gazebo
+# (2026-08-12) — CG adiantado + alavanca de ~0,94m até a ponta da
+# ferramenta. Números da postura verificados por FK (2026-08-13):
+#   esticado : CG do braço 0,234m à frente | ponta da ferramenta 0,94m
+#   recolhido: CG do braço 0,175m à frente | ponta da ferramenta 0,35m
+# J2/J3 ficam perto (mas dentro) dos limites [-1.134, 1.134] /
+# [-1.047, 1.047]; J4=-1.8 dobra o punho para a ferramenta recolher
+# junto (limite ±1.920).
+# J2/J3 no limite de junta do URDF (±1.134 / ±1.047 rad, com margem
+# mínima contra saturação) — decisão do Marco em 2026-08-13 ("aplique o
+# limite"): o recolhimento máximo permitido pelos limites atuais. Se um
+# dia o range do ombro for revisado contra o manual do RV-M2 (o clássico
+# é assimétrico, tipo -30°/+100°), dá pra recolher mais.
+arm_postures:
+  stow_home: [0.0, 1.13, -1.04, -1.8, 0.0]
+
+  # Postura de busca/deslocamento: MESMA forma recolhida do stow_home,
+  # só com J1=+90° para a câmera de tarefa apontar para a FRENTE do
+  # robô (+X da base). Verificado por FK em 2026-08-13: com J1=0 o eixo
+  # óptico aponta para −Y (lado direito do robô), inútil para procurar
+  # a tag enquanto se navega; com J1=+90° aponta para +X. Mantém o CG
+  # tão compacto quanto o stow (a rotação de J1 não muda a distância
+  # horizontal do CG, só a direção).
+  search: [1.5708, 1.13, -1.04, -1.8, 0.0]
+
+  # Postura de pré-manipulação: braço semi-estendido à frente (J1=+90°,
+  # mesma direção da câmera/aproximação), punho alinhado — ponto de
+  # partida do controle Cartesiano fino (fuzzy_wb_controller) depois
+  # que a base já parou na pose de standoff de frente pra chave.
+  # Deliberadamente NÃO totalmente estendida: o alcance máximo exige
+  # J2≈−8° (braço quase horizontal), justamente a postura que tombou o
+  # robô em 2026-08-12.
+  deploy: [1.5708, 0.4, -0.2, -0.2, 0.0]
+
+  # Velocidade da rampa de postura (rad/s por junta) — movimento
+  # deliberadamente lento: postura muda entre fases da tarefa, nunca
+  # com pressa, e degraus bruscos de setpoint com P=300 (J2) já
+  # chutaram o chassi no passado (ver b166er_gazebo.launch).
+  ramp_velocity: 0.3
+  # Tolerância para considerar a postura atingida (rad, por junta)
+  reached_tolerance: 0.02
