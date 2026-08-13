@@ -1,0 +1,41 @@
+<launch>
+  <!-- Missão completa da chave seccionadora: procurar a tag, aproximar,
+       abrir a chave, voltar ao ponto de partida (chave_mission.py, SMACH).
+
+       Pré-requisitos, já rodando antes deste launch:
+         1. roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo
+         2. roslaunch b166er_robot spawn_chave_fixture.launch
+
+       Uso:
+         roslaunch b166er_whole_body_control chave_mission.launch
+
+       Acompanhar a máquina de estados ao vivo:
+         rosrun smach_viewer smach_viewer.py
+  -->
+
+  <arg name="standoff_distance" default="0.65"
+       doc="Distância (m) do olhal em que a base para para manipular.
+            Alcance horizontal da ponta da ferramenta na altura do olhal
+            é ~0,93 m (varredura de FK); 0,65 m evita o braço quase
+            estendido, postura que já tombou o robô."/>
+  <arg name="search_omega" default="0.35"
+       doc="Velocidade angular (rad/s) da busca girando no próprio eixo"/>
+  <arg name="tag_id" default="0"/>
+
+  <rosparam file="$(find b166er_whole_body_control)/config/chave_seccionadora_task.yaml"
+            command="load"/>
+
+  <!-- Percepção: detecta a tag e publica a pose da parede. Sem este nó
+       a missão não tem como descobrir onde está a chave (SEARCH falha
+       por timeout — de propósito, não há fallback para ground truth). -->
+  <node name="apriltag_localizer" pkg="b166er_whole_body_control"
+        type="apriltag_localizer.py" output="screen">
+    <param name="tag_id" value="$(arg tag_id)"/>
+  </node>
+
+  <node name="chave_mission" pkg="b166er_whole_body_control"
+        type="chave_mission.py" output="screen">
+    <param name="standoff_distance" value="$(arg standoff_distance)"/>
+    <param name="search_omega"      value="$(arg search_omega)"/>
+  </node>
+</launch>

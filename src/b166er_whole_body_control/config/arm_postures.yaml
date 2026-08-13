@@ -23,13 +23,23 @@
 arm_postures:
   stow_home: [0.0, 1.13, -1.04, -1.8, 0.0]
 
-  # Postura de pré-manipulação: braço semi-estendido à frente, punho
-  # alinhado — ponto de partida do controle Cartesiano fino
-  # (fuzzy_wb_controller) depois que a base já está parada na pose de
-  # standoff de frente pra chave. Valores iniciais razoáveis (braço a
-  # meio caminho, ferramenta apontando à frente) — tuning fino quando
-  # a máquina de estados estiver rodando de ponta a ponta.
-  deploy: [0.0, 0.4, -0.2, -0.2, 0.0]
+  # Postura de busca/deslocamento: MESMA forma recolhida do stow_home,
+  # só com J1=+90° para a câmera de tarefa apontar para a FRENTE do
+  # robô (+X da base). Verificado por FK em 2026-08-13: com J1=0 o eixo
+  # óptico aponta para −Y (lado direito do robô), inútil para procurar
+  # a tag enquanto se navega; com J1=+90° aponta para +X. Mantém o CG
+  # tão compacto quanto o stow (a rotação de J1 não muda a distância
+  # horizontal do CG, só a direção).
+  search: [1.5708, 1.13, -1.04, -1.8, 0.0]
+
+  # Postura de pré-manipulação: braço semi-estendido à frente (J1=+90°,
+  # mesma direção da câmera/aproximação), punho alinhado — ponto de
+  # partida do controle Cartesiano fino (fuzzy_wb_controller) depois
+  # que a base já parou na pose de standoff de frente pra chave.
+  # Deliberadamente NÃO totalmente estendida: o alcance máximo exige
+  # J2≈−8° (braço quase horizontal), justamente a postura que tombou o
+  # robô em 2026-08-12.
+  deploy: [1.5708, 0.4, -0.2, -0.2, 0.0]
 
   # Velocidade da rampa de postura (rad/s por junta) — movimento
   # deliberadamente lento: postura muda entre fases da tarefa, nunca
