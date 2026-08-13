@@ -42,6 +42,20 @@ em todas as fases — só a posição varia. Se o tooling do end-effector
 precisar de uma orientação de engate específica, isso ainda precisa
 ser adicionado (não está no escopo do documento original).
 
+Ferramenta (vara + gancho, ver movemaster.urdf.xacro): os alvos das
+fases (engage/release/pos1/pos2) são pensados para a PONTA DA
+FERRAMENTA (tool_tip) alcançar o olhal — mas /b166er/ee_target e
+/b166er/robot_state.ee_pose continuam sendo o T265 (único sensor de
+pose do EE, arquitetura sem encoders; a ferramenta não é observada
+diretamente). Como a orientação do EE fica fixa durante toda a tarefa
+(ver acima), a conversão é só de POSIÇÃO — kinematics.
+tooltip_position_to_t265_position (mantendo a orientação do T265
+capturada) — e não kinematics.tooltip_target_to_t265_target (essa
+outra é para quando a orientação DESEJADA é a da ponta da ferramenta,
+não a do T265; não é o caso aqui). Convergência é checada no alvo do
+T265 convertido, comparando com ee_pose (que é T265, não a
+ferramenta).
+
 Tópicos
 -------
   Subscreve:
@@ -61,7 +75,7 @@ from gazebo_msgs.srv import GetLinkState
 from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
-from b166er_whole_body_control.kinematics import pose_error
+from b166er_whole_body_control.kinematics import pose_error, tooltip_position_to_t265_position
 
 
 PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
@@ -188,7 +202,8 @@ class TaskSequencer:
                       '(%.3f, %.3f, %.3f)', *olhal_pos)
         return olhal_pos, R
 
-    def _phase_target_matrix(self, phase_params):
+    def _tooltip_target_matrix(self, phase_params):
+        """Pose alvo da PONTA DA FERRAMENTA (não do T265) para a fase."""
         offset_local = np.array(phase_params['offset_xyz_m'], dtype=float)
         offset_world = self._olhal_R @ offset_local
         target_pos   = self._olhal_pos + offset_world
@@ -255,12 +270,23 @@ class TaskSequencer:
             if rospy.is_shutdown():
                 return
 
-            T_target = self._phase_target_matrix(phase_params)
-            rospy.loginfo('[task_sequencer] fase "%s" — alvo=(%.3f, %.3f, %.3f)',
-                          phase_name, *T_target[:3, 3])
-            self._publish_target(T_target)
+            T_tooltip_target = self._tooltip_target_matrix(phase_params)
+            R_ee_fixed = T_tooltip_target[:3, :3]   # = self._ee_orientation, mantida fixa
+            p_t265_target = tooltip_position_to_t265_position(
+                T_tooltip_target[:3, 3], R_ee_fixed)
 
-            if not self._wait_convergence(phase_name, T_target):
+            T_t265_target = np.eye(4)
+            T_t265_target[:3, :3] = R_ee_fixed
+            T_t265_target[:3, 3]  = p_t265_target
+
+            rospy.loginfo('[task_sequencer] fase "%s" — alvo ponta-da-ferramenta='
+                          '(%.3f, %.3f, %.3f), alvo T265 equivalente=(%.3f, %.3f, %.3f)',
+                          phase_name, *T_tooltip_target[:3, 3], *T_t265_target[:3, 3])
+            self._publish_target(T_t265_target)
+
+            # Convergência checada no alvo do T265 — ee_pose é o T265,
+            # não a ponta da ferramenta (não observada diretamente).
+            if not self._wait_convergence(phase_name, T_t265_target):
                 return  # rospy.is_shutdown() durante a espera
 
             rospy.sleep(self._dwell_time)

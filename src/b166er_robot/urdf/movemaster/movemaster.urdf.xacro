@@ -286,6 +286,88 @@
       </visual>
     </link>
 
+    <!-- ═══ Ferramenta de operação (vara rígida + gancho na ponta) ═══
+         Decisão do Marco (2026-08-12): vara rígida (sem junta própria,
+         sem atuação — só extensão fixa do EE), ~35cm de comprimento,
+         com gancho na ponta pra engatar no olhal da chave seccionadora
+         (ver urdf/fixtures/chave_seccionadora_lf.urdf.xacro). Existe
+         pra dar folga real entre o chassi/braço e a parede — o RV-M2
+         sozinho (~0,5-0,7m de alcance) força a base a chegar quase
+         colada na parede pra alcançar o olhal, o que já derrubou o
+         robô numa simulação de teste (base colidindo com a parede).
+         Mesma lógica de uma vara de manobra real (hot stick): manter
+         distância do ponto energizado.
+
+         Montada no mesmo ponto que o gripper visual (GripCube, ponta
+         em z=-0.08 no frame do GripCube, mesmo offset dos meshes
+         Grip1/Grip2) — SEM junta própria (fixed), então herda a fusão
+         de corpo rígido do Gazebo junto com L5/CameraSupport/GripCube
+         (mesmo comportamento já documentado nas fixtures: um
+         <gazebo reference> por link, não <material><color> puro).
+
+         IMPORTANTE: o T265 (t265_link) continua sendo o único sensor
+         de pose do EE (arquitetura sem encoders) — a ponta da
+         ferramenta (tool_tip) NÃO é observada diretamente, é um offset
+         FIXO e conhecido a partir de t265_link (mesmo CameraSupport
+         rígido). Ver kinematics.py (T_T265_TOOLTIP) para essa
+         transformação — quem consome alvos Cartesianos pensando na
+         ponta da ferramenta (ex.: task_sequencer.py) precisa aplicar
+         esse offset ao comandar o T265, não pode simplesmente mirar a
+         ponta da ferramenta como se fosse o EE controlado. ═══ -->
+    <xacro:property name="tool_length" value="0.35"/>
+
+    <joint name="JTool" type="fixed">
+      <origin xyz="0 0 -0.08" rpy="0 0 0"/>
+      <parent link="GripCube"/>
+      <child link="tool_rod"/>
+    </joint>
+
+    <link name="tool_rod">
+      <visual>
+        <origin xyz="0 0 ${-tool_length/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.008" length="${tool_length}"/></geometry>
+        <material name="ToolColor"><color rgba="0.95 0.75 0.05 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-tool_length/2}" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.008" length="${tool_length}"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="JToolTip" type="fixed">
+      <origin xyz="0 0 ${-tool_length}" rpy="0 0 0"/>
+      <parent link="tool_rod"/>
+      <child link="tool_tip"/>
+    </joint>
+
+    <!-- tool_tip: frame na ponta do gancho — este é o frame que precisa
+         coincidir com chave_olhal_link quando a tarefa "engage"
+         converge. URDF não tem primitiva de toroide; o gancho é
+         aproximado por um disco fino, mesma convenção já usada em
+         chave_olhal_link (chave_seccionadora_lf.urdf.xacro). -->
+    <link name="tool_tip">
+      <visual>
+        <geometry><cylinder radius="0.015" length="0.006"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <collision>
+        <geometry><sphere radius="0.018"/></geometry>
+      </collision>
+    </link>
+
+    <!-- <material><color> puro do URDF some na fusão de corpo rígido do
+         Gazebo (mesmo comportamento documentado em
+         chave_seccionadora_lf.urdf.xacro) — só os dois links novos da
+         ferramenta ganham <gazebo reference> aqui; o resto da árvore
+         fixa do EE (CameraSupport/GripCube/Grip1/Grip2) já tinha esse
+         problema antes desta mudança e fica fora de escopo. -->
+    <gazebo reference="tool_rod">
+      <material>Gazebo/Yellow</material>
+    </gazebo>
+    <gazebo reference="tool_tip">
+      <material>Gazebo/Yellow</material>
+    </gazebo>
+
     <!-- ── Transmissões para ros_control (Gazebo) ───────────────────── -->
     <!-- VelocityJointInterface: controladores de velocidade para cada junta -->
 

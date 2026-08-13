@@ -60,6 +60,72 @@ def _tf(xyz, rpy):
 T_BASELINK_ARM = _tf([0.003, 0, 0.294], [0, 0, 0])
 _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([0, 0.075, -0.07], [0, 2.1, 1.57])
 
+# Ferramenta de operação (vara + gancho, ver movemaster.urdf.xacro,
+# JTool/JToolTip) — mesma cadeia rígida do L5 até a ponta do gancho,
+# via GripCube (JCam + JGripCube + JTool + JToolTip, todas fixed).
+_T_L5_TOOLTIP = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
+                @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
+                @ _trans(0, 0, -0.08)   # JTool:     GripCube → tool_rod
+                @ _trans(0, 0, -0.35))  # JToolTip:  tool_rod → tool_tip
+
+# Offset FIXO e conhecido de t265_link até a ponta da ferramenta —
+# ambos pendurados rigidamente no mesmo CameraSupport, então essa
+# transformação não muda com a pose do braço. T265 continua sendo o
+# único sensor de pose do EE (arquitetura sem encoders); quem precisa
+# de um alvo Cartesiano para a PONTA DA FERRAMENTA (ex.: task_sequencer.py
+# mirando chave_olhal_link) usa esta constante para converter esse alvo
+# num alvo equivalente para o T265 — nunca o contrário.
+T_T265_TOOLTIP = np.linalg.inv(_T_L5_T265) @ _T_L5_TOOLTIP
+
+
+def tooltip_target_to_t265_target(T_world_tooltip_target):
+    """
+    Converte um alvo Cartesiano de ORIENTAÇÃO EXPLÍCITA pensado para a
+    ponta da ferramenta no alvo equivalente para o T265 — o frame que o
+    whole-body controller realmente controla.
+
+    ATENÇÃO — rotação, não só posição: a rotação de T_world_tooltip_target
+    é tratada como a rotação DESEJADA DA PONTA DA FERRAMENTA, não do T265.
+    Como T_T265_TOOLTIP tem uma parte rotacional não-trivial (o mount da
+    ferramenta não é um alinhamento puro), a rotação resultante do T265
+    (T_world_t265_target[:3,:3]) sai DIFERENTE da rotação de entrada — é
+    a rotação de T265 necessária para que a FERRAMENTA atinja aquela
+    orientação, não uma cópia dela. Use esta função só quando a tarefa
+    realmente especifica a orientação da ferramenta.
+
+    Para o caso mais comum neste código (manter a orientação do PRÓPRIO
+    T265 fixa e só variar a posição-alvo da ponta da ferramenta — ver
+    task_sequencer.py), use tooltip_position_to_t265_position abaixo, não
+    esta função.
+
+    T_world_tooltip_target : ndarray (4,4) — pose alvo desejada da
+                              ponta da ferramenta, no frame mundial.
+
+    Retorna T_world_t265_target (4,4).
+    """
+    return T_world_tooltip_target @ np.linalg.inv(T_T265_TOOLTIP)
+
+
+def tooltip_position_to_t265_position(p_world_tooltip_target, R_world_t265_fixed):
+    """
+    Converte uma posição-alvo da ponta da ferramenta na posição-alvo
+    equivalente do T265, MANTENDO a orientação do T265 fixa em
+    R_world_t265_fixed (o caso comum: a tarefa não especifica
+    orientação de ferramenta, só mantém o EE numa orientação
+    constante — ver task_sequencer.py).
+
+    p_world_tooltip_target : array (3,)   — posição alvo da ponta da
+                              ferramenta, no frame mundial.
+    R_world_t265_fixed     : ndarray (3,3) — orientação do T265 a
+                              manter (mesma em toda a tarefa).
+
+    Retorna p_world_t265_target (3,), tal que comandar o T265 para essa
+    posição, nessa orientação, deixa a ponta da ferramenta exatamente
+    em p_world_tooltip_target.
+    """
+    offset_world = R_world_t265_fixed @ T_T265_TOOLTIP[:3, 3]
+    return np.asarray(p_world_tooltip_target) - offset_world
+
 
 def _adj(R):
     """Adjunto 6×6 para transformar vetores de velocidade de frame."""
