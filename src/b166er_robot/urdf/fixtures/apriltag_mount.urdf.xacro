@@ -18,7 +18,18 @@
 
   <xacro:macro name="apriltag_mount" params="parent prefix:=tag_ xyz:='0 0 0' rpy:='0 0 0'">
 
-    <xacro:property name="tag_size" value="0.132"/>          <!-- 132 mm — mesma tag física já validada -->
+    <!-- A textura apriltag_36h11_id0.png tem quiet zone branca: o
+         quadrado preto ocupa exatamente 80% da imagem (medido pixel a
+         pixel em 2026-08-13, bbox 100-899 numa textura de 1000px). O
+         que importa para o detector/PnP é o QUADRADO PRETO — é ele que
+         deve medir 132mm, igual à tag física do Marco já validada em
+         hardware (ver project_fase4_apriltag_validacao). Por isso a
+         PLACA mede tag_black_size/0.8 = 165mm, para o preto renderizar
+         os 132mm exatos. Descoberto ao vivo: o PnP superestimava a
+         distância em ~25% quando a placa media 132mm (preto = 105,6mm
+         renderizado, tratado como 132mm pelo detector). -->
+    <xacro:property name="tag_black_size" value="0.132"/>    <!-- 132 mm — quadrado preto, mesma tag física validada -->
+    <xacro:property name="tag_size" value="${tag_black_size/0.8}"/>  <!-- placa: preto + quiet zone da textura -->
     <xacro:property name="tag_plate_thickness" value="0.005"/>
     <xacro:property name="wall_standoff" value="0.02"/>
 
