@@ -63,6 +63,14 @@ MAX_ARM_VEL  = 0.8    # rad/s por junta
 # de 28 kg sobre uma base de 41 kg tem autoridade de sobra para
 # derrubar o conjunto.
 MAX_ARM_VEL_LOCKED = 0.25  # rad/s por junta
+
+# Teto de velocidade CARTESIANA na manipulação com base travada. O ganho
+# Fuzzy é agressivo por projeto (aproxima rápido de longe), mas aqui o
+# erro começa em ~0,3 m e o ganho pedia velocidades que faziam o braço
+# ultrapassar e caçar o alvo (erro oscilando 0,15 ↔ 0,46 m em vez de
+# convergir, 2026-08-13). Perto de uma parede energizada, aproximação
+# lenta e monotônica vale mais que velocidade.
+MAX_CART_VEL_LOCKED = 0.06  # m/s
 K_NULL       = 0.3    # ganho do objetivo secundário (espaço nulo)
 
 # Piso de velocidade linear da base. Com o braço horizontal, a direção x do
@@ -486,6 +494,23 @@ class FuzzyWBController:
 
             # ---- 4a. Base travada: só o braço serve o alvo --------------
             if self._base_locked:
+                # NÃO AGIR SOBRE ESTIMATIVA RUIM: o braço é controlado a
+                # partir de q estimado por IK (sem encoders). Em
+                # movimento essa IK às vezes não converge (observado:
+                # resíduo de até 15 cm durante a manipulação), e usar
+                # esse q monta uma Jacobiana errada — o controlador
+                # empurra o braço na direção errada e passa a caçar o
+                # alvo. Melhor parar e esperar a estimativa reassentar:
+                # o alvo é estático, não há pressa.
+                if not state.ik_converged:
+                    self._publish_arm_vel(np.zeros(5), now)
+                    self._pub_cmdvel.publish(Twist())
+                    rospy.logwarn_throttle(2.0,
+                        '[fuzzy_wb] IK não convergiu (res=%.3fm) — braço parado '
+                        'até a estimativa reassentar', state.ik_residual_pos)
+                    rate.sleep()
+                    continue
+
                 # POSIÇÃO APENAS (3 linhas da Jacobiana). O braço tem 5
                 # DOF; exigir pose 6D completa é infactível na maioria
                 # das configurações e o DLS trava num compromisso —
@@ -518,8 +543,13 @@ class FuzzyWBController:
                     err_lin = err_EE[:3]
 
                 err_pos_norm = float(np.linalg.norm(err_lin))
+                # Velocidade Cartesiana comandada, saturada pela direção.
+                xdot = k_pos * err_lin
+                sp = float(np.linalg.norm(xdot))
+                if sp > MAX_CART_VEL_LOCKED:
+                    xdot = xdot * (MAX_CART_VEL_LOCKED / sp)
                 J_pin = dls_pseudoinverse(J_pos, lam)
-                q_dot_arm = J_pin @ (k_pos * err_lin)
+                q_dot_arm = J_pin @ xdot
                 N_arm = null_space_projector(J_pos, J_pin)
                 q_dot_arm = q_dot_arm + N_arm @ (self._ns_gain *
                                                  joint_limit_gradient(q_arm))

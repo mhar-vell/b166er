@@ -24,7 +24,9 @@ Sequência
   REFINE     → já parado e perto, remede a parede pela tag e substitui a
                estimativa grosseira do SEARCH. Sem isso o erro angular
                da detecção distante vira dezenas de cm no alvo.
-  DEPLOY     → braço para a postura de pré-manipulação.
+  DEPLOY     → resolve a IK da ponta para o primeiro alvo e
+               pré-posiciona o braço nela (não uma postura fixa: o ramo
+               errado trava o controlador num batente de junta).
   MANIPULATE → as 4 fases Cartesianas (engage → release → pos1 → pos2)
                via /b166er/ee_target, conduzidas pelo controlador
                whole-body, exatamente como no task_sequencer.
@@ -67,7 +69,8 @@ from tf.transformations import quaternion_matrix, euler_from_quaternion
 
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, pose_error, T_T265_TOOLTIP)
+    JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
+    ik_tooltip_position)
 from b166er_whole_body_control import chave_task
 
 PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
@@ -96,6 +99,7 @@ class MissionContext(object):
         # Distância intermediária de aproximação: dentro da faixa
         # confiável da tag (132 mm → ~1,45 m pela regra d/11).
         self.coarse_distance  = rospy.get_param('~coarse_distance', 1.30)
+        self.deploy_ik_tol    = rospy.get_param('~deploy_ik_tol', 0.02)
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
@@ -482,17 +486,57 @@ class Refine(smach.State):
 
 
 class Deploy(smach.State):
+    """Pré-posiciona o braço na SOLUÇÃO DE IK do primeiro alvo.
+
+    Não usa mais uma postura fixa. O braço tem múltiplos ramos de
+    solução e uma postura fixa cai na bacia errada com frequência: em
+    2026-08-13 a missão convergia suave até 4,5 cm do olhal e travava
+    lá, com J3 cravado em −60° (o batente), enquanto a solução do mesmo
+    alvo pedia J3 = +31°. Resolver a IK aqui coloca o braço no ramo
+    certo, e o controlador Cartesiano só fecha o resíduo.
+
+    Fallback para a postura 'deploy' do YAML se a IK não achar solução
+    (alvo fora de alcance a partir do standoff) — aí o MANIPULATE falha
+    com diagnóstico claro em vez de o braço sair tentando às cegas.
+    """
+
     def __init__(self, ctx):
         smach.State.__init__(self, outcomes=['ok', 'failed'])
         self.ctx = ctx
 
     def execute(self, _):
         ctx = self.ctx
-        ctx.send_posture('deploy')
+        p_tip = chave_task.phase_target_position(
+            ctx.wall_pos, ctx.wall_R, ctx.phases[PHASE_ORDER[0]]['offset_xyz_m'])
+
+        x, y, yaw = ctx.base_pose()
+        b = ctx.robot_state.base_odom.pose.pose
+        T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
+                                  b.orientation.z, b.orientation.w])
+        T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
+        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
+
+        q_ik, err_ik = ik_tooltip_position(p_local)
+        if err_ik < ctx.deploy_ik_tol:
+            rospy.loginfo('[mission] DEPLOY: IK da ponta resolvida (resíduo '
+                          '%.4f m) — pré-posicionando em %s graus',
+                          err_ik, np.degrees(q_ik).round(1))
+            msg = JointState()
+            msg.header.stamp = rospy.Time.now()
+            msg.name     = JOINT_NAMES
+            msg.position = q_ik.tolist()
+            ctx.posture_done = False
+            ctx.pub_posture.publish(msg)
+        else:
+            rospy.logwarn('[mission] DEPLOY: IK da ponta não fechou (resíduo '
+                          '%.3f m) — alvo provavelmente fora de alcance deste '
+                          'standoff. Usando a postura fixa do YAML.', err_ik)
+            ctx.send_posture('deploy')
+
         if not _wait_posture(ctx):
             return 'failed'
-        # Handoff: daqui em diante quem dirige base E braço é o
-        # controlador whole-body, conduzido por /b166er/ee_target.
+        # Handoff: daqui em diante quem dirige o braço é o controlador
+        # whole-body (com a base travada), conduzido por /b166er/ee_target.
         ctx.release_base()
         return 'ok'
 

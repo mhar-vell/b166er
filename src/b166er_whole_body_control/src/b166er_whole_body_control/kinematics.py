@@ -422,3 +422,55 @@ def gravity_torque_arm(q):
             r = p_joints[j] - p_i
             tau[i] += _LINK_MASSES[j] * np.dot(g_vec, np.cross(z_i, r))
     return tau
+
+
+def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08):
+    """
+    IK de POSIÇÃO da ponta da ferramenta (não do T265, não pose 6D).
+
+    Por que existe: a manipulação da chave controla só a posição da
+    ponta (5 DOF não fecham pose 6D — ver fuzzy_wb_controller), e o
+    braço tem múltiplos ramos de solução. Partir de uma postura fixa
+    põe o DLS na bacia errada com frequência: em 2026-08-13 a missão
+    estacionava a 4,5 cm do olhal com J3 cravado em −60° (o batente),
+    enquanto a solução analítica do mesmo alvo pedia J3 = +31°.
+    Resolver a IK antes e pré-posicionar o braço nela resolve isso —
+    o controlador Cartesiano só precisa fechar o resíduo.
+
+    p_target_arm : (3,) posição alvo da ponta, no frame da BASE DO BRAÇO.
+    q_seeds      : lista de sementes; default cobre os ramos principais.
+
+    Retorna (q, erro_final). Multi-start: fica com o melhor resultado.
+    """
+    if q_seeds is None:
+        q_seeds = [
+            np.zeros(5),
+            np.array([0.0,  0.6, -0.4, -1.2, 0.0]),   # cotovelo "para baixo"
+            np.array([0.0, -0.9,  0.5,  0.7, 0.0]),   # cotovelo "para cima"
+            np.array([0.0,  0.3,  0.3,  0.0, 0.0]),
+            np.array([0.0, -0.3, -0.3,  0.5, 0.0]),
+        ]
+
+    def _tip(q):
+        return (fk_arm(q) @ T_T265_TOOLTIP)[:3, 3]
+
+    best_q, best_err = None, np.inf
+    for seed in q_seeds:
+        q = np.clip(np.array(seed, dtype=float), JOINT_LOWER, JOINT_UPPER)
+        for _ in range(max_iter):
+            err = np.asarray(p_target_arm) - _tip(q)
+            if np.linalg.norm(err) < 1e-4:
+                break
+            J = np.zeros((3, 5))
+            for i in range(5):
+                d = np.zeros(5); d[i] = IK_DQ_STEP
+                J[:, i] = (_tip(q + d) - _tip(q - d)) / (2 * IK_DQ_STEP)
+            dq = J.T @ np.linalg.solve(J @ J.T + IK_LAMBDA**2 * np.eye(3), err)
+            n = np.max(np.abs(dq))
+            if n > max_step:
+                dq *= max_step / n
+            q = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
+        e = float(np.linalg.norm(np.asarray(p_target_arm) - _tip(q)))
+        if e < best_err:
+            best_q, best_err = q.copy(), e
+    return best_q, best_err
