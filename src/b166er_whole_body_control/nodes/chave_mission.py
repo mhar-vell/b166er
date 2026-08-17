@@ -73,7 +73,10 @@ from b166er_whole_body_control.kinematics import (
     ik_tooltip_position)
 from b166er_whole_body_control import chave_task
 
-PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
+# pre_engage primeiro: aproxima por um ponto afastado da parede e só
+# então entra reto no olhal — o controlador Cartesiano não desvia de
+# obstáculo sozinho (ver nota no YAML).
+PHASE_ORDER = ['pre_engage', 'engage', 'release', 'pos1', 'pos2']
 
 
 def _yaw_of(quat):
@@ -506,6 +509,9 @@ class Deploy(smach.State):
 
     def execute(self, _):
         ctx = self.ctx
+        # Mira o primeiro waypoint (pré-engate, afastado da parede) —
+        # não o olhal: pré-posicionar direto no olhal levaria o braço a
+        # atravessar a parede durante a rampa de postura.
         p_tip = chave_task.phase_target_position(
             ctx.wall_pos, ctx.wall_R, ctx.phases[PHASE_ORDER[0]]['offset_xyz_m'])
 
