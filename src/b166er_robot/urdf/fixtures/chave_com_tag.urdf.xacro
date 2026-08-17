@@ -28,18 +28,15 @@
   <xacro:property name="chave_x_offset" value="-0.20"/>
   <xacro:property name="tag_x_offset" value="0.20"/>
 
-  <!-- IMPORTANTE: esta altura precisa bater com o cálculo interno do
-       macro chave_seccionadora_lf (bracket_mount_z), já que o xacro não
-       expõe propriedades de dentro de um macro para fora dele. Se os
-       parâmetros dimensionais da chave mudarem lá, atualizar aqui
-       também — olhal_height=0.810, blade_length=0.200,
-       blade_angle=0.349 rad, bracket_height=0.060. Sem isolador (ver
-       nota "SEM ISOLADOR" em chave_seccionadora_lf.urdf.xacro,
-       decisão do Marco em 2026-08-12): a lâmina pivota direto no
-       topo do bracket, então este valor subiu em relação à versão
-       anterior com isolador (que era ≈0,7879 m). -->
-  <xacro:property name="chave_bracket_mount_z"
-    value="${0.810 + 0.200*cos(0.349) - 0.060}"/>  <!-- ≈ 0,9379 m -->
+  <!-- Altura de montagem do macro da chave = altura do PIVÔ (embaixo),
+       não mais do bracket sob o isolador. Precisa bater com o cálculo
+       interno de chave_seccionadora_lf (pivot_z), que o xacro não
+       expõe para fora do macro: olhal_height=0.810, blade_length=0.200,
+       blade_angle=0.349 rad. Mecânica invertida em 2026-08-13 (pivô
+       embaixo, olhal em cima) — o OLHAL continua exatamente onde
+       estava, a 0.810 m; só a estrutura abaixo dele mudou. -->
+  <xacro:property name="chave_pivot_z"
+    value="${0.810 - 0.200*cos(0.349)}"/>  <!-- ≈ 0,622 m -->
 
   <xacro:property name="tag_mount_z" value="1.030"/>
 
@@ -70,7 +67,7 @@
   </gazebo>
 
   <xacro:chave_seccionadora_lf parent="wall_link" prefix="chave_"
-    xyz="${chave_x_offset} 0 ${chave_bracket_mount_z}" rpy="0 0 0"/>
+    xyz="${chave_x_offset} 0 ${chave_pivot_z}" rpy="0 0 0"/>
 
   <xacro:apriltag_mount parent="wall_link" prefix="tag_"
     xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"/>

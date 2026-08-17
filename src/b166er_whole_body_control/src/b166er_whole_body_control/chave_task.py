@@ -33,8 +33,15 @@ _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
 # Offset fixo de wall_link até chave_olhal_link, no frame local do
 # fixture (X ao longo da parede, Y normal saindo da face, Z vertical).
 # O Z é exatamente OLHAL_HEIGHT porque wall_link nasce no chão e a
-# cadeia bracket→blade→olhal foi construída para o olhal cair nessa
-# altura — os termos de bracket_height/pivot_z se cancelam.
+# cadeia do fixture foi construída para o olhal cair nessa altura.
+#
+# INVARIANTE deliberado: a mecânica da chave foi invertida em
+# 2026-08-13 (pivô passou para BAIXO, olhal para CIMA — correção do
+# Marco), mas estes números NÃO mudaram. O olhal continua no mesmo
+# ponto do mundo; só a estrutura abaixo dele mudou. Isso preserva a
+# calibração de todo o pipeline de percepção. Conferido no URDF
+# processado: olhal em (-0.2684, 0.03, 0.810) relativo a wall_link,
+# antes e depois.
 OLHAL_OFFSET_FROM_WALL_LINK = np.array([
     CHAVE_X_OFFSET - _PIVOT_X,
     WALL_STANDOFF,

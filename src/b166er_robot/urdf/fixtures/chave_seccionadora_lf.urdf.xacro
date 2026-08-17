@@ -1,140 +1,143 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!-- Chave seccionadora unipolar de distribuição, base "C", tipo "LF"
-       (STIeletrônica Isoladores) — alvo de manipulação fixo no mundo
-       Gazebo para a tarefa de operação de chave descrita no artigo
-       (mobile-manipulator-solution) e no ROADMAP.
+  <!-- Chave seccionadora da BANCADA DE TESTES do Marco — remodelada em
+       2026-08-13 a partir da FOTO da bancada real (docs/img/
+       chave_bancada_teste_sem_isolador.jpg no pacote whole_body_control),
+       não mais do desenho técnico do datasheet STI.
 
-       Fonte das dimensões: datasheet STI "CHAVE SECCIONADORA UNIPOLAR
-       DE DISTRIBUIÇÃO BASE C TIPO LF" (PDF entregue pelo Marco,
-       2026-08-08), tabela CARACTERÍSTICAS TÉCNICAS DIMENSIONAIS.
-       Catálogo usado como referência: LF-25043-A (24 kV, 400 A,
-       NBI 125 kV) — A=530 B=365 C=180 D=345 mm, peso 7 kg. Escolha
-       arbitrária dentre as 15 variantes da tabela (todas têm a mesma
-       forma, só a escala e a classe de isolamento mudam); trocar de
-       catálogo é só trocar os xacro:property abaixo.
+       Por que mudou: o desenho do datasheet inclui o isolador tipo bucha,
+       que a bancada não tem, e a silhueta resultante não lembrava a
+       chave real ("a renderização da chave não está parecido com o
+       real" — Marco). A foto mostra outra coisa: uma placa branca
+       parafusada na parede, um bracket metálico chato no topo, um
+       mecanismo escuro em forma de wishbone descendo, a barra
+       horizontal do olhal atravessando, e um segundo bracket metálico
+       na base.
 
-       IMPORTANTE: geometria de primitivas (caixas/cilindros), NÃO é
-       uma réplica fiel de CAD — é uma aproximação proporcional
-       inspirada no desenho técnico do datasheet (lâmina móvel a ~20°
-       da vertical na posição fechada, olhal na ponta da lâmina). O
-       que É exato: a altura do olhal acima do solo, fixada em 810 mm
-       por especificação direta do Marco — todo o resto da geometria é
-       construído de baixo para cima a partir desse ponto, não o
-       contrário.
+       INVERSÃO DA MECÂNICA (correção do Marco, 2026-08-13): o PIVÔ fica
+       EMBAIXO e o OLHAL EM CIMA. A versão anterior tinha isso ao
+       contrário (lâmina pendurada de um pivô superior), o que colocava
+       o alvo de manipulação na extremidade errada da chave — o robô
+       mirava a ponta de baixo.
 
-       SEM ISOLADOR: por decisão explícita do Marco (documento
-       "Descrição do movimento de abertura da chave seccionadora",
-       Google Docs, compartilhado em 2026-08-12), o isolador tipo
-       bucha foi removido tanto da bancada de testes física quanto
-       desta simulação — a foto da bancada real (mesmo documento)
-       mostra a chave presa direto na parede, sem bucha, com a tag
-       AprilTag logo acima, exatamente como já modelávamos o resto do
-       fixture. A lâmina agora pivota direto no topo do bracket.
+       O QUE NÃO MUDOU, de propósito: a posição do olhal no mundo
+       (810 mm do chão, mesmo offset lateral). É a esse ponto que o
+       pipeline de percepção e chave_task.py estão calibrados; inverter
+       a mecânica abaixo dele não mexe no alvo. Ver
+       OLHAL_OFFSET_FROM_WALL_LINK em chave_task.py.
 
-       Montagem: fixada direto numa parede (ver chave_com_tag.urdf.xacro),
-       não num poste próprio — por isso este macro não tem link de base
-       nem de suporte vertical, só o bracket "base C" que encosta na
-       parede e a cadeia bracket→lâmina→olhal por cima dele. O
-       afastamento de 3 cm da face da parede é aplicado uma única vez,
-       no joint bracket→lâmina, e propaga por herança de frame para o
-       resto da cadeia (terminal, lâmina, olhal) — importante para o
-       TF do olhal_link bater exatamente com a geometria visual/de
-       colisão renderizada, já que é esse frame que o controlador
-       whole-body vai mirar.
-
-       Referências visuais usadas (não reproduzidas como imagem, só
-       como referência de proporção): STIeletrônica Isoladores,
-       https://stisp.com.br/chave-seccionadora-unipolar-de-distribuicao-base-c-tipo-lf/
-       e vídeo https://youtu.be/Mpzq69clYi0. -->
+       Continua sendo aproximação por primitivas, não réplica de CAD. -->
 
   <xacro:macro name="chave_seccionadora_lf" params="parent prefix:=chave_ xyz:='0 0 0' rpy:='0 0 0'">
 
-    <!-- ═══ Parâmetros dimensionais (datasheet STI, catálogo LF-25043-A) ═══ -->
-    <xacro:property name="olhal_height" value="0.810"/>       <!-- altura do olhal, fixa (spec do Marco) -->
-    <xacro:property name="blade_length" value="0.200"/>       <!-- comprimento aprox. da lâmina móvel -->
-    <xacro:property name="blade_angle" value="0.349"/>        <!-- 20° em rad, ângulo fechado (datasheet) -->
-    <xacro:property name="bracket_height" value="0.060"/>     <!-- altura aprox. do suporte "base C" -->
-    <xacro:property name="wall_standoff" value="0.03"/>       <!-- afastamento da face da parede -->
+    <!-- ═══ Parâmetros ═══ -->
+    <xacro:property name="olhal_height" value="0.810"/>      <!-- altura do olhal (spec do Marco) -->
+    <xacro:property name="blade_length" value="0.200"/>      <!-- pivô → olhal -->
+    <xacro:property name="blade_angle" value="0.349"/>       <!-- 20° da vertical, posição fechada -->
+    <xacro:property name="wall_standoff" value="0.03"/>      <!-- afastamento da face da parede -->
 
-    <!-- Ponto de pivô da lâmina: acima e deslocado horizontalmente do
-         olhal, pela trigonometria do ângulo de 20° fechado. -->
-    <xacro:property name="pivot_z" value="${blade_length*cos(blade_angle)}"/>
-    <xacro:property name="pivot_x" value="${blade_length*sin(blade_angle)}"/>
+    <!-- Placa branca de fundo (a que aparece na foto, parafusada na
+         parede e servindo de base para os dois brackets). -->
+    <xacro:property name="plate_w" value="0.16"/>
+    <xacro:property name="plate_h" value="0.62"/>
+    <xacro:property name="plate_t" value="0.012"/>
 
-    <!-- Altura em que o bracket precisa encostar na parede para que o
-         olhal, no fim da cadeia, caia exatamente em olhal_height. Sem
-         isolador no meio, a lâmina pivota direto no topo do bracket. -->
-    <xacro:property name="bracket_mount_z" value="${olhal_height + pivot_z - bracket_height}"/>
+    <!-- Deslocamento horizontal do olhal em relação ao pivô, pela
+         inclinação de 20° da lâmina fechada. Com o pivô EMBAIXO, o
+         olhal sobe: +cos em Z, e o mesmo afastamento lateral de antes
+         (sinal mantido para o olhal não mudar de lugar no mundo). -->
+    <xacro:property name="pivot_dz" value="${blade_length*cos(blade_angle)}"/>
+    <xacro:property name="pivot_dx" value="${blade_length*sin(blade_angle)}"/>
 
-    <!-- ═══ Suporte "base C" (bracket de fixação à parede) ═══ -->
-    <link name="${prefix}bracket">
+    <!-- Origem do macro (bracket de montagem) = PIVÔ, embaixo. -->
+    <xacro:property name="pivot_z" value="${olhal_height - pivot_dz}"/>
+
+    <!-- ═══ Placa branca de fundo ═══ -->
+    <link name="${prefix}plate">
       <visual>
-        <origin xyz="0 ${wall_standoff} ${bracket_height/2}"/>
-        <geometry><box size="0.10 ${2*wall_standoff} ${bracket_height}"/></geometry>
-        <material name="galvanized"><color rgba="0.65 0.65 0.68 1"/></material>
+        <origin xyz="0 ${plate_t/2} ${plate_h/2 - 0.10}"/>
+        <geometry><box size="${plate_w} ${plate_t} ${plate_h}"/></geometry>
+        <material name="switch_plate"><color rgba="0.93 0.92 0.88 1"/></material>
       </visual>
       <collision>
-        <origin xyz="0 ${wall_standoff} ${bracket_height/2}"/>
-        <geometry><box size="0.10 ${2*wall_standoff} ${bracket_height}"/></geometry>
+        <origin xyz="0 ${plate_t/2} ${plate_h/2 - 0.10}"/>
+        <geometry><box size="${plate_w} ${plate_t} ${plate_h}"/></geometry>
       </collision>
       <inertial>
-        <mass value="0.5"/>
+        <mass value="1.0"/>
+        <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}plate_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}plate"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+
+    <!-- ═══ Bracket inferior = PIVÔ da lâmina (chapa metálica chata,
+         parafusada na placa — a de baixo na foto) ═══ -->
+    <link name="${prefix}bracket">
+      <visual>
+        <origin xyz="0 ${wall_standoff*0.6} 0"/>
+        <geometry><box size="0.045 0.020 0.14"/></geometry>
+        <material name="galvanized"><color rgba="0.55 0.55 0.58 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 ${wall_standoff*0.6} 0"/>
+        <geometry><box size="0.045 0.020 0.14"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.4"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
     </link>
 
     <joint name="${prefix}bracket_joint" type="fixed">
-      <parent link="${parent}"/>
+      <parent link="${prefix}plate"/>
       <child link="${prefix}bracket"/>
-      <origin xyz="${xyz}" rpy="${rpy}"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Terminal fixo (padrão NEMA) no topo do bracket. Sem
-         isolador para encadear o afastamento da parede (wall_standoff)
-         por herança, terminal e lâmina são agora irmãos, filhos diretos
-         do bracket — cada branch repete o offset Y explicitamente
-         (ver também blade_joint logo abaixo). ═══ -->
+    <!-- ═══ Bracket superior = contato fixo (a chapa de cima na foto,
+         com o furo no topo) ═══ -->
     <link name="${prefix}fixed_terminal">
       <visual>
-        <origin xyz="0 ${wall_standoff} 0"/>
-        <geometry><box size="0.06 0.03 0.03"/></geometry>
-        <material name="copper"><color rgba="0.72 0.45 0.20 1"/></material>
+        <origin xyz="0 ${wall_standoff*0.6} 0"/>
+        <geometry><box size="0.045 0.020 0.19"/></geometry>
+        <material name="galvanized"/>
       </visual>
       <collision>
-        <origin xyz="0 ${wall_standoff} 0"/>
-        <geometry><box size="0.06 0.03 0.03"/></geometry>
+        <origin xyz="0 ${wall_standoff*0.6} 0"/>
+        <geometry><box size="0.045 0.020 0.19"/></geometry>
       </collision>
       <inertial>
-        <mass value="0.3"/>
-        <inertia ixx="0.0005" ixy="0" ixz="0" iyy="0.0005" iyz="0" izz="0.0005"/>
+        <mass value="0.4"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
     </link>
 
     <joint name="${prefix}fixed_terminal_joint" type="fixed">
-      <parent link="${prefix}bracket"/>
+      <parent link="${prefix}plate"/>
       <child link="${prefix}fixed_terminal"/>
-      <origin xyz="0 0 ${bracket_height}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${pivot_dz + 0.16}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Lâmina móvel (posição fechada, ~20° da vertical) e olhal
-         na ponta — este é o ponto que a garra deve alcançar para
-         operar a chave. Pivô no topo do bracket (sem isolador no
-         meio); a lâmina desce e se inclina para fora até o olhal, em
-         Z = 0.810 m do solo. ═══ -->
+    <!-- ═══ Lâmina móvel: SOBE do pivô até o olhal, inclinada ~20°
+         (o mecanismo escuro da foto) ═══ -->
     <link name="${prefix}blade">
       <visual>
-        <origin xyz="0 0 ${-blade_length/2}" rpy="0 ${blade_angle} 0"/>
-        <geometry><box size="0.015 0.015 ${blade_length}"/></geometry>
-        <material name="copper"/>
+        <origin xyz="${-pivot_dx/2} 0 ${blade_length/2}" rpy="0 ${-blade_angle} 0"/>
+        <geometry><box size="0.022 0.016 ${blade_length}"/></geometry>
+        <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
       <collision>
-        <origin xyz="0 0 ${-blade_length/2}" rpy="0 ${blade_angle} 0"/>
-        <geometry><box size="0.015 0.015 ${blade_length}"/></geometry>
+        <origin xyz="${-pivot_dx/2} 0 ${blade_length/2}" rpy="0 ${-blade_angle} 0"/>
+        <geometry><box size="0.022 0.016 ${blade_length}"/></geometry>
       </collision>
       <inertial>
-        <mass value="0.4"/>
+        <mass value="0.5"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.0002"/>
       </inertial>
     </link>
@@ -142,50 +145,50 @@
     <joint name="${prefix}blade_joint" type="fixed">
       <parent link="${prefix}bracket"/>
       <child link="${prefix}blade"/>
-      <origin xyz="0 ${wall_standoff} ${bracket_height}" rpy="0 0 0"/>
+      <origin xyz="0 ${wall_standoff} 0" rpy="0 0 0"/>
     </joint>
 
-    <!-- Olhal: anel de engate para a vara de manobra / garra do robô.
-         Posição exata: pivô menos o deslocamento da lâmina inclinada.
-         Este é o frame que o controlador whole-body deve mirar. -->
+    <!-- ═══ Olhal: a barra horizontal que atravessa o mecanismo na foto
+         — é onde a ferramenta engata. Este é o frame que o controlador
+         mira; fica no TOPO da lâmina, a 810 mm do chão. ═══ -->
     <link name="${prefix}olhal_link">
       <visual>
-        <geometry><cylinder radius="0.018" length="0.008"/></geometry>
-        <material name="copper"/>
+        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <geometry><cylinder radius="0.011" length="0.13"/></geometry>
+        <material name="galvanized"/>
       </visual>
       <collision>
-        <geometry><sphere radius="0.02"/></geometry>
+        <geometry><sphere radius="0.022"/></geometry>
       </collision>
       <inertial>
-        <mass value="0.05"/>
-        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+        <mass value="0.08"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>
       </inertial>
     </link>
 
     <joint name="${prefix}olhal_joint" type="fixed">
       <parent link="${prefix}blade"/>
       <child link="${prefix}olhal_link"/>
-      <origin xyz="${-pivot_x} 0 ${-pivot_z}" rpy="0 0 0"/>
+      <origin xyz="${-pivot_dx} 0 ${pivot_dz}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Materiais Gazebo explícitos ═══
-         O <material><color> do URDF puro não é confiável quando os
-         links acabam fundidos num único corpo rígido pela cadeia de
-         juntas fixas (comportamento observado ao vivo: tudo saía cinza
-         padrão do Gazebo, cores do URDF descartadas na conversão para
-         SDF). Nomes de material Gazebo/OGRE embutidos são a forma
-         garantida de colorir cada link independente da fusão. -->
+    <!-- ═══ Materiais Gazebo explícitos — o <material><color> do URDF
+         some na fusão de corpo rígido da cadeia de juntas fixas
+         (comportamento confirmado ao vivo, ver histórico). ═══ -->
+    <gazebo reference="${prefix}plate">
+      <material>Gazebo/White</material>
+    </gazebo>
     <gazebo reference="${prefix}bracket">
       <material>Gazebo/Grey</material>
     </gazebo>
     <gazebo reference="${prefix}fixed_terminal">
-      <material>Gazebo/Orange</material>
+      <material>Gazebo/Grey</material>
     </gazebo>
     <gazebo reference="${prefix}blade">
-      <material>Gazebo/Orange</material>
+      <material>Gazebo/DarkGrey</material>
     </gazebo>
     <gazebo reference="${prefix}olhal_link">
-      <material>Gazebo/Orange</material>
+      <material>Gazebo/Grey</material>
     </gazebo>
 
   </xacro:macro>
