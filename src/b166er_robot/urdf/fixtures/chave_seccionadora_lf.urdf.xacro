@@ -43,10 +43,20 @@
     <xacro:property name="plate_h" value="0.62"/>
     <xacro:property name="plate_t" value="0.012"/>
 
-    <!-- Deslocamento horizontal do olhal em relação ao pivô, pela
-         inclinação de 20° da lâmina fechada. Com o pivô EMBAIXO, o
-         olhal sobe: +cos em Z, e o mesmo afastamento lateral de antes
-         (sinal mantido para o olhal não mudar de lugar no mundo). -->
+    <!-- Deslocamento do olhal em relação ao pivô, pela inclinação de
+         20° da lâmina fechada. Com o pivô EMBAIXO, o olhal sobe (+cos
+         em Z).
+
+         ROTAÇÃO DE 90° NO EIXO Z (correção do Marco, 2026-08-13): a
+         lâmina inclina no plano Y-Z, ou seja, PARA FORA da parede (na
+         direção de onde o robô se aproxima), não mais de lado ao longo
+         dela. Isso também põe a barra do olhal correndo paralela à
+         face da parede, como aparece na foto da bancada.
+
+         Implementado na geometria INTERNA do macro, não rotacionando a
+         instância: assim o wall_standoff continua empurrando a chave
+         para fora da parede (+Y). Rotacionar a instância giraria o
+         standoff junto e enfiaria a chave dentro da parede. -->
     <xacro:property name="pivot_dz" value="${blade_length*cos(blade_angle)}"/>
     <xacro:property name="pivot_dx" value="${blade_length*sin(blade_angle)}"/>
 
@@ -125,16 +135,16 @@
     </joint>
 
     <!-- ═══ Lâmina móvel: SOBE do pivô até o olhal, inclinada ~20°
-         (o mecanismo escuro da foto) ═══ -->
+         PARA FORA da parede (plano Y-Z) — o mecanismo escuro da foto ═══ -->
     <link name="${prefix}blade">
       <visual>
-        <origin xyz="${-pivot_dx/2} 0 ${blade_length/2}" rpy="0 ${-blade_angle} 0"/>
-        <geometry><box size="0.022 0.016 ${blade_length}"/></geometry>
+        <origin xyz="0 ${pivot_dx/2} ${blade_length/2}" rpy="${-blade_angle} 0 0"/>
+        <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
         <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
       <collision>
-        <origin xyz="${-pivot_dx/2} 0 ${blade_length/2}" rpy="0 ${-blade_angle} 0"/>
-        <geometry><box size="0.022 0.016 ${blade_length}"/></geometry>
+        <origin xyz="0 ${pivot_dx/2} ${blade_length/2}" rpy="${-blade_angle} 0 0"/>
+        <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
       </collision>
       <inertial>
         <mass value="0.5"/>
@@ -150,10 +160,12 @@
 
     <!-- ═══ Olhal: a barra horizontal que atravessa o mecanismo na foto
          — é onde a ferramenta engata. Este é o frame que o controlador
-         mira; fica no TOPO da lâmina, a 810 mm do chão. ═══ -->
+         mira; fica no TOPO da lâmina, a 810 mm do chão. Eixo da barra
+         ao longo de X, ou seja, PARALELA à face da parede (é assim que
+         ela aparece na foto, atravessando o mecanismo de lado a lado). ═══ -->
     <link name="${prefix}olhal_link">
       <visual>
-        <origin xyz="0 0 0" rpy="1.5708 0 0"/>
+        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
         <geometry><cylinder radius="0.011" length="0.13"/></geometry>
         <material name="galvanized"/>
       </visual>
@@ -169,7 +181,7 @@
     <joint name="${prefix}olhal_joint" type="fixed">
       <parent link="${prefix}blade"/>
       <child link="${prefix}olhal_link"/>
-      <origin xyz="${-pivot_dx} 0 ${pivot_dz}" rpy="0 0 0"/>
+      <origin xyz="0 ${pivot_dx} ${pivot_dz}" rpy="0 0 0"/>
     </joint>
 
     <!-- ═══ Materiais Gazebo explícitos — o <material><color> do URDF

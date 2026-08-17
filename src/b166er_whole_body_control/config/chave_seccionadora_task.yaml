@@ -66,11 +66,17 @@ chave_seccionadora_task:
   # invertido para refletir o sentido real (desce, não sobe).
   # blade_angle_deg é só uma referência da magnitude do curso usada
   # no cálculo, não corresponde mais literalmente a um ângulo de pivô.
+  # PLANO DO ARCO MUDOU (2026-08-13): com a chave rotacionada 90° no
+  # eixo Z (correção do Marco), a lâmina inclina para FORA da parede,
+  # no plano Y-Z. O deslocamento horizontal da abertura saiu de X e foi
+  # para +Y (afastando da parede, na direção do robô); o Z continua
+  # descendo, como o Marco confirmou. Magnitudes inalteradas — mesmo
+  # curso de 30°, só reprojetado no plano certo.
   pos1:
     # Metade do curso confirmado (equivalente a 15° de giro)
-    offset_xyz_m: [-0.046, 0.0, -0.024]
+    offset_xyz_m: [0.0, 0.046, -0.024]
     blade_angle_deg: 35
   pos2:
     # Curso completo confirmado pelo Marco (equivalente a 30° de giro)
-    offset_xyz_m: [-0.085, 0.0, -0.059]
+    offset_xyz_m: [0.0, 0.085, -0.059]
     blade_angle_deg: 50

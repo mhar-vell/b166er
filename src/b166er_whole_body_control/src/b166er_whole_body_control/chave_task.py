@@ -35,16 +35,19 @@ _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
 # O Z é exatamente OLHAL_HEIGHT porque wall_link nasce no chão e a
 # cadeia do fixture foi construída para o olhal cair nessa altura.
 #
-# INVARIANTE deliberado: a mecânica da chave foi invertida em
-# 2026-08-13 (pivô passou para BAIXO, olhal para CIMA — correção do
-# Marco), mas estes números NÃO mudaram. O olhal continua no mesmo
-# ponto do mundo; só a estrutura abaixo dele mudou. Isso preserva a
-# calibração de todo o pipeline de percepção. Conferido no URDF
-# processado: olhal em (-0.2684, 0.03, 0.810) relativo a wall_link,
-# antes e depois.
+# Histórico da geometria (2026-08-13, duas correções do Marco no mesmo
+# dia): primeiro a mecânica foi invertida (pivô passou para BAIXO,
+# olhal para CIMA); depois a chave inteira foi rotacionada 90° no eixo
+# Z, de modo que a lâmina inclina PARA FORA da parede (plano Y-Z) em
+# vez de de lado, e a barra do olhal corre paralela à face — como na
+# foto da bancada.
+#
+# Consequência: o deslocamento da inclinação da lâmina saiu de X e foi
+# para Y. A altura (810 mm) e o X (posição da chave ao longo da parede)
+# não mudaram.
 OLHAL_OFFSET_FROM_WALL_LINK = np.array([
-    CHAVE_X_OFFSET - _PIVOT_X,
-    WALL_STANDOFF,
+    CHAVE_X_OFFSET,
+    WALL_STANDOFF + _PIVOT_X,
     OLHAL_HEIGHT,
 ])
 
