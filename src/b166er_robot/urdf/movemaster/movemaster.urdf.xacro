@@ -398,18 +398,47 @@
       <child link="tool_tip"/>
     </joint>
 
-    <!-- tool_tip: frame na ponta do gancho — este é o frame que precisa
-         coincidir com chave_olhal_link quando a tarefa "engage"
-         converge. URDF não tem primitiva de toroide; o gancho é
-         aproximado por um disco fino, mesma convenção já usada em
-         chave_olhal_link (chave_seccionadora_lf.urdf.xacro). -->
+    <!-- tool_tip: frame no VÃO do gancho — o ponto onde o anel do
+         olhal se aloja quando engatado. É este frame que o controlador
+         mira, então o gancho é desenhado EM VOLTA da origem dele: se o
+         controlador leva tool_tip até o centro do olhal, o anel cai
+         dentro do vão.
+
+         Formato de gancho pedido pelo Marco (2026-08-13): "para
+         realizar a abertura a ferramenta deve ter na ponta um formato
+         de gancho". Antes era um disco chato, que não engancharia
+         nada. URDF não tem primitiva curva, então o gancho é
+         aproximado por segmentos retos: a haste continua um pouco além
+         do vão, curva e volta, formando um J aberto para o lado — o
+         anel entra pela abertura e fica preso no vão quando a
+         ferramenta puxa. -->
     <link name="tool_tip">
+      <!-- continuação da haste, passando o vão -->
       <visual>
-        <geometry><cylinder radius="0.015" length="0.006"/></geometry>
+        <origin xyz="0 0 -0.018" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.006" length="0.05"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <!-- curva do gancho (dois segmentos inclinados) -->
+      <visual>
+        <origin xyz="0.016 0 -0.045" rpy="0 -0.9 0"/>
+        <geometry><cylinder radius="0.006" length="0.042"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <visual>
+        <origin xyz="0.038 0 -0.026" rpy="0 -2.0 0"/>
+        <geometry><cylinder radius="0.006" length="0.04"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <!-- bico do gancho, apontando de volta para a haste -->
+      <visual>
+        <origin xyz="0.040 0 0.003" rpy="0 -2.7 0"/>
+        <geometry><cylinder radius="0.005" length="0.026"/></geometry>
         <material name="ToolColor"/>
       </visual>
       <collision>
-        <geometry><sphere radius="0.018"/></geometry>
+        <origin xyz="0.018 0 -0.022"/>
+        <geometry><sphere radius="0.020"/></geometry>
       </collision>
     </link>
 

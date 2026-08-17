@@ -1,69 +1,56 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-  <!-- Chave seccionadora da BANCADA DE TESTES do Marco — remodelada em
-       2026-08-13 a partir da FOTO da bancada real (docs/img/
+  <!-- Chave seccionadora da BANCADA DE TESTES do Marco, modelada a
+       partir da FOTO da bancada real (docs/img/
        chave_bancada_teste_sem_isolador.jpg no pacote whole_body_control),
-       não mais do desenho técnico do datasheet STI.
+       não do desenho técnico do datasheet STI — o desenho inclui o
+       isolador tipo bucha, que a bancada não tem.
 
-       Por que mudou: o desenho do datasheet inclui o isolador tipo bucha,
-       que a bancada não tem, e a silhueta resultante não lembrava a
-       chave real ("a renderização da chave não está parecido com o
-       real" — Marco). A foto mostra outra coisa: uma placa branca
-       parafusada na parede, um bracket metálico chato no topo, um
-       mecanismo escuro em forma de wishbone descendo, a barra
-       horizontal do olhal atravessando, e um segundo bracket metálico
-       na base.
+       Geometria, depois das correções do Marco em 2026-08-13:
 
-       INVERSÃO DA MECÂNICA (correção do Marco, 2026-08-13): o PIVÔ fica
-       EMBAIXO e o OLHAL EM CIMA. A versão anterior tinha isso ao
-       contrário (lâmina pendurada de um pivô superior), o que colocava
-       o alvo de manipulação na extremidade errada da chave — o robô
-       mirava a ponta de baixo.
+       · PIVÔ EMBAIXO, OLHAL EM CIMA. A primeira versão tinha o
+         contrário e o robô mirava a extremidade errada.
 
-       O QUE NÃO MUDOU, de propósito: a posição do olhal no mundo
-       (810 mm do chão, mesmo offset lateral). É a esse ponto que o
-       pipeline de percepção e chave_task.py estão calibrados; inverter
-       a mecânica abaixo dele não mexe no alvo. Ver
-       OLHAL_OFFSET_FROM_WALL_LINK em chave_task.py.
+       · LÂMINA NO PLANO Y-Z (chave "rotacionada 90° no eixo Z"): abre
+         inclinando PARA FORA da parede, na direção de onde o robô se
+         aproxima. A barra do mecanismo corre paralela à face, como na
+         foto.
+
+       · FECHADA = LÂMINA VERTICAL. A versão anterior desenhava a
+         lâmina já inclinada 20°, que é a posição ABERTA ("a inclinação
+         que está é a posição da chave aberta" — Marco). Fechada, a
+         lâmina encosta no contato fixo de cima; abrir é girá-la 30°
+         para fora (curso confirmado pelo Marco).
+
+       · OLHAL É UM ANEL, não uma barra. É por dentro dele que o gancho
+         da ferramenta passa. URDF não tem primitiva de toroide, então
+         o anel é aproximado por segmentos cilíndricos em círculo, no
+         plano X-Z — furo voltado para o robô, para o gancho entrar de
+         frente e puxar.
 
        Continua sendo aproximação por primitivas, não réplica de CAD. -->
 
   <xacro:macro name="chave_seccionadora_lf" params="parent prefix:=chave_ xyz:='0 0 0' rpy:='0 0 0'">
 
-    <!-- ═══ Parâmetros ═══ -->
     <xacro:property name="olhal_height" value="0.810"/>      <!-- altura do olhal (spec do Marco) -->
     <xacro:property name="blade_length" value="0.200"/>      <!-- pivô → olhal -->
-    <xacro:property name="blade_angle" value="0.349"/>       <!-- 20° da vertical, posição fechada -->
     <xacro:property name="wall_standoff" value="0.03"/>      <!-- afastamento da face da parede -->
 
-    <!-- Placa branca de fundo (a que aparece na foto, parafusada na
-         parede e servindo de base para os dois brackets). -->
+    <!-- Placa de fundo (a branca da foto, parafusada na parede). -->
     <xacro:property name="plate_w" value="0.16"/>
     <xacro:property name="plate_h" value="0.62"/>
     <xacro:property name="plate_t" value="0.012"/>
 
-    <!-- Deslocamento do olhal em relação ao pivô, pela inclinação de
-         20° da lâmina fechada. Com o pivô EMBAIXO, o olhal sobe (+cos
-         em Z).
+    <!-- Anel do olhal -->
+    <xacro:property name="ring_r" value="0.028"/>      <!-- raio do furo -->
+    <xacro:property name="ring_t" value="0.006"/>      <!-- espessura do arame -->
+    <xacro:property name="ring_seg" value="10"/>       <!-- segmentos do círculo -->
 
-         ROTAÇÃO DE 90° NO EIXO Z (correção do Marco, 2026-08-13): a
-         lâmina inclina no plano Y-Z, ou seja, PARA FORA da parede (na
-         direção de onde o robô se aproxima), não mais de lado ao longo
-         dela. Isso também põe a barra do olhal correndo paralela à
-         face da parede, como aparece na foto da bancada.
+    <!-- Fechada: lâmina vertical, olhal direto acima do pivô. -->
+    <xacro:property name="pivot_z" value="${olhal_height - blade_length}"/>
 
-         Implementado na geometria INTERNA do macro, não rotacionando a
-         instância: assim o wall_standoff continua empurrando a chave
-         para fora da parede (+Y). Rotacionar a instância giraria o
-         standoff junto e enfiaria a chave dentro da parede. -->
-    <xacro:property name="pivot_dz" value="${blade_length*cos(blade_angle)}"/>
-    <xacro:property name="pivot_dx" value="${blade_length*sin(blade_angle)}"/>
-
-    <!-- Origem do macro (bracket de montagem) = PIVÔ, embaixo. -->
-    <xacro:property name="pivot_z" value="${olhal_height - pivot_dz}"/>
-
-    <!-- ═══ Placa branca de fundo ═══ -->
+    <!-- ═══ Placa de fundo ═══ -->
     <link name="${prefix}plate">
       <visual>
         <origin xyz="0 ${plate_t/2} ${plate_h/2 - 0.10}"/>
@@ -86,8 +73,7 @@
       <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <!-- ═══ Bracket inferior = PIVÔ da lâmina (chapa metálica chata,
-         parafusada na placa — a de baixo na foto) ═══ -->
+    <!-- ═══ Bracket inferior = PIVÔ ═══ -->
     <link name="${prefix}bracket">
       <visual>
         <origin xyz="0 ${wall_standoff*0.6} 0"/>
@@ -110,8 +96,8 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Bracket superior = contato fixo (a chapa de cima na foto,
-         com o furo no topo) ═══ -->
+    <!-- ═══ Bracket superior = contato fixo (a lâmina fechada encosta
+         nele) ═══ -->
     <link name="${prefix}fixed_terminal">
       <visual>
         <origin xyz="0 ${wall_standoff*0.6} 0"/>
@@ -131,19 +117,18 @@
     <joint name="${prefix}fixed_terminal_joint" type="fixed">
       <parent link="${prefix}plate"/>
       <child link="${prefix}fixed_terminal"/>
-      <origin xyz="0 0 ${pivot_dz + 0.16}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${blade_length + 0.14}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Lâmina móvel: SOBE do pivô até o olhal, inclinada ~20°
-         PARA FORA da parede (plano Y-Z) — o mecanismo escuro da foto ═══ -->
+    <!-- ═══ Lâmina móvel — VERTICAL (posição fechada) ═══ -->
     <link name="${prefix}blade">
       <visual>
-        <origin xyz="0 ${pivot_dx/2} ${blade_length/2}" rpy="${-blade_angle} 0 0"/>
+        <origin xyz="0 0 ${blade_length/2}"/>
         <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
         <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
       <collision>
-        <origin xyz="0 ${pivot_dx/2} ${blade_length/2}" rpy="${-blade_angle} 0 0"/>
+        <origin xyz="0 0 ${blade_length/2}"/>
         <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
       </collision>
       <inertial>
@@ -158,19 +143,40 @@
       <origin xyz="0 ${wall_standoff} 0" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Olhal: a barra horizontal que atravessa o mecanismo na foto
-         — é onde a ferramenta engata. Este é o frame que o controlador
-         mira; fica no TOPO da lâmina, a 810 mm do chão. Eixo da barra
-         ao longo de X, ou seja, PARALELA à face da parede (é assim que
-         ela aparece na foto, atravessando o mecanismo de lado a lado). ═══ -->
+    <!-- ═══ OLHAL: anel no topo da lâmina, a 810 mm do chão. Este é o
+         frame que o controlador mira, e é por dentro dele que o gancho
+         da ferramenta passa.
+
+         O anel fica no plano X-Z (normal ao longo de Y), ou seja, com o
+         FURO VOLTADO PARA O ROBÔ — o gancho entra de frente e puxa.
+         Aproximado por ${ring_seg} cilindros curtos em círculo, já que
+         o URDF não tem toroide. A colisão é uma esfera única: o
+         contato fino do gancho no anel não é simulado nesta fase (a
+         tarefa é validada por posição do EE, não por contato). ═══ -->
     <link name="${prefix}olhal_link">
-      <visual>
-        <origin xyz="0 0 0" rpy="0 1.5708 0"/>
-        <geometry><cylinder radius="0.011" length="0.13"/></geometry>
-        <material name="galvanized"/>
-      </visual>
+      <xacro:macro name="ring_seg_vis" params="i">
+        <xacro:property name="a" value="${2*pi*i/ring_seg}"/>
+        <visual>
+          <origin xyz="${ring_r*cos(a)} 0 ${ring_r*sin(a)}"
+                  rpy="${pi/2} ${-a} 0"/>
+          <geometry>
+            <cylinder radius="${ring_t/2}" length="${2*pi*ring_r/ring_seg*1.15}"/>
+          </geometry>
+          <material name="galvanized"/>
+        </visual>
+      </xacro:macro>
+      <xacro:ring_seg_vis i="0"/>
+      <xacro:ring_seg_vis i="1"/>
+      <xacro:ring_seg_vis i="2"/>
+      <xacro:ring_seg_vis i="3"/>
+      <xacro:ring_seg_vis i="4"/>
+      <xacro:ring_seg_vis i="5"/>
+      <xacro:ring_seg_vis i="6"/>
+      <xacro:ring_seg_vis i="7"/>
+      <xacro:ring_seg_vis i="8"/>
+      <xacro:ring_seg_vis i="9"/>
       <collision>
-        <geometry><sphere radius="0.022"/></geometry>
+        <geometry><sphere radius="${ring_r}"/></geometry>
       </collision>
       <inertial>
         <mass value="0.08"/>
@@ -181,12 +187,11 @@
     <joint name="${prefix}olhal_joint" type="fixed">
       <parent link="${prefix}blade"/>
       <child link="${prefix}olhal_link"/>
-      <origin xyz="0 ${pivot_dx} ${pivot_dz}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${blade_length}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Materiais Gazebo explícitos — o <material><color> do URDF
-         some na fusão de corpo rígido da cadeia de juntas fixas
-         (comportamento confirmado ao vivo, ver histórico). ═══ -->
+    <!-- ═══ Materiais Gazebo explícitos (o <material><color> do URDF
+         some na fusão de corpo rígido da cadeia de juntas fixas) ═══ -->
     <gazebo reference="${prefix}plate">
       <material>Gazebo/White</material>
     </gazebo>
@@ -200,7 +205,7 @@
       <material>Gazebo/DarkGrey</material>
     </gazebo>
     <gazebo reference="${prefix}olhal_link">
-      <material>Gazebo/Grey</material>
+      <material>Gazebo/Orange</material>
     </gazebo>
 
   </xacro:macro>

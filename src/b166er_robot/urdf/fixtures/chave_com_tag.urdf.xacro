@@ -32,11 +32,11 @@
        não mais do bracket sob o isolador. Precisa bater com o cálculo
        interno de chave_seccionadora_lf (pivot_z), que o xacro não
        expõe para fora do macro: olhal_height=0.810, blade_length=0.200,
-       blade_angle=0.349 rad. Mecânica invertida em 2026-08-13 (pivô
-       embaixo, olhal em cima) — o OLHAL continua exatamente onde
-       estava, a 0.810 m; só a estrutura abaixo dele mudou. -->
+       lâmina VERTICAL quando fechada. Mecânica invertida em 2026-08-13
+       (pivô embaixo, olhal em cima) e depois rotacionada 90° no eixo Z
+       (lâmina abre para fora da parede). O olhal segue a 0.810 m. -->
   <xacro:property name="chave_pivot_z"
-    value="${0.810 - 0.200*cos(0.349)}"/>  <!-- ≈ 0,622 m -->
+    value="${0.810 - 0.200}"/>  <!-- 0,610 m — lâmina VERTICAL na posição fechada -->
 
   <xacro:property name="tag_mount_z" value="1.030"/>
 

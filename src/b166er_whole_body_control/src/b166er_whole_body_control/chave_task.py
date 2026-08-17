@@ -23,7 +23,9 @@ import numpy as np
 CHAVE_X_OFFSET     = -0.20    # chave_x_offset
 OLHAL_HEIGHT       = 0.810    # olhal_height (spec do Marco)
 BLADE_LENGTH       = 0.200    # blade_length
-BLADE_ANGLE_CLOSED = 0.349    # blade_angle, 20° em rad (fechada)
+BLADE_ANGLE_CLOSED = 0.0      # fechada = lâmina VERTICAL (correção do Marco:
+                              # os 20° da versão anterior eram a posição ABERTA)
+BLADE_ANGLE_OPEN   = 0.524    # 30° — curso de abertura confirmado pelo Marco
 WALL_STANDOFF      = 0.03     # wall_standoff da chave
 TAG_X_OFFSET       = 0.20     # tag_x_offset
 TAG_MOUNT_Z        = 1.030    # tag_mount_z
@@ -42,12 +44,15 @@ _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
 # vez de de lado, e a barra do olhal corre paralela à face — como na
 # foto da bancada.
 #
-# Consequência: o deslocamento da inclinação da lâmina saiu de X e foi
-# para Y. A altura (810 mm) e o X (posição da chave ao longo da parede)
-# não mudaram.
+# E uma terceira: a posição FECHADA passou a ser a lâmina VERTICAL —
+# os 20° que o modelo desenhava como "fechada" são, na verdade, a
+# posição ABERTA ("a inclinação que está é a posição da chave aberta").
+# Fechada e vertical, o olhal fica direto acima do pivô, sem componente
+# de inclinação. A altura (810 mm) e o X não mudaram em nenhuma das
+# três correções.
 OLHAL_OFFSET_FROM_WALL_LINK = np.array([
     CHAVE_X_OFFSET,
-    WALL_STANDOFF + _PIVOT_X,
+    WALL_STANDOFF,        # lâmina vertical: olhal direto acima do pivô
     OLHAL_HEIGHT,
 ])
 
