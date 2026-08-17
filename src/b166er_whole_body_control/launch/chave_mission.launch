@@ -36,6 +36,11 @@
     <param name="tag_id" value="$(arg tag_id)"/>
   </node>
 
+  <!-- Alinha a tolerância do controlador com a da missão (20 mm): sem
+       isso ele continua empurrando o braço atrás dos 5 mm default
+       depois que a missão já considerou a fase concluída. -->
+  <param name="/fuzzy_wb_controller/tol_pos" value="0.020"/>
+
   <node name="chave_mission" pkg="b166er_whole_body_control"
         type="chave_mission.py" output="screen">
     <param name="standoff_distance" value="$(arg standoff_distance)"/>

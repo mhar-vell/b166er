@@ -111,8 +111,19 @@ class MissionContext(object):
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
 
-        # Tolerâncias Cartesianas — mesmas do fuzzy_wb_controller
-        self.tol_pos    = rospy.get_param('~tol_pos', 0.005)
+        # Tolerância Cartesiana da manipulação: 20 mm, NÃO os 5 mm que
+        # o fuzzy_wb_controller usa por padrão.
+        #
+        # Razão: não faz sentido exigir do controle uma precisão maior
+        # que a da MEDIÇÃO do alvo. A posição do olhal vem da detecção
+        # da tag, que mede com ~9 mm de erro (validado contra ground
+        # truth em 2026-08-13, três poses). Perseguir 5 mm de erro de
+        # EE contra um alvo conhecido a ±9 mm é perseguir ruído — e na
+        # prática o sistema estacionava em 12 mm com o ganho Fuzzy já
+        # reduzido perto do alvo, gastando o timeout inteiro sem
+        # fechar. 20 mm é compatível com o engate: o vão do gancho tem
+        # ~20 mm e o anel do olhal 28 mm de raio.
+        self.tol_pos    = rospy.get_param('~tol_pos', 0.020)
         self.tol_orient = rospy.get_param('~tol_orient', 0.02)
 
         self.postures = rospy.get_param('/arm_postures')
@@ -216,6 +227,32 @@ class MissionContext(object):
         rospy.loginfo_throttle(2.0,
             '[mission] gimbal: tag em x=%+.2f do centro → J1=%.3f rad',
             off_x, self._j1_track)
+
+    def settle_gimbal(self):
+        """Encerra o rastreamento gimbal de forma limpa.
+
+        Reenvia a postura corrente como alvo e espera 'reached', para
+        garantir que a ponte de braço não fique com uma rampa pendente
+        — enquanto houver, ela ignora /b166er/arm_vel_cmd e o
+        controlador Cartesiano não move nada.
+        """
+        if self._j1_track is None:
+            return
+        q = list(self.postures['search'])
+        q[0] = self._j1_track
+        msg = JointState()
+        msg.header.stamp = rospy.Time.now()
+        msg.name     = JOINT_NAMES
+        msg.position = q
+        self.posture_done = False
+        self.pub_posture.publish(msg)
+        t0 = rospy.Time.now()
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown() and not self.posture_done:
+            if (rospy.Time.now() - t0).to_sec() > 5.0:
+                rospy.logwarn('[mission] gimbal não assentou em 5s')
+                return
+            rate.sleep()
 
     # ------------------------------------------------------------------
     def publish_markers(self, goal=None):
@@ -567,10 +604,42 @@ class Manipulate(smach.State):
             offset = ctx.phases[phase]['offset_xyz_m']
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
 
-            # Publica a posição da PONTA diretamente: o controlador está
-            # em servo_tooltip e mede o erro nela. Converter para um alvo
-            # de T265 aqui (como o task_sequencer faz) só valeria com a
-            # orientação sob controle — e ela não está, de propósito.
+            # ── 1) Movimento em ESPAÇO DE JUNTAS até a solução de IK ──
+            # Não peça ao DLS para vencer 18 cm sozinho: ele é local e
+            # sistematicamente encalha num batente. Em 2026-08-13 o
+            # DEPLOY posicionava J3 em torno de 0°/+58° (solução boa) e
+            # o controlador Cartesiano arrastava a junta até -60°, onde
+            # travava com 10-14 cm de erro residual. A IK enxerga a
+            # postura inteira e respeita os limites; a rampa até ela é
+            # lenta e previsível.
+            b = ctx.robot_state.base_odom.pose.pose
+            T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
+                                      b.orientation.z, b.orientation.w])
+            T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
+            p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
+            q_ik, err_ik = ik_tooltip_position(p_local)
+
+            if err_ik < ctx.deploy_ik_tol:
+                rospy.loginfo('[mission] fase "%s" — IK resolvida (%.4f m), '
+                              'indo por espaço de juntas: %s graus',
+                              phase, err_ik, np.degrees(q_ik).round(1))
+                msg = JointState()
+                msg.header.stamp = rospy.Time.now()
+                msg.name     = JOINT_NAMES
+                msg.position = q_ik.tolist()
+                ctx.posture_done = False
+                ctx.pub_posture.publish(msg)
+                if not _wait_posture(ctx):
+                    return 'failed'
+            else:
+                rospy.logwarn('[mission] fase "%s": IK não fechou (%.3f m) — '
+                              'alvo fora de alcance deste standoff', phase, err_ik)
+                return 'failed'
+
+            # ── 2) Ajuste fino CARTESIANO, fechando o resíduo ──
+            # Aqui o DLS trabalha no que ele faz bem: correção local
+            # pequena, medida na ponta pelo sensor, compensando o droop
+            # do PID e o erro da própria estimativa de juntas.
             T_target = np.eye(4)
             T_target[:3, :3] = R_ee
             T_target[:3, 3]  = p_tip
@@ -582,7 +651,7 @@ class Manipulate(smach.State):
             msg.pose.orientation = ctx.ee_orientation
             ctx.pub_target.publish(msg)
             ctx.publish_markers()
-            rospy.loginfo('[mission] fase "%s" — ponta deve ir a (%.3f, %.3f, %.3f)',
+            rospy.loginfo('[mission] fase "%s" — ajuste fino até (%.3f, %.3f, %.3f)',
                           phase, *p_tip)
 
             if not _wait_ee_convergence(ctx, T_target, phase):
@@ -719,6 +788,13 @@ def _navigate_to(ctx, goal, timeout, tag):
             return False
 
         # Mantém a tag centrada enquanto anda, e alimenta o RViz.
+        # ATENÇÃO: o gimbal publica comandos de POSTURA, e a ponte de
+        # braço (gazebo_arm_bridge) ignora /b166er/arm_vel_cmd enquanto
+        # uma rampa de postura está ativa. Se uma rampa do gimbal ficar
+        # em voo quando a navegação terminar, ela sequestra o braço e o
+        # controlador Cartesiano da manipulação não consegue mover nada
+        # — foi o que travou o "engage" em 2026-08-13, com o
+        # controlador comandando velocidade e o braço parado.
         if (rospy.Time.now() - t_gimbal).to_sec() > ctx.gimbal_period:
             ctx.gimbal_track()
             ctx.publish_markers(goal)
@@ -751,6 +827,11 @@ def _navigate_to(ctx, goal, timeout, tag):
             err = _ang_diff(gyaw, yaw)
             if abs(err) < ctx.nav_yaw_tol:
                 ctx.stop_base()
+                # Fecha qualquer rampa de gimbal pendente: reenvia a
+                # postura ATUAL do rastreamento como alvo e espera ela
+                # assentar, para a ponte de braço sair do modo postura
+                # antes de a manipulação começar.
+                ctx.settle_gimbal()
                 rospy.loginfo('[mission] %s: concluído', tag)
                 return True
             ctx.drive(0.0, math.copysign(ctx.nav_w, err))

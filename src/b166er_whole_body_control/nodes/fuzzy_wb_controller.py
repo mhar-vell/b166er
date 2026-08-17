@@ -550,9 +550,16 @@ class FuzzyWBController:
                     xdot = xdot * (MAX_CART_VEL_LOCKED / sp)
                 J_pin = dls_pseudoinverse(J_pos, lam)
                 q_dot_arm = J_pin @ xdot
-                N_arm = null_space_projector(J_pos, J_pin)
-                q_dot_arm = q_dot_arm + N_arm @ (self._ns_gain *
-                                                 joint_limit_gradient(q_arm))
+                # SEM termo de espaço nulo aqui, de propósito. Ele
+                # empurra as juntas para o meio da faixa, e isso briga
+                # com a configuração que a IK do DEPLOY escolheu: em
+                # 2026-08-13 o DEPLOY pôs J3 em +58° (solução válida,
+                # perto do limite +60) e o termo de espaço nulo
+                # arrastou a junta pela faixa inteira até o limite
+                # OPOSTO (-60°), onde ela travou e o erro estacionou em
+                # 10 cm. Movimento de manipulação é local e parte de
+                # uma postura já escolhida por IK — não há o que
+                # otimizar no espaço nulo, só o que estragar.
                 self._pub_cmdvel.publish(Twist())
                 self._publish_arm_vel(q_dot_arm, now)
                 self._publish_gains(k_pos, k_orient, lam)
