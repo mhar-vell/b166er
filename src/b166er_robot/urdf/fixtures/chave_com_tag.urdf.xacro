@@ -72,11 +72,20 @@
   <xacro:apriltag_mount parent="wall_link" prefix="tag_"
     xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"/>
 
-  <!-- Fixture inteira estática — nunca deve ser movida por física de
-       contato (é o alvo da tarefa, não um objeto manipulável nesta
-       fase). -->
-  <gazebo>
-    <static>true</static>
-  </gazebo>
+  <!-- A fixture NÃO pode mais ser <static>: modelo estático no Gazebo
+       não simula juntas, e a lâmina precisa girar para a chave abrir
+       (2026-08-13 — antes disso a chave era um bloco rígido e não
+       abria quando o robô puxava).
+
+       Em vez de 'static', a parede é ancorada ao mundo por uma junta
+       fixa ao link especial 'world'. Efeito prático igual — a parede
+       não sai do lugar por contato — mas a lâmina continua livre para
+       girar na sua junta revoluta. -->
+  <link name="world"/>
+  <joint name="world_anchor" type="fixed">
+    <parent link="world"/>
+    <child link="wall_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
 
 </robot>

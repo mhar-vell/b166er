@@ -67,6 +67,7 @@ from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool
 from tf.transformations import quaternion_matrix, euler_from_quaternion
 
+from gazebo_msgs.srv import SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
@@ -227,6 +228,39 @@ class MissionContext(object):
         rospy.loginfo_throttle(2.0,
             '[mission] gimbal: tag em x=%+.2f do centro → J1=%.3f rad',
             off_x, self._j1_track)
+
+    def set_blade_angle(self, deg):
+        """Gira a lâmina da chave para o ângulo dado (graus).
+
+        A chave só ganhou junta revoluta em 2026-08-13 — antes era um
+        bloco rígido e não abria quando o robô puxava, como o Marco
+        observou. Aqui o ângulo é IMPOSTO cinematicamente, acompanhando
+        o waypoint que a ferramenta está executando, em vez de emergir
+        do contato gancho-anel.
+
+        Por que não por contato: puxar um anel com um gancho é um
+        problema de contato fino (duas superfícies curvas, engate
+        geométrico), que o ODE com colisões primitivas não resolve de
+        forma confiável — a ferramenta atravessaria ou escorregaria. O
+        acoplamento cinemático dá a demonstração correta do movimento
+        de abertura, que é o que a missão precisa mostrar. Simular o
+        contato de verdade exigiria malhas de colisão e um solver mais
+        caro, e não muda nada no que está sendo validado aqui (a
+        navegação, a percepção e o alcance do braço).
+        """
+        try:
+            rospy.wait_for_service('/gazebo/set_model_configuration', timeout=2.0)
+            srv = rospy.ServiceProxy('/gazebo/set_model_configuration',
+                                     SetModelConfiguration)
+            srv(model_name=self.fixture_model,
+                urdf_param_name='chave_fixture_description',
+                joint_names=['chave_blade_joint'],
+                joint_positions=[math.radians(deg)])
+            rospy.loginfo('[mission] chave girada para %.0f° (%s)', deg,
+                          'aberta' if deg > 25 else
+                          'fechada' if deg < 5 else 'parcial')
+        except (rospy.ROSException, rospy.ServiceException) as e:
+            rospy.logwarn('[mission] não consegui girar a lâmina: %s', e)
 
     def settle_gimbal(self):
         """Encerra o rastreamento gimbal de forma limpa.
@@ -656,6 +690,13 @@ class Manipulate(smach.State):
 
             if not _wait_ee_convergence(ctx, T_target, phase):
                 return 'failed'
+
+            # A chave acompanha a ferramenta: o ângulo da lâmina segue o
+            # waypoint alcançado (ver set_blade_angle sobre por que é
+            # cinemático e não por contato).
+            ang = ctx.phases[phase].get('blade_angle_deg')
+            if ang is not None:
+                ctx.set_blade_angle(float(ang))
             rospy.sleep(1.0)
 
         rospy.loginfo('[mission] MANIPULATE concluída — chave aberta')

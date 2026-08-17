@@ -137,10 +137,21 @@
       </inertial>
     </link>
 
-    <joint name="${prefix}blade_joint" type="fixed">
+    <!-- JUNTA REAL DE ABERTURA (2026-08-13): era 'fixed', e por isso a
+         chave não abria de jeito nenhum quando o robô puxava — o Marco
+         notou. Agora é revoluta em torno de X, o que faz a lâmina
+         girar no plano Y-Z, para fora da parede. Curso 0 → 30°
+         (fechada → aberta), o mesmo confirmado pelo Marco. -->
+    <joint name="${prefix}blade_joint" type="revolute">
       <parent link="${prefix}bracket"/>
       <child link="${prefix}blade"/>
       <origin xyz="0 ${wall_standoff} 0" rpy="0 0 0"/>
+      <axis xyz="-1 0 0"/>
+      <limit lower="0.0" upper="0.60" effort="40" velocity="1.0"/>
+      <!-- Atrito alto: chave de manobra é dura, não cai sozinha pela
+           gravidade nem oscila. Também deixa a posição estável quando
+           o ângulo é imposto por set_model_configuration. -->
+      <dynamics damping="5.0" friction="8.0"/>
     </joint>
 
     <!-- ═══ OLHAL: anel no topo da lâmina, a 810 mm do chão. Este é o
