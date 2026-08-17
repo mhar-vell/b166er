@@ -38,8 +38,8 @@ from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, JOINT_LOWER, JOINT_UPPER,
-    whole_body_jacobian,
+    JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, T_T265_TOOLTIP,
+    whole_body_jacobian, arm_jacobian_world,
     dls_pseudoinverse, null_space_projector,
     joint_limit_gradient,
     pose_error,
@@ -53,6 +53,16 @@ from b166er_whole_body_control.fuzzy_gain import FuzzyGain
 MAX_BASE_LIN = 0.3    # m/s
 MAX_BASE_ANG = 0.5    # rad/s
 MAX_ARM_VEL  = 0.8    # rad/s por junta
+
+# Teto MUITO mais baixo para a manipulação com a base travada. Com o
+# teto normal, o braço saiu da postura recolhida para um alvo a 1,2 m
+# usando ~1,9 rad/s em várias juntas ao mesmo tempo: o erro caiu
+# 1,22 → 0,15 m em 2 s (o controle funciona), mas o CG disparou para a
+# frente e o momento dinâmico tombou o Pioneer (2026-08-13). Manipular
+# perto de uma parede é movimento deliberado, não corrida — e o braço
+# de 28 kg sobre uma base de 41 kg tem autoridade de sobra para
+# derrubar o conjunto.
+MAX_ARM_VEL_LOCKED = 0.25  # rad/s por junta
 K_NULL       = 0.3    # ganho do objetivo secundário (espaço nulo)
 
 # Piso de velocidade linear da base. Com o braço horizontal, a direção x do
@@ -178,16 +188,49 @@ class FuzzyWBController:
         # standalone, preservado.
         self._wb_enabled = True
 
+        # Trava de base: quando ligada, a base fica PARADA e só o braço
+        # (5 DOF) serve o alvo Cartesiano. Existe porque o whole-body
+        # não tem nenhuma noção de obstáculo — na missão da chave ele
+        # dirigiu a base contra a parede tentando alcançar o olhal e
+        # tombou o robô (2026-08-13). Depois que a base já está
+        # posicionada na pose de standoff, mover a base durante a
+        # manipulação fina não agrega e só arrisca colisão.
+        self._base_locked = rospy.get_param('~base_locked', False)
+
+        # Servo da PONTA DA FERRAMENTA (não do T265). Com a orientação
+        # fora do controle (ver etapa 4a), a conversão "alvo da ponta →
+        # alvo do T265" deixa de valer: ela pressupõe uma orientação
+        # fixa e conhecida, e a orientação passa a variar livremente.
+        # Com isso ligado, o alvo publicado em /b166er/ee_target é lido
+        # como a posição desejada da PONTA, e o erro/Jacobiana são
+        # calculados nela.
+        self._servo_tooltip = rospy.get_param('~servo_tooltip', False)
+
         # Subscritores
         rospy.Subscriber('/b166er/robot_state', RobotState,   self._cb_state)
         rospy.Subscriber('/b166er/ee_target',   PoseStamped,  self._cb_target)
         rospy.Subscriber('/b166er/wb_enable',   Bool,         self._cb_wb_enable)
+        rospy.Subscriber('/b166er/base_lock',   Bool,         self._cb_base_lock)
+        rospy.Subscriber('/b166er/servo_tooltip', Bool,       self._cb_servo_tooltip)
 
         rospy.loginfo('[fuzzy_wb_controller] pronto — aguardando /b166er/ee_target')
 
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
         self._robot_state = msg
+
+    def _cb_base_lock(self, msg):
+        if msg.data != self._base_locked:
+            rospy.loginfo('[fuzzy_wb_ctrl] base %s',
+                          'TRAVADA (só braço serve o alvo)' if msg.data
+                          else 'liberada (whole-body 8-DOF)')
+        self._base_locked = msg.data
+
+    def _cb_servo_tooltip(self, msg):
+        if msg.data != self._servo_tooltip:
+            rospy.loginfo('[fuzzy_wb_ctrl] alvo interpretado como %s',
+                          'PONTA DA FERRAMENTA' if msg.data else 'T265')
+        self._servo_tooltip = msg.data
 
     def _cb_wb_enable(self, msg):
         if msg.data != self._wb_enabled:
@@ -249,10 +292,17 @@ class FuzzyWBController:
         self._pub_cmdvel.publish(msg)
 
     def _publish_arm_vel(self, q_dot_arm, stamp):
+        vmax = MAX_ARM_VEL_LOCKED if self._base_locked else MAX_ARM_VEL
+        # Satura preservando a DIREÇÃO do movimento: clipar junta a junta
+        # distorce a trajetória Cartesiana justamente quando o limite
+        # morde (várias juntas saturam juntas na largada).
+        n = float(np.max(np.abs(q_dot_arm)))
+        if n > vmax:
+            q_dot_arm = q_dot_arm * (vmax / n)
         msg          = JointState()
         msg.header.stamp = stamp
         msg.name     = JOINT_NAMES
-        msg.velocity = np.clip(q_dot_arm, -MAX_ARM_VEL, MAX_ARM_VEL).tolist()
+        msg.velocity = q_dot_arm.tolist()
         self._pub_armvel.publish(msg)
 
     def _publish_gains(self, k_pos, k_orient, lam):
@@ -376,7 +426,19 @@ class FuzzyWBController:
             # Critério de parada com histerese: entra em "alcançado" dentro
             # da tolerância e só reativa se o erro crescer 50% além dela —
             # evita chaveamento 0 ↔ MIN_BASE_LIN quando o erro paira na borda.
-            if err_pos_norm < self._tol_pos and err_orient_norm < self._tol_orient:
+            if self._base_locked:
+                # Só posição, e medida na ponta quando servo_tooltip —
+                # ver etapa 4a. O teste de alcance real acontece lá; aqui
+                # só evita declarar "alcançado" cedo demais.
+                if self._servo_tooltip:
+                    r_tool = T_cur[:3, :3] @ T_T265_TOOLTIP[:3, 3]
+                    err_tip = float(np.linalg.norm(
+                        self._target[:3, 3] - (T_cur[:3, 3] + r_tool)))
+                    if err_tip < self._tol_pos:
+                        self._reached = True
+                elif err_pos_norm < self._tol_pos:
+                    self._reached = True
+            elif err_pos_norm < self._tol_pos and err_orient_norm < self._tol_orient:
                 self._reached = True
             elif (err_pos_norm > 1.5 * self._tol_pos
                   or err_orient_norm > 1.5 * self._tol_orient):
@@ -404,13 +466,73 @@ class FuzzyWBController:
             q_arm        = np.array(state.q_arm)
             theta        = float(np.arctan2(T_world_base[1, 0], T_world_base[0, 0]))
 
-            # Se a base ainda não aponta na direção geral do alvo, para
-            # tudo e gira antes de deixar o DLS/projeção não-holonômica
-            # tentar (e falhar) corrigir erro lateral com a base andando.
-            heading_error = self._update_maneuver_state(
-                T_world_base[:2, 3], self._target[:2, 3], theta, now)
-            if self._maneuver_state == 'ALIGN':
-                self._run_align(heading_error, now, k_pos, k_orient, lam)
+            # A manobra ALIGN só faz sentido com a base LIVRE — ela gira
+            # o chassi e zera o braço. Com a base travada isso trava a
+            # tarefa inteira: observado ao vivo em 2026-08-13, a missão
+            # ficou 60 s no "engage" sem o braço sair do lugar (erro
+            # constante de 0,82 m) porque o ALIGN engatava a cada ciclo,
+            # girava a base e mandava velocidade zero para as juntas.
+            if not self._base_locked:
+                # Se a base ainda não aponta na direção geral do alvo,
+                # para tudo e gira antes de deixar o DLS/projeção
+                # não-holonômica tentar (e falhar) corrigir erro lateral
+                # com a base andando.
+                heading_error = self._update_maneuver_state(
+                    T_world_base[:2, 3], self._target[:2, 3], theta, now)
+                if self._maneuver_state == 'ALIGN':
+                    self._run_align(heading_error, now, k_pos, k_orient, lam)
+                    rate.sleep()
+                    continue
+
+            # ---- 4a. Base travada: só o braço serve o alvo --------------
+            if self._base_locked:
+                # POSIÇÃO APENAS (3 linhas da Jacobiana). O braço tem 5
+                # DOF; exigir pose 6D completa é infactível na maioria
+                # das configurações e o DLS trava num compromisso —
+                # observado ao vivo em 2026-08-13: erro parado em 0,80 m
+                # com 0,86 rad de orientação, braço recebendo comando e
+                # não chegando a lugar nenhum. Com 3 DOF de tarefa e 5 de
+                # braço sobra redundância de verdade.
+                #
+                # É legítimo para esta tarefa: o documento da chave
+                # especifica DIREÇÕES DE FORÇA e posições do olhal, nunca
+                # uma orientação de ferramenta (ver chave_seccionadora_task.md).
+                J_arm = arm_jacobian_world(q_arm, T_world_base @ T_BASELINK_ARM)
+                p_t265 = T_cur[:3, 3]
+                r_tool = T_cur[:3, :3] @ T_T265_TOOLTIP[:3, 3]
+
+                if self._servo_tooltip:
+                    # Transporta a Jacobiana do T265 para a ponta (ponto
+                    # rigidamente preso): J_lin_ponta = J_lin − [r]× J_ang.
+                    # E mede o erro na PONTA, não no T265 — sem isso o
+                    # controlador persegue um alvo deslocado pela
+                    # orientação corrente, que agora varia livre (erro
+                    # estacionou em 0,33 m no teste de 2026-08-13).
+                    r_skew = np.array([[0.0, -r_tool[2],  r_tool[1]],
+                                       [r_tool[2], 0.0, -r_tool[0]],
+                                       [-r_tool[1], r_tool[0], 0.0]])
+                    J_pos = J_arm[:3, :] - r_skew @ J_arm[3:, :]
+                    err_lin = self._target[:3, 3] - (p_t265 + r_tool)
+                else:
+                    J_pos = J_arm[:3, :]
+                    err_lin = err_EE[:3]
+
+                err_pos_norm = float(np.linalg.norm(err_lin))
+                J_pin = dls_pseudoinverse(J_pos, lam)
+                q_dot_arm = J_pin @ (k_pos * err_lin)
+                N_arm = null_space_projector(J_pos, J_pin)
+                q_dot_arm = q_dot_arm + N_arm @ (self._ns_gain *
+                                                 joint_limit_gradient(q_arm))
+                self._pub_cmdvel.publish(Twist())
+                self._publish_arm_vel(q_dot_arm, now)
+                self._publish_gains(k_pos, k_orient, lam)
+                self._publish_jacobian(J_pos)
+                if err_pos_norm < self._tol_pos:
+                    self._reached = True
+                rospy.loginfo_throttle(1.0,
+                    '[fuzzy_wb] BASE TRAVADA (%s, só posição) err=%.4f arm=%s',
+                    'ponta' if self._servo_tooltip else 'T265',
+                    err_pos_norm, q_dot_arm.round(3))
                 rate.sleep()
                 continue
 

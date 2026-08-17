@@ -50,6 +50,34 @@ TAG_OFFSET_FROM_WALL_LINK = np.array([TAG_X_OFFSET, 0.0, TAG_MOUNT_Z])
 WALL_FRONT_NORMAL_LOCAL = np.array([0.0, 1.0, 0.0])
 
 
+def flatten_wall_R(wall_R):
+    """
+    Projeta a orientação estimada da parede em rotação PURA DE YAW.
+
+    A parede é vertical por construção (assenta no chão, tag e chave
+    montadas na face) — roll e pitch são zero de verdade, e o que a
+    estimativa por PnP devolve nesses eixos é só ruído. Ruído que
+    custa caro: o olhal fica a 0,86 m da origem de wall_link
+    (majoritariamente em Z), então cada grau de tilt espúrio empurra a
+    posição calculada do olhal em ~1,5 cm na horizontal.
+
+    Foi exatamente esse o modo de falha em 2026-08-13: detecção a
+    ~2,5 m com ~24° de tilt acumulado colocou o alvo da fase "engage"
+    em y=3,357 — atrás da parede (que está em y=3,0) — e o
+    controlador whole-body dirigiu o robô contra ela até tombar.
+
+    Aplicar o vínculo de verticalidade aqui é usar informação que o
+    robô realmente tem sobre a tarefa, não maquiar a medição: a
+    incerteza de yaw (a única que importa para mirar) fica preservada.
+    """
+    wall_R = np.asarray(wall_R)
+    yaw = math.atan2(wall_R[1, 0], wall_R[0, 0])
+    c, s = math.cos(yaw), math.sin(yaw)
+    return np.array([[c, -s, 0.0],
+                     [s,  c, 0.0],
+                     [0.0, 0.0, 1.0]])
+
+
 def olhal_position(wall_pos, wall_R):
     """Posição de chave_olhal_link no mundo, dada a pose de wall_link."""
     return np.asarray(wall_pos) + wall_R @ OLHAL_OFFSET_FROM_WALL_LINK

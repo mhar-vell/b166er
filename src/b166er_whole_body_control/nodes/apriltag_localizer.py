@@ -78,7 +78,7 @@ import cv2
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from tf.transformations import quaternion_matrix, quaternion_from_matrix
 
 from b166er_whole_body_control.msg import RobotState
@@ -144,6 +144,14 @@ class AprilTagLocalizer:
 
         self._pub_wall_pose = rospy.Publisher('/b166er/wall_pose', PoseStamped,
                                               queue_size=1)
+        # Offset da tag no QUADRO, normalizado em [-1, 1] (x: horizontal,
+        # y: vertical; z = lado do quadrado em px, proxy de distância).
+        # Serve ao rastreamento tipo gimbal ("pescoço de galinha") que
+        # mantém a tag centrada enquanto a base navega — sem isso a tag
+        # sai de quadro na aproximação e a estimativa degrada justamente
+        # quando mais importa.
+        self._pub_tag_pixel = rospy.Publisher('/b166er/tag_pixel', Point,
+                                              queue_size=1)
 
         rospy.Subscriber('/task_camera/camera_info', CameraInfo, self._cb_camera_info)
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state)
@@ -176,6 +184,16 @@ class AprilTagLocalizer:
 
         idx = int(np.where(ids == self._tag_id)[0][0])
         img_points = corners[idx].reshape(4, 2).astype(np.float32)
+
+        # Offset no quadro, para o rastreamento gimbal.
+        h, w = gray.shape[:2]
+        cx, cy = img_points.mean(axis=0)
+        side_px = float(np.mean([np.linalg.norm(img_points[i] - img_points[(i + 1) % 4])
+                                 for i in range(4)]))
+        self._pub_tag_pixel.publish(Point(
+            x=float((cx - w / 2.0) / (w / 2.0)),
+            y=float((cy - h / 2.0) / (h / 2.0)),
+            z=side_px))
 
         ok, rvec, tvec = cv2.solvePnP(self._obj_points, img_points,
                                       self._K, self._dist)

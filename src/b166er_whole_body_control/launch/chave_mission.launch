@@ -13,11 +13,14 @@
          rosrun smach_viewer smach_viewer.py
   -->
 
-  <arg name="standoff_distance" default="0.65"
+  <arg name="standoff_distance" default="0.80"
        doc="Distância (m) do olhal em que a base para para manipular.
             Alcance horizontal da ponta da ferramenta na altura do olhal
-            é ~0,93 m (varredura de FK); 0,65 m evita o braço quase
-            estendido, postura que já tombou o robô."/>
+            é ~0,93 m (varredura de FK). Subiu de 0,65 para 0,80 m em
+            2026-08-13: com 0,65 o chassi ficava perto demais da parede
+            (o Marco notou ao vivo) e qualquer erro de estimativa virava
+            risco de colisão. 0,80 m ainda deixa 13 cm de folga de
+            alcance."/>
   <arg name="search_omega" default="0.35"
        doc="Velocidade angular (rad/s) da busca girando no próprio eixo"/>
   <arg name="tag_id" default="0"/>
