@@ -184,6 +184,21 @@ class GazeboArmBridge:
             for i, pub in enumerate(self._pubs):
                 pub.publish(Float64(data=float(q_pub[i])))
 
+            # Instrumentação (2026-08-13): rastrear se a ponte está de
+            # fato integrando arm_vel_cmd. Sintoma investigado: o
+            # controlador comandava 0,1 rad/s por 60 s e o braço não
+            # saía do lugar — precisa distinguir "não recebeu",
+            # "recebeu mas está em modo postura" e "integrou mas o PID
+            # não seguiu".
+            age = ((rospy.Time.now() - self._t_last_cmd).to_sec()
+                   if self._t_last_cmd else -1.0)
+            rospy.loginfo_throttle(2.0,
+                '[bridge] postura=%s | dq_cmd=%s idade=%.2fs | dq_aplicado=%s | '
+                'q_arm=%s',
+                'ATIVA' if self._q_posture_target is not None else 'nao',
+                np.round(self._dq_cmd, 3), age, np.round(dq, 3),
+                np.round(self._q_arm, 3))
+
             rate.sleep()
 
 
