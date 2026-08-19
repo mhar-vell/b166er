@@ -424,7 +424,8 @@ def gravity_torque_arm(q):
     return tau
 
 
-def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08):
+def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
+                        q_current=None, continuity_weight=0.35):
     """
     IK de POSIÇÃO da ponta da ferramenta (não do T265, não pose 6D).
 
@@ -437,8 +438,22 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08)
     Resolver a IK antes e pré-posicionar o braço nela resolve isso —
     o controlador Cartesiano só precisa fechar o resíduo.
 
+    CONTINUIDADE DE RAMO (2026-08-13): com várias soluções válidas, a
+    escolha "melhor por erro" pulava de ramo entre execuções — a
+    estimativa da parede varia alguns milímetros e a IK respondia com
+    posturas completamente diferentes. Medido em duas execuções da
+    missão com o mesmo código: uma escolheu [2.0, -9.2, -6.6, 58.8] e
+    convergiu em 4 fases; a outra escolheu [-8.7, -29.8, 41.8, 28.1] e
+    divergiu. Passando q_current, soluções próximas da postura atual são
+    preferidas — os waypoints consecutivos ficam no mesmo ramo e o
+    comportamento vira repetível.
+
     p_target_arm : (3,) posição alvo da ponta, no frame da BASE DO BRAÇO.
     q_seeds      : lista de sementes; default cobre os ramos principais.
+    q_current    : postura atual; se dada, entra como primeira semente e
+                   penaliza soluções distantes dela.
+    continuity_weight : peso da penalidade de distância (rad → "metros
+                   equivalentes" no critério de escolha).
 
     Retorna (q, erro_final). Multi-start: fica com o melhor resultado.
     """
@@ -450,11 +465,14 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08)
             np.array([0.0,  0.3,  0.3,  0.0, 0.0]),
             np.array([0.0, -0.3, -0.3,  0.5, 0.0]),
         ]
+        if q_current is not None:
+            # Semente prioritária: a própria postura atual.
+            q_seeds = [np.array(q_current, dtype=float)] + q_seeds
 
     def _tip(q):
         return (fk_arm(q) @ T_T265_TOOLTIP)[:3, 3]
 
-    best_q, best_err = None, np.inf
+    best_q, best_err, best_score = None, np.inf, np.inf
     for seed in q_seeds:
         q = np.clip(np.array(seed, dtype=float), JOINT_LOWER, JOINT_UPPER)
         for _ in range(max_iter):
@@ -471,6 +489,13 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08)
                 dq *= max_step / n
             q = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
         e = float(np.linalg.norm(np.asarray(p_target_arm) - _tip(q)))
-        if e < best_err:
-            best_q, best_err = q.copy(), e
+        # Critério de escolha: erro de posição + penalidade de
+        # continuidade. Soluções que exigem reconfigurar o braço inteiro
+        # perdem para soluções equivalentes perto de onde ele já está.
+        score = e
+        if q_current is not None:
+            score += continuity_weight * float(
+                np.linalg.norm(q - np.asarray(q_current, dtype=float)))
+        if score < best_score:
+            best_q, best_err, best_score = q.copy(), e, score
     return best_q, best_err

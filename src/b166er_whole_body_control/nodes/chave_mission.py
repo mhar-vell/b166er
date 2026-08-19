@@ -65,7 +65,8 @@ from geometry_msgs.msg import PoseStamped, Twist, Point
 from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool
-from tf.transformations import quaternion_matrix, euler_from_quaternion
+from tf.transformations import (quaternion_matrix, euler_from_quaternion,
+                                quaternion_from_matrix)
 
 from gazebo_msgs.srv import SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
@@ -100,6 +101,10 @@ class MissionContext(object):
         self.posture_timeout  = rospy.get_param('~posture_timeout', 30.0)
         self.phase_timeout    = rospy.get_param('~phase_timeout', 60.0)
         self.refine_samples   = rospy.get_param('~refine_samples', 10)
+        # Nome do modelo da fixture no Gazebo — usado para girar a
+        # lâmina da chave (set_blade_angle).
+        self.fixture_model    = rospy.get_param('~fixture_model_name',
+                                                'chave_seccionadora_fixture')
         # Distância intermediária de aproximação: dentro da faixa
         # confiável da tag (132 mm → ~1,45 m pela regra d/11).
         self.coarse_distance  = rospy.get_param('~coarse_distance', 1.30)
@@ -165,6 +170,10 @@ class MissionContext(object):
         # (2026-08-13, robô tombado). Depois do standoff, só o braço serve
         # o alvo.
         self.pub_base_lock = rospy.Publisher('/b166er/base_lock', Bool,
+                                             queue_size=1, latch=True)
+        # Plano de exclusão da base (substitui a trava total). Ver
+        # _apply_keepout no fuzzy_wb_controller.
+        self.pub_keepout   = rospy.Publisher('/b166er/base_keepout', PoseStamped,
                                              queue_size=1, latch=True)
         # Alvo publicado como posição da PONTA da ferramenta (não do
         # T265) durante a manipulação — ver fuzzy_wb_controller, 4a.
@@ -384,15 +393,50 @@ class MissionContext(object):
         self.pub_wb_enable.publish(Bool(data=False))
         rospy.sleep(0.2)   # deixa o stand-down chegar antes de dirigir
 
-    def release_base(self):
-        """Devolve /cmd_vel ao fuzzy_wb_controller, com a base TRAVADA.
+    def publish_keepout(self):
+        """Publica o plano que a base não pode cruzar: a face da parede.
 
-        A base já está na pose de standoff; daqui pra frente só o braço
-        deve se mexer. Sem a trava o whole-body avança o chassi contra a
-        parede — ele não tem percepção de obstáculo nenhuma.
+        Substitui a trava total de base. A trava evitava a colisão mas
+        tirava a base da solução — sobravam 5 juntas para a tarefa e o
+        DLS saturava J2/J3 nos batentes, congelando o erro em ~10 cm
+        (medido em 2026-08-13). Com a restrição, a base volta a
+        participar dos 8 DOF e só perde a liberdade de avançar além do
+        limite.
+
+        Convenção esperada pelo controlador: position = ponto no plano,
+        eixo X da orientação = normal apontando para o LADO SEGURO.
+        """
+        n = chave_task.wall_front_normal(self.wall_R)   # aponta para o robô
+        msg = PoseStamped()
+        msg.header.frame_id = 'odom'
+        msg.header.stamp = rospy.Time.now()
+        msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = self.wall_pos
+
+        # Monta uma rotação cujo eixo X seja a normal do lado seguro.
+        x = n / max(np.linalg.norm(n), 1e-9)
+        z = np.array([0.0, 0.0, 1.0])
+        y = np.cross(z, x); y /= max(np.linalg.norm(y), 1e-9)
+        z = np.cross(x, y)
+        T = np.eye(4); T[:3, 0], T[:3, 1], T[:3, 2] = x, y, z
+        qx, qy, qz, qw = quaternion_from_matrix(T)
+        msg.pose.orientation.x, msg.pose.orientation.y = qx, qy
+        msg.pose.orientation.z, msg.pose.orientation.w = qz, qw
+        self.pub_keepout.publish(msg)
+        rospy.loginfo('[mission] plano de exclusão publicado: parede em %s, '
+                      'normal segura %s', self.wall_pos.round(3), x.round(3))
+
+    def release_base(self):
+        """Devolve /cmd_vel ao controlador, com a base LIVRE mas restrita.
+
+        Antes isto travava a base por completo. A trava evitava a
+        colisão com a parede mas eliminava a redundância: com 5 juntas
+        só, o DLS saturava J2/J3 nos batentes e o erro congelava.
+        Agora a base participa dos 8 DOF, contida pelo plano de
+        exclusão — que é a resposta certa para whole-body.
         """
         self.stop_base()
-        self.pub_base_lock.publish(Bool(data=True))
+        self.publish_keepout()
+        self.pub_base_lock.publish(Bool(data=False))
         self.pub_servo_tip.publish(Bool(data=True))
         self.pub_wb_enable.publish(Bool(data=True))
         rospy.sleep(0.3)
@@ -593,7 +637,8 @@ class Deploy(smach.State):
         T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
         p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
 
-        q_ik, err_ik = ik_tooltip_position(p_local)
+        q_ik, err_ik = ik_tooltip_position(
+            p_local, q_current=np.array(ctx.robot_state.q_arm))
         if err_ik < ctx.deploy_ik_tol:
             rospy.loginfo('[mission] DEPLOY: IK da ponta resolvida (resíduo '
                           '%.4f m) — pré-posicionando em %s graus',
@@ -651,7 +696,12 @@ class Manipulate(smach.State):
                                       b.orientation.z, b.orientation.w])
             T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
             p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
-            q_ik, err_ik = ik_tooltip_position(p_local)
+            # Passa a postura ATUAL: mantém os waypoints no mesmo ramo
+            # de solução (ver ik_tooltip_position — sem isso a escolha
+            # pulava de ramo entre execuções e o resultado não era
+            # repetível).
+            q_ik, err_ik = ik_tooltip_position(
+                p_local, q_current=np.array(ctx.robot_state.q_arm))
 
             if err_ik < ctx.deploy_ik_tol:
                 rospy.loginfo('[mission] fase "%s" — IK resolvida (%.4f m), '
