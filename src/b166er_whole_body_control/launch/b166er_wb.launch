@@ -174,6 +174,12 @@
       <param name="use_joint_states_seed" value="$(arg ik_seed_ground_truth)"/>
     </node>
 
+    <!-- 1b · Monitor de inclinação (IMU) — segurança de tombamento -->
+    <node name="tilt_monitor"
+          pkg="b166er_whole_body_control"
+          type="tilt_monitor.py"
+          output="screen"/>
+
     <!-- 2 · Fuzzy whole-body controller: Pioneer + RV-M2 como 8-DOF -->
     <node name="fuzzy_wb_controller"
           pkg="b166er_whole_body_control"

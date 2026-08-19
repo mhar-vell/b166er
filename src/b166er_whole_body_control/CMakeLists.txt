@@ -48,5 +48,6 @@ catkin_install_python(PROGRAMS
   nodes/task_sequencer.py
   nodes/apriltag_localizer.py
   nodes/chave_mission.py
+  nodes/tilt_monitor.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

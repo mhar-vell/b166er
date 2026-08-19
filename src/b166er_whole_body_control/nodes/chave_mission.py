@@ -186,6 +186,11 @@ class MissionContext(object):
         rospy.Subscriber('/b166er/wall_pose', PoseStamped, self._cb_wall)
         rospy.Subscriber('/b166er/arm_posture_reached', Bool, self._cb_posture)
         rospy.Subscriber('/b166er/tag_pixel', Point, self._cb_tag_pixel)
+        # Segurança: tombamento detectado pela IMU aborta a missão.
+        # Antes disso o robô tombou várias vezes e a máquina de estados
+        # seguia tentando, alheia — a IMU existia e não era usada.
+        self.tilt_critical = False
+        rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
 
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
@@ -197,6 +202,12 @@ class MissionContext(object):
     def _cb_posture(self, msg):
         if msg.data:
             self.posture_done = True
+
+    def _cb_tilt(self, msg):
+        if msg.data and not self.tilt_critical:
+            rospy.logerr('[mission] IMU reportou inclinação crítica — '
+                         'abortando a missão')
+        self.tilt_critical = msg.data
 
     def _cb_tag_pixel(self, msg):
         self.tag_pixel   = msg
@@ -935,6 +946,10 @@ def _wait_ee_convergence(ctx, T_target, phase):
     rate = rospy.Rate(10)
     t0 = rospy.Time.now()
     while not rospy.is_shutdown():
+        if ctx.tilt_critical:
+            rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
+                         phase)
+            return False
         st = ctx.robot_state
         p, o = st.ee_pose.pose.position, st.ee_pose.pose.orientation
         T_cur = quaternion_matrix([o.x, o.y, o.z, o.w])

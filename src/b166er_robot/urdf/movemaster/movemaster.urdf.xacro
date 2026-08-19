@@ -70,6 +70,32 @@
       <child link="ahrs8_link"/>
     </joint>
 
+    <!-- Sensor IMU no Gazebo (2026-08-13). Estava faltando: a AHRS-8
+         existia no URDF como geometria, mas sem sensor — nada publicava
+         /imu/data e o robô tombou várias vezes sem nenhum aviso, tendo
+         um sensor de atitude a bordo (o Marco notou).
+
+         CONVENIENTE: a AHRS-8 é filha de L1, e L1 gira em relação à
+         base APENAS em torno de Z (J1 tem axis="0 0 1" e origem sem
+         rpy; a montagem da IMU também só tem yaw). Logo o ROLL e o
+         PITCH medidos pela IMU são IDÊNTICOS aos do chassi — para
+         detecção de tombamento não é preciso compensar a configuração
+         do braço. Só o yaw difere (por q1 + π). -->
+    <gazebo reference="ahrs8_link">
+      <gravity>true</gravity>
+      <sensor name="ahrs8_imu" type="imu">
+        <always_on>true</always_on>
+        <update_rate>50</update_rate>
+        <plugin name="ahrs8_imu_plugin" filename="libgazebo_ros_imu_sensor.so">
+          <topicName>/imu/data</topicName>
+          <bodyName>ahrs8_link</bodyName>
+          <frameName>ahrs8_link</frameName>
+          <updateRateHZ>50.0</updateRateHZ>
+          <gaussianNoise>0.002</gaussianNoise>
+        </plugin>
+      </sensor>
+    </gazebo>
+
     <link name="ahrs8_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
