@@ -64,7 +64,7 @@ import smach_ros
 from geometry_msgs.msg import PoseStamped, Twist, Point
 from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Float64
 from tf.transformations import (quaternion_matrix, euler_from_quaternion,
                                 quaternion_from_matrix)
 
@@ -116,6 +116,8 @@ class MissionContext(object):
         self.nav_w         = rospy.get_param('~nav_angular_vel', 0.4)
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
+        # Distância mínima (centro da base → obstáculo) pelo laser.
+        self.min_clearance = rospy.get_param('~min_clearance', 0.55)
 
         # Tolerância Cartesiana da manipulação: 20 mm, NÃO os 5 mm que
         # o fuzzy_wb_controller usa por padrão.
@@ -191,6 +193,11 @@ class MissionContext(object):
         # seguia tentando, alheia — a IMU existia e não era usada.
         self.tilt_critical = False
         rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
+        # Distância livre medida pelo Hokuyo — usada na navegação para
+        # parar antes de encostar, sem depender da estimativa da tag.
+        self.front_clearance = None
+        rospy.Subscriber('/b166er/front_clearance', Float64,
+                         self._cb_clearance)
 
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
@@ -202,6 +209,9 @@ class MissionContext(object):
     def _cb_posture(self, msg):
         if msg.data:
             self.posture_done = True
+
+    def _cb_clearance(self, msg):
+        self.front_clearance = msg.data
 
     def _cb_tilt(self, msg):
         if msg.data and not self.tilt_critical:
@@ -916,7 +926,19 @@ def _navigate_to(ctx, goal, timeout, tag):
                 ctx.drive(0.0, math.copysign(ctx.nav_w, err))
 
         elif phase == 'DRIVE':
-            if dist < ctx.nav_pos_tol:
+            # Freio por MEDIDA: o laser vê o obstáculo real à frente.
+            # Antes a única proteção era o alvo calculado a partir da
+            # tag — se a estimativa errasse, o robô ia para cima da
+            # parede (aconteceu em 2026-08-13, standoff calculado a 9 cm
+            # da parede por erro de 53 cm na detecção distante).
+            if (ctx.front_clearance is not None
+                    and ctx.front_clearance < ctx.min_clearance):
+                ctx.stop_base()
+                rospy.logwarn('[mission] %s: laser reporta obstáculo a %.2f m '
+                              '(mín %.2f) — parando avanço', tag,
+                              ctx.front_clearance, ctx.min_clearance)
+                phase = 'TURN_FINAL'
+            elif dist < ctx.nav_pos_tol:
                 ctx.stop_base()
                 phase = 'TURN_FINAL'
                 rospy.loginfo('[mission] %s: chegou, ajustando heading final', tag)

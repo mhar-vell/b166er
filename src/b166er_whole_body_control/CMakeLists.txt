@@ -49,5 +49,6 @@ catkin_install_python(PROGRAMS
   nodes/apriltag_localizer.py
   nodes/chave_mission.py
   nodes/tilt_monitor.py
+  nodes/laser_safety.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

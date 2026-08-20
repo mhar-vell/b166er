@@ -33,7 +33,7 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray, MultiArrayDimension, Bool
+from std_msgs.msg import Float64MultiArray, MultiArrayDimension, Bool, Float64
 from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
@@ -244,6 +244,14 @@ class FuzzyWBController:
         self._keepout_n = None      # normal unitária, lado seguro
         self._keepout_d = rospy.get_param('~base_keepout_dist', 0.55)
 
+        # MEDIDA DIRETA do Hokuyo (laser_safety). Preferida ao plano
+        # inferido pela tag: o plano depende da estimativa da parede,
+        # que carrega o erro da detecção; o laser mede o obstáculo real
+        # à frente, com ~1,5 cm de erro (calibrado em 2026-08-13).
+        # Também protege contra obstáculos que a tag não descreve.
+        self._front_clearance = None
+        self._use_laser = rospy.get_param('~use_laser_keepout', True)
+
         # Subscritores
         rospy.Subscriber('/b166er/robot_state', RobotState,   self._cb_state)
         rospy.Subscriber('/b166er/ee_target',   PoseStamped,  self._cb_target)
@@ -251,6 +259,7 @@ class FuzzyWBController:
         rospy.Subscriber('/b166er/base_lock',   Bool,         self._cb_base_lock)
         rospy.Subscriber('/b166er/servo_tooltip', Bool,       self._cb_servo_tooltip)
         rospy.Subscriber('/b166er/base_keepout', PoseStamped, self._cb_keepout)
+        rospy.Subscriber('/b166er/front_clearance', Float64, self._cb_clearance)
 
         rospy.loginfo('[fuzzy_wb_controller] pronto — aguardando /b166er/ee_target')
 
@@ -275,13 +284,43 @@ class FuzzyWBController:
                       'dist_min=%.2f m', self._keepout_p.round(3),
                       self._keepout_n.round(3), self._keepout_d)
 
-    def _apply_keepout(self, q_dot_base, p_base):
+    def _cb_clearance(self, msg):
+        self._front_clearance = msg.data
+
+    def _apply_keepout(self, q_dot_base, p_base, theta):
         """Projeta fora a componente de velocidade que invade o plano.
 
         Deixa a base LIVRE para tudo o mais — só remove o movimento que
         a aproximaria além do limite. É uma restrição de velocidade, não
         uma trava: a redundância dos 8 DOF continua disponível ao DLS.
         """
+        # ── Restrição por MEDIDA (Hokuyo) ──
+        # Bloqueia avanço quando o laser vê obstáculo dentro do limite,
+        # independentemente do que a estimativa da tag diga. É a defesa
+        # que não depende de inferência nenhuma.
+        if self._use_laser and self._front_clearance is not None:
+            if self._front_clearance < self._keepout_d:
+                # ATENÇÃO AO FRAME: q_dot_base vem da Jacobiana
+                # whole-body no frame do MUNDO ([ẋ, ẏ, θ̇]), não no
+                # frame do robô. A primeira versão testava
+                # q_dot_base[0] > 0 achando que era "avanço" — mas isso
+                # é a componente X do mundo. Com o robô encarando a
+                # parede em +Y, ele avançava em ẏ e a checagem nunca
+                # disparava: o robô foi de 0,80 m a 0,31 m da parede e
+                # tombou (pitch de 1,31 rad, 2026-08-13).
+                #
+                # O correto é projetar no HEADING e remover só a
+                # componente que aproxima.
+                fwd = np.array([np.cos(theta), np.sin(theta)])
+                v_fwd = float(np.dot(q_dot_base[:2], fwd))
+                if v_fwd > 0.0:
+                    q_dot_base = q_dot_base.copy()
+                    q_dot_base[:2] = q_dot_base[:2] - v_fwd * fwd
+                    rospy.logwarn_throttle(2.0,
+                        '[fuzzy_wb] laser: obstáculo a %.2f m (mín %.2f) — '
+                        'avanço de %.3f m/s bloqueado',
+                        self._front_clearance, self._keepout_d, v_fwd)
+
         if self._keepout_p is None:
             return q_dot_base
         n_xy = np.array([self._keepout_n[0], self._keepout_n[1]])
@@ -633,7 +672,7 @@ class FuzzyWBController:
                     self._pub_cmdvel.publish(Twist())
                     self._publish_arm_vel(q_dot, now)
                 else:
-                    q_dot_base = self._apply_keepout(q_dot[:3], T_world_base[:3, 3])
+                    q_dot_base = self._apply_keepout(q_dot[:3], T_world_base[:3, 3], theta)
                     self._publish_cmd_vel(q_dot_base, theta)
                     self._publish_arm_vel(q_dot[3:], now)
 
