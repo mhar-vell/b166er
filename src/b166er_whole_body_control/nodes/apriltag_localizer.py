@@ -83,13 +83,23 @@ from tf.transformations import quaternion_matrix, quaternion_from_matrix
 
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import T_T265_TASKCAMERA
+from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
 
 TAG_SIZE = 0.132  # m — mesma tag física já validada (project_fase4_apriltag_validacao)
 
-# Offset fixo de wall_link até o centro da tag_plate (chave_com_tag.urdf.xacro:
-# tag_x_offset=0.20, tag_mount_z=1.030, joint sem rotação — mesma
-# orientação de wall_link).
-TAG_OFFSET_FROM_WALL_LINK = np.array([0.20, 0.0, 1.030])
+# Offset de wall_link até a tag: IMPORTADO de chave_task, NÃO copiado.
+#
+# Aqui havia uma cópia local com 0.20 fixo. Quando a tag foi movida para
+# o outro lado da chave (-0.60, 2026-08-13), chave_task foi atualizado e
+# esta cópia não — o localizador passou a estimar a parede 0,795 m fora
+# do lugar. Pior: a missão rodou inteira e terminou em MISSION_OK,
+# porque tudo depois disso é relativo à estimativa errada; o robô
+# "abriu a chave" a 80 cm de onde ela está. O Marco pegou o risco antes
+# do teste: "ao mudar o lado da tag, tem q alterar as direções no
+# código também".
+#
+# Duplicar constante de geometria é exatamente o que chave_task existe
+# para evitar. Importar fecha a porta para esse erro se repetir.
 
 # Rotação padrão link-da-câmera (X-forward, convenção Gazebo/ROS para
 # corpos) → frame óptico (Z-forward, X-right, Y-down, convenção

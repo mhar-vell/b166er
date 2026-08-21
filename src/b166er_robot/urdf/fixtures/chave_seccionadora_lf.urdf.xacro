@@ -35,7 +35,17 @@
 
     <xacro:property name="olhal_height" value="0.810"/>      <!-- altura do olhal (spec do Marco) -->
     <xacro:property name="blade_length" value="0.200"/>      <!-- pivô → olhal -->
-    <xacro:property name="wall_standoff" value="0.03"/>      <!-- afastamento da face da parede -->
+    <!-- Afastamento do mecanismo em relação à placa. Subiu de 0,03 m
+         para 0,08 m em 2026-08-13, por dois motivos que convergem:
+         · FÍSICO: a foto da bancada mostra o mecanismo bem destacado da
+           placa (a barra e a articulação se projetam vários cm), não
+           colado como 3 cm sugeriam.
+         · FUNCIONAL: com 3 cm o olhal ficava a 30 mm da face, enquanto
+           o bracket ocupa até 28 mm — o gancho (esfera de colisão de
+           20 mm) não tinha por onde entrar. O J4 travava contra o
+           bracket e a ponta parava 5 cm aquém do alvo, sintoma que
+           levou horas a isolar porque parecia droop ou IK ruim. -->
+    <xacro:property name="wall_standoff" value="0.08"/>
 
     <!-- Placa de fundo (a branca da foto, parafusada na parede). -->
     <xacro:property name="plate_w" value="0.16"/>
@@ -127,10 +137,16 @@
         <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
         <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
-      <collision>
-        <origin xyz="0 0 ${blade_length/2}"/>
-        <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
-      </collision>
+      <!-- Lâmina SEM colisão, pelo mesmo motivo do olhal: o anel fica
+           no TOPO dela, então o gancho que mira o centro do anel
+           encosta na lâmina e trava. Medido: J4 cravado enquanto a IK
+           pedia de -41,9° a -2,9° (defasagem crescendo até 30,7°),
+           ponta congelada 5,7 cm aquém.
+
+           Colisão só faz sentido nas partes ESTRUTURAIS (placa,
+           brackets), que é onde o robô realmente não pode entrar. A
+           lâmina é o alvo da manipulação e sua abertura é acoplada
+           cinematicamente (set_blade_angle), não pelo contato. -->
       <inertial>
         <mass value="0.5"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.0002"/>
@@ -186,9 +202,21 @@
       <xacro:ring_seg_vis i="7"/>
       <xacro:ring_seg_vis i="8"/>
       <xacro:ring_seg_vis i="9"/>
-      <collision>
-        <geometry><sphere radius="${ring_r}"/></geometry>
-      </collision>
+      <!-- SEM COLISÃO no olhal (2026-08-13). Havia aqui uma esfera
+           sólida de raio ${ring_r} "aproximando" o anel — mas para a
+           física isso é uma BOLA MACIÇA, não um anel vazado: o gancho
+           batia nela em vez de atravessar. Sintoma medido: durante o
+           engate o J4 ficava cravado em ~-84° por mais que a IK
+           pedisse (-77,8° → -55,5°), a ponta congelada a 3 cm do alvo,
+           e a iteração só aumentava a defasagem (-5,1° → -29,8°).
+           Nada disso era droop nem IK ruim — era o gancho empurrando
+           uma esfera invisível.
+
+           Modelar o anel como toroide de colisão (vários cilindros)
+           seria caro e inútil aqui: a abertura da chave é acoplada
+           CINEMATICAMENTE (ver set_blade_angle em chave_mission.py),
+           não pelo contato gancho-anel. Sem colisão, o gancho alcança
+           o centro do anel, que é o que o controlador mira. -->
       <inertial>
         <mass value="0.08"/>
         <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>

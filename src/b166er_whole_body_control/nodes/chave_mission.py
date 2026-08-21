@@ -109,6 +109,9 @@ class MissionContext(object):
         # confiável da tag (132 mm → ~1,45 m pela regra d/11).
         self.coarse_distance  = rospy.get_param('~coarse_distance', 1.30)
         self.deploy_ik_tol    = rospy.get_param('~deploy_ik_tol', 0.02)
+        # IK iterativa da manipulação fina (ver _reach_by_iterative_ik)
+        self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
+        self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
@@ -678,9 +681,22 @@ class Deploy(smach.State):
 
         if not _wait_posture(ctx):
             return 'failed'
-        # Handoff: daqui em diante quem dirige o braço é o controlador
-        # whole-body (com a base travada), conduzido por /b166er/ee_target.
-        ctx.release_base()
+        # SEM handoff para o controlador Cartesiano: a manipulação usa
+        # IK iterativa em espaço de juntas (_reach_by_iterative_ik), e
+        # os dois não podem coexistir. Com o fuzzy_wb_controller ativo
+        # ele segue perseguindo o último /b166er/ee_target e MOVE A
+        # BASE enquanto a missão comanda posturas — a base sai do lugar
+        # para o qual a IK foi resolvida e a ponta erra o alvo por
+        # alguns centímetros, sem responder a novas iterações (medido em
+        # 2026-08-13: erro cravado em 3,2 cm por 5 iterações, com a
+        # ponta imóvel).
+        #
+        # A missão mantém /cmd_vel (base parada) durante toda a
+        # manipulação; o plano de exclusão segue publicado para quando o
+        # controlador Cartesiano voltar a atuar.
+        ctx.publish_keepout()
+        ctx.take_base()
+        ctx.stop_base()
         return 'ok'
 
 
@@ -704,71 +720,14 @@ class Manipulate(smach.State):
             offset = ctx.phases[phase]['offset_xyz_m']
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
 
-            # ── 1) Movimento em ESPAÇO DE JUNTAS até a solução de IK ──
-            # Não peça ao DLS para vencer 18 cm sozinho: ele é local e
-            # sistematicamente encalha num batente. Em 2026-08-13 o
-            # DEPLOY posicionava J3 em torno de 0°/+58° (solução boa) e
-            # o controlador Cartesiano arrastava a junta até -60°, onde
-            # travava com 10-14 cm de erro residual. A IK enxerga a
-            # postura inteira e respeita os limites; a rampa até ela é
-            # lenta e previsível.
-            b = ctx.robot_state.base_odom.pose.pose
-            T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
-                                      b.orientation.z, b.orientation.w])
-            T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
-            p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
-            # Passa a postura ATUAL: mantém os waypoints no mesmo ramo
-            # de solução (ver ik_tooltip_position — sem isso a escolha
-            # pulava de ramo entre execuções e o resultado não era
-            # repetível).
-            q_ik, err_ik = ik_tooltip_position(
-                p_local, q_current=np.array(ctx.robot_state.q_arm))
-
-            if err_ik < ctx.deploy_ik_tol:
-                rospy.loginfo('[mission] fase "%s" — IK resolvida (%.4f m), '
-                              'indo por espaço de juntas: %s graus',
-                              phase, err_ik, np.degrees(q_ik).round(1))
-                msg = JointState()
-                msg.header.stamp = rospy.Time.now()
-                msg.name     = JOINT_NAMES
-                msg.position = q_ik.tolist()
-                ctx.posture_done = False
-                ctx.pub_posture.publish(msg)
-                if not _wait_posture(ctx):
-                    return 'failed'
-            else:
-                rospy.logwarn('[mission] fase "%s": IK não fechou (%.3f m) — '
-                              'alvo fora de alcance deste standoff', phase, err_ik)
+            if not _reach_by_iterative_ik(ctx, p_tip, phase):
                 return 'failed'
 
-            # ── 2) Ajuste fino CARTESIANO, fechando o resíduo ──
-            # Aqui o DLS trabalha no que ele faz bem: correção local
-            # pequena, medida na ponta pelo sensor, compensando o droop
-            # do PID e o erro da própria estimativa de juntas.
-            T_target = np.eye(4)
-            T_target[:3, :3] = R_ee
-            T_target[:3, 3]  = p_tip
-
-            msg = PoseStamped()
-            msg.header.frame_id = 'odom'
-            msg.header.stamp    = rospy.Time.now()
-            msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = p_tip
-            msg.pose.orientation = ctx.ee_orientation
-            ctx.pub_target.publish(msg)
-            ctx.publish_markers()
-            rospy.loginfo('[mission] fase "%s" — ajuste fino até (%.3f, %.3f, %.3f)',
-                          phase, *p_tip)
-
-            if not _wait_ee_convergence(ctx, T_target, phase):
-                return 'failed'
-
-            # A chave acompanha a ferramenta: o ângulo da lâmina segue o
-            # waypoint alcançado (ver set_blade_angle sobre por que é
-            # cinemático e não por contato).
+            # A chave acompanha a ferramenta (ver set_blade_angle).
             ang = ctx.phases[phase].get('blade_angle_deg')
             if ang is not None:
                 ctx.set_blade_angle(float(ang))
-            rospy.sleep(1.0)
+            rospy.sleep(0.5)
 
         rospy.loginfo('[mission] MANIPULATE concluída — chave aberta')
         return 'done'
@@ -961,6 +920,93 @@ def _navigate_to(ctx, goal, timeout, tag):
             ctx.drive(0.0, math.copysign(ctx.nav_w, err))
 
         rate.sleep()
+    return False
+
+
+def _tooltip_now(ctx):
+    """Posição atual da PONTA da ferramenta, medida pelo T265."""
+    p = ctx.robot_state.ee_pose.pose.position
+    o = ctx.robot_state.ee_pose.pose.orientation
+    R = quaternion_matrix([o.x, o.y, o.z, o.w])[:3, :3]
+    return np.array([p.x, p.y, p.z]) + R @ T_T265_TOOLTIP[:3, 3]
+
+
+def _reach_by_iterative_ik(ctx, p_goal, phase):
+    """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
+
+    Por que iterar em vez de deixar a malha Cartesiana fechar: depois de
+    comandar a solução de IK, o braço FÍSICO não chega nela — os
+    controladores de posição têm droop de 1,4 a 3,3° por junta sob
+    gravidade (medido em 2026-08-13), o que deixa a ponta 3 a 10 cm
+    aquém. A malha Cartesiana enxerga esse resíduo (o T265 mede a pose
+    real) mas nem sempre consegue fechá-lo: em algumas configurações a
+    Jacobiana não tem autoridade na direção necessária e o DLS empurra
+    juntas até os batentes, com o erro estacionando.
+
+    A iteração ataca o droop pelo que ele é — um erro sistemático e
+    repetível: mede o quanto faltou e recomanda a IK mirando ALÉM do
+    alvo, na mesma medida. Como o droop é função da postura e a postura
+    quase não muda entre iterações, duas ou três bastam.
+
+    Cada passo usa a postura atual como semente (continuidade de ramo).
+    """
+    p_goal = np.asarray(p_goal, dtype=float)
+    p_aim  = p_goal.copy()
+
+    for it in range(ctx.ik_max_iters):
+        if ctx.tilt_critical:
+            rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
+                         phase)
+            return False
+
+        b = ctx.robot_state.base_odom.pose.pose
+        T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
+                                  b.orientation.z, b.orientation.w])
+        T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
+        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_aim, 1))[:3]
+
+        q_ik, err_ik = ik_tooltip_position(
+            p_local, q_current=np.array(ctx.robot_state.q_arm))
+        if err_ik > ctx.deploy_ik_tol:
+            rospy.logwarn('[mission] fase "%s" it%d: IK não fechou (%.3f m) — '
+                          'alvo fora de alcance deste standoff',
+                          phase, it, err_ik)
+            return False
+
+        msg = JointState()
+        msg.header.stamp = rospy.Time.now()
+        msg.name     = JOINT_NAMES
+        msg.position = q_ik.tolist()
+        ctx.posture_done = False
+        ctx.pub_posture.publish(msg)
+        if not _wait_posture(ctx):
+            return False
+        rospy.sleep(ctx.ik_settle_time)   # deixa o PID assentar antes de medir
+
+        p_now = _tooltip_now(ctx)
+        err   = p_goal - p_now
+        n_err = float(np.linalg.norm(err))
+
+        # O braço chegou onde a IK mandou? Distingue "IK ruim" de
+        # "controlador não seguiu" — sem isso as duas causas produzem o
+        # mesmo sintoma (ponta longe do alvo).
+        q_real = np.array(ctx.robot_state.q_arm)
+        dq = np.degrees(q_real - q_ik)
+        rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
+                      'erro=%.4f | IK pediu %s | faltou %s graus',
+                      phase, it, *p_now, n_err,
+                      np.degrees(q_ik).round(1), dq.round(1))
+
+        if n_err < ctx.tol_pos:
+            rospy.loginfo('[mission] fase "%s" alcançada em %d iteração(ões) '
+                          '(%.4f m)', phase, it + 1, n_err)
+            return True
+
+        # Mira além, na medida do que faltou (compensação de droop).
+        p_aim = p_aim + err
+
+    rospy.logerr('[mission] fase "%s": %d iterações sem fechar (%.4f m, '
+                 'tolerância %.3f)', phase, ctx.ik_max_iters, n_err, ctx.tol_pos)
     return False
 
 

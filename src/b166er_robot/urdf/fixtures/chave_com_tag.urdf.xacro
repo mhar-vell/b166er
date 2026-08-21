@@ -22,11 +22,19 @@
   <xacro:include filename="$(find b166er_robot)/urdf/fixtures/apriltag_mount.urdf.xacro"/>
 
   <!-- ═══ Parâmetros da parede ═══ -->
-  <xacro:property name="wall_width" value="1.0"/>
+  <xacro:property name="wall_width" value="1.6"/>
   <xacro:property name="wall_thickness" value="0.10"/>
   <xacro:property name="wall_height" value="1.40"/>
   <xacro:property name="chave_x_offset" value="-0.20"/>
-  <xacro:property name="tag_x_offset" value="0.20"/>
+  <!-- Tag do OUTRO LADO da chave (pedido do Marco, 2026-08-13):
+       antes ficava em +0.20, com a chave em -0.20; agora do lado oposto.
+       Aproximada da chave em seguida (também a pedido do Marco): a
+       separação caiu de 0,40 m para 0,22 m, com a tag em -0.42.
+       Ficar perto importa para a percepção: quanto menor a distância
+       entre a tag e o alvo de manipulação, menor o braço de alavanca
+       do erro angular da detecção sobre a posição estimada do olhal.
+       A parede segue com 1,6 m de largura. -->
+  <xacro:property name="tag_x_offset" value="-0.42"/>
 
   <!-- Altura de montagem do macro da chave = altura do PIVÔ (embaixo),
        não mais do bracket sob o isolador. Precisa bater com o cálculo
