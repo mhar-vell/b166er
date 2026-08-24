@@ -70,6 +70,17 @@ source_ros() {
     return $rc
 }
 
+# Conta processos que casam com o padrão.
+#
+# NÃO usar `pgrep -c ... || echo 0`: quando não há match, o pgrep imprime
+# "0" E sai com código 1, então o `|| echo 0` acrescenta um SEGUNDO zero e
+# a variável vira "0\n0" — que estoura em $(( )) com
+# "syntax error in expression (error token is 0)". `wc -l` sempre imprime
+# um número e sai com 0.
+conta_proc() {
+    pgrep -f -- "$1" 2>/dev/null | wc -l
+}
+
 pids_vivos() {
     local out=""
     for p in "${PATTERNS[@]}"; do
@@ -85,15 +96,15 @@ cmd_status() {
     local total=0
     for n in "${NODES[@]}"; do
         local c
-        c=$(pgrep -fc -- "b166er_whole_body_control/$n.py" 2>/dev/null || echo 0)
+        c=$(conta_proc "b166er_whole_body_control/$n.py")
         total=$((total + c))
         printf "  %-22s %s%s\n" "$n" "$c" \
             "$([ "$c" -gt 1 ] && echo '   <<< DUPLICADO')"
     done
     for p in gzserver gzclient rosmaster; do
-        printf "  %-22s %s\n" "$p" "$(pgrep -fc -- "$p" 2>/dev/null || echo 0)"
+        printf "  %-22s %s\n" "$p" "$(conta_proc "$p")"
     done
-    echo "  total de PIDs da simulação: $(pids_vivos | grep -c . || true)"
+    echo "  total de PIDs da simulação: $(pids_vivos | wc -l)"
 
     echo "── REGISTROS no master (podem estar órfãos) ─────────────"
     if source_ros >/dev/null 2>&1 && timeout 5 rosnode list >/dev/null 2>&1; then
@@ -146,7 +157,7 @@ cmd_assert_clean() {
     local restantes
     restantes=$(pids_vivos)
     if [ -n "$restantes" ]; then
-        echo "[sim_stack] NÃO está limpo — $(echo "$restantes" | grep -c .) processo(s):" >&2
+        echo "[sim_stack] NÃO está limpo — $(echo "$restantes" | wc -l) processo(s):" >&2
         ps -o pid,args -p $(echo "$restantes" | tr '\n' ',' | sed 's/,$//') 2>/dev/null >&2
         return 1
     fi
@@ -205,7 +216,7 @@ cmd_preflight() {
     for n in state_estimator fuzzy_wb_controller gazebo_arm_bridge \
              tilt_monitor laser_safety apriltag_localizer; do
         local c
-        c=$(pgrep -fc -- "b166er_whole_body_control/$n.py" 2>/dev/null || echo 0)
+        c=$(conta_proc "b166er_whole_body_control/$n.py")
         if [ "$c" -ne 1 ]; then
             echo "  FALHA  $n: $c processos (esperado 1)"; falhas=$((falhas + 1))
         fi
