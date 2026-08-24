@@ -13,12 +13,26 @@ Gazebo e sem nenhum consumidor.
 Lê /imu/data e publica:
   /b166er/tilt          (Float64) — inclinação em rad, √(roll² + pitch²)
   /b166er/tilt_warning  (Bool)    — passou do limiar de alerta
-  /b166er/tilt_critical (Bool)    — passou do limiar crítico (latched)
+  /b166er/tilt_critical (Bool)    — passou do limiar crítico
 
-Quem consome: chave_mission aborta a missão em tilt_critical, indo para
-ABORT_SAFE (para a base e recolhe o braço). O sinal é latched de
-propósito: uma vez que o robô tombou, o estado não deve ser esquecido
-por um pico de ruído voltar abaixo do limiar.
+Quem consome (três, e isso importa):
+  · fuzzy_wb_controller — zera comando de base e braço
+  · gazebo_arm_bridge   — cancela a rampa da tarefa e RECOLHE o braço
+                          para stow_home (recolher reduz o momento que
+                          derruba o robô; congelar o mantinha)
+  · chave_mission       — aborta a missão, indo para ABORT_SAFE
+
+A primeira versão era ouvida SÓ pela máquina de estados, e o Marco
+pegou a falha: o robô tombou fora de uma missão, a IMU avisou
+corretamente e `rostopic info` mostrava "Subscribers: None". Detectar
+não é reagir — corte de comando tem que valer sempre, não só enquanto
+uma tarefa está em execução.
+
+O sinal NÃO é permanente: limpa sozinho depois que o robô fica
+nivelado de forma sustentada (~recover_time). Latch eterno travava o
+braço mesmo após reposicionar o robô, e numa bateria automatizada um
+único tombo inviabilizava todas as execuções seguintes. O evento
+continua registrado em ERROR — o que muda é poder recuperar.
 
 Por que roll/pitch da IMU do BRAÇO servem para o chassi: a AHRS-8 é
 filha de L1, e L1 gira em relação à base apenas em torno de Z (J1 tem
@@ -56,6 +70,19 @@ class TiltMonitor(object):
         self._pub_crit = rospy.Publisher('/b166er/tilt_critical', Bool,
                                          queue_size=1, latch=True)
 
+        # Tempo que o robô precisa ficar nivelado para o estado crítico
+        # ser limpo. O latch original nunca limpava ("se tombou, o
+        # operador precisa saber"), mas isso trava o sistema para
+        # sempre: o braço fica congelado mesmo depois do robô ser
+        # reposicionado, e numa bateria automatizada um tombo
+        # inviabilizava todas as execuções seguintes. O evento continua
+        # sendo registrado em ERROR — o que muda é só a possibilidade
+        # de recuperar.
+        self._recover_time = rospy.get_param('~recover_time', 2.0)
+        self._recover_tilt = rospy.get_param('~recover_tilt',
+                                             self._warn_tilt * 0.5)
+        self._level_since = None
+
         self._warned = False
         self._critical = False
         self._pub_warn.publish(Bool(data=False))
@@ -85,11 +112,27 @@ class TiltMonitor(object):
             rospy.logwarn('[tilt_monitor] inclinação de alerta: %.2f rad (%.0f°)',
                           tilt, math.degrees(tilt))
         elif tilt < self._warn_tilt * 0.7 and self._warned and not self._critical:
-            # Histerese na volta — só o alerta se recupera. O crítico é
-            # latched: se o robô chegou a tombar, o operador precisa
-            # saber, mesmo que a leitura oscile de volta.
             self._warned = False
             self._pub_warn.publish(Bool(data=False))
+
+        # Recuperação do estado crítico: exige o robô NIVELADO de forma
+        # sustentada, não só um instante abaixo do limiar — leitura
+        # oscilando durante um tombamento cruza o limiar várias vezes.
+        if self._critical:
+            if tilt < self._recover_tilt:
+                if self._level_since is None:
+                    self._level_since = rospy.Time.now()
+                elif (rospy.Time.now() - self._level_since).to_sec() >= self._recover_time:
+                    self._critical = False
+                    self._warned = False
+                    self._level_since = None
+                    self._pub_crit.publish(Bool(data=False))
+                    self._pub_warn.publish(Bool(data=False))
+                    rospy.logwarn('[tilt_monitor] robô nivelado por %.1fs '
+                                  '(%.2f rad) — estado crítico LIMPO, comandos '
+                                  'liberados', self._recover_time, tilt)
+            else:
+                self._level_since = None
 
 
 if __name__ == '__main__':

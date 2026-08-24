@@ -93,6 +93,15 @@ class GazeboArmBridge:
                          self._cb_vel_cmd, queue_size=1)
         rospy.Subscriber('/b166er/arm_posture_cmd', JointState,
                          self._cb_posture_cmd, queue_size=1)
+        # SEGURANÇA DE TOMBAMENTO: congela o braço onde está. Mexer um
+        # braço de 28 kg estendido com o chassi tombando só piora a
+        # situação — e a rampa de postura em curso é justamente o tipo
+        # de comando que continuaria rodando alheio ao acidente. A
+        # reação NÃO é congelar e sim recolher: ver o bloco em _run().
+        self._tilt_critical = False
+        # Fração de ramp_velocity usada na retração de emergência.
+        self._tilt_retract_scale = rospy.get_param('~tilt_retract_scale', 0.6)
+        rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt_critical)
 
         rospy.loginfo('[gazebo_arm_bridge] q_spawn=%s  aguardando warm-start...',
                       np.round(self._q_spawn, 3))
@@ -121,7 +130,22 @@ class GazeboArmBridge:
             self._dq_cmd     = np.array(msg.velocity, dtype=float)
             self._t_last_cmd = rospy.Time.now()
 
+    def _cb_tilt_critical(self, msg):
+        if msg.data and not self._tilt_critical:
+            rospy.logerr('[gazebo_arm_bridge] INCLINAÇÃO CRÍTICA — abortando '
+                         'a tarefa e RECOLHENDO o braço para stow_home')
+            self._q_posture_target = None   # cancela rampa da tarefa
+            self._dq_cmd = np.zeros(5)
+        elif not msg.data and self._tilt_critical:
+            rospy.logwarn('[gazebo_arm_bridge] inclinação normalizada — '
+                          'operação liberada')
+        self._tilt_critical = msg.data
+
     def _cb_posture_cmd(self, msg):
+        if self._tilt_critical:
+            rospy.logwarn_throttle(5.0, '[gazebo_arm_bridge] comando de postura '
+                                        'ignorado: inclinação crítica')
+            return
         if len(msg.position) == 5:
             q_target = np.clip(np.array(msg.position, dtype=float),
                                JOINT_LOWER, JOINT_UPPER)
@@ -157,7 +181,41 @@ class GazeboArmBridge:
                 rate.sleep()
                 continue
 
-            if self._q_posture_target is not None:
+            if self._tilt_critical:
+                # RECOLHER, não congelar (corrigido em 2026-08-24).
+                #
+                # A primeira versão congelava o braço (dq = 0). Errado
+                # por física e por consequência:
+                #
+                # Física — quem derruba o robô é o momento do braço de
+                # 28 kg estendido. Congelar mantém exatamente o braço
+                # de alavanca que causou o tombamento; recolher para
+                # junto do corpo reduz o momento e é sempre a direção
+                # segura, mesmo com o chassi já em movimento.
+                #
+                # Consequência — o congelamento criou um DEADLOCK real,
+                # observado numa bateria inteira (8/8 abortadas em
+                # 2026-08-24): robô tomba com o braço estendido → tilt
+                # crítico congela o braço → o reset põe o chassi em pé,
+                # mas o braço continua estendido → tomba de novo em
+                # menos de 2 s → nunca cumpre o tempo de nivelamento
+                # para limpar o estado → braço segue congelado. O
+                # sistema não conseguia se recuperar sozinho, e a
+                # postura que impedia a recuperação era justamente a
+                # que a trava protegia.
+                #
+                # Velocidade reduzida: é manobra de segurança com o
+                # chassi instável, não movimento de tarefa.
+                err = self._q_home - self._q_arm
+                if np.max(np.abs(err)) < self._reached_tol:
+                    dq = np.zeros(5)
+                else:
+                    v = self._ramp_vel * self._tilt_retract_scale
+                    dq = np.clip(err / dt, -v, v)
+                    rospy.logwarn_throttle(
+                        2.0, '[gazebo_arm_bridge] recolhendo por inclinação '
+                             'crítica (falta %.2f rad)', np.max(np.abs(err)))
+            elif self._q_posture_target is not None:
                 # Rampa de postura: move q_arm em direção ao alvo a
                 # ~ramp_velocity, ignorando arm_vel_cmd (movimento
                 # deliberado em espaço de juntas, ver docstring).
