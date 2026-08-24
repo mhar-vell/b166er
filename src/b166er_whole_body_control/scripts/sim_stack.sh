@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+#
+# sim_stack.sh — sobe, derruba e AUDITA o stack de simulação do b166er.
+#
+# Existe porque em 2026-08-24 uma bateria inteira (8 execuções, ~1 h) foi
+# perdida e outra ficou sem valor estatístico por processos sobreviventes:
+#
+#   · 215 processos órfãos de nós de sessões ANTERIORES ainda vivos na
+#     máquina, publicando nos mesmos tópicos;
+#   · o state_estimator morto deixando o NOME registrado no master, de
+#     modo que `rosnode list` mostrava tudo OK enquanto o nó não existia.
+#
+# A lição operacional: `rosnode list` lista REGISTROS no master, não
+# processos. Um nó que morreu de SIGKILL deixa o registro para trás e o
+# stack parece íntegro. A conferência tem que ser por `pgrep`, sempre.
+#
+# Uso:
+#   sim_stack.sh stop          derruba tudo e confirma que sobrou zero
+#   sim_stack.sh status        lista PROCESSOS vivos (e registros órfãos)
+#   sim_stack.sh assert-clean  sai != 0 se houver qualquer resíduo
+#   sim_stack.sh start [args]  exige limpo, sobe o stack + fixture, espera pronto
+#   sim_stack.sh restart [args]  stop + start
+#   sim_stack.sh preflight     verifica se dá para TESTAR (use antes de bateria)
+#
+# Todo comando é seguro de repetir.
+#
+# `start` sobe também a fixture (parede + chave + tag), que vive num
+# launch separado (b166er_robot/launch/simulation/spawn_chave_fixture.launch)
+# e precisa de um Gazebo já rodando. Esquecer esse passo custou outra
+# bateria inteira em 2026-08-24: o stack subiu íntegro, a câmera publicava
+# a 15 Hz, o localizador rodava — e as 8 execuções morreram em
+# "SEARCH: tag não encontrada" porque não havia tag nenhuma no mundo.
+# Processo vivo não é o mesmo que cenário montado; o `preflight` checa os
+# dois.
+
+set -uo pipefail
+
+WS="${B166ER_WS:-/home/marco/b166er}"
+CONDA_SH="${CONDA_SH:-/home/marco/miniforge3/etc/profile.d/conda.sh}"
+CONDA_ENV="${CONDA_ENV:-ros_env}"
+
+# Nós que compõem o stack. Usados só para relatório — o desligamento
+# varre por caminho do workspace, para pegar também o que não está aqui.
+NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge
+       tilt_monitor laser_safety apriltag_localizer chave_mission)
+
+# Padrões de processo que pertencem à simulação. O caminho do workspace
+# cobre qualquer nó lançado do devel space, inclusive de sessões antigas.
+PATTERNS=("$WS/devel" "gzserver" "gzclient" "rosmaster" "roscore"
+          "b166er_wb.launch" "chave_mission.launch")
+
+# ROS não é sourceado aqui de propósito: `stop`, `status` e `assert-clean`
+# precisam funcionar mesmo com o master morto ou o ambiente quebrado.
+source_ros() {
+    # setup.zsh vs setup.bash importa: sob zsh, o setup.bash resolve $0
+    # errado e falha com "no such file or directory: .../setup.sh".
+    # Este script roda em bash (shebang), então setup.bash é o certo.
+    #
+    # `set +u` aqui não é preguiça: os scripts do conda e do catkin
+    # referenciam variáveis não definidas, e sob `set -u` isso aborta o
+    # script inteiro sem imprimir uma linha sequer — sintoma observado ao
+    # escrever este arquivo (preflight saía com código 1 e zero saída).
+    local u_antes; u_antes=$(set +o | grep nounset)
+    set +u
+    # shellcheck disable=SC1090
+    source "$CONDA_SH" && conda activate "$CONDA_ENV" \
+        && source "$WS/devel/setup.bash"
+    local rc=$?
+    eval "$u_antes"
+    return $rc
+}
+
+pids_vivos() {
+    local out=""
+    for p in "${PATTERNS[@]}"; do
+        out+=$'\n'"$(pgrep -f -- "$p" 2>/dev/null)"
+    done
+    # Exclui a si mesmo e a filhos diretos deste script.
+    printf '%s\n' "$out" | grep -E '^[0-9]+$' | sort -u \
+        | grep -vx "$$" | grep -vx "$PPID"
+}
+
+cmd_status() {
+    echo "── PROCESSOS (fonte de verdade) ─────────────────────────"
+    local total=0
+    for n in "${NODES[@]}"; do
+        local c
+        c=$(pgrep -fc -- "b166er_whole_body_control/$n.py" 2>/dev/null || echo 0)
+        total=$((total + c))
+        printf "  %-22s %s%s\n" "$n" "$c" \
+            "$([ "$c" -gt 1 ] && echo '   <<< DUPLICADO')"
+    done
+    for p in gzserver gzclient rosmaster; do
+        printf "  %-22s %s\n" "$p" "$(pgrep -fc -- "$p" 2>/dev/null || echo 0)"
+    done
+    echo "  total de PIDs da simulação: $(pids_vivos | grep -c . || true)"
+
+    echo "── REGISTROS no master (podem estar órfãos) ─────────────"
+    if source_ros >/dev/null 2>&1 && timeout 5 rosnode list >/dev/null 2>&1; then
+        local orfaos=0
+        while read -r n; do
+            [ -z "$n" ] && continue
+            if ! timeout 3 rosnode ping -c1 "$n" >/dev/null 2>&1; then
+                echo "  ÓRFÃO: $n (registrado, não responde)"
+                orfaos=$((orfaos + 1))
+            fi
+        done < <(timeout 5 rosnode list 2>/dev/null)
+        [ "$orfaos" -eq 0 ] && echo "  nenhum registro órfão"
+    else
+        echo "  master fora do ar (normal depois de 'stop')"
+    fi
+}
+
+cmd_stop() {
+    echo "[sim_stack] derrubando..."
+    # Ordem: launches primeiro (para não relançarem filhos), depois nós,
+    # depois gazebo, master por último.
+    for p in "b166er_wb.launch" "chave_mission.launch" "$WS/devel" \
+             "gzclient" "gzserver" "rosmaster" "roscore"; do
+        pkill -f -- "$p" 2>/dev/null
+    done
+    sleep 3
+    for p in "${PATTERNS[@]}"; do pkill -9 -f -- "$p" 2>/dev/null; done
+    sleep 3
+
+    # Teimosos: mata por PID, um a um, e confirma.
+    local restantes
+    restantes=$(pids_vivos)
+    if [ -n "$restantes" ]; then
+        echo "[sim_stack] insistindo em: $(echo "$restantes" | tr '\n' ' ')"
+        # shellcheck disable=SC2086
+        kill -9 $restantes 2>/dev/null
+        sleep 3
+    fi
+
+    restantes=$(pids_vivos)
+    if [ -n "$restantes" ]; then
+        echo "[sim_stack] FALHOU — ainda vivos:"
+        ps -o pid,args -p $(echo "$restantes" | tr '\n' ',' | sed 's/,$//') 2>/dev/null
+        return 1
+    fi
+    echo "[sim_stack] limpo: zero processos da simulação"
+}
+
+cmd_assert_clean() {
+    local restantes
+    restantes=$(pids_vivos)
+    if [ -n "$restantes" ]; then
+        echo "[sim_stack] NÃO está limpo — $(echo "$restantes" | grep -c .) processo(s):" >&2
+        ps -o pid,args -p $(echo "$restantes" | tr '\n' ',' | sed 's/,$//') 2>/dev/null >&2
+        return 1
+    fi
+    echo "[sim_stack] limpo"
+}
+
+cmd_start() {
+    cmd_assert_clean || {
+        echo "[sim_stack] recuse-se a subir sobre resíduo: rode 'stop' antes." >&2
+        return 1
+    }
+    source_ros || { echo "[sim_stack] não consegui sourcear o ROS" >&2; return 1; }
+
+    local args=("$@")
+    [ ${#args[@]} -eq 0 ] && args=(mode:=gazebo gui:=false rviz:=false)
+    echo "[sim_stack] subindo: ${args[*]}"
+    setsid roslaunch b166er_whole_body_control b166er_wb.launch "${args[@]}" \
+        > "${SIM_STACK_LOG:-/tmp/b166er_stack.log}" 2>&1 &
+    disown
+
+    # Pronto = os tópicos que a missão realmente consome estão FLUINDO.
+    # Esperar por rosnode list aqui repetiria o erro que motivou o script.
+    echo -n "[sim_stack] aguardando fluxo em /b166er/robot_state"
+    local pronto=0
+    for _ in $(seq 1 60); do
+        if timeout 4 rostopic hz -w 3 /b166er/robot_state 2>&1 \
+               | grep -q "average rate"; then
+            pronto=1; echo " — pronto"; break
+        fi
+        echo -n "."
+        sleep 5
+    done
+    if [ "$pronto" -ne 1 ]; then
+        echo " — TIMEOUT"
+        echo "[sim_stack] veja ${SIM_STACK_LOG:-/tmp/b166er_stack.log}" >&2
+        return 1
+    fi
+
+    # A fixture mora num launch separado e não sobe junto com o stack.
+    echo "[sim_stack] spawnando a fixture (parede + chave + tag)..."
+    timeout 60 roslaunch b166er_robot spawn_chave_fixture.launch \
+        >> "${SIM_STACK_LOG:-/tmp/b166er_stack.log}" 2>&1
+    sleep 3
+
+    cmd_status
+    cmd_preflight
+}
+
+# Verifica se dá para TESTAR — não só se há processos vivos. Cada item
+# aqui já custou uma bateria inteira (~1 h) por não ser verificado.
+cmd_preflight() {
+    source_ros >/dev/null 2>&1
+    local falhas=0
+    echo "── PREFLIGHT ───────────────────────────────────────────"
+
+    for n in state_estimator fuzzy_wb_controller gazebo_arm_bridge \
+             tilt_monitor laser_safety apriltag_localizer; do
+        local c
+        c=$(pgrep -fc -- "b166er_whole_body_control/$n.py" 2>/dev/null || echo 0)
+        if [ "$c" -ne 1 ]; then
+            echo "  FALHA  $n: $c processos (esperado 1)"; falhas=$((falhas + 1))
+        fi
+    done
+    [ "$falhas" -eq 0 ] && echo "  ok     um processo por nó"
+
+    # Cenário montado: sem a fixture não há tag, e o SEARCH roda 90 s no vazio.
+    if timeout 10 rosservice call /gazebo/get_world_properties 2>/dev/null \
+           | grep -q chave_seccionadora_fixture; then
+        echo "  ok     fixture presente no mundo"
+    else
+        echo "  FALHA  fixture AUSENTE do mundo (nada para o SEARCH achar)"
+        falhas=$((falhas + 1))
+    fi
+
+    # Percepção de fato fechando o laço, não só a câmera publicando.
+    if timeout 20 rostopic echo -n1 /b166er/wall_pose >/dev/null 2>&1; then
+        echo "  ok     tag detectada (/b166er/wall_pose responde)"
+    else
+        echo "  AVISO  tag não detectada agora — normal se o robô não estiver"
+        echo "         de frente para a parede; o SEARCH gira para procurar."
+    fi
+
+    # Estado crítico pendente congela o braço em toda execução seguinte.
+    local crit
+    crit=$(timeout 10 rostopic echo -n1 /b166er/tilt_critical 2>/dev/null \
+           | grep -oE 'True|False' | head -1)
+    if [ "$crit" = "False" ]; then
+        echo "  ok     tilt_critical limpo"
+    else
+        echo "  FALHA  tilt_critical='$crit' (robô tombado ou estado preso)"
+        falhas=$((falhas + 1))
+    fi
+
+    if [ "$falhas" -gt 0 ]; then
+        echo "[sim_stack] PREFLIGHT REPROVADO ($falhas) — não gaste uma bateria." >&2
+        return 1
+    fi
+    echo "[sim_stack] preflight aprovado — pode testar"
+}
+
+case "${1:-status}" in
+    stop)         cmd_stop ;;
+    preflight)    cmd_preflight ;;
+    status)       cmd_status ;;
+    assert-clean) cmd_assert_clean ;;
+    start)        shift; cmd_start "$@" ;;
+    restart)      shift; cmd_stop && cmd_start "$@" ;;
+    *)            echo "uso: $0 {stop|start|restart|status|assert-clean|preflight}" >&2
+                  exit 2 ;;
+esac
