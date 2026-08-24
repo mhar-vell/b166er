@@ -101,6 +101,16 @@ class MissionContext(object):
         self.posture_timeout  = rospy.get_param('~posture_timeout', 30.0)
         self.phase_timeout    = rospy.get_param('~phase_timeout', 60.0)
         self.refine_samples   = rospy.get_param('~refine_samples', 10)
+        # O SEARCH mede a ~2,8 m, onde a tag subtende pouco e o PnP é
+        # mais ruidoso — e onde um "flip" de ambiguidade de pose custa
+        # caro, porque a pose da parede define para onde o robô dirige.
+        # Na bateria de 2026-08-21 uma execução saiu do SEARCH com a
+        # parede 0,58 m deslocada e o yaw 34° errado. Mais amostras (e
+        # rejeição de outliers em _sample_wall) atacam justamente isso.
+        # O REFINE mede de perto e continua com 10: ali a dispersão é
+        # pequena e amostrar demais só custa tempo.
+        self.search_samples   = rospy.get_param('~search_samples', 25)
+        self.search_sample_timeout = rospy.get_param('~search_sample_timeout', 25.0)
         # Nome do modelo da fixture no Gazebo — usado para girar a
         # lâmina da chave (set_blade_angle).
         self.fixture_model    = rospy.get_param('~fixture_model_name',
@@ -525,8 +535,8 @@ class Search(smach.State):
                 ctx.stop_base()
                 rospy.loginfo('[mission] tag avistada — parando para medir')
                 rospy.sleep(1.0)   # deixa a base assentar antes de amostrar
-                if not _sample_wall(ctx, ctx.refine_samples,
-                                    ctx.refine_timeout, 'SEARCH'):
+                if not _sample_wall(ctx, ctx.search_samples,
+                                    ctx.search_sample_timeout, 'SEARCH'):
                     # Avistou de relance mas não conseguiu medir parada:
                     # segue girando, a tag volta ao quadro.
                     rospy.logwarn('[mission] SEARCH: medição falhou, continuando busca')
@@ -618,11 +628,22 @@ class Refine(smach.State):
 
         antes = ctx.wall_pos.copy()
         if not _sample_wall(ctx, n_wanted, ctx.refine_timeout, 'REFINE'):
-            rospy.logerr('[mission] REFINE: parede fora do campo de visão na '
-                         'pose de standoff — estimativa do SEARCH era ruim?')
-            return 'failed'
-        rospy.loginfo('[mission] REFINE: deslocou %.3f m da estimativa anterior',
-                      float(np.linalg.norm(ctx.wall_pos - antes)))
+            # NÃO é falha: seguimos com a estimativa que já temos.
+            #
+            # A remedição no standoff era obrigatória quando a tag tinha
+            # 132 mm e a medida intermediária (a ~1,3 m) errava ~40 mm.
+            # Com a tag de 220 mm essa medida intermediária erra 13 mm —
+            # boa o bastante para manipular. E exigir a tag visível no
+            # standoff é frágil por geometria: parado de frente para a
+            # CHAVE, a tag fica deslocada para o lado e pode sair do
+            # campo de visão da câmera de punho. Foram 4 das 5 falhas
+            # numa bateria de 8 (2026-08-21), todas por isso.
+            rospy.logwarn('[mission] REFINE: tag não visível no standoff — '
+                          'seguindo com a estimativa da aproximação '
+                          '(erro típico ~13 mm com a tag de 220 mm)')
+        else:
+            rospy.loginfo('[mission] REFINE: deslocou %.3f m da estimativa anterior',
+                          float(np.linalg.norm(ctx.wall_pos - antes)))
         rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f)',
                       *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
         return 'ok'
@@ -790,6 +811,16 @@ class AbortSafe(smach.State):
 # Helpers compartilhados entre estados
 # ═══════════════════════════════════════════════════════════════════════
 
+# Limiares de rejeição de outlier em _sample_wall. Dimensionados pela
+# dispersão real medida: parado e de frente, amostras consecutivas da
+# mesma pose variam poucos centímetros e milirradianos; um flip de
+# ambiguidade do PnP salta dezenas de centímetros e dezenas de graus.
+# A folga entre as duas escalas é grande, então os valores não são
+# críticos — precisam só ficar no meio.
+_OUTLIER_POS_M   = 0.15
+_OUTLIER_YAW_RAD = 0.20
+
+
 def _sample_wall(ctx, n_wanted, timeout, tag):
     """Coleta N estimativas da parede com o robô PARADO e devolve a média.
 
@@ -822,7 +853,43 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
         rospy.logerr('[mission] %s: só %d amostras da tag', tag, len(positions))
         return False
 
-    pos_mean = np.mean(np.array(positions), axis=0)
+    # REJEIÇÃO DE OUTLIERS (2026-08-24). Média pura assume ruído
+    # simétrico, e o erro do PnP aqui não é: a ambiguidade de pose da
+    # tag plana faz a solução "virar" para um espelho, e uma única
+    # amostra virada desloca a média muito mais do que o ruído normal.
+    # Na bateria de 2026-08-21 o SEARCH de uma execução devolveu a
+    # parede a (0.185, 3.576) yaw=2.549 — 0,58 m e 34° fora, com o
+    # mesmo pipeline que nas outras execuções errava 3 cm.
+    #
+    # Mediana como referência (não a média: a média já está
+    # contaminada) e corte por desvio absoluto. O yaw entra no mesmo
+    # critério porque é nele que o flip aparece primeiro.
+    P = np.array(positions)
+    med = np.median(P, axis=0)
+    yaw_med = math.atan2(np.median(np.sin(yaws)), np.median(np.cos(yaws)))
+    d_pos = np.linalg.norm(P - med, axis=1)
+    d_yaw = np.abs(np.arctan2(np.sin(np.array(yaws) - yaw_med),
+                              np.cos(np.array(yaws) - yaw_med)))
+    keep = (d_pos <= _OUTLIER_POS_M) & (d_yaw <= _OUTLIER_YAW_RAD)
+    if keep.sum() >= 3 and keep.sum() < len(positions):
+        rospy.logwarn('[mission] %s: %d de %d amostras descartadas como '
+                      'outlier (>%.2f m ou >%.2f rad da mediana)',
+                      tag, len(positions) - int(keep.sum()), len(positions),
+                      _OUTLIER_POS_M, _OUTLIER_YAW_RAD)
+        P = P[keep]
+        yaws = list(np.array(yaws)[keep])
+    elif keep.sum() < 3:
+        # Dispersão grande demais para separar sinal de outlier: a
+        # medida inteira é suspeita. Falhar aqui é melhor que devolver
+        # uma pose errada com cara de confiável — foi assim que o robô
+        # já foi mandado contra a parede.
+        rospy.logerr('[mission] %s: amostras dispersas demais (só %d de %d '
+                     'dentro de %.2f m da mediana) — medida descartada',
+                     tag, int(keep.sum()), len(positions), _OUTLIER_POS_M)
+        return False
+
+    positions = P.tolist()
+    pos_mean = np.mean(P, axis=0)
     yaw_mean = math.atan2(np.mean(np.sin(yaws)), np.mean(np.cos(yaws)))
     c, s_ = math.cos(yaw_mean), math.sin(yaw_mean)
     ctx.wall_pos = pos_mean
