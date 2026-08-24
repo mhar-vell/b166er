@@ -259,6 +259,13 @@ class FuzzyWBController:
         rospy.Subscriber('/b166er/base_lock',   Bool,         self._cb_base_lock)
         rospy.Subscriber('/b166er/servo_tooltip', Bool,       self._cb_servo_tooltip)
         rospy.Subscriber('/b166er/base_keepout', PoseStamped, self._cb_keepout)
+        # SEGURANÇA DE TOMBAMENTO, independente de haver missão. Antes o
+        # /b166er/tilt_critical só era ouvido pela máquina de estados —
+        # com ela parada, o alerta era publicado no vazio (o Marco pegou
+        # isso: o robô tombou, a IMU avisou, "Subscribers: None"). Corte
+        # de comando tem que valer sempre, não só durante uma tarefa.
+        self._tilt_critical = False
+        rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt_critical)
         rospy.Subscriber('/b166er/front_clearance', Float64, self._cb_clearance)
 
         rospy.loginfo('[fuzzy_wb_controller] pronto — aguardando /b166er/ee_target')
@@ -273,6 +280,12 @@ class FuzzyWBController:
                           'TRAVADA (só braço serve o alvo)' if msg.data
                           else 'liberada (whole-body 8-DOF)')
         self._base_locked = msg.data
+
+    def _cb_tilt_critical(self, msg):
+        if msg.data and not self._tilt_critical:
+            rospy.logerr('[fuzzy_wb_ctrl] INCLINAÇÃO CRÍTICA — zerando comandos '
+                         'de base e braço até a condição ser limpa')
+        self._tilt_critical = msg.data
 
     def _cb_keepout(self, msg):
         p = msg.pose.position
@@ -512,6 +525,17 @@ class FuzzyWBController:
 
         while not rospy.is_shutdown():
             now = rospy.Time.now()
+
+            if self._tilt_critical:
+                # Corte duro: zera base e braço e não calcula mais nada.
+                # Um robô tombando não deve continuar recebendo comando,
+                # qualquer que seja o alvo.
+                self._pub_cmdvel.publish(Twist())
+                self._publish_arm_vel(np.zeros(5), now)
+                rospy.logerr_throttle(2.0,
+                    '[fuzzy_wb] parado por inclinação crítica')
+                rate.sleep()
+                continue
 
             if not self._wb_enabled:
                 # Stand-down: outro nó é o dono de /cmd_vel agora (ex.:
