@@ -171,8 +171,15 @@ cmd_start() {
     }
     source_ros || { echo "[sim_stack] não consegui sourcear o ROS" >&2; return 1; }
 
+    # PADRÃO É COM VISUALIZAÇÃO. Subir headless economiza CPU mas deixa o
+    # Marco cego: sem a janela do Gazebo, sem RViz e sem a imagem da
+    # câmera, não dá para ver o robô se aproximar nem conferir se a tag
+    # está sendo detectada. Reclamação recorrente ("vc sempre esquece de
+    # subir o rviz e a camera"), então o default inverteu. Para rodar
+    # headless (bateria longa, CI), passe explicitamente:
+    #   sim_stack.sh start mode:=gazebo gui:=false rviz:=false
     local args=("$@")
-    [ ${#args[@]} -eq 0 ] && args=(mode:=gazebo gui:=false rviz:=false)
+    [ ${#args[@]} -eq 0 ] && args=(mode:=gazebo gui:=true rviz:=true)
     echo "[sim_stack] subindo: ${args[*]}"
     setsid roslaunch b166er_whole_body_control b166er_wb.launch "${args[@]}" \
         > "${SIM_STACK_LOG:-/tmp/b166er_stack.log}" 2>&1 &
@@ -180,15 +187,21 @@ cmd_start() {
 
     # Pronto = os tópicos que a missão realmente consome estão FLUINDO.
     # Esperar por rosnode list aqui repetiria o erro que motivou o script.
+    #
+    # `rostopic echo -n1`, não `rostopic hz -w 3`: o hz precisa juntar
+    # várias amostras E o próprio rostopic leva 1-2 s só para registrar o
+    # nó no master, então uma sonda curta reprovava um tópico que estava
+    # publicando normalmente. Foi o que aconteceu em 2026-08-24: o start
+    # desistiu com TIMEOUT e não spawnou a fixture, enquanto o
+    # /b166er/robot_state corria a 20 Hz. O echo -n1 retorna assim que a
+    # primeira mensagem chega.
     echo -n "[sim_stack] aguardando fluxo em /b166er/robot_state"
     local pronto=0
-    for _ in $(seq 1 60); do
-        if timeout 4 rostopic hz -w 3 /b166er/robot_state 2>&1 \
-               | grep -q "average rate"; then
+    for _ in $(seq 1 40); do
+        if timeout 12 rostopic echo -n1 /b166er/robot_state >/dev/null 2>&1; then
             pronto=1; echo " — pronto"; break
         fi
         echo -n "."
-        sleep 5
     done
     if [ "$pronto" -ne 1 ]; then
         echo " — TIMEOUT"
@@ -201,6 +214,18 @@ cmd_start() {
     timeout 60 roslaunch b166er_robot spawn_chave_fixture.launch \
         >> "${SIM_STACK_LOG:-/tmp/b166er_stack.log}" 2>&1
     sleep 3
+
+    # Visualização da câmera de tarefa. O /b166er/tag_debug_image mostra a
+    # tag COM a detecção desenhada, que é o que importa conferir: ver a
+    # imagem crua não diz se o pipeline fechou. Só sobe se houver GUI.
+    if [[ " ${args[*]} " != *"gui:=false"* ]] && command -v rqt_image_view >/dev/null; then
+        if ! pgrep -f rqt_image_view >/dev/null; then
+            echo "[sim_stack] abrindo a imagem da câmera (/b166er/tag_debug_image)"
+            setsid rqt_image_view /b166er/tag_debug_image \
+                >> "${SIM_STACK_LOG:-/tmp/b166er_stack.log}" 2>&1 &
+            disown
+        fi
+    fi
 
     cmd_status
     cmd_preflight
