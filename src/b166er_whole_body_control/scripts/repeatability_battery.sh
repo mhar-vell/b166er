@@ -26,10 +26,16 @@ echo "[bateria] $N execuções -> $OUT"
     exit 1
 }
 
+# `set +u` em volta do sourcing: os scripts do conda, do catkin e do
+# Gazebo referenciam variáveis não definidas (GAZEBO_RESOURCE_PATH, entre
+# outras) e sob `set -u` isso aborta a bateria inteira antes da primeira
+# execução. Mesmo tropeço já corrigido no sim_stack.sh.
+set +u
 source /home/marco/miniforge3/etc/profile.d/conda.sh
 conda activate ros_env
 # shellcheck disable=SC1091
 source /home/marco/b166er/devel/setup.bash
+set -u
 
 for i in $(seq 1 "$N"); do
     if ! python3 "$AQUI/reset_sim.py"; then
