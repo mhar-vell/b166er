@@ -9,6 +9,8 @@ Cadeia completa:
                           ← 3 base →       ←— 5 braço —→
 """
 
+import math
+
 import numpy as np
 
 # ---------------------------------------------------------------------------
@@ -325,18 +327,61 @@ def _T_to_6vec(T):
     return np.concatenate([pos, dw])
 
 
+def so3_log(R):
+    """Logaritmo em SO(3): devolve θ·eixo, com θ ∈ [0, π] o ângulo REAL.
+
+    Substitui a parte vetorial de R (2026-08-24). A versão anterior usava
+    vee(R − Rᵀ)/2, que vale sin(θ)·eixo — e isso tem duas patologias:
+
+      θ real     0°   30°   90°   150°   179°   180°
+      relatado  0.00  0.50  1.00   0.50   0.02   0.00
+
+    1) Em θ = 180° o erro relatado é EXATAMENTE ZERO: uma orientação
+       completamente invertida é indistinguível de alinhamento perfeito,
+       e a IK declara convergência.
+    2) Pior: acima de 90° o valor DECRESCE, então o gradiente empurra
+       para 180°. Não é um ponto cego, é um atrator espúrio.
+
+    Consequência medida no b166er (2026-08-24): o state_estimator
+    convergia com a posição da T265 certa a 0,6 mm e a orientação
+    invertida 179,6°, reportando convergido. Como a ponta da ferramenta
+    fica 0,228 m fora da origem da T265, ela ia parar 0,45 m longe do
+    real. Toda a manipulação (que é baseada na ponta) passava a
+    perseguir um alvo fantasma, o controlador estendia o braço para
+    corrigir um erro inexistente e o robô tombava.
+
+    Perto de θ = π, sin θ → 0 e a fórmula usual estoura; ali o eixo sai
+    de (R + I)/2 = eixo·eixoᵀ. O sinal do eixo é ambíguo em π (θ·n e
+    −θ·n são a mesma rotação) — qualquer um serve, ambos afastam da
+    singularidade.
+    """
+    c = float(np.clip((np.trace(R) - 1.0) / 2.0, -1.0, 1.0))
+    theta = math.acos(c)
+    v = np.array([R[2, 1] - R[1, 2],
+                  R[0, 2] - R[2, 0],
+                  R[1, 0] - R[0, 1]])
+    if theta < 1e-6:
+        return 0.5 * v                      # sin θ ≈ θ
+    if theta < math.pi - 1e-3:
+        return (theta / (2.0 * math.sin(theta))) * v
+    A = 0.5 * (R + np.eye(3))               # = eixo·eixoᵀ em θ = π
+    i = int(np.argmax(np.diag(A)))
+    d = math.sqrt(max(A[i, i], 0.0))
+    if d < 1e-9:
+        return np.zeros(3)
+    eixo = A[:, i] / d
+    return theta * (eixo / np.linalg.norm(eixo))
+
+
 def pose_error(T_current, T_target):
     """
     Erro 6-vetor [Δp, Δω] de SE(3).
     Δp  = p_target − p_current
-    Δω  = parte vetorial de R_err = R_target · R_current^T
+    Δω  = log de R_err = R_target · R_current^T  (ver so3_log)
     """
     dp    = T_target[:3, 3] - T_current[:3, 3]
     R_err = T_target[:3, :3] @ T_current[:3, :3].T
-    dw    = np.array([R_err[2,1]-R_err[1,2],
-                      R_err[0,2]-R_err[2,0],
-                      R_err[1,0]-R_err[0,1]]) * 0.5
-    return np.concatenate([dp, dw])
+    return np.concatenate([dp, so3_log(R_err)])
 
 
 def ik_arm(T_target, q_init=None):
