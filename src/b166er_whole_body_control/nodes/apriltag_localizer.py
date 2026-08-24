@@ -85,7 +85,8 @@ from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import T_T265_TASKCAMERA
 from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
 
-TAG_SIZE = 0.132  # m — mesma tag física já validada (project_fase4_apriltag_validacao)
+TAG_SIZE = 0.220  # m — quadrado preto. Subiu de 132 mm para alcançar
+                  # a distância do SEARCH (~3 m); ver apriltag_mount.urdf.xacro
 
 # Offset de wall_link até a tag: IMPORTADO de chave_task, NÃO copiado.
 #
@@ -212,8 +213,14 @@ class AprilTagLocalizer:
         primeira versão da missão calcular o standoff errado e ir para
         cima da parede.
         """
-        if self._pub_debug.get_num_connections() == 0:
-            return
+        # SEM guarda de assinantes. Havia aqui um
+        # `if get_num_connections() == 0: return` para poupar CPU, mas o
+        # efeito prático era o tópico parecer morto justamente quando
+        # alguém ia olhar: image_view abre, o publisher ainda não
+        # registrou a conexão, nada chega, e a impressão é de que a
+        # câmera não funciona (o Marco relatou isso mais de uma vez).
+        # Publicar sempre custa uma conversão de imagem a 15 Hz e
+        # garante que o tópico esteja vivo quando precisar.
         out = frame.copy()
         if corners is not None and ids is not None:
             cv2.aruco.drawDetectedMarkers(out, corners, ids)

@@ -425,7 +425,8 @@ def gravity_torque_arm(q):
 
 
 def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
-                        q_current=None, continuity_weight=0.35):
+                        q_current=None, continuity_weight=0.35,
+                        ik_reach_tol=0.005):
     """
     IK de POSIÇÃO da ponta da ferramenta (não do T265, não pose 6D).
 
@@ -472,7 +473,7 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
     def _tip(q):
         return (fk_arm(q) @ T_T265_TOOLTIP)[:3, 3]
 
-    best_q, best_err, best_score = None, np.inf, np.inf
+    candidatos = []
     for seed in q_seeds:
         q = np.clip(np.array(seed, dtype=float), JOINT_LOWER, JOINT_UPPER)
         for _ in range(max_iter):
@@ -489,13 +490,25 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
                 dq *= max_step / n
             q = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
         e = float(np.linalg.norm(np.asarray(p_target_arm) - _tip(q)))
-        # Critério de escolha: erro de posição + penalidade de
-        # continuidade. Soluções que exigem reconfigurar o braço inteiro
-        # perdem para soluções equivalentes perto de onde ele já está.
-        score = e
-        if q_current is not None:
-            score += continuity_weight * float(
-                np.linalg.norm(q - np.asarray(q_current, dtype=float)))
-        if score < best_score:
-            best_q, best_err, best_score = q.copy(), e, score
-    return best_q, best_err
+        dist = (float(np.linalg.norm(q - np.asarray(q_current, dtype=float)))
+                if q_current is not None else 0.0)
+        candidatos.append((e, dist, q.copy()))
+
+    # ESCOLHA EM DOIS ESTÁGIOS. A versão anterior somava erro e distância
+    # num score único (e + w·dist) — o que deixa a continuidade NEGOCIAR
+    # contra a precisão: quando a solução correta exigia reconfigurar
+    # bastante o braço, ela perdia para uma solução ruim que estava
+    # perto, o resíduo estourava a tolerância e a missão abortava. Numa
+    # bateria de repetibilidade isso derrubou 8 de 8 execuções
+    # (2026-08-21).
+    #
+    # Continuidade é critério de DESEMPATE, não de compromisso: primeiro
+    # filtra quem realmente alcança o alvo, e só entre esses escolhe o
+    # mais próximo da postura atual. Sem nenhum que alcance, devolve o
+    # de menor erro (quem chamou decide se serve).
+    bons = [c for c in candidatos if c[0] < ik_reach_tol]
+    if bons:
+        e, _, q = min(bons, key=lambda c: c[1] * continuity_weight)
+    else:
+        e, _, q = min(candidatos, key=lambda c: c[0])
+    return q, e

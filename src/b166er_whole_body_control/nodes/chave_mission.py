@@ -94,7 +94,7 @@ class MissionContext(object):
 
     def __init__(self):
         self.rate_hz       = rospy.get_param('~rate', 20.0)
-        self.standoff_dist = rospy.get_param('~standoff_distance', 0.80)
+        self.standoff_dist = rospy.get_param('~standoff_distance', 0.70)
         self.search_omega  = rospy.get_param('~search_omega', 0.35)
         self.search_timeout   = rospy.get_param('~search_timeout', 90.0)
         self.approach_timeout = rospy.get_param('~approach_timeout', 120.0)
@@ -112,6 +112,7 @@ class MissionContext(object):
         # IK iterativa da manipulação fina (ver _reach_by_iterative_ik)
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
+        self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
@@ -967,11 +968,29 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
 
         q_ik, err_ik = ik_tooltip_position(
             p_local, q_current=np.array(ctx.robot_state.q_arm))
+
         if err_ik > ctx.deploy_ik_tol:
-            rospy.logwarn('[mission] fase "%s" it%d: IK não fechou (%.3f m) — '
-                          'alvo fora de alcance deste standoff',
-                          phase, it, err_ik)
-            return False
+            # O ponto EXTRAPOLADO saiu do alcance — não o alvo real.
+            # Abortar aqui era exagero: em 1 de 5 execuções da bateria
+            # de repetibilidade (2026-08-21) a missão morreu no
+            # pre_engage porque a mira além caiu 25 mm fora do
+            # workspace. Recuar para o alvo verdadeiro é sempre
+            # possível (foi alcançável no DEPLOY) e custa só perder a
+            # compensação daquela iteração.
+            if not np.allclose(p_aim, p_goal):
+                rospy.logwarn('[mission] fase "%s" it%d: mira além ficou fora '
+                              'de alcance (%.3f m) — recuando para o alvo real',
+                              phase, it, err_ik)
+                p_aim = p_goal.copy()
+                p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM)
+                           @ np.append(p_aim, 1))[:3]
+                q_ik, err_ik = ik_tooltip_position(
+                    p_local, q_current=np.array(ctx.robot_state.q_arm))
+            if err_ik > ctx.deploy_ik_tol:
+                rospy.logwarn('[mission] fase "%s" it%d: IK não fechou (%.3f m) '
+                              '— alvo fora de alcance deste standoff',
+                              phase, it, err_ik)
+                return False
 
         msg = JointState()
         msg.header.stamp = rospy.Time.now()
@@ -1002,8 +1021,12 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           '(%.4f m)', phase, it + 1, n_err)
             return True
 
-        # Mira além, na medida do que faltou (compensação de droop).
-        p_aim = p_aim + err
+        # Mira além, na medida do que faltou — AMORTECIDA. Corrigir o
+        # erro inteiro de uma vez extrapola demais quando o primeiro
+        # passo erra muito, e o ponto extrapolado pode sair do
+        # workspace. Com 0,8 converge em praticamente o mesmo número de
+        # iterações e fica dentro do alcance.
+        p_aim = p_aim + ctx.ik_correction_gain * err
 
     rospy.logerr('[mission] fase "%s": %d iterações sem fechar (%.4f m, '
                  'tolerância %.3f)', phase, ctx.ik_max_iters, n_err, ctx.tol_pos)

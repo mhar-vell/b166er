@@ -27,7 +27,7 @@ BLADE_ANGLE_CLOSED = 0.0      # fechada = lâmina VERTICAL (correção do Marco:
                               # os 20° da versão anterior eram a posição ABERTA)
 BLADE_ANGLE_OPEN   = 0.524    # 30° — curso de abertura confirmado pelo Marco
 WALL_STANDOFF      = 0.08     # wall_standoff da chave (mecanismo destacado da placa)
-TAG_X_OFFSET       = -0.42    # tag_x_offset (outro lado da chave, 0,22 m dela)
+TAG_X_OFFSET       = -0.50    # tag_x_offset (outro lado da chave, 0,30 m dela)
 TAG_MOUNT_Z        = 1.030    # tag_mount_z
 
 _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
