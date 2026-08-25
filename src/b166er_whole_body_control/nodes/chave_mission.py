@@ -722,7 +722,26 @@ class Deploy(smach.State):
         T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
                                   b.orientation.z, b.orientation.w])
         T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
-        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
+
+        # RESOLVER PARA A POSE DE DEPOIS DO AVANÇO, não para a de agora.
+        #
+        # O robô ainda vai andar (deploy_dist − standoff_dist) para
+        # frente antes de manipular. Pré-posicionar o braço para a pose
+        # atual faz a primeira fase re-resolver a IK a partir de uma base
+        # deslocada, e a solução pode cair em outra postura — medido: J4
+        # varrendo de −68° para +95° com a base PARADA, levantando o
+        # chassi 11,2°, de longe a maior excursão de inclinação da missão
+        # inteira (as demais fases ficam abaixo de 1,1°). A roda saía do
+        # chão e voltava meio segundo depois.
+        #
+        # Era efeito colateral da separação em dois momentos: eu movi a
+        # base entre a solução da IK e o seu uso, e esqueci de mover o
+        # frame junto.
+        avanco = max(ctx.deploy_dist - ctx.standoff_dist, 0.0)
+        T_wb_futuro = T_wb.copy()
+        T_wb_futuro[:3, 3] = T_wb[:3, 3] + T_wb[:3, 0] * avanco
+        p_local = (np.linalg.inv(T_wb_futuro @ T_BASELINK_ARM)
+                   @ np.append(p_tip, 1))[:3]
 
         q_ik, err_ik = ik_tooltip_position(
             p_local, q_current=np.array(ctx.robot_state.q_arm))
