@@ -34,6 +34,8 @@ b166er_gazebo.launch) — o recolhimento é pós-spawn, suave.
 import rospy
 import numpy as np
 from sensor_msgs.msg import JointState
+
+from b166er_whole_body_control.msg import RobotState
 from std_msgs.msg import Float64, Bool, Empty
 
 from b166er_whole_body_control.kinematics import (
@@ -108,7 +110,13 @@ class GazeboArmBridge:
         # hardware.
         self._q_med = None
         self._t_q_med = None
-        rospy.Subscriber('/b166er/estimated_joint_states', JointState,
+        # /b166er/robot_state e NÃO /b166er/estimated_joint_states: só o
+        # primeiro carrega ik_converged. A IK do estimador nem sempre
+        # fecha — foram 41 não-convergências numa bateria, com resíduos
+        # de até 1,03 m e 1,54 rad, ou seja, postura sem sentido nenhum.
+        # Consumir isso como medida boa fazia a ponte "corrigir" contra
+        # um alvo fantasma e nunca declarar a postura atingida.
+        rospy.Subscriber('/b166er/robot_state', RobotState,
                          self._cb_q_medido, queue_size=1)
         # Tolerância na MEDIDA, MUITO mais folgada que a do modelo.
         #
@@ -126,7 +134,13 @@ class GazeboArmBridge:
         # Correção integral contra o erro estacionário dos controladores.
         self._corr_vel = rospy.get_param('~correcao_vel', 0.15)   # rad/s
         self._corr_max = rospy.get_param('~correcao_max', 0.60)   # rad
+        # Tempo máximo empurrando a correção antes de aceitar a postura
+        # com o resíduo que sobrar. Sem isto o DEPLOY ficava preso até o
+        # timeout de 30 s da missão.
+        self._corr_timeout = rospy.get_param('~correcao_timeout', 5.0)
         self._correcao = np.zeros(5)
+        self._t_no_alvo = None
+        self._modelo_no_alvo = False
 
         self._tilt_critical = False
         # Fração de ramp_velocity usada na retração de emergência.
@@ -224,8 +238,14 @@ class GazeboArmBridge:
         self._tilt_critical = msg.data
 
     def _cb_q_medido(self, msg):
-        if len(msg.position) == 5:
-            self._q_med = np.array(msg.position, dtype=float)
+        # Estimativa que não convergiu é pior que estimativa nenhuma:
+        # ela tem cara de medida e leva o controle a agir na direção
+        # errada. Descartar deixa _q_medido() devolver None, e o critério
+        # cai para o modelo — degradar é melhor que agir sobre lixo.
+        if not msg.ik_converged:
+            return
+        if len(msg.q_arm) == 5:
+            self._q_med = np.array(msg.q_arm, dtype=float)
             self._t_q_med = rospy.Time.now()
 
     def _q_medido(self):
@@ -240,14 +260,18 @@ class GazeboArmBridge:
             return None
         return self._q_med
 
-    def _erro_medido(self):
-        """Maior desvio entre a postura ALVO e a MEDIDA, em rad."""
+    def _erro_por_junta(self):
+        """Desvio por junta entre a postura ALVO e a MEDIDA, em rad."""
         q = self._q_medido()
         if q is None or self._q_posture_target is None:
             return None
         d = self._q_posture_target - q
-        d = (d + np.pi) % (2 * np.pi) - np.pi   # J4 é contínua no Gazebo
-        return float(np.max(np.abs(d)))
+        return (d + np.pi) % (2 * np.pi) - np.pi   # J4 é contínua no Gazebo
+
+    def _erro_medido(self):
+        """Maior desvio entre a postura ALVO e a MEDIDA, em rad."""
+        d = self._erro_por_junta()
+        return None if d is None else float(np.max(np.abs(d)))
 
     def _cb_posture_cmd(self, msg):
         if self._tilt_critical:
@@ -262,6 +286,8 @@ class GazeboArmBridge:
     def _start_posture(self, q_target, why):
         self._q_posture_target = q_target
         self._correcao = np.zeros(5)   # cada postura recomeça do zero
+        self._modelo_no_alvo = False
+        self._t_no_alvo = None
         self._pub_posture_reached.publish(Bool(data=False))
         tgt = JointState()
         tgt.header.stamp = rospy.Time.now()
@@ -352,22 +378,67 @@ class GazeboArmBridge:
                 err = self._q_posture_target - self._q_arm
                 err_med = self._erro_medido()
 
-                if err_med is None:
-                    chegou = np.max(np.abs(err)) < self._reached_tol
-                else:
-                    chegou = (np.max(np.abs(err)) < self._reached_tol
-                              and err_med < self._reached_tol_medido)
+                # A MEDIDA CORRIGE, MAS NÃO BLOQUEIA (revisto em 2026-08-25).
+                #
+                # A versão anterior exigia a postura medida dentro da
+                # tolerância para declarar chegada. Instrumentando por
+                # junta, o erro persistente é do J2 — o ombro, a junta
+                # mais carregada — entre 9° e 12°, e ele não cede nem com
+                # a correção saturada. É erro estacionário do PID sob
+                # carga, não divergência: o braço faz isso o tempo todo.
+                #
+                # Exigir que ele suma impõe um requisito que a missão foi
+                # projetada para não precisar — o _reach_by_iterative_ik
+                # mede onde a PONTA foi parar e re-mira, justamente para
+                # absorver esse resíduo. Bloquear ali travou o DEPLOY e o
+                # recolhimento e derrubou a bateria de 5/8 para 3/8.
+                #
+                # Agora a medida serve para (a) dar tempo à correção
+                # atuar e (b) deixar o resíduo registrado. Passado esse
+                # tempo, a postura fecha com o resíduo no log.
+                # O "modelo chegou" é LATCHED, e isso não é detalhe.
+                #
+                # A correção move q_arm ALÉM do alvo de propósito, para
+                # vencer o erro estacionário. Isso faz |alvo − q_arm|
+                # crescer de novo, e sem o latch o código caía de volta no
+                # ramo da rampa, que desfazia a correção — os dois ramos
+                # se anulavam e o modelo nunca convergia. Sintoma:
+                # "postura não atingida em 30s" em quase toda execução
+                # (bateria de 2026-08-25, 2/8). Uma vez que o modelo
+                # encostou no alvo, ele não volta a "não ter chegado".
+                if not self._modelo_no_alvo and np.max(np.abs(err)) < self._reached_tol:
+                    self._modelo_no_alvo = True
+                    self._t_no_alvo = rospy.Time.now()
+
+                tempo_corrigindo = (
+                    (rospy.Time.now() - self._t_no_alvo).to_sec()
+                    if self._t_no_alvo is not None else 0.0)
+
+                chegou = (self._modelo_no_alvo
+                          and (err_med is None
+                               or err_med < self._reached_tol_medido
+                               or tempo_corrigindo > self._corr_timeout))
 
                 if chegou:
                     self._q_arm = self._q_posture_target.copy()
                     self._q_posture_target = None
                     self._correcao = np.zeros(5)
+                    self._t_no_alvo = None
+                    self._modelo_no_alvo = False
+                    if err_med is not None and err_med >= self._reached_tol_medido:
+                        d = self._erro_por_junta()
+                        rospy.logwarn('[gazebo_arm_bridge] postura fechada com '
+                                      'resíduo de %.3f rad (%s) — erro '
+                                      'estacionário sob carga, a missão '
+                                      'compensa medindo a ponta', err_med,
+                                      np.round(np.degrees(d), 1)
+                                      if d is not None else '?')
                     self._pub_posture_reached.publish(Bool(data=True))
                     rospy.loginfo('[gazebo_arm_bridge] postura atingida: %s rad '
                                   '(erro medido %s)', np.round(self._q_arm, 3),
                                   '—' if err_med is None else '%.3f rad' % err_med)
                     dq = np.zeros(5)
-                elif np.max(np.abs(err)) < self._reached_tol and err_med is not None:
+                elif self._modelo_no_alvo and err_med is not None:
                     # Modelo chegou, braço real não. Empurra o comando ALÉM
                     # do alvo, devagar e com teto: é ação integral contra o
                     # erro estacionário dos controladores de posição sob
@@ -391,10 +462,15 @@ class GazeboArmBridge:
                                      'segue o comando.', self._corr_max, err_med)
                         dq = np.zeros(5)
                     else:
+                        d = self._erro_por_junta()
+                        pior = int(np.argmax(np.abs(d)))
                         rospy.logwarn_throttle(
                             2.0, '[gazebo_arm_bridge] modelo no alvo mas braço '
-                                 'real a %.3f rad — corrigindo (%.2f rad de %.2f)',
-                            err_med, np.max(np.abs(self._correcao)), self._corr_max)
+                                 'real a %.3f rad (pior: %s) — corrigindo '
+                                 '(%.2f rad de %.2f) | por junta %s',
+                            err_med, JOINT_NAMES[pior],
+                            np.max(np.abs(self._correcao)), self._corr_max,
+                            np.round(np.degrees(d), 1))
                 else:
                     dq = np.clip(err / dt, -self._ramp_vel, self._ramp_vel)
             elif self._t_last_cmd is not None:
