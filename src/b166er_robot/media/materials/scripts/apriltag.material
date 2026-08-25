@@ -1,0 +1,29 @@
+// AprilTag 36h11 id0 material — usado pelo suporte de calibração/alvo
+// da chave seccionadora em urdf/fixtures/apriltag_mount.urdf.xacro.
+// Textura em ../textures/apriltag_36h11_id0.png (mesmo arquivo entregue
+// pelo Marco em ~/apriltag_36h11_id0.png, gerado pela família 36h11 do
+// AprilTag, id 0 — já usada e validada com a T265 real, ver ROADMAP
+// Fase 4 / memória project_fase4_apriltag_validacao).
+
+material AprilTag/36h11_id0
+{
+  technique
+  {
+    pass
+    {
+      lighting off
+      ambient 1.0 1.0 1.0 1.0
+      diffuse 1.0 1.0 1.0 1.0
+
+      texture_unit
+      {
+        texture apriltag_36h11_id0.png
+        filtering none
+        // "none" evita blur bilinear na borda dos módulos preto/branco
+        // da tag -- filtragem suave degrada a detecção do AprilTag em
+        // distâncias curtas, o mesmo motivo pelo qual o pipeline de
+        // detecção real (b166er_vision) é sensível à nitidez da borda.
+      }
+    }
+  }
+}

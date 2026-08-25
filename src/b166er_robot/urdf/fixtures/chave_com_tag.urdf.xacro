@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<robot name="chave_seccionadora_fixture" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Fixture combinada: parede + chave seccionadora LF + suporte da tag
+       AprilTag, spawnada como modelo Gazebo separado do b166er (não faz
+       parte do robot_description do robô — é o alvo da tarefa de
+       manipulação, a bancada de testes contra a qual o robô deve
+       navegar e depois manipular).
+
+       Uso:
+         roslaunch b166er_robot spawn_chave_fixture.launch \
+           x:=3.0 y:=0.0 yaw:=3.14159
+
+       Layout: parede fina (1,0 x 0,10 x 1,40 m), base no chão (Z=0).
+       A chave e a tag ficam fixadas na face frontal da parede (Y=0 no
+       frame local da parede), lado a lado (chave em X=-0,20, tag em
+       X=+0,20). O yaw de spawn (padrão π) gira a fixture inteira para
+       que essa face frontal aponte de volta para onde o robô nasce no
+       mundo — ver spawn_chave_fixture.launch para o cálculo. -->
+
+  <xacro:include filename="$(find b166er_robot)/urdf/fixtures/chave_seccionadora_lf.urdf.xacro"/>
+  <xacro:include filename="$(find b166er_robot)/urdf/fixtures/apriltag_mount.urdf.xacro"/>
+
+  <!-- ═══ Parâmetros da parede ═══ -->
+  <xacro:property name="wall_width" value="1.0"/>
+  <xacro:property name="wall_thickness" value="0.10"/>
+  <xacro:property name="wall_height" value="1.40"/>
+  <xacro:property name="chave_x_offset" value="-0.20"/>
+  <xacro:property name="tag_x_offset" value="0.20"/>
+
+  <!-- IMPORTANTE: esta altura precisa bater com o cálculo interno do
+       macro chave_seccionadora_lf (bracket_mount_z), já que o xacro não
+       expõe propriedades de dentro de um macro para fora dele. Se os
+       parâmetros dimensionais da chave mudarem lá, atualizar aqui
+       também — olhal_height=0.810, blade_length=0.200,
+       blade_angle=0.349 rad, bracket_height=0.060. Sem isolador (ver
+       nota "SEM ISOLADOR" em chave_seccionadora_lf.urdf.xacro,
+       decisão do Marco em 2026-08-12): a lâmina pivota direto no
+       topo do bracket, então este valor subiu em relação à versão
+       anterior com isolador (que era ≈0,7879 m). -->
+  <xacro:property name="chave_bracket_mount_z"
+    value="${0.810 + 0.200*cos(0.349) - 0.060}"/>  <!-- ≈ 0,9379 m -->
+
+  <xacro:property name="tag_mount_z" value="1.030"/>
+
+  <!-- ═══ Parede: base no chão, face frontal (mounting) em Y=0 do frame
+       local, corpo se estendendo para -Y (atrás) ═══ -->
+  <link name="wall_link">
+    <visual>
+      <origin xyz="0 ${-wall_thickness/2} ${wall_height/2}"/>
+      <geometry><box size="${wall_width} ${wall_thickness} ${wall_height}"/></geometry>
+      <material name="wall_concrete"><color rgba="0.72 0.70 0.65 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 ${-wall_thickness/2} ${wall_height/2}"/>
+      <geometry><box size="${wall_width} ${wall_thickness} ${wall_height}"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="50.0"/>
+      <inertia ixx="1.0" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+    </inertial>
+  </link>
+
+  <!-- Material Gazebo explícito — ver nota em chave_seccionadora_lf.urdf.xacro
+       sobre por que o <material><color> puro do URDF não é confiável
+       aqui (wall_link é o corpo raiz que acaba absorvendo todos os
+       links filhos ligados por junta fixa). -->
+  <gazebo reference="wall_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <xacro:chave_seccionadora_lf parent="wall_link" prefix="chave_"
+    xyz="${chave_x_offset} 0 ${chave_bracket_mount_z}" rpy="0 0 0"/>
+
+  <xacro:apriltag_mount parent="wall_link" prefix="tag_"
+    xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"/>
+
+  <!-- Fixture inteira estática — nunca deve ser movida por física de
+       contato (é o alvo da tarefa, não um objeto manipulável nesta
+       fase). -->
+  <gazebo>
+    <static>true</static>
+  </gazebo>
+
+</robot>

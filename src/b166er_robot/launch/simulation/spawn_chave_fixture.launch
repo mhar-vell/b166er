@@ -1,0 +1,43 @@
+<launch>
+  <!-- Spawna a fixture (parede + chave seccionadora LF + tag AprilTag)
+       como modelo Gazebo separado do b166er (estático, não faz parte do
+       robot_description do robô). Requer um Gazebo já rodando
+       (ex.: roslaunch b166er_whole_body_control b166er_wb.launch mode:=gazebo).
+
+       CORRIGIDO em 2026-08-12 (Marco): a parede deve ficar perpendicular
+       ao eixo Y, a 3m do ponto de spawn do robô — ou seja, deslocada em
+       Y (y=3.0), não em X como na primeira versão. A geometria da
+       parede (wall_link em chave_com_tag.urdf.xacro) já é construída
+       com a face frontal (onde a chave e a tag ficam) voltada para o
+       eixo Y local (normal da face = +Y local, ver caixa
+       wall_width×wall_thickness×wall_height = X×Y×Z) — bastava
+       posicioná-la ao longo do Y do mundo, não do X. A primeira versão
+       (x=3.0, y=0.0) colocava a parede deslocada em X mas com a normal
+       dela ainda em Y — o robô, andando reto em +X a partir da origem,
+       acabava esbarrando na BORDA fina da parede em vez de se
+       aproximar de frente da face onde a chave está montada (só
+       percebido testando de verdade no Gazebo, não pela inspeção
+       visual/captura de tela feita em 2026-08-08 — aquela verificação
+       foi insuficiente, o robô nunca chegou a se aproximar da fixture
+       naquele teste).
+
+       yaw=π (3.14159 rad) continua correto (a rotação necessária para
+       a normal da face apontar de volta para -Y, ou seja, para onde o
+       robô nasce, é a mesma independente de qual eixo a parede está
+       deslocada) — o robô precisa girar para encarar o eixo Y e depois
+       navegar até lá antes de manipular, não só esticar o braço parado.
+  -->
+  <arg name="x"   default="0.0"/>
+  <arg name="y"   default="3.0"/>
+  <arg name="z"   default="0.0"/>
+  <arg name="yaw" default="3.14159"/>
+
+  <param name="chave_fixture_description"
+         command="$(find xacro)/xacro $(find b166er_robot)/urdf/fixtures/chave_com_tag.urdf.xacro"/>
+
+  <node name="spawn_chave_fixture" pkg="gazebo_ros" type="spawn_model"
+        args="-urdf -model chave_seccionadora_fixture
+              -param chave_fixture_description
+              -x $(arg x) -y $(arg y) -z $(arg z) -Y $(arg yaw)"
+        output="screen"/>
+</launch>
