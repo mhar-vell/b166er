@@ -95,6 +95,24 @@ class MissionContext(object):
     def __init__(self):
         self.rate_hz       = rospy.get_param('~rate', 20.0)
         self.standoff_dist = rospy.get_param('~standoff_distance', 0.70)
+
+        # DUAS DISTÂNCIAS, NÃO UMA (2026-08-25, pedido do Marco).
+        #
+        # O braço estende num ponto mais afastado da parede e só depois o
+        # robô avança para engatar. Estender o braço já colado na parede
+        # deixa punho e ferramenta varrendo perto dela durante toda a
+        # rampa de postura, e o movimento de puxar o olhal esbarrava.
+        # Separar os dois momentos dá folga para a postura se armar.
+        self.deploy_dist = rospy.get_param('~deploy_distance', 0.88)
+        # Velocidade do avanço/recuo fino, feito só com as rodas.
+        self.creep_vel = rospy.get_param('~creep_velocity', 0.06)
+        self.creep_timeout = rospy.get_param('~creep_timeout', 25.0)
+        # PUXAR COM AS RODAS. A abertura afasta o olhal da parede em
+        # 8,5 cm (ver pos2 no YAML). Fazer isso recuando a base, em vez
+        # de recolher o braço, mantém a postura do braço estável e usa a
+        # tração do chassi para a força — que é o que whole-body deveria
+        # significar aqui.
+        self.pull_with_base = rospy.get_param('~pull_with_base', True)
         self.search_omega  = rospy.get_param('~search_omega', 0.35)
         self.search_timeout   = rospy.get_param('~search_timeout', 90.0)
         self.approach_timeout = rospy.get_param('~approach_timeout', 120.0)
@@ -599,8 +617,11 @@ class Approach(smach.State):
         ctx = self.ctx
         # Etapas de distância ao olhal: a intermediária só entra se o
         # robô ainda estiver mais longe que ela.
-        stages = [d for d in (ctx.coarse_distance, ctx.standoff_dist)
-                  if d > ctx.standoff_dist] + [ctx.standoff_dist]
+        # A aproximação termina na distância de DEPLOY, não na de
+        # engate: o braço se arma com folga e o robô fecha os últimos
+        # centímetros depois, já com a postura montada.
+        parada = ctx.deploy_dist
+        stages = [d for d in (ctx.coarse_distance,) if d > parada] + [parada]
 
         for i, dist in enumerate(stages):
             goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R, dist)
@@ -747,6 +768,13 @@ class Deploy(smach.State):
         ctx.publish_keepout()
         ctx.take_base()
         ctx.stop_base()
+
+        # SEGUNDO MOMENTO: com o braço já armado, fecha a diferença entre
+        # a distância de deploy e a de engate andando só com as rodas.
+        avanco = ctx.deploy_dist - ctx.standoff_dist
+        if avanco > 0.005:
+            if not _creep_base(ctx, avanco, 'DEPLOY/aproxima'):
+                return 'failed'
         return 'ok'
 
 
@@ -766,8 +794,28 @@ class Manipulate(smach.State):
         R_ee = quaternion_matrix([ctx.ee_orientation.x, ctx.ee_orientation.y,
                                   ctx.ee_orientation.z, ctx.ee_orientation.w])[:3, :3]
 
+        # Começa no offset da PRIMEIRA fase, não em zero: o pre_engage é
+        # o waypoint de aproximação (18 cm à frente do olhal), não um
+        # puxão. Zerar aqui mandaria a base recuar 18 cm antes de sequer
+        # engatar.
+        y_anterior = ctx.phases[PHASE_ORDER[0]]['offset_xyz_m'][1]
         for phase in PHASE_ORDER:
             offset = ctx.phases[phase]['offset_xyz_m']
+
+            # PUXAR COM AS RODAS. A componente Y do offset é o quanto o
+            # olhal se afasta da parede — exatamente o que recuar o chassi
+            # produz. Deixar isso para a base mantém a postura do braço
+            # parada e reserva ao braço só a descida (componente Z), que
+            # é onde ele tem folga. Antes, o braço fazia as duas coisas e
+            # varria perto da parede no meio do movimento.
+            dy = offset[1] - y_anterior
+            if ctx.pull_with_base and dy > 0.005:
+                if not _creep_base(ctx, -dy, 'fase "%s"/puxa' % phase):
+                    return 'failed'
+            y_anterior = offset[1]
+
+            # O alvo é recalculado DEPOIS do recuo: a ponta já veio junto
+            # com a base, então o que sobra para a IK é o resíduo.
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
 
             alcancar = (_reach_by_wholebody if ctx.use_wholebody
@@ -1027,6 +1075,67 @@ def _tooltip_now(ctx):
     o = ctx.robot_state.ee_pose.pose.orientation
     R = quaternion_matrix([o.x, o.y, o.z, o.w])[:3, :3]
     return np.array([p.x, p.y, p.z]) + R @ T_T265_TOOLTIP[:3, 3]
+
+
+def _creep_base(ctx, distancia, tag):
+    """Anda em linha reta pela distância dada (+ avança, − recua).
+
+    Deslocamento fino só com as rodas, sem girar e sem mexer no braço.
+    O _navigate_to não serve aqui: ele é girar-avançar-girar, pensado
+    para navegação, e girar com a ferramenta engatada no olhal
+    arrancaria o gancho.
+
+    Existe por dois motivos, ambos apontados pelo Marco em 2026-08-25:
+    fechar os últimos centímetros DEPOIS que o braço já está armado, e
+    executar o puxão da abertura recuando o chassi em vez de recolher o
+    braço. A base tem tração de sobra e a postura do braço fica parada,
+    o que é bem mais estável do que varrer o punho perto da parede.
+
+    Referência é a odometria, não a tag: é deslocamento relativo curto,
+    e a odometria da base é boa nessa escala.
+    """
+    p0 = ctx.robot_state.base_odom.pose.pose.position
+    x0, y0 = p0.x, p0.y
+    alvo = abs(distancia)
+    sentido = 1.0 if distancia >= 0 else -1.0
+    rospy.loginfo('[mission] %s: %s %.3f m só com as rodas', tag,
+                  'avançando' if sentido > 0 else 'RECUANDO', alvo)
+
+    rate = rospy.Rate(ctx.rate_hz)
+    t0 = rospy.Time.now()
+    while not rospy.is_shutdown():
+        if ctx.tilt_critical:
+            ctx.stop_base()
+            rospy.logerr('[mission] %s: abortado por inclinação crítica', tag)
+            return False
+        if (rospy.Time.now() - t0).to_sec() > ctx.creep_timeout:
+            ctx.stop_base()
+            rospy.logerr('[mission] %s: timeout andando %.3f m', tag, alvo)
+            return False
+
+        p = ctx.robot_state.base_odom.pose.pose.position
+        andou = math.hypot(p.x - x0, p.y - y0)
+        if andou >= alvo:
+            ctx.stop_base()
+            rospy.loginfo('[mission] %s: concluído (%.3f m)', tag, andou)
+            return True
+
+        # Freio por medida também no avanço: o laser é a única defesa que
+        # não depende de estimativa nenhuma.
+        if (sentido > 0 and ctx.front_clearance is not None
+                and ctx.front_clearance < ctx.min_clearance):
+            ctx.stop_base()
+            rospy.logwarn('[mission] %s: laser a %.2f m (mín %.2f) — parando '
+                          'antes de completar', tag, ctx.front_clearance,
+                          ctx.min_clearance)
+            return True
+
+        cmd = Twist()
+        cmd.linear.x = sentido * ctx.creep_vel
+        ctx.pub_cmdvel.publish(cmd)
+        rate.sleep()
+    ctx.stop_base()
+    return False
 
 
 def _reach_by_wholebody(ctx, p_goal, phase):
