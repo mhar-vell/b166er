@@ -46,8 +46,13 @@ NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge
 
 # Padrões de processo que pertencem à simulação. O caminho do workspace
 # cobre qualquer nó lançado do devel space, inclusive de sessões antigas.
+# Visualizadores entram aqui de propósito: eles não são "do stack" mas
+# sobrevivem ao stop se não forem listados, e um rviz órfão de uma sessão
+# anterior fica publicando/assinando junto com o novo. Aconteceu em
+# 2026-08-24 — dois rviz reais ao mesmo tempo, achado pelo Marco.
 PATTERNS=("$WS/devel" "gzserver" "gzclient" "rosmaster" "roscore"
-          "b166er_wb.launch" "chave_mission.launch")
+          "b166er_wb.launch" "chave_mission.launch"
+          "lib/rviz/rviz" "rqt_image_view")
 
 # ROS não é sourceado aqui de propósito: `stop`, `status` e `assert-clean`
 # precisam funcionar mesmo com o master morto ou o ambiente quebrado.
@@ -78,7 +83,12 @@ source_ros() {
 # "syntax error in expression (error token is 0)". `wc -l` sempre imprime
 # um número e sai com 0.
 conta_proc() {
-    pgrep -f -- "$1" 2>/dev/null | wc -l
+    # Exclui o próprio shell e o pai: a linha de comando de quem INVOCA
+    # este script contém o padrão procurado, então o pgrep se casa
+    # sozinho e infla toda contagem em +1. Isso fez `status` reportar
+    # "2 rviz" com um só rodando (2026-08-24) — falso positivo de
+    # duplicata é tão ruim quanto não detectar a real.
+    pgrep -f -- "$1" 2>/dev/null | grep -vx "$$" | grep -vx "$PPID" | wc -l
 }
 
 pids_vivos() {
@@ -101,7 +111,10 @@ cmd_status() {
         printf "  %-22s %s%s\n" "$n" "$c" \
             "$([ "$c" -gt 1 ] && echo '   <<< DUPLICADO')"
     done
-    for p in gzserver gzclient rosmaster; do
+    # Contados pelo binário real, não pelo nome solto: `pgrep -f rviz`
+    # casa também o wrapper /bin/sh e o roslaunch, inflando o número e
+    # fazendo parecer duplicata onde não há.
+    for p in "gzserver -u" "gzclient -g" rosmaster "lib/rviz/rviz" rqt_image_view; do
         printf "  %-22s %s\n" "$p" "$(conta_proc "$p")"
     done
     echo "  total de PIDs da simulação: $(pids_vivos | wc -l)"

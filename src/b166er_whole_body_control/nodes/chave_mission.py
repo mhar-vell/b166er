@@ -133,6 +133,26 @@ class MissionContext(object):
         # Distância mínima (centro da base → obstáculo) pelo laser.
         self.min_clearance = rospy.get_param('~min_clearance', 0.55)
 
+        # ── Manipulação por whole-body (ver _reach_by_wholebody) ──
+        # DESLIGADO por padrão até ser medido contra o caminho atual.
+        #
+        # O caminho whole-body foi reativado em 2026-08-24 e faz o que
+        # promete (arm_vel_cmd saiu de zero pela primeira vez), mas nas
+        # execuções feitas até agora ele NÃO melhorou a missão: o erro do
+        # pre_engage ficou em 0,3758 m contra 0,3814 m da IK iterativa —
+        # praticamente idêntico, o que aliás indica que a causa daquela
+        # falha não está em nenhum dos dois controladores.
+        #
+        # Ligar um caminho não validado por padrão troca um problema
+        # conhecido por um desconhecido. Fica opt-in
+        # (use_wholebody:=true) até uma bateria comparar os dois.
+        self.use_wholebody     = rospy.get_param('~use_wholebody', False)
+        self.wb_phase_timeout  = rospy.get_param('~wb_phase_timeout', 25.0)
+        # Amostras consecutivas dentro da tolerância (a 10 Hz) para
+        # aceitar a fase. Um instante dentro dela pode ser a ponta
+        # passando de raspão no transitório.
+        self.wb_settle_samples = rospy.get_param('~wb_settle_samples', 5)
+
         # Tolerância Cartesiana da manipulação: 20 mm, NÃO os 5 mm que
         # o fuzzy_wb_controller usa por padrão.
         #
@@ -703,19 +723,27 @@ class Deploy(smach.State):
 
         if not _wait_posture(ctx):
             return 'failed'
-        # SEM handoff para o controlador Cartesiano: a manipulação usa
-        # IK iterativa em espaço de juntas (_reach_by_iterative_ik), e
-        # os dois não podem coexistir. Com o fuzzy_wb_controller ativo
-        # ele segue perseguindo o último /b166er/ee_target e MOVE A
-        # BASE enquanto a missão comanda posturas — a base sai do lugar
-        # para o qual a IK foi resolvida e a ponta erra o alvo por
-        # alguns centímetros, sem responder a novas iterações (medido em
-        # 2026-08-13: erro cravado em 3,2 cm por 5 iterações, com a
-        # ponta imóvel).
+        # O DEPLOY continua sendo posicionamento GROSSO por rampa em
+        # espaço de juntas; o handoff para o controlador Cartesiano
+        # acontece fase a fase, dentro de _reach_by_wholebody.
         #
-        # A missão mantém /cmd_vel (base parada) durante toda a
-        # manipulação; o plano de exclusão segue publicado para quando o
-        # controlador Cartesiano voltar a atuar.
+        # Este bloco dizia "SEM handoff: os dois não podem coexistir",
+        # por causa do episódio de 2026-08-13 em que o
+        # fuzzy_wb_controller perseguia o último /b166er/ee_target e
+        # movia a base enquanto a missão comandava posturas (erro cravado
+        # em 3,2 cm por 5 iterações, ponta imóvel). O desligamento
+        # resolveu o sintoma e custou caro: medido em 2026-08-24, o
+        # controlador ficava em stand-down a missão inteira e o controle
+        # whole-body não participava de nada.
+        #
+        # O alvo estava velho porque a missão nunca publicava um novo —
+        # /b166er/ee_target era declarado e nunca usado. Não havia
+        # disputa por /cmd_vel: stop_base() emite um único Twist zero.
+        # Com alvo fresco publicado ANTES de habilitar, e take_base() no
+        # finally de cada fase, os dois convivem.
+        #
+        # A base fica parada aqui; o plano de exclusão fica publicado
+        # para quando o controlador assumir.
         ctx.publish_keepout()
         ctx.take_base()
         ctx.stop_base()
@@ -742,7 +770,9 @@ class Manipulate(smach.State):
             offset = ctx.phases[phase]['offset_xyz_m']
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
 
-            if not _reach_by_iterative_ik(ctx, p_tip, phase):
+            alcancar = (_reach_by_wholebody if ctx.use_wholebody
+                        else _reach_by_iterative_ik)
+            if not alcancar(ctx, p_tip, phase):
                 return 'failed'
 
             # A chave acompanha a ferramenta (ver set_blade_angle).
@@ -997,6 +1027,98 @@ def _tooltip_now(ctx):
     o = ctx.robot_state.ee_pose.pose.orientation
     R = quaternion_matrix([o.x, o.y, o.z, o.w])[:3, :3]
     return np.array([p.x, p.y, p.z]) + R @ T_T265_TOOLTIP[:3, 3]
+
+
+def _reach_by_wholebody(ctx, p_goal, phase):
+    """Fecha a fase com o controlador whole-body de 8 DOF.
+
+    Reativa o caminho que estava morto (2026-08-24): release_base() nunca
+    era chamado, /b166er/ee_target nunca era publicado e
+    /b166er/servo_tooltip nunca ia a True. Medido numa missão inteira a
+    50 Hz: arm_vel_cmd != 0 em 0 de 21396 amostras — o fuzzy_wb_controller
+    ficava em stand-down do início ao fim e a manipulação toda acontecia
+    por IK em espaço de juntas. Ou seja, o controle whole-body, que é a
+    contribuição central, não participava de nada.
+
+    Por que ele tinha sido desligado, e por que dá para religar: o
+    comentário de 2026-08-13 dizia que os dois "não podem coexistir",
+    porque o controlador seguia perseguindo o último ee_target e movia a
+    base enquanto a missão comandava posturas. Mas o alvo estava velho
+    justamente porque a missão nunca publicava um novo — e não há disputa
+    por /cmd_vel: stop_base() emite um único Twist zero, e nem Manipulate
+    nem _reach_by_iterative_ik publicam em laço. O conflito era alvo
+    obsoleto, não incompatibilidade.
+
+    Daí a ordem aqui, que não é acidental: publicar o alvo ANTES de
+    habilitar, nunca depois. Entre o release_base() e o primeiro
+    ee_target o controlador atuaria sobre o alvo da fase anterior.
+
+    A chegada é medida pela MISSÃO, não pelo controlador: ele tem um
+    _reached interno com tolerância própria e não publica sinal nenhum.
+    Manter o critério aqui evita duas autoridades discordando sobre o
+    que é "chegou".
+    """
+    p_goal = np.asarray(p_goal, dtype=float)
+
+    alvo = PoseStamped()
+    alvo.header.stamp = rospy.Time.now()
+    alvo.header.frame_id = 'odom'
+    alvo.pose.position.x = float(p_goal[0])
+    alvo.pose.position.y = float(p_goal[1])
+    alvo.pose.position.z = float(p_goal[2])
+    alvo.pose.orientation.w = 1.0   # com servo_tooltip só a posição conta
+    ctx.pub_target.publish(alvo)
+    rospy.sleep(0.2)
+
+    ctx.release_base()
+    rospy.loginfo('[mission] fase "%s": whole-body assumiu (base livre, '
+                  'restrita pelo plano de exclusão)', phase)
+
+    ok = False
+    try:
+        t0 = rospy.Time.now()
+        rate = rospy.Rate(10)
+        estaveis = 0
+        melhor = float('inf')
+        while not rospy.is_shutdown():
+            if ctx.tilt_critical:
+                rospy.logerr('[mission] fase "%s": abortada por inclinação '
+                             'crítica', phase)
+                return False
+            if (rospy.Time.now() - t0).to_sec() > ctx.wb_phase_timeout:
+                rospy.logerr('[mission] fase "%s": whole-body não fechou em '
+                             '%.0fs (melhor %.4f m, tolerância %.3f)',
+                             phase, ctx.wb_phase_timeout, melhor, ctx.tol_pos)
+                return False
+
+            p_now = _tooltip_now(ctx)
+            n_err = float(np.linalg.norm(p_goal - p_now))
+            melhor = min(melhor, n_err)
+
+            # Exige a tolerância SUSTENTADA: um instante dentro dela pode
+            # ser a ponta passando de raspão durante o transitório.
+            if n_err < ctx.tol_pos:
+                estaveis += 1
+                if estaveis >= ctx.wb_settle_samples:
+                    rospy.loginfo('[mission] fase "%s" alcançada por whole-body '
+                                  'em %.1fs (%.4f m)', phase,
+                                  (rospy.Time.now() - t0).to_sec(), n_err)
+                    ok = True
+                    return True
+            else:
+                estaveis = 0
+            rospy.loginfo_throttle(2.0,
+                '[mission] fase "%s": whole-body a %.4f m do alvo', phase, n_err)
+            rate.sleep()
+        return False
+    finally:
+        # Devolver o /cmd_vel é obrigatório mesmo no caminho de falha: sem
+        # isso o controlador segue perseguindo este alvo na fase seguinte,
+        # que é exatamente o bug de 2026-08-13.
+        ctx.take_base()
+        ctx.stop_base()
+        if not ok:
+            ctx.publish_keepout()
 
 
 def _reach_by_iterative_ik(ctx, p_goal, phase):
