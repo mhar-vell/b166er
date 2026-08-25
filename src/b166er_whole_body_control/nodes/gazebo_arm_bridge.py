@@ -34,7 +34,7 @@ b166er_gazebo.launch) — o recolhimento é pós-spawn, suave.
 import rospy
 import numpy as np
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64, Bool
+from std_msgs.msg import Float64, Bool, Empty
 
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, gravity_torque_arm)
@@ -98,6 +98,9 @@ class GazeboArmBridge:
         # situação — e a rampa de postura em curso é justamente o tipo
         # de comando que continuaria rodando alheio ao acidente. A
         # reação NÃO é congelar e sim recolher: ver o bloco em _run().
+        self._resync_pedido = False
+        rospy.Subscriber('/b166er/arm_resync', JointState, self._cb_resync)
+
         self._tilt_critical = False
         # Fração de ramp_velocity usada na retração de emergência.
         self._tilt_retract_scale = rospy.get_param('~tilt_retract_scale', 0.6)
@@ -113,13 +116,65 @@ class GazeboArmBridge:
         q_ff  = -self._k_ff * tau_g / _P_GAINS
         return np.clip(q_arm + q_ff, JOINT_LOWER, JOINT_UPPER)
 
+    def _cb_resync(self, _msg):
+        """Reancora q_arm nas juntas REAIS. Usar após reset da simulação.
+
+        A ponte integra q_arm em malha aberta e só lê /joint_states uma
+        vez, no warm-start — fiel ao robô real, que não tem encoder. Mas
+        isso torna o estado interno IMPOSSÍVEL de corrigir depois, e o
+        reset do Gazebo teleporta as juntas sem que a ponte saiba: ela
+        segue comandando os controladores para a postura antiga e o braço
+        SALTA de volta no instante em que a física despausa.
+
+        Observado em 2026-08-24: reset com o braço estendido levava a
+        inclinação de 0,007 para 1,114 rad — o robô "nascia caindo". O
+        efeito também invalidava baterias inteiras, porque cada execução
+        começava com um solavanco de 28 kg.
+
+        Não é atalho de simulação: no hardware o equivalente é o
+        procedimento de homing, que também reancora a estimativa a uma
+        referência externa.
+        """
+        if len(_msg.position) == 5:
+            # Postura entregue explicitamente. É o caminho que funciona
+            # com a FÍSICA PAUSADA: /joint_states não atualiza enquanto o
+            # Gazebo está parado, e reancorar só depois de despausar é
+            # tarde — os controladores de posição já seguram o setpoint
+            # antigo e disparam o braço no primeiro passo de física.
+            q = np.array(_msg.position, dtype=float)
+            q = (q + np.pi) % (2 * np.pi) - np.pi
+            self._q_arm = np.clip(q, JOINT_LOWER, JOINT_UPPER)
+            self._q_posture_target = None
+            self._dq_cmd = np.zeros(5)
+            # Emitir o comando JÁ, ainda pausado, para o setpoint antigo
+            # não sobreviver ao unpause.
+            q_pub = self._q_pub_for(self._q_arm)
+            for i, pub in enumerate(self._pubs):
+                pub.publish(Float64(data=float(q_pub[i])))
+            rospy.logwarn('[gazebo_arm_bridge] q_arm reancorado por comando '
+                          'explícito em %s rad', np.round(self._q_arm, 3))
+            return
+        self._resync_pedido = True
+        rospy.logwarn('[gazebo_arm_bridge] ressincronização pedida — '
+                      'reancorando q_arm nas juntas reais')
+
     def _cb_joint_states(self, msg):
-        if self._q_arm is not None:
+        if self._q_arm is not None and not self._resync_pedido:
             return   # warm-start one-shot
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
             q_init = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            # Desembrulhar é obrigatório: J4 é contínua no Gazebo e
+            # acumula voltas (medido: 423° e 257,7° para a mesma postura
+            # física). Sem isto o clip nos limites destrói a leitura.
+            q_init = (q_init + np.pi) % (2 * np.pi) - np.pi
             self._q_arm = np.clip(q_init, JOINT_LOWER, JOINT_UPPER)
+            if self._resync_pedido:
+                self._resync_pedido = False
+                self._q_posture_target = None   # a rampa antiga não vale mais
+                self._dq_cmd = np.zeros(5)
+                rospy.logwarn('[gazebo_arm_bridge] q_arm reancorado em %s rad',
+                              np.round(self._q_arm, 3))
             rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
                           np.round(self._q_arm, 3))
             if self._goto_home:
