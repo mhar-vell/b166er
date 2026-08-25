@@ -1,0 +1,76 @@
+# Sequência de movimentos para abrir a chave seccionadora unipolar
+# (fixture urdf/fixtures/chave_com_tag.urdf.xacro), conforme descrito
+# pelo Marco em "Descrição do movimento de abertura da chave
+# seccionadora" (Google Docs, compartilhado em 2026-08-12).
+#
+# Frame de referência: local do fixture (mesmo frame do wall_link, não
+# o frame do mundo) — eixo X horizontal ao longo da parede (mesmo eixo
+# de chave_x_offset/tag_x_offset no xacro), eixo Z vertical (gravidade).
+# Isso bate com o X/Y do desenho técnico do documento (lá chamado de
+# X/Y; aqui, X/Z), e é invariante ao yaw com que o fixture é spawnado
+# no mundo Gazebo — só depende da geometria da própria chave.
+#
+# Documento original:
+#   "Uma ferramenta no end-efector do manipulador realizará o engate
+#    no olhal e o robot deverá realizar uma força perpendicular ao
+#    eixo X (este movimento fará com que a chave seja liberada para
+#    realizar o movimento seguinte). Logo após este movimento, o robot
+#    deverá realizar um movimento paralelo ao eixo X, ou seja o olhal
+#    descerá um pouco para a posição um e depois irá para a posição 2,
+#    realizando dessa forma a abertura da chave."
+#
+# NÃO tem isolador — ver nota "SEM ISOLADOR" em
+# urdf/fixtures/chave_seccionadora_lf.urdf.xacro.
+
+chave_seccionadora_task:
+
+  # Frame TF do olhal no fixture Gazebo (alvo que o whole_body_planner
+  # deve mirar via /b166er/ee_target).
+  target_frame: "chave_olhal_link"
+
+  # ── Fase 0: engate ──
+  # A ferramenta do end-effector se encaixa no olhal, sem deslocamento
+  # adicional — pose alvo = pose atual do frame chave_olhal_link.
+  engage:
+    offset_xyz_m: [0.0, 0.0, 0.0]
+
+  # ── Fase 1: força de liberação, perpendicular ao eixo X ──
+  # Pequeno empurrão para destravar a catraca/trava mecânica que
+  # segura a lâmina fechada, antes do movimento de abertura em si.
+  # Magnitude confirmada com o Marco: ~10-20mm; usando o meio da
+  # faixa (15mm) como valor de partida — ajustável aqui sem tocar
+  # em código.
+  release:
+    offset_xyz_m: [0.0, 0.0, -0.015]   # -Z (perpendicular a X), 15mm
+
+  # ── Fase 2: abertura, movimento com componente dominante paralela
+  #    ao eixo X — "posição 1" (intermediária) e "posição 2" (final,
+  #    chave aberta) ──
+  #
+  # Curso confirmado pelo Marco em 2026-08-12: 30° de giro total da
+  # lâmina, a partir do ângulo fechado (20°/0.349rad) — ou seja,
+  # posição 2 (totalmente aberta) = 50° absoluto. Posição 1
+  # (intermediária) segue sendo uma estimativa MINHA para dividir o
+  # curso em dois passos (metade do curso, 35° absoluto) — o
+  # documento não especifica esse ponto médio, só que ele existe a
+  # caminho da posição 2; ajustar se o Marco quiser outra proporção.
+  #
+  # Sentido do arco CONFIRMADO pelo Marco em 2026-08-12: o olhal desce
+  # para abrir a chave. Isso é o OPOSTO do que a fórmula de pivô já
+  # modelada no xacro previa (olhal = pivô - blade_length·(sin θ, 0,
+  # cos θ), que dá Z crescente para θ maior) — ou seja, o pivô/sentido
+  # de giro real da bancada não é o mesmo que o desenho técnico do
+  # datasheet (que inclui o isolador, removido na bancada) sugeria.
+  # Os offsets abaixo usam a MAGNITUDE calculada por aquela fórmula
+  # (curso de 30°/15° confirmado pelo Marco), mas com o sinal do Z
+  # invertido para refletir o sentido real (desce, não sobe).
+  # blade_angle_deg é só uma referência da magnitude do curso usada
+  # no cálculo, não corresponde mais literalmente a um ângulo de pivô.
+  pos1:
+    # Metade do curso confirmado (equivalente a 15° de giro)
+    offset_xyz_m: [-0.046, 0.0, -0.024]
+    blade_angle_deg: 35
+  pos2:
+    # Curso completo confirmado pelo Marco (equivalente a 30° de giro)
+    offset_xyz_m: [-0.085, 0.0, -0.059]
+    blade_angle_deg: 50

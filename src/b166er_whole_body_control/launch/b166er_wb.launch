@@ -51,6 +51,12 @@
          command="$(find xacro)/xacro
                   $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
 
+  <!-- Posturas nomeadas do braço (home recolhido, deploy) — usadas
+       pelo gazebo_arm_bridge (rampa pós-warm-start e comandos de
+       postura) e pela futura máquina de estados da tarefa. -->
+  <rosparam file="$(find b166er_whole_body_control)/config/arm_postures.yaml"
+            command="load"/>
+
   <node name="robot_state_publisher"
         pkg="robot_state_publisher"
         type="robot_state_publisher"

@@ -33,7 +33,7 @@ import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64MultiArray, MultiArrayDimension
+from std_msgs.msg import Float64MultiArray, MultiArrayDimension, Bool
 from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
@@ -172,15 +172,31 @@ class FuzzyWBController:
         self._pub_jacobian = rospy.Publisher('/b166er/wb_jacobian',
                                              Float64MultiArray, queue_size=1)
 
+        # Arbitragem de /cmd_vel: quando um orquestrador (chave_mission)
+        # assume a navegação da base, este nó precisa CALAR — ver o
+        # stand-down no spin(). Default true: comportamento antigo,
+        # standalone, preservado.
+        self._wb_enabled = True
+
         # Subscritores
         rospy.Subscriber('/b166er/robot_state', RobotState,   self._cb_state)
         rospy.Subscriber('/b166er/ee_target',   PoseStamped,  self._cb_target)
+        rospy.Subscriber('/b166er/wb_enable',   Bool,         self._cb_wb_enable)
 
         rospy.loginfo('[fuzzy_wb_controller] pronto — aguardando /b166er/ee_target')
 
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
         self._robot_state = msg
+
+    def _cb_wb_enable(self, msg):
+        if msg.data != self._wb_enabled:
+            rospy.loginfo('[fuzzy_wb_ctrl] %s /cmd_vel',
+                          'assumindo' if msg.data else 'liberando (stand-down)')
+        self._wb_enabled = msg.data
+        if not msg.data:
+            # Zera o braço ao sair: navegação acontece com o braço parado.
+            self._publish_arm_vel(np.zeros(5), rospy.Time.now())
 
     def _cb_target(self, msg):
         self._target   = _pose_stamped_to_matrix(msg)
@@ -330,6 +346,15 @@ class FuzzyWBController:
 
         while not rospy.is_shutdown():
             now = rospy.Time.now()
+
+            if not self._wb_enabled:
+                # Stand-down: outro nó é o dono de /cmd_vel agora (ex.:
+                # chave_mission navegando a base). Publicar nem que seja
+                # zero aqui brigaria com ele — os dois comandos chegariam
+                # intercalados a 20 Hz no Gazebo e a base andaria aos
+                # trancos. Silêncio total é o handoff correto.
+                rate.sleep()
+                continue
 
             if not self._enabled or self._robot_state is None:
                 self._pub_cmdvel.publish(Twist())
