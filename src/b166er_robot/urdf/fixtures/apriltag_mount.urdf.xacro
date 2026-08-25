@@ -24,11 +24,30 @@
          que importa para o detector/PnP é o QUADRADO PRETO — é ele que
          deve medir 132mm, igual à tag física do Marco já validada em
          hardware (ver project_fase4_apriltag_validacao). Por isso a
-         PLACA mede tag_black_size/0.8 = 165mm, para o preto renderizar
-         os 132mm exatos. Descoberto ao vivo: o PnP superestimava a
+         PLACA mede tag_black_size/0.8, para o preto renderizar o
+         tamanho nominal.
+
+         TAMANHO SUBIU DE 132 PARA 220 mm em 2026-08-21. A tag de
+         132 mm é a que o Marco tem impressa e validou em hardware,
+         mas ela limita a detecção confiável a 1,45 m (regra
+         lado ≥ d/11) — e o SEARCH da missão acontece a ~3 m, onde a
+         estimativa da parede errava mais de meio metro e chegou a
+         mandar o robô contra ela.
+
+         Medido em varredura (2026-08-21), erro da pose da parede:
+           distância   132 mm      220 mm
+           2,80 m      sem detecção  59 mm
+           2,30 m      —             26 mm
+           1,80 m      —             17 mm
+           1,30 m      ~40 mm        13 mm
+           0,80 m      ~20 mm        17 mm
+
+         PARA A BANCADA REAL: é preciso imprimir a tag de 220 mm. A de
+         132 mm continua válida, mas só a partir de ~1,4 m — o que
+         obriga a busca a acontecer mais perto da chave. Descoberto ao vivo: o PnP superestimava a
          distância em ~25% quando a placa media 132mm (preto = 105,6mm
          renderizado, tratado como 132mm pelo detector). -->
-    <xacro:property name="tag_black_size" value="0.132"/>    <!-- 132 mm — quadrado preto, mesma tag física validada -->
+    <xacro:property name="tag_black_size" value="0.220"/>   <!-- 220 mm — ver nota abaixo -->
     <xacro:property name="tag_size" value="${tag_black_size/0.8}"/>  <!-- placa: preto + quiet zone da textura -->
     <xacro:property name="tag_plate_thickness" value="0.005"/>
     <xacro:property name="wall_standoff" value="0.02"/>

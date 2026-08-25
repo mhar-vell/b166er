@@ -28,9 +28,23 @@ chave_seccionadora_task:
   # deve mirar via /b166er/ee_target).
   target_frame: "chave_olhal_link"
 
-  # ── Fase 0: engate ──
-  # A ferramenta do end-effector se encaixa no olhal, sem deslocamento
-  # adicional — pose alvo = pose atual do frame chave_olhal_link.
+  # ── Fase 0a: pré-engate (VETOR DE APROXIMAÇÃO) ──
+  # Ponto afastado da parede, alinhado com o olhal. Existe porque o
+  # controlador Cartesiano não tem NENHUMA noção de obstáculo: dado um
+  # alvo colado na parede, ele escolhe o caminho reto no espaço de
+  # juntas, e esse caminho passa por dentro dela — foi o que o Marco
+  # observou ("o manipulador ainda está chocando com a parede").
+  #
+  # Medido em 2026-08-13: na postura FINAL nenhum elo toca a parede (o
+  # punho fica a 28 cm dela). O problema é só o transiente. Parar aqui
+  # primeiro e só então entrar reto em -Y resolve sem precisar de
+  # planejador com colisão.
+  pre_engage:
+    offset_xyz_m: [0.0, 0.18, 0.0]    # 18 cm à frente do olhal
+
+  # ── Fase 0b: engate ──
+  # Entra reto, do pré-engate até o olhal. A ferramenta encaixa o anel
+  # no vão do gancho.
   engage:
     offset_xyz_m: [0.0, 0.0, 0.0]
 
@@ -66,11 +80,17 @@ chave_seccionadora_task:
   # invertido para refletir o sentido real (desce, não sobe).
   # blade_angle_deg é só uma referência da magnitude do curso usada
   # no cálculo, não corresponde mais literalmente a um ângulo de pivô.
+  # PLANO DO ARCO MUDOU (2026-08-13): com a chave rotacionada 90° no
+  # eixo Z (correção do Marco), a lâmina inclina para FORA da parede,
+  # no plano Y-Z. O deslocamento horizontal da abertura saiu de X e foi
+  # para +Y (afastando da parede, na direção do robô); o Z continua
+  # descendo, como o Marco confirmou. Magnitudes inalteradas — mesmo
+  # curso de 30°, só reprojetado no plano certo.
   pos1:
     # Metade do curso confirmado (equivalente a 15° de giro)
-    offset_xyz_m: [-0.046, 0.0, -0.024]
-    blade_angle_deg: 35
+    offset_xyz_m: [0.0, 0.046, -0.024]
+    blade_angle_deg: 15   # ângulo da junta da lâmina (0 = fechada)
   pos2:
     # Curso completo confirmado pelo Marco (equivalente a 30° de giro)
-    offset_xyz_m: [-0.085, 0.0, -0.059]
-    blade_angle_deg: 50
+    offset_xyz_m: [0.0, 0.085, -0.059]
+    blade_angle_deg: 30   # aberta

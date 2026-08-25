@@ -22,24 +22,36 @@
   <xacro:include filename="$(find b166er_robot)/urdf/fixtures/apriltag_mount.urdf.xacro"/>
 
   <!-- ═══ Parâmetros da parede ═══ -->
-  <xacro:property name="wall_width" value="1.0"/>
+  <xacro:property name="wall_width" value="1.6"/>
   <xacro:property name="wall_thickness" value="0.10"/>
   <xacro:property name="wall_height" value="1.40"/>
   <xacro:property name="chave_x_offset" value="-0.20"/>
-  <xacro:property name="tag_x_offset" value="0.20"/>
+  <!-- Tag do OUTRO LADO da chave (pedido do Marco, 2026-08-13):
+       antes ficava em +0.20, com a chave em -0.20; agora do lado oposto.
+       Aproximada da chave em seguida (também a pedido do Marco): a
+       separação caiu de 0,40 m para 0,30 m, com a tag em -0.50.
 
-  <!-- IMPORTANTE: esta altura precisa bater com o cálculo interno do
-       macro chave_seccionadora_lf (bracket_mount_z), já que o xacro não
-       expõe propriedades de dentro de um macro para fora dele. Se os
-       parâmetros dimensionais da chave mudarem lá, atualizar aqui
-       também — olhal_height=0.810, blade_length=0.200,
-       blade_angle=0.349 rad, bracket_height=0.060. Sem isolador (ver
-       nota "SEM ISOLADOR" em chave_seccionadora_lf.urdf.xacro,
-       decisão do Marco em 2026-08-12): a lâmina pivota direto no
-       topo do bracket, então este valor subiu em relação à versão
-       anterior com isolador (que era ≈0,7879 m). -->
-  <xacro:property name="chave_bracket_mount_z"
-    value="${0.810 + 0.200*cos(0.349) - 0.060}"/>  <!-- ≈ 0,9379 m -->
+       Por que não mais perto: ao subir a tag de 132 para 220 mm, a
+       PLACA foi de 16,5 para 27,5 cm de largura, e em -0.42 a borda
+       dela ficava a 2 mm da placa da chave — visualmente encostadas
+       (o Marco notou: "a tag está em cima da chave"). Em -0.50 sobram
+       8 cm de folga. A conta que governa: meia-placa da tag (13,75 cm)
+       + meia-placa da chave (8 cm) + margem.
+       Ficar perto importa para a percepção: quanto menor a distância
+       entre a tag e o alvo de manipulação, menor o braço de alavanca
+       do erro angular da detecção sobre a posição estimada do olhal.
+       A parede segue com 1,6 m de largura. -->
+  <xacro:property name="tag_x_offset" value="-0.50"/>
+
+  <!-- Altura de montagem do macro da chave = altura do PIVÔ (embaixo),
+       não mais do bracket sob o isolador. Precisa bater com o cálculo
+       interno de chave_seccionadora_lf (pivot_z), que o xacro não
+       expõe para fora do macro: olhal_height=0.810, blade_length=0.200,
+       lâmina VERTICAL quando fechada. Mecânica invertida em 2026-08-13
+       (pivô embaixo, olhal em cima) e depois rotacionada 90° no eixo Z
+       (lâmina abre para fora da parede). O olhal segue a 0.810 m. -->
+  <xacro:property name="chave_pivot_z"
+    value="${0.810 - 0.200}"/>  <!-- 0,610 m — lâmina VERTICAL na posição fechada -->
 
   <xacro:property name="tag_mount_z" value="1.030"/>
 
@@ -70,16 +82,25 @@
   </gazebo>
 
   <xacro:chave_seccionadora_lf parent="wall_link" prefix="chave_"
-    xyz="${chave_x_offset} 0 ${chave_bracket_mount_z}" rpy="0 0 0"/>
+    xyz="${chave_x_offset} 0 ${chave_pivot_z}" rpy="0 0 0"/>
 
   <xacro:apriltag_mount parent="wall_link" prefix="tag_"
     xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"/>
 
-  <!-- Fixture inteira estática — nunca deve ser movida por física de
-       contato (é o alvo da tarefa, não um objeto manipulável nesta
-       fase). -->
-  <gazebo>
-    <static>true</static>
-  </gazebo>
+  <!-- A fixture NÃO pode mais ser <static>: modelo estático no Gazebo
+       não simula juntas, e a lâmina precisa girar para a chave abrir
+       (2026-08-13 — antes disso a chave era um bloco rígido e não
+       abria quando o robô puxava).
+
+       Em vez de 'static', a parede é ancorada ao mundo por uma junta
+       fixa ao link especial 'world'. Efeito prático igual — a parede
+       não sai do lugar por contato — mas a lâmina continua livre para
+       girar na sua junta revoluta. -->
+  <link name="world"/>
+  <joint name="world_anchor" type="fixed">
+    <parent link="world"/>
+    <child link="wall_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
 
 </robot>

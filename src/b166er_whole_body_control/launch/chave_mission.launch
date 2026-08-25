@@ -13,11 +13,23 @@
          rosrun smach_viewer smach_viewer.py
   -->
 
-  <arg name="standoff_distance" default="0.65"
+  <arg name="standoff_distance" default="0.70"
        doc="Distância (m) do olhal em que a base para para manipular.
             Alcance horizontal da ponta da ferramenta na altura do olhal
-            é ~0,93 m (varredura de FK); 0,65 m evita o braço quase
-            estendido, postura que já tombou o robô."/>
+            é ~0,93 m (varredura de FK).
+
+            Histórico: 0,65 → 0,80 m (o chassi ficava perto demais da
+            parede) → 0,70 m. A volta para 0,70 veio de uma bateria de
+            repetibilidade (8 execuções, 2026-08-21): com 0,80 m
+            sobravam só 13 cm de margem de alcance, e um erro de
+            estacionamento de poucos centímetros — normal, vindo do
+            yaw estimado da parede — bastava para o alvo sair do
+            workspace. Duas das oito falharam exatamente assim, com a
+            IK não fechando já no DEPLOY.
+
+            0,70 m dá 23 cm de margem e continua seguro: o mecanismo da
+            chave está 8 cm à frente da parede, então a base fica a
+            0,78 m dela e a frente do chassi a ~0,53 m."/>
   <arg name="search_omega" default="0.35"
        doc="Velocidade angular (rad/s) da busca girando no próprio eixo"/>
   <arg name="tag_id" default="0"/>
@@ -28,10 +40,22 @@
   <!-- Percepção: detecta a tag e publica a pose da parede. Sem este nó
        a missão não tem como descobrir onde está a chave (SEARCH falha
        por timeout — de propósito, não há fallback para ground truth). -->
-  <node name="apriltag_localizer" pkg="b166er_whole_body_control"
-        type="apriltag_localizer.py" output="screen">
-    <param name="tag_id" value="$(arg tag_id)"/>
-  </node>
+  <!-- O apriltag_localizer agora sobe junto com o b166er_wb.launch (para
+       a imagem de diagnóstico existir fora das missões também). Ligue
+       aqui só se estiver rodando a missão contra um stack que não o
+       tenha: roslaunch ... chave_mission.launch localizer:=true -->
+  <arg name="localizer" default="false"/>
+  <group if="$(arg localizer)">
+    <node name="apriltag_localizer" pkg="b166er_whole_body_control"
+          type="apriltag_localizer.py" output="screen">
+      <param name="tag_id" value="$(arg tag_id)"/>
+    </node>
+  </group>
+
+  <!-- Alinha a tolerância do controlador com a da missão (20 mm): sem
+       isso ele continua empurrando o braço atrás dos 5 mm default
+       depois que a missão já considerou a fase concluída. -->
+  <param name="/fuzzy_wb_controller/tol_pos" value="0.020"/>
 
   <node name="chave_mission" pkg="b166er_whole_body_control"
         type="chave_mission.py" output="screen">

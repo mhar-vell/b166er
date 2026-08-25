@@ -34,7 +34,7 @@ b166er_gazebo.launch) — o recolhimento é pós-spawn, suave.
 import rospy
 import numpy as np
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float64, Bool
+from std_msgs.msg import Float64, Bool, Empty
 
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, gravity_torque_arm)
@@ -93,6 +93,45 @@ class GazeboArmBridge:
                          self._cb_vel_cmd, queue_size=1)
         rospy.Subscriber('/b166er/arm_posture_cmd', JointState,
                          self._cb_posture_cmd, queue_size=1)
+        # SEGURANÇA DE TOMBAMENTO: congela o braço onde está. Mexer um
+        # braço de 28 kg estendido com o chassi tombando só piora a
+        # situação — e a rampa de postura em curso é justamente o tipo
+        # de comando que continuaria rodando alheio ao acidente. A
+        # reação NÃO é congelar e sim recolher: ver o bloco em _run().
+        self._resync_pedido = False
+        rospy.Subscriber('/b166er/arm_resync', JointState, self._cb_resync)
+
+        # ── Realimentação da postura MEDIDA ──
+        # Fonte: state_estimator (IK da pose da T265). É a única medida de
+        # postura que existe no robô real, que não tem encoder — usar
+        # /joint_states aqui funcionaria no Gazebo e seria mentira no
+        # hardware.
+        self._q_med = None
+        self._t_q_med = None
+        rospy.Subscriber('/b166er/estimated_joint_states', JointState,
+                         self._cb_q_medido, queue_size=1)
+        # Tolerância na MEDIDA, MUITO mais folgada que a do modelo.
+        #
+        # Dimensionada pela separação de escalas, não por precisão
+        # desejada: o estimador (IK da pose da T265) tem erro próprio de
+        # poucos graus — medido 3,2° com o braço parado em stow — e a
+        # divergência que precisamos pegar é de dezenas de graus (28° no
+        # caso que motivou isto). 0,15 rad ≈ 8,6° fica no meio.
+        #
+        # Apertar demais é pior que não ter: com 0,05 rad (2,9°) o
+        # critério ficou abaixo do ruído do estimador e NENHUMA postura
+        # fechava — a missão morria já no primeiro stow_home.
+        self._reached_tol_medido = rospy.get_param('~reached_tol_medido', 0.15)
+        self._med_timeout = rospy.get_param('~medida_timeout', 1.0)
+        # Correção integral contra o erro estacionário dos controladores.
+        self._corr_vel = rospy.get_param('~correcao_vel', 0.15)   # rad/s
+        self._corr_max = rospy.get_param('~correcao_max', 0.60)   # rad
+        self._correcao = np.zeros(5)
+
+        self._tilt_critical = False
+        # Fração de ramp_velocity usada na retração de emergência.
+        self._tilt_retract_scale = rospy.get_param('~tilt_retract_scale', 0.6)
+        rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt_critical)
 
         rospy.loginfo('[gazebo_arm_bridge] q_spawn=%s  aguardando warm-start...',
                       np.round(self._q_spawn, 3))
@@ -104,13 +143,65 @@ class GazeboArmBridge:
         q_ff  = -self._k_ff * tau_g / _P_GAINS
         return np.clip(q_arm + q_ff, JOINT_LOWER, JOINT_UPPER)
 
+    def _cb_resync(self, _msg):
+        """Reancora q_arm nas juntas REAIS. Usar após reset da simulação.
+
+        A ponte integra q_arm em malha aberta e só lê /joint_states uma
+        vez, no warm-start — fiel ao robô real, que não tem encoder. Mas
+        isso torna o estado interno IMPOSSÍVEL de corrigir depois, e o
+        reset do Gazebo teleporta as juntas sem que a ponte saiba: ela
+        segue comandando os controladores para a postura antiga e o braço
+        SALTA de volta no instante em que a física despausa.
+
+        Observado em 2026-08-24: reset com o braço estendido levava a
+        inclinação de 0,007 para 1,114 rad — o robô "nascia caindo". O
+        efeito também invalidava baterias inteiras, porque cada execução
+        começava com um solavanco de 28 kg.
+
+        Não é atalho de simulação: no hardware o equivalente é o
+        procedimento de homing, que também reancora a estimativa a uma
+        referência externa.
+        """
+        if len(_msg.position) == 5:
+            # Postura entregue explicitamente. É o caminho que funciona
+            # com a FÍSICA PAUSADA: /joint_states não atualiza enquanto o
+            # Gazebo está parado, e reancorar só depois de despausar é
+            # tarde — os controladores de posição já seguram o setpoint
+            # antigo e disparam o braço no primeiro passo de física.
+            q = np.array(_msg.position, dtype=float)
+            q = (q + np.pi) % (2 * np.pi) - np.pi
+            self._q_arm = np.clip(q, JOINT_LOWER, JOINT_UPPER)
+            self._q_posture_target = None
+            self._dq_cmd = np.zeros(5)
+            # Emitir o comando JÁ, ainda pausado, para o setpoint antigo
+            # não sobreviver ao unpause.
+            q_pub = self._q_pub_for(self._q_arm)
+            for i, pub in enumerate(self._pubs):
+                pub.publish(Float64(data=float(q_pub[i])))
+            rospy.logwarn('[gazebo_arm_bridge] q_arm reancorado por comando '
+                          'explícito em %s rad', np.round(self._q_arm, 3))
+            return
+        self._resync_pedido = True
+        rospy.logwarn('[gazebo_arm_bridge] ressincronização pedida — '
+                      'reancorando q_arm nas juntas reais')
+
     def _cb_joint_states(self, msg):
-        if self._q_arm is not None:
+        if self._q_arm is not None and not self._resync_pedido:
             return   # warm-start one-shot
         name_to_pos = dict(zip(msg.name, msg.position))
         if all(n in name_to_pos for n in JOINT_NAMES):
             q_init = np.array([name_to_pos[n] for n in JOINT_NAMES])
+            # Desembrulhar é obrigatório: J4 é contínua no Gazebo e
+            # acumula voltas (medido: 423° e 257,7° para a mesma postura
+            # física). Sem isto o clip nos limites destrói a leitura.
+            q_init = (q_init + np.pi) % (2 * np.pi) - np.pi
             self._q_arm = np.clip(q_init, JOINT_LOWER, JOINT_UPPER)
+            if self._resync_pedido:
+                self._resync_pedido = False
+                self._q_posture_target = None   # a rampa antiga não vale mais
+                self._dq_cmd = np.zeros(5)
+                rospy.logwarn('[gazebo_arm_bridge] q_arm reancorado em %s rad',
+                              np.round(self._q_arm, 3))
             rospy.loginfo('[gazebo_arm_bridge] warm-start q=%s rad',
                           np.round(self._q_arm, 3))
             if self._goto_home:
@@ -121,7 +212,48 @@ class GazeboArmBridge:
             self._dq_cmd     = np.array(msg.velocity, dtype=float)
             self._t_last_cmd = rospy.Time.now()
 
+    def _cb_tilt_critical(self, msg):
+        if msg.data and not self._tilt_critical:
+            rospy.logerr('[gazebo_arm_bridge] INCLINAÇÃO CRÍTICA — abortando '
+                         'a tarefa e RECOLHENDO o braço para stow_home')
+            self._q_posture_target = None   # cancela rampa da tarefa
+            self._dq_cmd = np.zeros(5)
+        elif not msg.data and self._tilt_critical:
+            rospy.logwarn('[gazebo_arm_bridge] inclinação normalizada — '
+                          'operação liberada')
+        self._tilt_critical = msg.data
+
+    def _cb_q_medido(self, msg):
+        if len(msg.position) == 5:
+            self._q_med = np.array(msg.position, dtype=float)
+            self._t_q_med = rospy.Time.now()
+
+    def _q_medido(self):
+        """Postura medida, ou None se ausente/velha demais.
+
+        Envelhecer importa: agir sobre uma medida parada é pior que não
+        agir — foi assim que a ponte declarou chegada com 28° de erro.
+        """
+        if self._q_med is None or self._t_q_med is None:
+            return None
+        if (rospy.Time.now() - self._t_q_med).to_sec() > self._med_timeout:
+            return None
+        return self._q_med
+
+    def _erro_medido(self):
+        """Maior desvio entre a postura ALVO e a MEDIDA, em rad."""
+        q = self._q_medido()
+        if q is None or self._q_posture_target is None:
+            return None
+        d = self._q_posture_target - q
+        d = (d + np.pi) % (2 * np.pi) - np.pi   # J4 é contínua no Gazebo
+        return float(np.max(np.abs(d)))
+
     def _cb_posture_cmd(self, msg):
+        if self._tilt_critical:
+            rospy.logwarn_throttle(5.0, '[gazebo_arm_bridge] comando de postura '
+                                        'ignorado: inclinação crítica')
+            return
         if len(msg.position) == 5:
             q_target = np.clip(np.array(msg.position, dtype=float),
                                JOINT_LOWER, JOINT_UPPER)
@@ -129,6 +261,7 @@ class GazeboArmBridge:
 
     def _start_posture(self, q_target, why):
         self._q_posture_target = q_target
+        self._correcao = np.zeros(5)   # cada postura recomeça do zero
         self._pub_posture_reached.publish(Bool(data=False))
         tgt = JointState()
         tgt.header.stamp = rospy.Time.now()
@@ -157,18 +290,111 @@ class GazeboArmBridge:
                 rate.sleep()
                 continue
 
-            if self._q_posture_target is not None:
+            if self._tilt_critical:
+                # RECOLHER, não congelar (corrigido em 2026-08-24).
+                #
+                # A primeira versão congelava o braço (dq = 0). Errado
+                # por física e por consequência:
+                #
+                # Física — quem derruba o robô é o momento do braço de
+                # 28 kg estendido. Congelar mantém exatamente o braço
+                # de alavanca que causou o tombamento; recolher para
+                # junto do corpo reduz o momento e é sempre a direção
+                # segura, mesmo com o chassi já em movimento.
+                #
+                # Consequência — o congelamento criou um DEADLOCK real,
+                # observado numa bateria inteira (8/8 abortadas em
+                # 2026-08-24): robô tomba com o braço estendido → tilt
+                # crítico congela o braço → o reset põe o chassi em pé,
+                # mas o braço continua estendido → tomba de novo em
+                # menos de 2 s → nunca cumpre o tempo de nivelamento
+                # para limpar o estado → braço segue congelado. O
+                # sistema não conseguia se recuperar sozinho, e a
+                # postura que impedia a recuperação era justamente a
+                # que a trava protegia.
+                #
+                # Velocidade reduzida: é manobra de segurança com o
+                # chassi instável, não movimento de tarefa.
+                err = self._q_home - self._q_arm
+                if np.max(np.abs(err)) < self._reached_tol:
+                    dq = np.zeros(5)
+                else:
+                    v = self._ramp_vel * self._tilt_retract_scale
+                    dq = np.clip(err / dt, -v, v)
+                    rospy.logwarn_throttle(
+                        2.0, '[gazebo_arm_bridge] recolhendo por inclinação '
+                             'crítica (falta %.2f rad)', np.max(np.abs(err)))
+            elif self._q_posture_target is not None:
                 # Rampa de postura: move q_arm em direção ao alvo a
                 # ~ramp_velocity, ignorando arm_vel_cmd (movimento
                 # deliberado em espaço de juntas, ver docstring).
+                #
+                # "ATINGIDA" É JULGADO PELA MEDIDA, NÃO PELO MODELO
+                # (2026-08-24). Antes o critério era só
+                # |alvo − q_arm| < tol, com q_arm sendo a integração
+                # interna desta ponte. Como ela é malha aberta, o modelo
+                # podia estar no alvo com o braço REAL longe — e, por
+                # achar que chegou, a ponte parava de acionar e o erro
+                # virava permanente.
+                #
+                # Medido na missão: a ponte anunciou
+                # "postura atingida: [-0.059, -0.572, 0.199, 1.89, 0.0]"
+                # enquanto a missão media faltar [0.1, -9.6, -17.9,
+                # -28.1, 0.0] graus. A ponta ficava cravada e as 5
+                # iterações do pre_engage davam erro idêntico
+                # (0,3565 m), porque cada nova postura comandada era
+                # comparada com o modelo, que já dizia estar no alvo.
+                #
+                # A medida vem do state_estimator, não de /joint_states:
+                # é a fonte que EXISTE no hardware real (IK da pose da
+                # T265), onde não há encoder. Quando ela falta, cai no
+                # critério antigo — degradar é melhor que travar.
                 err = self._q_posture_target - self._q_arm
-                if np.max(np.abs(err)) < self._reached_tol:
+                err_med = self._erro_medido()
+
+                if err_med is None:
+                    chegou = np.max(np.abs(err)) < self._reached_tol
+                else:
+                    chegou = (np.max(np.abs(err)) < self._reached_tol
+                              and err_med < self._reached_tol_medido)
+
+                if chegou:
                     self._q_arm = self._q_posture_target.copy()
                     self._q_posture_target = None
+                    self._correcao = np.zeros(5)
                     self._pub_posture_reached.publish(Bool(data=True))
-                    rospy.loginfo('[gazebo_arm_bridge] postura atingida: %s rad',
-                                  np.round(self._q_arm, 3))
+                    rospy.loginfo('[gazebo_arm_bridge] postura atingida: %s rad '
+                                  '(erro medido %s)', np.round(self._q_arm, 3),
+                                  '—' if err_med is None else '%.3f rad' % err_med)
                     dq = np.zeros(5)
+                elif np.max(np.abs(err)) < self._reached_tol and err_med is not None:
+                    # Modelo chegou, braço real não. Empurra o comando ALÉM
+                    # do alvo, devagar e com teto: é ação integral contra o
+                    # erro estacionário dos controladores de posição sob
+                    # carga. Sem teto isso viraria fuga descontrolada se a
+                    # medida estiver ruim.
+                    alvo_med = self._q_posture_target - self._q_medido()
+                    passo = np.clip(alvo_med, -self._corr_vel * dt,
+                                    self._corr_vel * dt)
+                    novo = np.clip(self._correcao + passo,
+                                   -self._corr_max, self._corr_max)
+                    saturou = np.allclose(novo, self._correcao, atol=1e-6)
+                    self._correcao = novo
+                    dq = passo / dt
+                    if saturou:
+                        self._q_posture_target = None
+                        self._correcao = np.zeros(5)
+                        self._pub_posture_reached.publish(Bool(data=False))
+                        rospy.logerr('[gazebo_arm_bridge] postura NÃO atingida: '
+                                     'correção saturou em %.2f rad com erro '
+                                     'medido de %.3f rad. O braço real não '
+                                     'segue o comando.', self._corr_max, err_med)
+                        dq = np.zeros(5)
+                    else:
+                        rospy.logwarn_throttle(
+                            2.0, '[gazebo_arm_bridge] modelo no alvo mas braço '
+                                 'real a %.3f rad — corrigindo (%.2f rad de %.2f)',
+                            err_med, np.max(np.abs(self._correcao)), self._corr_max)
                 else:
                     dq = np.clip(err / dt, -self._ramp_vel, self._ramp_vel)
             elif self._t_last_cmd is not None:
@@ -183,6 +409,21 @@ class GazeboArmBridge:
             q_pub = self._q_pub_for(self._q_arm)
             for i, pub in enumerate(self._pubs):
                 pub.publish(Float64(data=float(q_pub[i])))
+
+            # Instrumentação (2026-08-13): rastrear se a ponte está de
+            # fato integrando arm_vel_cmd. Sintoma investigado: o
+            # controlador comandava 0,1 rad/s por 60 s e o braço não
+            # saía do lugar — precisa distinguir "não recebeu",
+            # "recebeu mas está em modo postura" e "integrou mas o PID
+            # não seguiu".
+            age = ((rospy.Time.now() - self._t_last_cmd).to_sec()
+                   if self._t_last_cmd else -1.0)
+            rospy.loginfo_throttle(2.0,
+                '[bridge] postura=%s | dq_cmd=%s idade=%.2fs | dq_aplicado=%s | '
+                'q_arm=%s',
+                'ATIVA' if self._q_posture_target is not None else 'nao',
+                np.round(self._dq_cmd, 3), age, np.round(dq, 3),
+                np.round(self._q_arm, 3))
 
             rate.sleep()
 

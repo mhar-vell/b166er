@@ -18,9 +18,15 @@ Sequência
                parede em /b166er/wall_pose. É o único estado que
                descobre ONDE está a chave — nada aqui consulta o
                simulador.
-  APPROACH   → navega a base até a pose de standoff (0,65 m à frente do
-               olhal, encarando a parede), braço ainda recolhido.
-  DEPLOY     → braço para a postura de pré-manipulação.
+  APPROACH   → aproximação em etapas: vai até ~1,30 m (dentro da faixa
+               confiável da tag), remede parado, e só então navega até o
+               standoff final. Braço recolhido, câmera rastreando a tag.
+  REFINE     → já parado e perto, remede a parede pela tag e substitui a
+               estimativa grosseira do SEARCH. Sem isso o erro angular
+               da detecção distante vira dezenas de cm no alvo.
+  DEPLOY     → resolve a IK da ponta para o primeiro alvo e
+               pré-posiciona o braço nela (não uma postura fixa: o ramo
+               errado trava o controlador num batente de junta).
   MANIPULATE → as 4 fases Cartesianas (engage → release → pos1 → pos2)
                via /b166er/ee_target, conduzidas pelo controlador
                whole-body, exatamente como no task_sequencer.
@@ -55,17 +61,24 @@ import numpy as np
 import rospy
 import smach
 import smach_ros
-from geometry_msgs.msg import PoseStamped, Twist
+from geometry_msgs.msg import PoseStamped, Twist, Point
+from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool
-from tf.transformations import quaternion_matrix, euler_from_quaternion
+from std_msgs.msg import Bool, Float64
+from tf.transformations import (quaternion_matrix, euler_from_quaternion,
+                                quaternion_from_matrix)
 
+from gazebo_msgs.srv import SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, pose_error, tooltip_position_to_t265_position)
+    JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
+    ik_tooltip_position)
 from b166er_whole_body_control import chave_task
 
-PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
+# pre_engage primeiro: aproxima por um ponto afastado da parede e só
+# então entra reto no olhal — o controlador Cartesiano não desvia de
+# obstáculo sozinho (ver nota no YAML).
+PHASE_ORDER = ['pre_engage', 'engage', 'release', 'pos1', 'pos2']
 
 
 def _yaw_of(quat):
@@ -81,25 +94,93 @@ class MissionContext(object):
 
     def __init__(self):
         self.rate_hz       = rospy.get_param('~rate', 20.0)
-        self.standoff_dist = rospy.get_param('~standoff_distance', 0.65)
+        self.standoff_dist = rospy.get_param('~standoff_distance', 0.70)
         self.search_omega  = rospy.get_param('~search_omega', 0.35)
         self.search_timeout   = rospy.get_param('~search_timeout', 90.0)
         self.approach_timeout = rospy.get_param('~approach_timeout', 120.0)
         self.posture_timeout  = rospy.get_param('~posture_timeout', 30.0)
         self.phase_timeout    = rospy.get_param('~phase_timeout', 60.0)
+        self.refine_samples   = rospy.get_param('~refine_samples', 10)
+        # O SEARCH mede a ~2,8 m, onde a tag subtende pouco e o PnP é
+        # mais ruidoso — e onde um "flip" de ambiguidade de pose custa
+        # caro, porque a pose da parede define para onde o robô dirige.
+        # Na bateria de 2026-08-21 uma execução saiu do SEARCH com a
+        # parede 0,58 m deslocada e o yaw 34° errado. Mais amostras (e
+        # rejeição de outliers em _sample_wall) atacam justamente isso.
+        # O REFINE mede de perto e continua com 10: ali a dispersão é
+        # pequena e amostrar demais só custa tempo.
+        self.search_samples   = rospy.get_param('~search_samples', 25)
+        self.search_sample_timeout = rospy.get_param('~search_sample_timeout', 25.0)
+        # Nome do modelo da fixture no Gazebo — usado para girar a
+        # lâmina da chave (set_blade_angle).
+        self.fixture_model    = rospy.get_param('~fixture_model_name',
+                                                'chave_seccionadora_fixture')
+        # Distância intermediária de aproximação: dentro da faixa
+        # confiável da tag (132 mm → ~1,45 m pela regra d/11).
+        self.coarse_distance  = rospy.get_param('~coarse_distance', 1.30)
+        self.deploy_ik_tol    = rospy.get_param('~deploy_ik_tol', 0.02)
+        # IK iterativa da manipulação fina (ver _reach_by_iterative_ik)
+        self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
+        self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
+        self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
         self.nav_v         = rospy.get_param('~nav_linear_vel', 0.15)
         self.nav_w         = rospy.get_param('~nav_angular_vel', 0.4)
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
+        # Distância mínima (centro da base → obstáculo) pelo laser.
+        self.min_clearance = rospy.get_param('~min_clearance', 0.55)
 
-        # Tolerâncias Cartesianas — mesmas do fuzzy_wb_controller
-        self.tol_pos    = rospy.get_param('~tol_pos', 0.005)
+        # ── Manipulação por whole-body (ver _reach_by_wholebody) ──
+        # DESLIGADO por padrão até ser medido contra o caminho atual.
+        #
+        # O caminho whole-body foi reativado em 2026-08-24 e faz o que
+        # promete (arm_vel_cmd saiu de zero pela primeira vez), mas nas
+        # execuções feitas até agora ele NÃO melhorou a missão: o erro do
+        # pre_engage ficou em 0,3758 m contra 0,3814 m da IK iterativa —
+        # praticamente idêntico, o que aliás indica que a causa daquela
+        # falha não está em nenhum dos dois controladores.
+        #
+        # Ligar um caminho não validado por padrão troca um problema
+        # conhecido por um desconhecido. Fica opt-in
+        # (use_wholebody:=true) até uma bateria comparar os dois.
+        self.use_wholebody     = rospy.get_param('~use_wholebody', False)
+        self.wb_phase_timeout  = rospy.get_param('~wb_phase_timeout', 25.0)
+        # Amostras consecutivas dentro da tolerância (a 10 Hz) para
+        # aceitar a fase. Um instante dentro dela pode ser a ponta
+        # passando de raspão no transitório.
+        self.wb_settle_samples = rospy.get_param('~wb_settle_samples', 5)
+
+        # Tolerância Cartesiana da manipulação: 20 mm, NÃO os 5 mm que
+        # o fuzzy_wb_controller usa por padrão.
+        #
+        # Razão: não faz sentido exigir do controle uma precisão maior
+        # que a da MEDIÇÃO do alvo. A posição do olhal vem da detecção
+        # da tag, que mede com ~9 mm de erro (validado contra ground
+        # truth em 2026-08-13, três poses). Perseguir 5 mm de erro de
+        # EE contra um alvo conhecido a ±9 mm é perseguir ruído — e na
+        # prática o sistema estacionava em 12 mm com o ganho Fuzzy já
+        # reduzido perto do alvo, gastando o timeout inteiro sem
+        # fechar. 20 mm é compatível com o engate: o vão do gancho tem
+        # ~20 mm e o anel do olhal 28 mm de raio.
+        self.tol_pos    = rospy.get_param('~tol_pos', 0.020)
         self.tol_orient = rospy.get_param('~tol_orient', 0.02)
 
         self.postures = rospy.get_param('/arm_postures')
         self.phases   = rospy.get_param('/chave_seccionadora_task')
+
+        # Gimbal ("pescoço de galinha", ideia do Marco em 2026-08-13):
+        # manter a tag centrada no quadro girando J1 enquanto a base
+        # navega. Sem isso a tag sai do campo de visão na aproximação e a
+        # estimativa degrada justamente quando mais precisa ser boa.
+        self.gimbal_gain    = rospy.get_param('~gimbal_gain', 0.6)
+        self.gimbal_deadband = rospy.get_param('~gimbal_deadband', 0.06)
+        self.gimbal_period  = rospy.get_param('~gimbal_period', 0.4)   # s
+        self.tag_pixel      = None
+        self.tag_pixel_t    = None
+        self._j1_track      = None   # J1 corrente do rastreamento
 
         self.robot_state  = None
         self.wall_pose    = None
@@ -120,10 +201,37 @@ class MissionContext(object):
         # publicam intercalado a 20 Hz e a base anda aos trancos.
         self.pub_wb_enable = rospy.Publisher('/b166er/wb_enable', Bool,
                                              queue_size=1, latch=True)
+        # Trava de base durante a manipulação: o whole-body não conhece a
+        # parede e já dirigiu a base contra ela tentando alcançar o olhal
+        # (2026-08-13, robô tombado). Depois do standoff, só o braço serve
+        # o alvo.
+        self.pub_base_lock = rospy.Publisher('/b166er/base_lock', Bool,
+                                             queue_size=1, latch=True)
+        # Plano de exclusão da base (substitui a trava total). Ver
+        # _apply_keepout no fuzzy_wb_controller.
+        self.pub_keepout   = rospy.Publisher('/b166er/base_keepout', PoseStamped,
+                                             queue_size=1, latch=True)
+        # Alvo publicado como posição da PONTA da ferramenta (não do
+        # T265) durante a manipulação — ver fuzzy_wb_controller, 4a.
+        self.pub_servo_tip = rospy.Publisher('/b166er/servo_tooltip', Bool,
+                                             queue_size=1, latch=True)
+        self.pub_markers   = rospy.Publisher('/b166er/mission_markers',
+                                             MarkerArray, queue_size=1, latch=True)
 
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state)
         rospy.Subscriber('/b166er/wall_pose', PoseStamped, self._cb_wall)
         rospy.Subscriber('/b166er/arm_posture_reached', Bool, self._cb_posture)
+        rospy.Subscriber('/b166er/tag_pixel', Point, self._cb_tag_pixel)
+        # Segurança: tombamento detectado pela IMU aborta a missão.
+        # Antes disso o robô tombou várias vezes e a máquina de estados
+        # seguia tentando, alheia — a IMU existia e não era usada.
+        self.tilt_critical = False
+        rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
+        # Distância livre medida pelo Hokuyo — usada na navegação para
+        # parar antes de encostar, sem depender da estimativa da tag.
+        self.front_clearance = None
+        rospy.Subscriber('/b166er/front_clearance', Float64,
+                         self._cb_clearance)
 
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
@@ -135,6 +243,159 @@ class MissionContext(object):
     def _cb_posture(self, msg):
         if msg.data:
             self.posture_done = True
+
+    def _cb_clearance(self, msg):
+        self.front_clearance = msg.data
+
+    def _cb_tilt(self, msg):
+        if msg.data and not self.tilt_critical:
+            rospy.logerr('[mission] IMU reportou inclinação crítica — '
+                         'abortando a missão')
+        self.tilt_critical = msg.data
+
+    def _cb_tag_pixel(self, msg):
+        self.tag_pixel   = msg
+        self.tag_pixel_t = rospy.Time.now()
+
+    # ------------------------------------------------------------------
+    def gimbal_track(self):
+        """Ajusta J1 para recentrar a tag no quadro (rastreamento gimbal).
+
+        Chamado periodicamente durante a navegação. Feedback PURO DE
+        PIXEL: não depende da estimativa de mundo (que é justamente o
+        que está ruim quando o robô está longe), só de onde a tag
+        aparece na imagem. Deadband evita ficar caçando ruído.
+        """
+        if self.tag_pixel is None or self.tag_pixel_t is None:
+            return
+        if (rospy.Time.now() - self.tag_pixel_t).to_sec() > 1.0:
+            return   # detecção velha: tag sumiu, não persegue fantasma
+        off_x = self.tag_pixel.x
+        if abs(off_x) < self.gimbal_deadband:
+            return
+
+        base = list(self.postures['search'])
+        if self._j1_track is None:
+            self._j1_track = base[0]
+        # offset positivo = tag à direita no quadro; o eixo óptico é +X
+        # do link e J1 gira em torno de Z, então recentrar pede J1
+        # DIMINUINDO. Sinal confirmado ao vivo.
+        self._j1_track = float(np.clip(self._j1_track - self.gimbal_gain * off_x,
+                                       -2.6, 2.6))
+        q = list(base)
+        q[0] = self._j1_track
+        msg = JointState()
+        msg.header.stamp = rospy.Time.now()
+        msg.name     = JOINT_NAMES
+        msg.position = q
+        self.pub_posture.publish(msg)   # sem esperar: rastreamento é contínuo
+        rospy.loginfo_throttle(2.0,
+            '[mission] gimbal: tag em x=%+.2f do centro → J1=%.3f rad',
+            off_x, self._j1_track)
+
+    def set_blade_angle(self, deg):
+        """Gira a lâmina da chave para o ângulo dado (graus).
+
+        A chave só ganhou junta revoluta em 2026-08-13 — antes era um
+        bloco rígido e não abria quando o robô puxava, como o Marco
+        observou. Aqui o ângulo é IMPOSTO cinematicamente, acompanhando
+        o waypoint que a ferramenta está executando, em vez de emergir
+        do contato gancho-anel.
+
+        Por que não por contato: puxar um anel com um gancho é um
+        problema de contato fino (duas superfícies curvas, engate
+        geométrico), que o ODE com colisões primitivas não resolve de
+        forma confiável — a ferramenta atravessaria ou escorregaria. O
+        acoplamento cinemático dá a demonstração correta do movimento
+        de abertura, que é o que a missão precisa mostrar. Simular o
+        contato de verdade exigiria malhas de colisão e um solver mais
+        caro, e não muda nada no que está sendo validado aqui (a
+        navegação, a percepção e o alcance do braço).
+        """
+        try:
+            rospy.wait_for_service('/gazebo/set_model_configuration', timeout=2.0)
+            srv = rospy.ServiceProxy('/gazebo/set_model_configuration',
+                                     SetModelConfiguration)
+            srv(model_name=self.fixture_model,
+                urdf_param_name='chave_fixture_description',
+                joint_names=['chave_blade_joint'],
+                joint_positions=[math.radians(deg)])
+            rospy.loginfo('[mission] chave girada para %.0f° (%s)', deg,
+                          'aberta' if deg > 25 else
+                          'fechada' if deg < 5 else 'parcial')
+        except (rospy.ROSException, rospy.ServiceException) as e:
+            rospy.logwarn('[mission] não consegui girar a lâmina: %s', e)
+
+    def settle_gimbal(self):
+        """Encerra o rastreamento gimbal de forma limpa.
+
+        Reenvia a postura corrente como alvo e espera 'reached', para
+        garantir que a ponte de braço não fique com uma rampa pendente
+        — enquanto houver, ela ignora /b166er/arm_vel_cmd e o
+        controlador Cartesiano não move nada.
+        """
+        if self._j1_track is None:
+            return
+        q = list(self.postures['search'])
+        q[0] = self._j1_track
+        msg = JointState()
+        msg.header.stamp = rospy.Time.now()
+        msg.name     = JOINT_NAMES
+        msg.position = q
+        self.posture_done = False
+        self.pub_posture.publish(msg)
+        t0 = rospy.Time.now()
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown() and not self.posture_done:
+            if (rospy.Time.now() - t0).to_sec() > 5.0:
+                rospy.logwarn('[mission] gimbal não assentou em 5s')
+                return
+            rate.sleep()
+
+    # ------------------------------------------------------------------
+    def publish_markers(self, goal=None):
+        """Marcadores para o RViz: alvo de navegação, olhal e caminho.
+
+        Antes disso o RViz não mostrava NADA sobre o deslocamento (o
+        Marco perguntou por quê): a missão navega com controlador
+        próprio escrevendo direto em /cmd_vel, sem move_base e sem
+        publicar Path/Marker — não havia o que desenhar.
+        """
+        arr = MarkerArray()
+        now = rospy.Time.now()
+
+        def _mk(mid, mtype, scale, color):
+            m = Marker()
+            m.header.frame_id = 'odom'
+            m.header.stamp = now
+            m.ns = 'chave_mission'
+            m.id = mid
+            m.type = mtype
+            m.action = Marker.ADD
+            m.scale.x, m.scale.y, m.scale.z = scale
+            m.color.r, m.color.g, m.color.b, m.color.a = color
+            m.pose.orientation.w = 1.0
+            return m
+
+        if self.wall_pos is not None and self.wall_R is not None:
+            olhal = chave_task.olhal_position(self.wall_pos, self.wall_R)
+            m = _mk(0, Marker.SPHERE, (0.08, 0.08, 0.08), (1.0, 0.4, 0.0, 0.9))
+            m.pose.position.x, m.pose.position.y, m.pose.position.z = olhal
+            arr.markers.append(m)
+
+        if goal is not None and self.robot_state is not None:
+            gx, gy, _ = goal
+            m = _mk(1, Marker.CYLINDER, (0.25, 0.25, 0.02), (0.0, 0.8, 1.0, 0.8))
+            m.pose.position.x, m.pose.position.y, m.pose.position.z = gx, gy, 0.01
+            arr.markers.append(m)
+
+            x, y, _ = self.base_pose()
+            line = _mk(2, Marker.LINE_STRIP, (0.03, 0.0, 0.0), (0.0, 0.8, 1.0, 0.7))
+            line.points = [Point(x=x, y=y, z=0.05), Point(x=gx, y=gy, z=0.05)]
+            arr.markers.append(line)
+
+        if arr.markers:
+            self.pub_markers.publish(arr)
 
     # ------------------------------------------------------------------
     def wait_for_state(self, timeout=10.0):
@@ -169,15 +430,76 @@ class MissionContext(object):
         t.angular.z = float(np.clip(w, -self.nav_w, self.nav_w))
         self.pub_cmdvel.publish(t)
 
+    def update_wall_from(self, pose_msg):
+        """Atualiza a estimativa da parede a partir de um PoseStamped.
+
+        Orientação achatada para yaw puro — ver chave_task.flatten_wall_R
+        para o porquê (tilt espúrio do PnP vira erro grande na posição
+        calculada do olhal).
+        """
+        p = pose_msg.pose
+        self.wall_pos = np.array([p.position.x, p.position.y, p.position.z])
+        R = quaternion_matrix([p.orientation.x, p.orientation.y,
+                               p.orientation.z, p.orientation.w])[:3, :3]
+        self.wall_R = chave_task.flatten_wall_R(R)
+
     def take_base(self):
         """Missão assume /cmd_vel (navegação); fuzzy_wb_controller cala."""
         self.pub_wb_enable.publish(Bool(data=False))
         rospy.sleep(0.2)   # deixa o stand-down chegar antes de dirigir
 
+    def publish_keepout(self):
+        """Publica o plano que a base não pode cruzar: a face da parede.
+
+        Substitui a trava total de base. A trava evitava a colisão mas
+        tirava a base da solução — sobravam 5 juntas para a tarefa e o
+        DLS saturava J2/J3 nos batentes, congelando o erro em ~10 cm
+        (medido em 2026-08-13). Com a restrição, a base volta a
+        participar dos 8 DOF e só perde a liberdade de avançar além do
+        limite.
+
+        Convenção esperada pelo controlador: position = ponto no plano,
+        eixo X da orientação = normal apontando para o LADO SEGURO.
+        """
+        n = chave_task.wall_front_normal(self.wall_R)   # aponta para o robô
+        msg = PoseStamped()
+        msg.header.frame_id = 'odom'
+        msg.header.stamp = rospy.Time.now()
+        msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = self.wall_pos
+
+        # Monta uma rotação cujo eixo X seja a normal do lado seguro.
+        x = n / max(np.linalg.norm(n), 1e-9)
+        z = np.array([0.0, 0.0, 1.0])
+        y = np.cross(z, x); y /= max(np.linalg.norm(y), 1e-9)
+        z = np.cross(x, y)
+        T = np.eye(4); T[:3, 0], T[:3, 1], T[:3, 2] = x, y, z
+        qx, qy, qz, qw = quaternion_from_matrix(T)
+        msg.pose.orientation.x, msg.pose.orientation.y = qx, qy
+        msg.pose.orientation.z, msg.pose.orientation.w = qz, qw
+        self.pub_keepout.publish(msg)
+        rospy.loginfo('[mission] plano de exclusão publicado: parede em %s, '
+                      'normal segura %s', self.wall_pos.round(3), x.round(3))
+
     def release_base(self):
-        """Devolve /cmd_vel ao fuzzy_wb_controller (manipulação)."""
+        """Devolve /cmd_vel ao controlador, com a base LIVRE mas restrita.
+
+        Antes isto travava a base por completo. A trava evitava a
+        colisão com a parede mas eliminava a redundância: com 5 juntas
+        só, o DLS saturava J2/J3 nos batentes e o erro congelava.
+        Agora a base participa dos 8 DOF, contida pelo plano de
+        exclusão — que é a resposta certa para whole-body.
+        """
         self.stop_base()
+        self.publish_keepout()
+        self.pub_base_lock.publish(Bool(data=False))
+        self.pub_servo_tip.publish(Bool(data=True))
         self.pub_wb_enable.publish(Bool(data=True))
+        rospy.sleep(0.3)
+
+    def unlock_base(self):
+        """Destrava a base e volta a mirar o T265 (navegação)."""
+        self.pub_servo_tip.publish(Bool(data=False))
+        self.pub_base_lock.publish(Bool(data=False))
         rospy.sleep(0.2)
 
 
@@ -231,12 +553,16 @@ class Search(smach.State):
         while not rospy.is_shutdown():
             if ctx.wall_pose is not None:
                 ctx.stop_base()
-                p = ctx.wall_pose.pose
-                ctx.wall_pos = np.array([p.position.x, p.position.y, p.position.z])
-                ctx.wall_R   = quaternion_matrix(
-                    [p.orientation.x, p.orientation.y,
-                     p.orientation.z, p.orientation.w])[:3, :3]
-                rospy.loginfo('[mission] tag encontrada — parede em (%.3f, %.3f, %.3f)',
+                rospy.loginfo('[mission] tag avistada — parando para medir')
+                rospy.sleep(1.0)   # deixa a base assentar antes de amostrar
+                if not _sample_wall(ctx, ctx.search_samples,
+                                    ctx.search_sample_timeout, 'SEARCH'):
+                    # Avistou de relance mas não conseguiu medir parada:
+                    # segue girando, a tag volta ao quadro.
+                    rospy.logwarn('[mission] SEARCH: medição falhou, continuando busca')
+                    ctx.wall_pose = None
+                    continue
+                rospy.loginfo('[mission] parede localizada em (%.3f, %.3f, %.3f)',
                               *ctx.wall_pos)
                 return 'found'
 
@@ -252,7 +578,18 @@ class Search(smach.State):
 
 
 class Approach(smach.State):
-    """Navega a base até a pose de standoff, de frente para a chave."""
+    """Aproximação em ETAPAS, remedindo a parede entre elas.
+
+    Uma etapa só não funciona: a estimativa do SEARCH vem de ~3 m, e a
+    tag de 132 mm só é confiável até ~1,45 m pela regra tag ≥ d/11 (a
+    mesma medida em hardware real na Fase 4). Em 2026-08-13 isso deu
+    erro de 0,53 m na pose da parede — o standoff calculado caiu a 9 cm
+    da parede e o robô foi direto para cima dela.
+
+    Então: aproxima até uma distância intermediária que caia DENTRO da
+    faixa confiável, remede parado, e só então calcula o standoff final.
+    Cada etapa recalcula o alvo com a melhor estimativa disponível.
+    """
 
     def __init__(self, ctx):
         smach.State.__init__(self, outcomes=['arrived', 'failed'])
@@ -260,26 +597,156 @@ class Approach(smach.State):
 
     def execute(self, _):
         ctx = self.ctx
-        goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R,
-                                             ctx.standoff_dist)
-        rospy.loginfo('[mission] APPROACH — standoff em (%.2f, %.2f, %.2f rad)', *goal)
-        ok = _navigate_to(ctx, goal, ctx.approach_timeout, 'APPROACH')
-        return 'arrived' if ok else 'failed'
+        # Etapas de distância ao olhal: a intermediária só entra se o
+        # robô ainda estiver mais longe que ela.
+        stages = [d for d in (ctx.coarse_distance, ctx.standoff_dist)
+                  if d > ctx.standoff_dist] + [ctx.standoff_dist]
+
+        for i, dist in enumerate(stages):
+            goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R, dist)
+            rospy.loginfo('[mission] APPROACH etapa %d/%d — %.2f m do olhal, '
+                          'alvo (%.2f, %.2f, %.2f rad)',
+                          i + 1, len(stages), dist, *goal)
+            ctx.publish_markers(goal)
+            if not _navigate_to(ctx, goal, ctx.approach_timeout, 'APPROACH'):
+                return 'failed'
+
+            # Remede parado antes da próxima etapa (a última medição fina
+            # fica a cargo do REFINE, já na pose de standoff).
+            if i < len(stages) - 1:
+                rospy.sleep(1.0)
+                if not _sample_wall(ctx, ctx.refine_samples,
+                                    ctx.refine_timeout, 'APPROACH/remedida'):
+                    rospy.logerr('[mission] APPROACH: perdi a tag na etapa '
+                                 'intermediária')
+                    return 'failed'
+        return 'arrived'
 
 
-class Deploy(smach.State):
+class Refine(smach.State):
+    """Remede a parede de perto, já parado na pose de standoff.
+
+    A estimativa do SEARCH vem de longe (~2,5 m), onde o erro angular
+    chega a 7,5° — e o olhal fica a 0,86 m da origem de wall_link, então
+    esse erro vira dezenas de centímetros no alvo de manipulação. Em
+    2026-08-13 isso colocou a fase "engage" atrás da parede e derrubou
+    o robô. A ~0,65 m o mesmo pipeline mede com erro de ~18 mm.
+
+    Média de várias amostras para reduzir o ruído por frame; a posição
+    é média aritmética simples e o yaw é médio circular.
+    """
+
     def __init__(self, ctx):
         smach.State.__init__(self, outcomes=['ok', 'failed'])
         self.ctx = ctx
 
     def execute(self, _):
         ctx = self.ctx
-        ctx.send_posture('deploy')
+        n_wanted = ctx.refine_samples
+        rospy.loginfo('[mission] REFINE — remedindo a parede de perto (%d amostras)',
+                      n_wanted)
+
+        antes = ctx.wall_pos.copy()
+        if not _sample_wall(ctx, n_wanted, ctx.refine_timeout, 'REFINE'):
+            # NÃO é falha: seguimos com a estimativa que já temos.
+            #
+            # A remedição no standoff era obrigatória quando a tag tinha
+            # 132 mm e a medida intermediária (a ~1,3 m) errava ~40 mm.
+            # Com a tag de 220 mm essa medida intermediária erra 13 mm —
+            # boa o bastante para manipular. E exigir a tag visível no
+            # standoff é frágil por geometria: parado de frente para a
+            # CHAVE, a tag fica deslocada para o lado e pode sair do
+            # campo de visão da câmera de punho. Foram 4 das 5 falhas
+            # numa bateria de 8 (2026-08-21), todas por isso.
+            rospy.logwarn('[mission] REFINE: tag não visível no standoff — '
+                          'seguindo com a estimativa da aproximação '
+                          '(erro típico ~13 mm com a tag de 220 mm)')
+        else:
+            rospy.loginfo('[mission] REFINE: deslocou %.3f m da estimativa anterior',
+                          float(np.linalg.norm(ctx.wall_pos - antes)))
+        rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f)',
+                      *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
+        return 'ok'
+
+
+class Deploy(smach.State):
+    """Pré-posiciona o braço na SOLUÇÃO DE IK do primeiro alvo.
+
+    Não usa mais uma postura fixa. O braço tem múltiplos ramos de
+    solução e uma postura fixa cai na bacia errada com frequência: em
+    2026-08-13 a missão convergia suave até 4,5 cm do olhal e travava
+    lá, com J3 cravado em −60° (o batente), enquanto a solução do mesmo
+    alvo pedia J3 = +31°. Resolver a IK aqui coloca o braço no ramo
+    certo, e o controlador Cartesiano só fecha o resíduo.
+
+    Fallback para a postura 'deploy' do YAML se a IK não achar solução
+    (alvo fora de alcance a partir do standoff) — aí o MANIPULATE falha
+    com diagnóstico claro em vez de o braço sair tentando às cegas.
+    """
+
+    def __init__(self, ctx):
+        smach.State.__init__(self, outcomes=['ok', 'failed'])
+        self.ctx = ctx
+
+    def execute(self, _):
+        ctx = self.ctx
+        # Mira o primeiro waypoint (pré-engate, afastado da parede) —
+        # não o olhal: pré-posicionar direto no olhal levaria o braço a
+        # atravessar a parede durante a rampa de postura.
+        p_tip = chave_task.phase_target_position(
+            ctx.wall_pos, ctx.wall_R, ctx.phases[PHASE_ORDER[0]]['offset_xyz_m'])
+
+        x, y, yaw = ctx.base_pose()
+        b = ctx.robot_state.base_odom.pose.pose
+        T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
+                                  b.orientation.z, b.orientation.w])
+        T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
+        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
+
+        q_ik, err_ik = ik_tooltip_position(
+            p_local, q_current=np.array(ctx.robot_state.q_arm))
+        if err_ik < ctx.deploy_ik_tol:
+            rospy.loginfo('[mission] DEPLOY: IK da ponta resolvida (resíduo '
+                          '%.4f m) — pré-posicionando em %s graus',
+                          err_ik, np.degrees(q_ik).round(1))
+            msg = JointState()
+            msg.header.stamp = rospy.Time.now()
+            msg.name     = JOINT_NAMES
+            msg.position = q_ik.tolist()
+            ctx.posture_done = False
+            ctx.pub_posture.publish(msg)
+        else:
+            rospy.logwarn('[mission] DEPLOY: IK da ponta não fechou (resíduo '
+                          '%.3f m) — alvo provavelmente fora de alcance deste '
+                          'standoff. Usando a postura fixa do YAML.', err_ik)
+            ctx.send_posture('deploy')
+
         if not _wait_posture(ctx):
             return 'failed'
-        # Handoff: daqui em diante quem dirige base E braço é o
-        # controlador whole-body, conduzido por /b166er/ee_target.
-        ctx.release_base()
+        # O DEPLOY continua sendo posicionamento GROSSO por rampa em
+        # espaço de juntas; o handoff para o controlador Cartesiano
+        # acontece fase a fase, dentro de _reach_by_wholebody.
+        #
+        # Este bloco dizia "SEM handoff: os dois não podem coexistir",
+        # por causa do episódio de 2026-08-13 em que o
+        # fuzzy_wb_controller perseguia o último /b166er/ee_target e
+        # movia a base enquanto a missão comandava posturas (erro cravado
+        # em 3,2 cm por 5 iterações, ponta imóvel). O desligamento
+        # resolveu o sintoma e custou caro: medido em 2026-08-24, o
+        # controlador ficava em stand-down a missão inteira e o controle
+        # whole-body não participava de nada.
+        #
+        # O alvo estava velho porque a missão nunca publicava um novo —
+        # /b166er/ee_target era declarado e nunca usado. Não havia
+        # disputa por /cmd_vel: stop_base() emite um único Twist zero.
+        # Com alvo fresco publicado ANTES de habilitar, e take_base() no
+        # finally de cada fase, os dois convivem.
+        #
+        # A base fica parada aqui; o plano de exclusão fica publicado
+        # para quando o controlador assumir.
+        ctx.publish_keepout()
+        ctx.take_base()
+        ctx.stop_base()
         return 'ok'
 
 
@@ -302,24 +769,17 @@ class Manipulate(smach.State):
         for phase in PHASE_ORDER:
             offset = ctx.phases[phase]['offset_xyz_m']
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
-            p_t265 = tooltip_position_to_t265_position(p_tip, R_ee)
 
-            T_target = np.eye(4)
-            T_target[:3, :3] = R_ee
-            T_target[:3, 3]  = p_t265
-
-            msg = PoseStamped()
-            msg.header.frame_id = 'odom'
-            msg.header.stamp    = rospy.Time.now()
-            msg.pose.position.x, msg.pose.position.y, msg.pose.position.z = p_t265
-            msg.pose.orientation = ctx.ee_orientation
-            ctx.pub_target.publish(msg)
-            rospy.loginfo('[mission] fase "%s" — ponta em (%.3f, %.3f, %.3f)',
-                          phase, *p_tip)
-
-            if not _wait_ee_convergence(ctx, T_target, phase):
+            alcancar = (_reach_by_wholebody if ctx.use_wholebody
+                        else _reach_by_iterative_ik)
+            if not alcancar(ctx, p_tip, phase):
                 return 'failed'
-            rospy.sleep(1.0)
+
+            # A chave acompanha a ferramenta (ver set_blade_angle).
+            ang = ctx.phases[phase].get('blade_angle_deg')
+            if ang is not None:
+                ctx.set_blade_angle(float(ang))
+            rospy.sleep(0.5)
 
         rospy.loginfo('[mission] MANIPULATE concluída — chave aberta')
         return 'done'
@@ -332,7 +792,12 @@ class Retract(smach.State):
 
     def execute(self, _):
         ctx = self.ctx
-        ctx.take_base()          # retoma /cmd_vel para navegar de volta
+        # ORDEM IMPORTA: silencia o controlador ANTES de destravar. Ao
+        # contrário, existe uma janela em que ele fica com a base livre
+        # E ainda perseguindo o último alvo latched — observado ao vivo
+        # em 2026-08-13, a base saiu andando ~0,7 m depois do abort.
+        ctx.take_base()          # fuzzy cala, missão assume /cmd_vel
+        ctx.unlock_base()        # só então destrava
         ctx.stop_base()
         ctx.send_posture('stow_home')
         return 'ok' if _wait_posture(ctx) else 'failed'
@@ -364,7 +829,8 @@ class AbortSafe(smach.State):
 
     def execute(self, _):
         rospy.logwarn('[mission] ABORT — parando base e recolhendo braço')
-        self.ctx.take_base()
+        self.ctx.take_base()     # silencia o controlador PRIMEIRO
+        self.ctx.unlock_base()
         self.ctx.stop_base()
         self.ctx.send_posture('stow_home')
         _wait_posture(self.ctx)
@@ -374,6 +840,94 @@ class AbortSafe(smach.State):
 # ═══════════════════════════════════════════════════════════════════════
 # Helpers compartilhados entre estados
 # ═══════════════════════════════════════════════════════════════════════
+
+# Limiares de rejeição de outlier em _sample_wall. Dimensionados pela
+# dispersão real medida: parado e de frente, amostras consecutivas da
+# mesma pose variam poucos centímetros e milirradianos; um flip de
+# ambiguidade do PnP salta dezenas de centímetros e dezenas de graus.
+# A folga entre as duas escalas é grande, então os valores não são
+# críticos — precisam só ficar no meio.
+_OUTLIER_POS_M   = 0.15
+_OUTLIER_YAW_RAD = 0.20
+
+
+def _sample_wall(ctx, n_wanted, timeout, tag):
+    """Coleta N estimativas da parede com o robô PARADO e devolve a média.
+
+    Amostrar parado importa: em 2026-08-13 o SEARCH aceitava a primeira
+    detecção, capturada durante o giro, em ângulo rasante — erro de 46 cm
+    na pose da parede, que jogou o standoff quase encostado nela e deixou
+    a tag fora do campo de visão para o REFINE. Parado e de frente, o
+    mesmo pipeline erra ~2 cm.
+
+    Posição por média aritmética; yaw por média circular; roll/pitch
+    descartados (ver chave_task.flatten_wall_R).
+    """
+    positions, yaws = [], []
+    rate = rospy.Rate(10)
+    t0 = rospy.Time.now()
+    ctx.wall_pose = None
+    while len(positions) < n_wanted and not rospy.is_shutdown():
+        if (rospy.Time.now() - t0).to_sec() > timeout:
+            break
+        if ctx.wall_pose is not None:
+            p = ctx.wall_pose.pose
+            positions.append([p.position.x, p.position.y, p.position.z])
+            R = quaternion_matrix([p.orientation.x, p.orientation.y,
+                                   p.orientation.z, p.orientation.w])[:3, :3]
+            yaws.append(math.atan2(R[1, 0], R[0, 0]))
+            ctx.wall_pose = None
+        rate.sleep()
+
+    if len(positions) < 3:
+        rospy.logerr('[mission] %s: só %d amostras da tag', tag, len(positions))
+        return False
+
+    # REJEIÇÃO DE OUTLIERS (2026-08-24). Média pura assume ruído
+    # simétrico, e o erro do PnP aqui não é: a ambiguidade de pose da
+    # tag plana faz a solução "virar" para um espelho, e uma única
+    # amostra virada desloca a média muito mais do que o ruído normal.
+    # Na bateria de 2026-08-21 o SEARCH de uma execução devolveu a
+    # parede a (0.185, 3.576) yaw=2.549 — 0,58 m e 34° fora, com o
+    # mesmo pipeline que nas outras execuções errava 3 cm.
+    #
+    # Mediana como referência (não a média: a média já está
+    # contaminada) e corte por desvio absoluto. O yaw entra no mesmo
+    # critério porque é nele que o flip aparece primeiro.
+    P = np.array(positions)
+    med = np.median(P, axis=0)
+    yaw_med = math.atan2(np.median(np.sin(yaws)), np.median(np.cos(yaws)))
+    d_pos = np.linalg.norm(P - med, axis=1)
+    d_yaw = np.abs(np.arctan2(np.sin(np.array(yaws) - yaw_med),
+                              np.cos(np.array(yaws) - yaw_med)))
+    keep = (d_pos <= _OUTLIER_POS_M) & (d_yaw <= _OUTLIER_YAW_RAD)
+    if keep.sum() >= 3 and keep.sum() < len(positions):
+        rospy.logwarn('[mission] %s: %d de %d amostras descartadas como '
+                      'outlier (>%.2f m ou >%.2f rad da mediana)',
+                      tag, len(positions) - int(keep.sum()), len(positions),
+                      _OUTLIER_POS_M, _OUTLIER_YAW_RAD)
+        P = P[keep]
+        yaws = list(np.array(yaws)[keep])
+    elif keep.sum() < 3:
+        # Dispersão grande demais para separar sinal de outlier: a
+        # medida inteira é suspeita. Falhar aqui é melhor que devolver
+        # uma pose errada com cara de confiável — foi assim que o robô
+        # já foi mandado contra a parede.
+        rospy.logerr('[mission] %s: amostras dispersas demais (só %d de %d '
+                     'dentro de %.2f m da mediana) — medida descartada',
+                     tag, int(keep.sum()), len(positions), _OUTLIER_POS_M)
+        return False
+
+    positions = P.tolist()
+    pos_mean = np.mean(P, axis=0)
+    yaw_mean = math.atan2(np.mean(np.sin(yaws)), np.mean(np.cos(yaws)))
+    c, s_ = math.cos(yaw_mean), math.sin(yaw_mean)
+    ctx.wall_pos = pos_mean
+    ctx.wall_R   = np.array([[c, -s_, 0.0], [s_, c, 0.0], [0.0, 0.0, 1.0]])
+    rospy.loginfo('[mission] %s: %d amostras — parede (%.3f, %.3f, %.3f) yaw=%.3f',
+                  tag, len(positions), *pos_mean, yaw_mean)
+    return True
+
 
 def _wait_posture(ctx):
     t0 = rospy.Time.now()
@@ -395,11 +949,25 @@ def _navigate_to(ctx, goal, timeout, tag):
     t0 = rospy.Time.now()
     phase = 'TURN_TO'
 
+    t_gimbal = rospy.Time.now()
     while not rospy.is_shutdown():
         if (rospy.Time.now() - t0).to_sec() > timeout:
             ctx.stop_base()
             rospy.logerr('[mission] %s: timeout de %.0fs em %s', tag, timeout, phase)
             return False
+
+        # Mantém a tag centrada enquanto anda, e alimenta o RViz.
+        # ATENÇÃO: o gimbal publica comandos de POSTURA, e a ponte de
+        # braço (gazebo_arm_bridge) ignora /b166er/arm_vel_cmd enquanto
+        # uma rampa de postura está ativa. Se uma rampa do gimbal ficar
+        # em voo quando a navegação terminar, ela sequestra o braço e o
+        # controlador Cartesiano da manipulação não consegue mover nada
+        # — foi o que travou o "engage" em 2026-08-13, com o
+        # controlador comandando velocidade e o braço parado.
+        if (rospy.Time.now() - t_gimbal).to_sec() > ctx.gimbal_period:
+            ctx.gimbal_track()
+            ctx.publish_markers(goal)
+            t_gimbal = rospy.Time.now()
 
         x, y, yaw = ctx.base_pose()
         dx, dy = gx - x, gy - y
@@ -415,7 +983,19 @@ def _navigate_to(ctx, goal, timeout, tag):
                 ctx.drive(0.0, math.copysign(ctx.nav_w, err))
 
         elif phase == 'DRIVE':
-            if dist < ctx.nav_pos_tol:
+            # Freio por MEDIDA: o laser vê o obstáculo real à frente.
+            # Antes a única proteção era o alvo calculado a partir da
+            # tag — se a estimativa errasse, o robô ia para cima da
+            # parede (aconteceu em 2026-08-13, standoff calculado a 9 cm
+            # da parede por erro de 53 cm na detecção distante).
+            if (ctx.front_clearance is not None
+                    and ctx.front_clearance < ctx.min_clearance):
+                ctx.stop_base()
+                rospy.logwarn('[mission] %s: laser reporta obstáculo a %.2f m '
+                              '(mín %.2f) — parando avanço', tag,
+                              ctx.front_clearance, ctx.min_clearance)
+                phase = 'TURN_FINAL'
+            elif dist < ctx.nav_pos_tol:
                 ctx.stop_base()
                 phase = 'TURN_FINAL'
                 rospy.loginfo('[mission] %s: chegou, ajustando heading final', tag)
@@ -428,6 +1008,11 @@ def _navigate_to(ctx, goal, timeout, tag):
             err = _ang_diff(gyaw, yaw)
             if abs(err) < ctx.nav_yaw_tol:
                 ctx.stop_base()
+                # Fecha qualquer rampa de gimbal pendente: reenvia a
+                # postura ATUAL do rastreamento como alvo e espera ela
+                # assentar, para a ponte de braço sair do modo postura
+                # antes de a manipulação começar.
+                ctx.settle_gimbal()
                 rospy.loginfo('[mission] %s: concluído', tag)
                 return True
             ctx.drive(0.0, math.copysign(ctx.nav_w, err))
@@ -436,20 +1021,232 @@ def _navigate_to(ctx, goal, timeout, tag):
     return False
 
 
+def _tooltip_now(ctx):
+    """Posição atual da PONTA da ferramenta, medida pelo T265."""
+    p = ctx.robot_state.ee_pose.pose.position
+    o = ctx.robot_state.ee_pose.pose.orientation
+    R = quaternion_matrix([o.x, o.y, o.z, o.w])[:3, :3]
+    return np.array([p.x, p.y, p.z]) + R @ T_T265_TOOLTIP[:3, 3]
+
+
+def _reach_by_wholebody(ctx, p_goal, phase):
+    """Fecha a fase com o controlador whole-body de 8 DOF.
+
+    Reativa o caminho que estava morto (2026-08-24): release_base() nunca
+    era chamado, /b166er/ee_target nunca era publicado e
+    /b166er/servo_tooltip nunca ia a True. Medido numa missão inteira a
+    50 Hz: arm_vel_cmd != 0 em 0 de 21396 amostras — o fuzzy_wb_controller
+    ficava em stand-down do início ao fim e a manipulação toda acontecia
+    por IK em espaço de juntas. Ou seja, o controle whole-body, que é a
+    contribuição central, não participava de nada.
+
+    Por que ele tinha sido desligado, e por que dá para religar: o
+    comentário de 2026-08-13 dizia que os dois "não podem coexistir",
+    porque o controlador seguia perseguindo o último ee_target e movia a
+    base enquanto a missão comandava posturas. Mas o alvo estava velho
+    justamente porque a missão nunca publicava um novo — e não há disputa
+    por /cmd_vel: stop_base() emite um único Twist zero, e nem Manipulate
+    nem _reach_by_iterative_ik publicam em laço. O conflito era alvo
+    obsoleto, não incompatibilidade.
+
+    Daí a ordem aqui, que não é acidental: publicar o alvo ANTES de
+    habilitar, nunca depois. Entre o release_base() e o primeiro
+    ee_target o controlador atuaria sobre o alvo da fase anterior.
+
+    A chegada é medida pela MISSÃO, não pelo controlador: ele tem um
+    _reached interno com tolerância própria e não publica sinal nenhum.
+    Manter o critério aqui evita duas autoridades discordando sobre o
+    que é "chegou".
+    """
+    p_goal = np.asarray(p_goal, dtype=float)
+
+    alvo = PoseStamped()
+    alvo.header.stamp = rospy.Time.now()
+    alvo.header.frame_id = 'odom'
+    alvo.pose.position.x = float(p_goal[0])
+    alvo.pose.position.y = float(p_goal[1])
+    alvo.pose.position.z = float(p_goal[2])
+    alvo.pose.orientation.w = 1.0   # com servo_tooltip só a posição conta
+    ctx.pub_target.publish(alvo)
+    rospy.sleep(0.2)
+
+    ctx.release_base()
+    rospy.loginfo('[mission] fase "%s": whole-body assumiu (base livre, '
+                  'restrita pelo plano de exclusão)', phase)
+
+    ok = False
+    try:
+        t0 = rospy.Time.now()
+        rate = rospy.Rate(10)
+        estaveis = 0
+        melhor = float('inf')
+        while not rospy.is_shutdown():
+            if ctx.tilt_critical:
+                rospy.logerr('[mission] fase "%s": abortada por inclinação '
+                             'crítica', phase)
+                return False
+            if (rospy.Time.now() - t0).to_sec() > ctx.wb_phase_timeout:
+                rospy.logerr('[mission] fase "%s": whole-body não fechou em '
+                             '%.0fs (melhor %.4f m, tolerância %.3f)',
+                             phase, ctx.wb_phase_timeout, melhor, ctx.tol_pos)
+                return False
+
+            p_now = _tooltip_now(ctx)
+            n_err = float(np.linalg.norm(p_goal - p_now))
+            melhor = min(melhor, n_err)
+
+            # Exige a tolerância SUSTENTADA: um instante dentro dela pode
+            # ser a ponta passando de raspão durante o transitório.
+            if n_err < ctx.tol_pos:
+                estaveis += 1
+                if estaveis >= ctx.wb_settle_samples:
+                    rospy.loginfo('[mission] fase "%s" alcançada por whole-body '
+                                  'em %.1fs (%.4f m)', phase,
+                                  (rospy.Time.now() - t0).to_sec(), n_err)
+                    ok = True
+                    return True
+            else:
+                estaveis = 0
+            rospy.loginfo_throttle(2.0,
+                '[mission] fase "%s": whole-body a %.4f m do alvo', phase, n_err)
+            rate.sleep()
+        return False
+    finally:
+        # Devolver o /cmd_vel é obrigatório mesmo no caminho de falha: sem
+        # isso o controlador segue perseguindo este alvo na fase seguinte,
+        # que é exatamente o bug de 2026-08-13.
+        ctx.take_base()
+        ctx.stop_base()
+        if not ok:
+            ctx.publish_keepout()
+
+
+def _reach_by_iterative_ik(ctx, p_goal, phase):
+    """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
+
+    Por que iterar em vez de deixar a malha Cartesiana fechar: depois de
+    comandar a solução de IK, o braço FÍSICO não chega nela — os
+    controladores de posição têm droop de 1,4 a 3,3° por junta sob
+    gravidade (medido em 2026-08-13), o que deixa a ponta 3 a 10 cm
+    aquém. A malha Cartesiana enxerga esse resíduo (o T265 mede a pose
+    real) mas nem sempre consegue fechá-lo: em algumas configurações a
+    Jacobiana não tem autoridade na direção necessária e o DLS empurra
+    juntas até os batentes, com o erro estacionando.
+
+    A iteração ataca o droop pelo que ele é — um erro sistemático e
+    repetível: mede o quanto faltou e recomanda a IK mirando ALÉM do
+    alvo, na mesma medida. Como o droop é função da postura e a postura
+    quase não muda entre iterações, duas ou três bastam.
+
+    Cada passo usa a postura atual como semente (continuidade de ramo).
+    """
+    p_goal = np.asarray(p_goal, dtype=float)
+    p_aim  = p_goal.copy()
+
+    for it in range(ctx.ik_max_iters):
+        if ctx.tilt_critical:
+            rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
+                         phase)
+            return False
+
+        b = ctx.robot_state.base_odom.pose.pose
+        T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
+                                  b.orientation.z, b.orientation.w])
+        T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
+        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_aim, 1))[:3]
+
+        q_ik, err_ik = ik_tooltip_position(
+            p_local, q_current=np.array(ctx.robot_state.q_arm))
+
+        if err_ik > ctx.deploy_ik_tol:
+            # O ponto EXTRAPOLADO saiu do alcance — não o alvo real.
+            # Abortar aqui era exagero: em 1 de 5 execuções da bateria
+            # de repetibilidade (2026-08-21) a missão morreu no
+            # pre_engage porque a mira além caiu 25 mm fora do
+            # workspace. Recuar para o alvo verdadeiro é sempre
+            # possível (foi alcançável no DEPLOY) e custa só perder a
+            # compensação daquela iteração.
+            if not np.allclose(p_aim, p_goal):
+                rospy.logwarn('[mission] fase "%s" it%d: mira além ficou fora '
+                              'de alcance (%.3f m) — recuando para o alvo real',
+                              phase, it, err_ik)
+                p_aim = p_goal.copy()
+                p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM)
+                           @ np.append(p_aim, 1))[:3]
+                q_ik, err_ik = ik_tooltip_position(
+                    p_local, q_current=np.array(ctx.robot_state.q_arm))
+            if err_ik > ctx.deploy_ik_tol:
+                rospy.logwarn('[mission] fase "%s" it%d: IK não fechou (%.3f m) '
+                              '— alvo fora de alcance deste standoff',
+                              phase, it, err_ik)
+                return False
+
+        msg = JointState()
+        msg.header.stamp = rospy.Time.now()
+        msg.name     = JOINT_NAMES
+        msg.position = q_ik.tolist()
+        ctx.posture_done = False
+        ctx.pub_posture.publish(msg)
+        if not _wait_posture(ctx):
+            return False
+        rospy.sleep(ctx.ik_settle_time)   # deixa o PID assentar antes de medir
+
+        p_now = _tooltip_now(ctx)
+        err   = p_goal - p_now
+        n_err = float(np.linalg.norm(err))
+
+        # O braço chegou onde a IK mandou? Distingue "IK ruim" de
+        # "controlador não seguiu" — sem isso as duas causas produzem o
+        # mesmo sintoma (ponta longe do alvo).
+        q_real = np.array(ctx.robot_state.q_arm)
+        dq = np.degrees(q_real - q_ik)
+        rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
+                      'erro=%.4f | IK pediu %s | faltou %s graus',
+                      phase, it, *p_now, n_err,
+                      np.degrees(q_ik).round(1), dq.round(1))
+
+        if n_err < ctx.tol_pos:
+            rospy.loginfo('[mission] fase "%s" alcançada em %d iteração(ões) '
+                          '(%.4f m)', phase, it + 1, n_err)
+            return True
+
+        # Mira além, na medida do que faltou — AMORTECIDA. Corrigir o
+        # erro inteiro de uma vez extrapola demais quando o primeiro
+        # passo erra muito, e o ponto extrapolado pode sair do
+        # workspace. Com 0,8 converge em praticamente o mesmo número de
+        # iterações e fica dentro do alcance.
+        p_aim = p_aim + ctx.ik_correction_gain * err
+
+    rospy.logerr('[mission] fase "%s": %d iterações sem fechar (%.4f m, '
+                 'tolerância %.3f)', phase, ctx.ik_max_iters, n_err, ctx.tol_pos)
+    return False
+
+
 def _wait_ee_convergence(ctx, T_target, phase):
     rate = rospy.Rate(10)
     t0 = rospy.Time.now()
     while not rospy.is_shutdown():
+        if ctx.tilt_critical:
+            rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
+                         phase)
+            return False
         st = ctx.robot_state
         p, o = st.ee_pose.pose.position, st.ee_pose.pose.orientation
         T_cur = quaternion_matrix([o.x, o.y, o.z, o.w])
         T_cur[:3, 3] = [p.x, p.y, p.z]
+        # Erro medido na PONTA DA FERRAMENTA (o T265 é só o sensor).
+        p_tip_cur = T_cur[:3, 3] + T_cur[:3, :3] @ T_T265_TOOLTIP[:3, 3]
         err = pose_error(T_cur, T_target)
-        rp, ro = np.linalg.norm(err[:3]), np.linalg.norm(err[3:])
+        rp = float(np.linalg.norm(T_target[:3, 3] - p_tip_cur))
+        ro = float(np.linalg.norm(err[3:]))
 
-        if rp < ctx.tol_pos and ro < ctx.tol_orient:
-            rospy.loginfo('[mission] fase "%s" convergiu (%.4f m, %.4f rad)',
-                          phase, rp, ro)
+        # Só posição: durante a manipulação a base fica travada e o
+        # controlador serve apenas posição (5 DOF não fecham pose 6D —
+        # ver fuzzy_wb_controller, etapa 4a). Exigir orientação aqui
+        # seria esperar por um critério que ninguém está perseguindo.
+        if rp < ctx.tol_pos:
+            rospy.loginfo('[mission] fase "%s" convergiu (%.4f m; ori %.3f rad, '
+                          'não controlada)', phase, rp, ro)
             return True
 
         if (rospy.Time.now() - t0).to_sec() > ctx.phase_timeout:
@@ -472,7 +1269,9 @@ def main():
         smach.StateMachine.add('SEARCH', Search(ctx),
                                transitions={'found': 'APPROACH', 'failed': 'ABORT_SAFE'})
         smach.StateMachine.add('APPROACH', Approach(ctx),
-                               transitions={'arrived': 'DEPLOY', 'failed': 'ABORT_SAFE'})
+                               transitions={'arrived': 'REFINE', 'failed': 'ABORT_SAFE'})
+        smach.StateMachine.add('REFINE', Refine(ctx),
+                               transitions={'ok': 'DEPLOY', 'failed': 'ABORT_SAFE'})
         smach.StateMachine.add('DEPLOY', Deploy(ctx),
                                transitions={'ok': 'MANIPULATE', 'failed': 'ABORT_SAFE'})
         smach.StateMachine.add('MANIPULATE', Manipulate(ctx),

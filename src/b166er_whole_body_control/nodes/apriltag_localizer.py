@@ -78,18 +78,29 @@ import cv2
 import rospy
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from tf.transformations import quaternion_matrix, quaternion_from_matrix
 
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import T_T265_TASKCAMERA
+from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
 
-TAG_SIZE = 0.132  # m — mesma tag física já validada (project_fase4_apriltag_validacao)
+TAG_SIZE = 0.220  # m — quadrado preto. Subiu de 132 mm para alcançar
+                  # a distância do SEARCH (~3 m); ver apriltag_mount.urdf.xacro
 
-# Offset fixo de wall_link até o centro da tag_plate (chave_com_tag.urdf.xacro:
-# tag_x_offset=0.20, tag_mount_z=1.030, joint sem rotação — mesma
-# orientação de wall_link).
-TAG_OFFSET_FROM_WALL_LINK = np.array([0.20, 0.0, 1.030])
+# Offset de wall_link até a tag: IMPORTADO de chave_task, NÃO copiado.
+#
+# Aqui havia uma cópia local com 0.20 fixo. Quando a tag foi movida para
+# o outro lado da chave (-0.60, 2026-08-13), chave_task foi atualizado e
+# esta cópia não — o localizador passou a estimar a parede 0,795 m fora
+# do lugar. Pior: a missão rodou inteira e terminou em MISSION_OK,
+# porque tudo depois disso é relativo à estimativa errada; o robô
+# "abriu a chave" a 80 cm de onde ela está. O Marco pegou o risco antes
+# do teste: "ao mudar o lado da tag, tem q alterar as direções no
+# código também".
+#
+# Duplicar constante de geometria é exatamente o que chave_task existe
+# para evitar. Importar fecha a porta para esse erro se repetir.
 
 # Rotação padrão link-da-câmera (X-forward, convenção Gazebo/ROS para
 # corpos) → frame óptico (Z-forward, X-right, Y-down, convenção
@@ -110,6 +121,28 @@ _R_PNP_TO_FIXTURE = np.array([
     [0.0,  0.0, 1.0],
     [0.0,  1.0, 0.0],
 ])
+
+
+def _to_imgmsg(bgr):
+    """BGR (ndarray) → sensor_msgs/Image, sem passar pelo cv_bridge.
+
+    O cv_bridge desta instalação (ROS Noetic sobre Python 3.12) ainda
+    chama ndarray.tostring(), removido no NumPy 2.0 — cv2_to_imgmsg
+    quebra com AttributeError. A conversão é trivial o bastante para
+    fazer à mão e evita prender o nó a essa incompatibilidade.
+    (imgmsg_to_cv2, o caminho inverso, funciona normalmente.)
+    """
+    msg = Image()
+    msg.height, msg.width = bgr.shape[0], bgr.shape[1]
+    msg.encoding = 'bgr8'
+    msg.is_bigendian = 0
+    msg.step = 3 * bgr.shape[1]
+    msg.data = bgr.tobytes()
+    return msg
+
+
+def _draw_text(img, txt, y, color):
+    cv2.putText(img, txt, (8, y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
 
 
 def _quat_to_matrix(o):
@@ -144,6 +177,23 @@ class AprilTagLocalizer:
 
         self._pub_wall_pose = rospy.Publisher('/b166er/wall_pose', PoseStamped,
                                               queue_size=1)
+        # Offset da tag no QUADRO, normalizado em [-1, 1] (x: horizontal,
+        # y: vertical; z = lado do quadrado em px, proxy de distância).
+        # Serve ao rastreamento tipo gimbal ("pescoço de galinha") que
+        # mantém a tag centrada enquanto a base navega — sem isso a tag
+        # sai de quadro na aproximação e a estimativa degrada justamente
+        # quando mais importa.
+        self._pub_tag_pixel = rospy.Publisher('/b166er/tag_pixel', Point,
+                                              queue_size=1)
+        # Imagem ANOTADA com o resultado da detecção. Existe porque não
+        # havia como ver, ao vivo, se a câmera estava achando a tag —
+        # durante a depuração isso só era visível gerando prints sob
+        # demanda (Marco: "não consigo visualizar se a câmera está
+        # realmente encontrando a tag"). Publica sempre, com ou sem
+        # detecção, para o silêncio também ser informativo.
+        #   rosrun image_view image_view image:=/b166er/tag_debug_image
+        self._pub_debug = rospy.Publisher('/b166er/tag_debug_image', Image,
+                                          queue_size=1)
 
         rospy.Subscriber('/task_camera/camera_info', CameraInfo, self._cb_camera_info)
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state)
@@ -153,6 +203,48 @@ class AprilTagLocalizer:
                       self._tag_id, self._tag_size * 1000)
 
     # ------------------------------------------------------------------
+    def _publish_debug(self, frame, corners, ids, pnp):
+        """Publica a imagem com o resultado da detecção desenhado.
+
+        Mostra também a regra prática de alcance da tag (lado ≥ d/11,
+        validada em hardware na Fase 4): a distância estimada aparece em
+        verde quando está dentro da faixa confiável e em vermelho fora
+        dela — foi justamente detecção fora de faixa, a ~3 m, que fez a
+        primeira versão da missão calcular o standoff errado e ir para
+        cima da parede.
+        """
+        # SEM guarda de assinantes. Havia aqui um
+        # `if get_num_connections() == 0: return` para poupar CPU, mas o
+        # efeito prático era o tópico parecer morto justamente quando
+        # alguém ia olhar: image_view abre, o publisher ainda não
+        # registrou a conexão, nada chega, e a impressão é de que a
+        # câmera não funciona (o Marco relatou isso mais de uma vez).
+        # Publicar sempre custa uma conversão de imagem a 15 Hz e
+        # garante que o tópico esteja vivo quando precisar.
+        out = frame.copy()
+        if corners is not None and ids is not None:
+            cv2.aruco.drawDetectedMarkers(out, corners, ids)
+
+        if pnp is None:
+            if ids is None:
+                _draw_text(out, 'NENHUMA TAG DETECTADA', 24, (0, 0, 255))
+            else:
+                _draw_text(out, 'tag(s) %s — id %d NAO encontrada'
+                           % (list(ids), self._tag_id), 24, (0, 165, 255))
+        else:
+            rvec, tvec, side_px = pnp
+            d = float(np.linalg.norm(tvec))
+            d_max = self._tag_size * 11.0
+            ok = d <= d_max
+            cv2.drawFrameAxes(out, self._K, self._dist, rvec, tvec,
+                              self._tag_size * 0.7)
+            _draw_text(out, 'tag id=%d  lado=%.0f px  dist=%.2f m'
+                       % (self._tag_id, side_px, d), 24, (0, 255, 0))
+            _draw_text(out, 'faixa confiavel (d/11): ate %.2f m  ->  %s'
+                       % (d_max, 'OK' if ok else 'FORA DE FAIXA'), 48,
+                       (0, 255, 0) if ok else (0, 0, 255))
+        self._pub_debug.publish(_to_imgmsg(out))
+
     def _cb_camera_info(self, msg):
         self._K = np.array(msg.K, dtype=np.float64).reshape(3, 3)
         self._dist = np.array(msg.D, dtype=np.float64) if msg.D else np.zeros(5)
@@ -169,13 +261,25 @@ class AprilTagLocalizer:
         corners, ids, _ = self._detector.detectMarkers(gray)
 
         if ids is None:
+            self._publish_debug(frame, None, None, None)
             return
         ids = ids.flatten()
         if self._tag_id not in ids:
+            self._publish_debug(frame, corners, ids, None)
             return
 
         idx = int(np.where(ids == self._tag_id)[0][0])
         img_points = corners[idx].reshape(4, 2).astype(np.float32)
+
+        # Offset no quadro, para o rastreamento gimbal.
+        h, w = gray.shape[:2]
+        cx, cy = img_points.mean(axis=0)
+        side_px = float(np.mean([np.linalg.norm(img_points[i] - img_points[(i + 1) % 4])
+                                 for i in range(4)]))
+        self._pub_tag_pixel.publish(Point(
+            x=float((cx - w / 2.0) / (w / 2.0)),
+            y=float((cy - h / 2.0) / (h / 2.0)),
+            z=side_px))
 
         ok, rvec, tvec = cv2.solvePnP(self._obj_points, img_points,
                                       self._K, self._dist)
@@ -222,6 +326,8 @@ class AprilTagLocalizer:
         out.pose.orientation.z = qz
         out.pose.orientation.w = qw
         self._pub_wall_pose.publish(out)
+
+        self._publish_debug(frame, corners, ids, (rvec, tvec, side_px))
 
         rospy.loginfo_throttle(2.0,
             '[apriltag_localizer] tag id=%d detectada — wall_link estimado em '
