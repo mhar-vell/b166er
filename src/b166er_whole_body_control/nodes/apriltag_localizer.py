@@ -158,6 +158,32 @@ class AprilTagLocalizer:
         self._tag_size = rospy.get_param('~tag_size', TAG_SIZE)
         self._world_frame = rospy.get_param('~world_frame', 'odom')
 
+        # ── CÂMERA CONFIGURÁVEL (2026-08-25, preparando a bancada) ──
+        #
+        # Os tópicos eram fixos em /task_camera/*, que só existe na
+        # simulação: é uma câmera que eu acrescentei ao URDF e que o robô
+        # real NÃO tem. No laboratório a única câmera disponível é a
+        # T265, cujas duas fisheye o realsense2_camera publica.
+        #
+        # A troca não é só de tópico. A T265 usa modelo equidistante
+        # (Kannala-Brandt), e o solvePnP com K + coeficientes pinhole
+        # devolve lixo nesse modelo — daí o parâmetro ~fisheye, que
+        # desprojeta os cantos com cv2.fisheye antes do PnP.
+        self._img_topic  = rospy.get_param('~image_topic',
+                                           '/task_camera/image_raw')
+        self._info_topic = rospy.get_param('~camera_info_topic',
+                                           '/task_camera/camera_info')
+        # Extrínseca T265 -> câmera. Na simulação é a da câmera de
+        # tarefa; com a fisheye da própria T265 vem do TF do driver.
+        self._fisheye = rospy.get_param('~fisheye', False)
+        self._T_t265_cam = np.array(
+            rospy.get_param('~T_t265_camera', T_T265_TASKCAMERA.tolist()),
+            dtype=float)
+        if self._T_t265_cam.shape != (4, 4):
+            rospy.logwarn('[apriltag] ~T_t265_camera não é 4x4 — usando a '
+                          'transformada da câmera de tarefa')
+            self._T_t265_cam = T_T265_TASKCAMERA.copy()
+
         self._bridge = CvBridge()
         self._K = None
         self._dist = None
@@ -195,9 +221,11 @@ class AprilTagLocalizer:
         self._pub_debug = rospy.Publisher('/b166er/tag_debug_image', Image,
                                           queue_size=1)
 
-        rospy.Subscriber('/task_camera/camera_info', CameraInfo, self._cb_camera_info)
+        rospy.Subscriber(self._info_topic, CameraInfo, self._cb_camera_info)
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state)
-        rospy.Subscriber('/task_camera/image_raw', Image, self._cb_image, queue_size=1)
+        rospy.Subscriber(self._img_topic, Image, self._cb_image, queue_size=1)
+        rospy.loginfo('[apriltag] câmera: %s (fisheye=%s), tag %d de %.3f m',
+                      self._img_topic, self._fisheye, self._tag_id, self._tag_size)
 
         rospy.loginfo('[apriltag_localizer] pronto — procurando tag id=%d (%.0fmm)',
                       self._tag_id, self._tag_size * 1000)
@@ -252,6 +280,33 @@ class AprilTagLocalizer:
     def _cb_state(self, msg):
         self._t265_pose = msg.ee_pose.pose
 
+    def _resolve_pnp(self, img_points):
+        """PnP respeitando o modelo de lente.
+
+        A lente pinhole e a equidistante divergem MUITO fora do centro do
+        quadro, que é justamente onde a tag aparece quando o robô se
+        aproxima. Rodar solvePnP com K pinhole sobre pontos de uma
+        fisheye não é uma aproximação ruim: é uma pose errada com cara de
+        boa — exatamente o tipo de falha silenciosa que já custou caro
+        neste projeto.
+
+        Com ~fisheye, os cantos são desprojetados para raios normalizados
+        pelo modelo certo e o PnP roda contra uma câmera ideal
+        (K = identidade, distorção nula), o que é equivalente e evita
+        desdistorcer a imagem inteira a cada quadro.
+        """
+        if not self._fisheye:
+            return cv2.solvePnP(self._obj_points, img_points,
+                                self._K, self._dist)
+
+        d = self._dist.flatten()
+        d4 = np.zeros((4, 1))
+        d4[:min(4, len(d)), 0] = d[:4]
+        pts = img_points.reshape(-1, 1, 2).astype(np.float64)
+        norm = cv2.fisheye.undistortPoints(pts, self._K, d4)
+        return cv2.solvePnP(self._obj_points, norm.astype(np.float32),
+                            np.eye(3), np.zeros(5))
+
     def _cb_image(self, msg):
         if self._K is None or self._t265_pose is None:
             return
@@ -281,8 +336,7 @@ class AprilTagLocalizer:
             y=float((cy - h / 2.0) / (h / 2.0)),
             z=side_px))
 
-        ok, rvec, tvec = cv2.solvePnP(self._obj_points, img_points,
-                                      self._K, self._dist)
+        ok, rvec, tvec = self._resolve_pnp(img_points)
         if not ok:
             return
 
@@ -304,7 +358,7 @@ class AprilTagLocalizer:
                                self._t265_pose.position.y,
                                self._t265_pose.position.z]
 
-        T_world_camera = T_world_t265 @ T_T265_TASKCAMERA
+        T_world_camera = T_world_t265 @ self._T_t265_cam
         T_world_tag    = T_world_camera @ T_link_optical @ T_optical_tag
 
         # Reorienta do frame PnP (X-direita,Y-cima,Z-saindo-da-tag) para

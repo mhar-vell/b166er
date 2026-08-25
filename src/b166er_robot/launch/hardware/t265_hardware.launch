@@ -13,8 +13,12 @@
     <arg name="enable_pose"     value="true"/>
     <arg name="enable_accel"    value="true"/>
     <arg name="enable_gyro"     value="true"/>
-    <arg name="enable_fisheye1" value="false"/>
-    <arg name="enable_fisheye2" value="false"/>
+    <!-- FISHEYE LIGADAS (2026-08-25): no robô real elas são a ÚNICA
+         câmera disponível. A câmera de tarefa do URDF só existe na
+         simulação. O AprilTag da chave é detectado a partir daqui — ver
+         apriltag_localizer, parâmetro ~fisheye. -->
+    <arg name="enable_fisheye1" value="true"/>
+    <arg name="enable_fisheye2" value="false"/>   <!-- uma basta para o PnP monocular -->
     <arg name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
   </include>
 </launch>

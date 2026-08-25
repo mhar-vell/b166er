@@ -188,7 +188,26 @@
     <node name="apriltag_localizer"
           pkg="b166er_whole_body_control"
           type="apriltag_localizer.py"
-          output="screen"/>
+          output="screen">
+      <!-- CÂMERA DEPENDE DO MODO. /task_camera só existe no Gazebo: é uma
+           câmera acrescentada ao URDF que o robô real não possui. No
+           hardware a única disponível é a fisheye da própria T265, que
+           usa modelo equidistante e por isso precisa de ~fisheye=true
+           (ver _resolve_pnp no apriltag_localizer).
+
+           CUIDADO COM O ALCANCE: a fisheye tem 5,4 px/grau contra 7,4 da
+           simulada (mais campo, menos resolução angular). Com a tag de
+           220 mm a detecção confiável cai de ~3,9 m para ~2,8 m, que é
+           exatamente onde a busca acontece hoje. Na bancada, ou imprime
+           em A3 (A4 só comporta 155 mm de preto) ou aproxima o ponto de
+           busca com ~coarse_distance. -->
+      <param name="image_topic"
+             value="$(eval '/camera/fisheye1/image_raw' if arg('mode') == 'hardware' else '/task_camera/image_raw')"/>
+      <param name="camera_info_topic"
+             value="$(eval '/camera/fisheye1/camera_info' if arg('mode') == 'hardware' else '/task_camera/camera_info')"/>
+      <param name="fisheye"
+             value="$(eval arg('mode') == 'hardware')"/>
+    </node>
 
     <!-- 1c · Segurança por laser (Hokuyo) — distância livre à frente -->
     <node name="laser_safety"
