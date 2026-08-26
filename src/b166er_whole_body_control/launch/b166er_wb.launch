@@ -185,6 +185,14 @@
          execução, e a imagem anotada em /b166er/tag_debug_image é o
          principal recurso de diagnóstico visual do pipeline.
            rosrun image_view image_view image:=/b166er/tag_debug_image -->
+    <!-- Só na simulação: no hardware o driver da RealSense publica o
+         camera_info correto sozinho. -->
+    <node if="$(eval arg('mode') == 'gazebo')"
+          name="fisheye_info_fixer"
+          pkg="b166er_whole_body_control"
+          type="fisheye_info_fixer.py"
+          output="screen"/>
+
     <node name="apriltag_localizer"
           pkg="b166er_whole_body_control"
           type="apriltag_localizer.py"
@@ -201,12 +209,15 @@
            exatamente onde a busca acontece hoje. Na bancada, ou imprime
            em A3 (A4 só comporta 155 mm de preto) ou aproxima o ponto de
            busca com ~coarse_distance. -->
-      <param name="image_topic"
-             value="$(eval '/camera/fisheye1/image_raw' if arg('mode') == 'hardware' else '/task_camera/image_raw')"/>
-      <param name="camera_info_topic"
-             value="$(eval '/camera/fisheye1/camera_info' if arg('mode') == 'hardware' else '/task_camera/camera_info')"/>
-      <param name="fisheye"
-             value="$(eval arg('mode') == 'hardware')"/>
+      <!-- MESMA CÂMERA NOS DOIS MODOS (2026-08-26). A simulação passou
+           a ter a fisheye da T265 (wideanglecamera equidistante no
+           t265_link), publicando nos mesmos tópicos do driver real.
+           Assim o que se valida em simulação é o caminho que roda na
+           bancada — antes a percepção era exercitada por uma câmera
+           que o robô não tem. -->
+      <param name="image_topic"       value="/camera/fisheye1/image_raw"/>
+      <param name="camera_info_topic" value="/camera/fisheye1/camera_info"/>
+      <param name="fisheye"           value="true"/>
     </node>
 
     <!-- 1c · Segurança por laser (Hokuyo) — distância livre à frente -->
