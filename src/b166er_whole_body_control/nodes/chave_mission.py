@@ -68,7 +68,7 @@ from std_msgs.msg import Bool, Float64
 from tf.transformations import (quaternion_matrix, euler_from_quaternion,
                                 quaternion_from_matrix)
 
-from gazebo_msgs.srv import SetModelConfiguration
+from gazebo_msgs.srv import GetJointProperties, SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
@@ -78,7 +78,22 @@ from b166er_whole_body_control import chave_task
 # pre_engage primeiro: aproxima por um ponto afastado da parede e só
 # então entra reto no olhal — o controlador Cartesiano não desvia de
 # obstáculo sozinho (ver nota no YAML).
-PHASE_ORDER = ['pre_engage', 'engage', 'release', 'pos1', 'pos2']
+# Ordem das fases (ver config/chave_seccionadora_task.yaml).
+#
+# Reescrita em 2026-08-26 a partir da sequência que o Marco desenhou:
+# aproximar ao lado do furo, atravessar o degrau em X, DESCER para
+# apoiar o arame, acompanhar o arco e SAIR lateralmente.
+#
+# A saída lateral é nova e não é detalhe: antes a missão ia direto para
+# o recolhimento com a ferramenta ainda enfiada no anel, o que na
+# bancada arrastaria a chave de volta.
+PHASE_ORDER = ['aproxima_lateral', 'atravessa', 'captura',
+               'arco1', 'arco2', 'desengata']
+
+# Fases em que a base NÃO deve participar do movimento: são
+# deslocamentos ao longo do eixo do furo (X, lateral à parede), e a base
+# não anda de lado. Quem faz é o braço.
+PHASES_SO_BRACO = {'aproxima_lateral', 'atravessa', 'desengata'}
 
 
 def _yaw_of(quat):
@@ -113,6 +128,18 @@ class MissionContext(object):
         # tração do chassi para a força — que é o que whole-body deveria
         # significar aqui.
         self.pull_with_base = rospy.get_param('~pull_with_base', True)
+        # ABERTURA: por contato (padrão) ou por acoplamento cinemático.
+        # O acoplamento continua disponível como regressão — ele separa
+        # "a trajetória está certa" de "a força é suficiente", que são
+        # perguntas diferentes e falham por motivos diferentes.
+        self.blade_coupling = rospy.get_param('~blade_kinematic_coupling', False)
+        # Acima disto a chave conta como aberta (o curso da junta é 30°).
+        self.blade_open_deg = rospy.get_param('~blade_open_deg', 25.0)
+        # Deslocamento lateral do estacionamento, ao longo da parede.
+        # Casado com o offset X da primeira fase (aproxima_lateral): o
+        # robô para já ao lado do furo, e o braço só avança em linha
+        # reta para atravessar o degrau.
+        self.standoff_lateral = rospy.get_param('~standoff_lateral', -0.090)
         self.search_omega  = rospy.get_param('~search_omega', 0.35)
         self.search_timeout   = rospy.get_param('~search_timeout', 90.0)
         self.approach_timeout = rospy.get_param('~approach_timeout', 120.0)
@@ -311,8 +338,33 @@ class MissionContext(object):
             '[mission] gimbal: tag em x=%+.2f do centro → J1=%.3f rad',
             off_x, self._j1_track)
 
+    def blade_angle_now(self):
+        """Ângulo atual da lâmina, lido do Gazebo (graus). None se falhar.
+
+        Com a abertura por contato, este é o critério de sucesso da
+        tarefa: a chave abriu ou não abriu. Antes o ângulo era imposto
+        pela própria missão, então perguntar por ele seria perguntar o
+        que ela mesma acabara de mandar.
+        """
+        try:
+            rospy.wait_for_service('/gazebo/get_joint_properties', timeout=2.0)
+            srv = rospy.ServiceProxy('/gazebo/get_joint_properties',
+                                     GetJointProperties)
+            r = srv('chave_blade_joint')
+            if r.success and len(r.position):
+                return math.degrees(r.position[0])
+        except (rospy.ServiceException, rospy.ROSException) as exc:
+            rospy.logwarn_throttle(10.0,
+                '[mission] não consegui ler o ângulo da lâmina (%s)', exc)
+        return None
+
     def set_blade_angle(self, deg):
         """Gira a lâmina da chave para o ângulo dado (graus).
+
+        SÓ ATUA COM ~blade_kinematic_coupling (2026-08-25). Com a
+        abertura por contato ligada, este método vira observação: a
+        lâmina precisa girar porque o gancho puxou. Impor o ângulo aqui
+        mascararia exatamente a pergunta que a bancada real vai fazer.
 
         A chave só ganhou junta revoluta em 2026-08-13 — antes era um
         bloco rígido e não abria quando o robô puxava, como o Marco
@@ -330,6 +382,12 @@ class MissionContext(object):
         caro, e não muda nada no que está sendo validado aqui (a
         navegação, a percepção e o alcance do braço).
         """
+        if not self.blade_coupling:
+            ang = self.blade_angle_now()
+            rospy.loginfo('[mission] waypoint de %.0f° — lâmina medida em %s '
+                          '(abertura por CONTATO)', deg,
+                          '%.1f°' % ang if ang is not None else '?')
+            return
         try:
             rospy.wait_for_service('/gazebo/set_model_configuration', timeout=2.0)
             srv = rospy.ServiceProxy('/gazebo/set_model_configuration',
@@ -624,7 +682,8 @@ class Approach(smach.State):
         stages = [d for d in (ctx.coarse_distance,) if d > parada] + [parada]
 
         for i, dist in enumerate(stages):
-            goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R, dist)
+            goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R, dist,
+                                                lateral=ctx.standoff_lateral)
             rospy.loginfo('[mission] APPROACH etapa %d/%d — %.2f m do olhal, '
                           'alvo (%.2f, %.2f, %.2f rad)',
                           i + 1, len(stages), dist, *goal)
@@ -809,7 +868,8 @@ class Manipulate(smach.State):
             # é onde ele tem folga. Antes, o braço fazia as duas coisas e
             # varria perto da parede no meio do movimento.
             dy = offset[1] - y_anterior
-            if ctx.pull_with_base and dy > 0.005:
+            if (ctx.pull_with_base and dy > 0.005
+                    and phase not in PHASES_SO_BRACO):
                 if not _creep_base(ctx, -dy, 'fase "%s"/puxa' % phase):
                     return 'failed'
             y_anterior = offset[1]
@@ -829,7 +889,24 @@ class Manipulate(smach.State):
                 ctx.set_blade_angle(float(ang))
             rospy.sleep(0.5)
 
-        rospy.loginfo('[mission] MANIPULATE concluída — chave aberta')
+        # A CHAVE ABRIU MESMO? Com o acoplamento cinemático a pergunta
+        # era vazia — a missão lia de volta o que ela própria impôs. Com
+        # abertura por contato ela é o critério real da tarefa: chegar
+        # aos waypoints com 5 mm não vale nada se o gancho escorregou.
+        ang = ctx.blade_angle_now()
+        if ang is None:
+            rospy.logwarn('[mission] MANIPULATE: não consegui medir a lâmina — '
+                          'concluindo sem confirmar a abertura')
+        elif ang < ctx.blade_open_deg:
+            rospy.logerr('[mission] MANIPULATE: lâmina em %.1f° (mínimo %.1f°) '
+                         '— a trajetória fechou mas a CHAVE NÃO ABRIU', ang,
+                         ctx.blade_open_deg)
+            return 'failed'
+        else:
+            rospy.loginfo('[mission] MANIPULATE concluída — chave ABERTA, '
+                          'lâmina medida em %.1f°', ang)
+            return 'done'
+        rospy.loginfo('[mission] MANIPULATE concluída')
         return 'done'
 
 

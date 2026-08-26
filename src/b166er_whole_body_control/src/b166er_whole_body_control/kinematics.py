@@ -63,13 +63,26 @@ def _tf(xyz, rpy):
 T_BASELINK_ARM = _tf([0.003, 0, 0.294], [0, 0, 0])
 _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([0, 0.075, -0.07], [0, 2.1, 1.57])
 
-# Ferramenta de operação (vara + gancho, ver movemaster.urdf.xacro,
-# JTool/JToolTip) — mesma cadeia rígida do L5 até a ponta do gancho,
-# via GripCube (JCam + JGripCube + JTool + JToolTip, todas fixed).
-_T_L5_TOOLTIP = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
-                @ _trans(0, 0, -0.005)  # JGripCube: CameraSupport → GripCube
-                @ _trans(0, 0, -0.08)   # JTool:     GripCube → tool_rod
-                @ _trans(0, 0, -0.20))  # JToolTip:  tool_rod → tool_tip (20cm, reduzida de 35cm em 2026-08-13)
+# DEDO FIXO (desenho do Marco, 2026-08-25) — cadeia rígida do L5 até a
+# ponta, via GripCube (JCam + JGripCube + JTool + JToolTip, todas fixed).
+#
+# Substituiu a vara com gancho em J. Duas diferenças que importam para
+# quem consome esta constante:
+#
+#   · a peça monta na posição de um DEDO do gripper (x = +30 mm), não no
+#     eixo — a ponta deixou de ser coaxial com J5. Isso tira J5 do espaço
+#     nulo: antes |∂ponta/∂J5| era exatamente zero em qualquer postura,
+#     agora o rolamento do punho move a ponta.
+#   · o comprimento caiu de 200 mm para 135 mm (25 garfo + 10 afunilamento
+#     + 80 haste + 20 ponta alargada), então a ponta subiu 65 mm.
+_T_L5_TOOLTIP = (_trans(0, 0, -0.08)     # JCam:      L5 → CameraSupport
+                @ _trans(0, 0, -0.005)   # JGripCube: CameraSupport → GripCube
+                @ _trans(0.03, 0, -0.08)  # JTool:     GripCube → dedo fixo (posição do dedo)
+                @ _trans(0, 0, -0.115))  # JToolTip:  garfo + afunilamento + haste = 115 mm
+# A origem de tool_tip é a base do DEGRAU — o ponto onde o arame do olhal
+# repousa depois da descida de 5 mm. É esse ponto, e não a extremidade da
+# peça, que a missão persegue: o degrau se estende 20 mm em −X a partir
+# daqui, e o anel pode ficar em qualquer lugar ao longo dele.
 
 # Offset FIXO e conhecido de t265_link até a ponta da ferramenta —
 # ambos pendurados rigidamente no mesmo CameraSupport, então essa

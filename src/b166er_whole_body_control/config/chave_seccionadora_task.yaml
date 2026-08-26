@@ -1,96 +1,59 @@
-# Sequência de movimentos para abrir a chave seccionadora unipolar
-# (fixture urdf/fixtures/chave_com_tag.urdf.xacro), conforme descrito
-# pelo Marco em "Descrição do movimento de abertura da chave
-# seccionadora" (Google Docs, compartilhado em 2026-08-12).
+# Fases da abertura da chave seccionadora.
 #
-# Frame de referência: local do fixture (mesmo frame do wall_link, não
-# o frame do mundo) — eixo X horizontal ao longo da parede (mesmo eixo
-# de chave_x_offset/tag_x_offset no xacro), eixo Z vertical (gravidade).
-# Isso bate com o X/Y do desenho técnico do documento (lá chamado de
-# X/Y; aqui, X/Z), e é invariante ao yaw com que o fixture é spawnado
-# no mundo Gazebo — só depende da geometria da própria chave.
+# Cada offset é a posição alvo do tool_tip — a BASE DO DEGRAU do dedo
+# fixo — em relação ao CENTRO DO OLHAL, no frame da parede:
 #
-# Documento original:
-#   "Uma ferramenta no end-efector do manipulador realizará o engate
-#    no olhal e o robot deverá realizar uma força perpendicular ao
-#    eixo X (este movimento fará com que a chave seja liberada para
-#    realizar o movimento seguinte). Logo após este movimento, o robot
-#    deverá realizar um movimento paralelo ao eixo X, ou seja o olhal
-#    descerá um pouco para a posição um e depois irá para a posição 2,
-#    realizando dessa forma a abertura da chave."
+#   X = lateral, ao longo da parede. É o eixo do furo do olhal, e
+#       portanto a direção em que o degrau atravessa.
+#   Y = afastamento da parede (normal frontal), positivo em direção
+#       ao robô.
+#   Z = vertical.
 #
-# NÃO tem isolador — ver nota "SEM ISOLADOR" em
-# urdf/fixtures/chave_seccionadora_lf.urdf.xacro.
-
+# Sequência definida pelo Marco em 2026-08-26 (Notebook 18, pág. 4):
+# aproximar por baixo/ao lado, atravessar o degrau, DESCER para apoiar
+# o arame, acompanhar o arco, e sair lateralmente. A saída lateral não
+# existia antes — sem ela o recolhimento arrastaria a chave.
+#
+# A geometria do arco vem de: olhal a 200 mm do pivô, giro em torno de
+# X. Para 15° -> ΔY=+51,8 ΔZ=−6,8 mm; para 30° -> ΔY=+100,0 ΔZ=−26,8 mm.
+# Se o raio real da bancada for diferente, SÓ ESTES NÚMEROS mudam.
 chave_seccionadora_task:
-
-  # Frame TF do olhal no fixture Gazebo (alvo que o whole_body_planner
-  # deve mirar via /b166er/ee_target).
   target_frame: "chave_olhal_link"
 
-  # ── Fase 0a: pré-engate (VETOR DE APROXIMAÇÃO) ──
-  # Ponto afastado da parede, alinhado com o olhal. Existe porque o
-  # controlador Cartesiano não tem NENHUMA noção de obstáculo: dado um
-  # alvo colado na parede, ele escolhe o caminho reto no espaço de
-  # juntas, e esse caminho passa por dentro dela — foi o que o Marco
-  # observou ("o manipulador ainda está chocando com a parede").
-  #
-  # Medido em 2026-08-13: na postura FINAL nenhum elo toca a parede (o
-  # punho fica a 28 cm dela). O problema é só o transiente. Parar aqui
-  # primeiro e só então entrar reto em -Y resolve sem precisar de
-  # planejador com colisão.
-  pre_engage:
-    offset_xyz_m: [0.0, 0.18, 0.0]    # 18 cm à frente do olhal
+  # ── 1. ao lado do furo, na altura do centro dele ──
+  # A folga lateral é generosa de propósito: é a etapa que depende da
+  # precisão de estacionamento (~2 cm medidos), e errar aqui só custa
+  # uma nova tentativa, não uma colisão.
+  aproxima_lateral:
+    offset_xyz_m: [-0.090, 0.0, 0.0085]
 
-  # ── Fase 0b: engate ──
-  # Entra reto, do pré-engate até o olhal. A ferramenta encaixa o anel
-  # no vão do gancho.
-  engage:
-    offset_xyz_m: [0.0, 0.0, 0.0]
+  # ── 2. avança em X: o degrau atravessa o furo ──
+  # Centrado na altura do furo, sem tocar o arame.
+  atravessa:
+    offset_xyz_m: [0.0, 0.0, 0.0085]
 
-  # ── Fase 1: força de liberação, perpendicular ao eixo X ──
-  # Pequeno empurrão para destravar a catraca/trava mecânica que
-  # segura a lâmina fechada, antes do movimento de abertura em si.
-  # Magnitude confirmada com o Marco: ~10-20mm; usando o meio da
-  # faixa (15mm) como valor de partida — ajustável aqui sem tocar
-  # em código.
-  release:
-    offset_xyz_m: [0.0, 0.0, -0.015]   # -Z (perpendicular a X), 15mm
+  # ── 3. desce e APOIA o arame sobre o degrau ──
+  # É aqui que a captura acontece. O curso depende do raio do furo:
+  # com Ø27 mm dá os 5 mm que o Marco especificou; com os Ø56 mm que
+  # estão modelados hoje dá 19,5 mm. Quando o olhal real for medido,
+  # este é o número a corrigir — e a descida especificada é, na prática,
+  # uma medida indireta do furo.
+  captura:
+    offset_xyz_m: [0.0, 0.0, -0.0195]
 
-  # ── Fase 2: abertura, movimento com componente dominante paralela
-  #    ao eixo X — "posição 1" (intermediária) e "posição 2" (final,
-  #    chave aberta) ──
-  #
-  # Curso confirmado pelo Marco em 2026-08-12: 30° de giro total da
-  # lâmina, a partir do ângulo fechado (20°/0.349rad) — ou seja,
-  # posição 2 (totalmente aberta) = 50° absoluto. Posição 1
-  # (intermediária) segue sendo uma estimativa MINHA para dividir o
-  # curso em dois passos (metade do curso, 35° absoluto) — o
-  # documento não especifica esse ponto médio, só que ele existe a
-  # caminho da posição 2; ajustar se o Marco quiser outra proporção.
-  #
-  # Sentido do arco CONFIRMADO pelo Marco em 2026-08-12: o olhal desce
-  # para abrir a chave. Isso é o OPOSTO do que a fórmula de pivô já
-  # modelada no xacro previa (olhal = pivô - blade_length·(sin θ, 0,
-  # cos θ), que dá Z crescente para θ maior) — ou seja, o pivô/sentido
-  # de giro real da bancada não é o mesmo que o desenho técnico do
-  # datasheet (que inclui o isolador, removido na bancada) sugeria.
-  # Os offsets abaixo usam a MAGNITUDE calculada por aquela fórmula
-  # (curso de 30°/15° confirmado pelo Marco), mas com o sinal do Z
-  # invertido para refletir o sentido real (desce, não sobe).
-  # blade_angle_deg é só uma referência da magnitude do curso usada
-  # no cálculo, não corresponde mais literalmente a um ângulo de pivô.
-  # PLANO DO ARCO MUDOU (2026-08-13): com a chave rotacionada 90° no
-  # eixo Z (correção do Marco), a lâmina inclina para FORA da parede,
-  # no plano Y-Z. O deslocamento horizontal da abertura saiu de X e foi
-  # para +Y (afastando da parede, na direção do robô); o Z continua
-  # descendo, como o Marco confirmou. Magnitudes inalteradas — mesmo
-  # curso de 30°, só reprojetado no plano certo.
-  pos1:
-    # Metade do curso confirmado (equivalente a 15° de giro)
-    offset_xyz_m: [0.0, 0.046, -0.024]
-    blade_angle_deg: 15   # ângulo da junta da lâmina (0 = fechada)
-  pos2:
-    # Curso completo confirmado pelo Marco (equivalente a 30° de giro)
-    offset_xyz_m: [0.0, 0.085, -0.059]
-    blade_angle_deg: 30   # aberta
+  # ── 4. acompanha o arco ──
+  # Força pequena em Y: o degrau sustenta por baixo e o anel desliza
+  # livremente sobre ele. A ferramenta não persegue a trajetória, só
+  # não pode descer menos que o olhal nem recuar mais rápido que ele.
+  arco1:
+    offset_xyz_m: [0.0, 0.0518, -0.0263]
+    blade_angle_deg: 15
+  arco2:
+    offset_xyz_m: [0.0, 0.1000, -0.0463]
+    blade_angle_deg: 30
+
+  # ── 5. sai lateralmente, desengatando ──
+  # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
+  # fora do anel sem puxá-lo de volta.
+  desengata:
+    offset_xyz_m: [-0.090, 0.1000, -0.0463]

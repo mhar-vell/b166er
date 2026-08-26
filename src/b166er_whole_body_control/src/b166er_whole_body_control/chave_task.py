@@ -103,10 +103,20 @@ def wall_front_normal(wall_R):
     return wall_R @ WALL_FRONT_NORMAL_LOCAL
 
 
-def standoff_base_pose(wall_pos, wall_R, distance):
+def standoff_base_pose(wall_pos, wall_R, distance, lateral=0.0):
     """
     Pose de aproximação da BASE: parada a `distance` metros à frente do
-    olhal, sobre a normal da face da parede, encarando a parede.
+    olhal e deslocada `lateral` metros ao longo da parede, encarando-a.
+
+    O DESLOCAMENTO LATERAL existe desde 2026-08-26, quando o Marco
+    especificou que o degrau da ferramenta atravessa o olhal movendo-se
+    ao LONGO do eixo do furo — que é lateral à parede. Parar de frente
+    para o olhal, como antes, deixava o braço sem curso nessa direção:
+    ele teria de esticar 9 cm para o lado a partir de uma postura já
+    estendida para a frente.
+
+    Deslocando a base, o braço começa a fase de travessia com a
+    ferramenta já ao lado do furo e só precisa avançar em linha reta.
 
     A distância é medida do olhal (não da parede) porque é o alcance do
     braço até o olhal que limita — alcance horizontal da ponta da
@@ -126,7 +136,12 @@ def standoff_base_pose(wall_pos, wall_R, distance):
         raise ValueError('normal da parede é vertical — fixture mal orientada?')
     n_xy = n_xy / norm
 
-    pos_xy = np.array([olhal[0], olhal[1]]) + n_xy * distance
+    # Lateral da parede no plano do chão: perpendicular à normal.
+    lat_xy = np.array([-n_xy[1], n_xy[0]])
+
+    pos_xy = (np.array([olhal[0], olhal[1]])
+              + n_xy * distance
+              + lat_xy * lateral)
     # Encara a parede: heading é a normal invertida.
     yaw = math.atan2(-n_xy[1], -n_xy[0])
     return float(pos_xy[0]), float(pos_xy[1]), float(yaw)

@@ -258,6 +258,55 @@
       </visual>
     </link>
 
+    <!-- ═══ FISHEYE 1 DA T265 — a câmera que o robô REALMENTE tem ═══
+         Acrescentada em 2026-08-26 depois de o Marco reforçar que a
+         bancada não tem a câmera de tarefa: ela foi invenção minha para
+         destravar a percepção em simulação, e tudo que validamos com
+         ela (alcance de detecção, ponto cego no standoff, taxa de
+         acerto do SEARCH) não valia para o robô real.
+
+         Aqui a simulação passa a exercitar EXATAMENTE o mesmo caminho
+         do hardware: mesmos tópicos (/camera/fisheye1/*), mesmo modelo
+         de lente, mesma resolução.
+
+         wideanglecamera com lente EQUIDISTANTE: é o modelo da T265
+         (Kannala-Brandt). Usar uma câmera pinhole comum aqui daria
+         números otimistas — a distorção fisheye é justamente o que
+         degrada o PnP longe do centro do quadro.
+
+         848x800 e ~157° de FOV horizontal são as specs da T265. Isso dá
+         5,4 px/grau contra 7,4 da câmera que inventei: mais campo,
+         menos resolução angular. Consequência já calculada: a detecção
+         confiável com a tag de 220 mm cai de ~3,9 m para ~2,8 m. ═══ -->
+    <gazebo reference="t265_link">
+      <sensor type="wideanglecamera" name="t265_fisheye1">
+        <update_rate>15.0</update_rate>
+        <always_on>1</always_on>
+        <visualize>false</visualize>
+        <camera>
+          <horizontal_fov>2.7367</horizontal_fov>
+          <image><width>848</width><height>800</height><format>R8G8B8</format></image>
+          <clip><near>0.05</near><far>50.0</far></clip>
+          <lens>
+            <type>equidistant</type>
+            <scale_to_hfov>true</scale_to_hfov>
+            <cutoff_angle>1.5707</cutoff_angle>
+            <env_texture_size>512</env_texture_size>
+          </lens>
+        </camera>
+        <plugin name="t265_fisheye1_controller" filename="libgazebo_ros_camera.so">
+          <cameraName>camera/fisheye1</cameraName>
+          <imageTopicName>image_raw</imageTopicName>
+          <!-- O camera_info do Gazebo vai para um tópico MORTO: ele
+               descreve a lente como pinhole e com fx errado. Quem publica
+               o /camera/fisheye1/camera_info é o fisheye_info_fixer. -->
+          <cameraInfoTopicName>camera_info_gazebo</cameraInfoTopicName>
+          <frameName>t265_link</frameName>
+          <hackBaseline>0.0</hackBaseline>
+        </plugin>
+      </sensor>
+    </gazebo>
+
     <!-- ═══ Câmera de tarefa (detecção de AprilTag) ═══
          Adicionada em 2026-08-12 pra fechar o loop de percepção pedido
          pelo Marco: "a tag deve ser utilizada para aproximação do
@@ -411,24 +460,98 @@
          ponta da ferramenta (ex.: task_sequencer.py) precisa aplicar
          esse offset ao comandar o T265, não pode simplesmente mirar a
          ponta da ferramenta como se fosse o EE controlado. ═══ -->
-    <xacro:property name="tool_length" value="0.20"/>
+    <!-- ═══════════════════════════════════════════════════════════════
+         DEDO FIXO — ferramenta de manobra do Marco (desenho de
+         2026-08-25, Dedo_Fixo_RVM2_desenho.png).
+
+         Substitui os DEDOS do gripper, não o gripper: o garfo abraça a
+         lingueta original de 10 mm (vão 10,4 mm, 4 furos M3 por aba em
+         grade 2x2) e a garra não abre nem fecha durante a tarefa — ela
+         só transmite tração. Isso elimina o grau de liberdade que não
+         temos como controlar bem e transforma a garra num ponto de
+         ancoragem rígido.
+
+         Geometria do desenho (mm), ao longo de -Z a partir da montagem:
+           garfo   25 de altura, 20 de profundidade, abas de 10
+           afunil. 10
+           haste   80, seção 10,4 x 20,0
+           ponta   20 de altura, 30,4 de largura, 20 de profundidade
+           total  135
+
+         A ponta alargada é o que prende o elo: a haste de 10,4 mm passa
+         pelo olhal, e o degrau de 20 mm (30,4 − 10,4) impede o anel de
+         escapar quando o conjunto traciona. É o mesmo princípio do
+         gancho de vara de manobra convencional, que o Marco descreveu
+         como "gancho puxando um elo".
+
+         POR QUE ISTO SUBSTITUI O GANCHO EM J ANTERIOR: aquele tinha
+         quatro cilindros de VISUAL e UMA ESFERA de colisão. Uma esfera
+         não engata nada — empurra e escorrega. Foi por isso que a
+         primeira tentativa de abertura por contato terminou com a ponta
+         a 2,8 mm do alvo e a lâmina cravada em 0,0°: a trajetória
+         estava certa e não havia geometria para prender. Aqui cada
+         trecho tem colisão de caixa, com a mesma forma do visual.
+         ═══════════════════════════════════════════════════════════════ -->
+    <!-- Geometria do desenho (mm). A peça é um L: a haste sai do garfo
+         e o DEGRAU vira 90° no plano perpendicular a ela.
+
+         Corrigido em 2026-08-26 depois de o Marco apontar que a vista
+         superior do desenho é um L, não uma barra com um bloco. Eu vinha
+         lendo a vista superior como se fosse lateral e modelei o degrau
+         como um poste vertical. Ele é um DEDO HORIZONTAL — e só assim
+         atravessa um anel cujo furo olha para o lado (normal em X). -->
+    <xacro:property name="dedo_garfo_h"  value="0.025"/>
+    <xacro:property name="dedo_afun_h"   value="0.010"/>
+    <xacro:property name="dedo_haste_l"  value="0.080"/>
+    <xacro:property name="dedo_haste_x"  value="0.0104"/>
+    <xacro:property name="dedo_haste_y"  value="0.020"/>
+    <!-- Saliência do degrau além da haste: 30,4 − 10,4 = 20 mm. É o
+         comprimento útil que fica atravessado no furo e sustenta o
+         arame do olhal. -->
+    <xacro:property name="dedo_degrau_l" value="0.020"/>
+    <xacro:property name="dedo_degrau_z" value="0.017"/>
+
+    <xacro:property name="tool_length"
+                    value="${dedo_garfo_h + dedo_afun_h + dedo_haste_l}"/>
 
     <joint name="JTool" type="fixed">
-      <origin xyz="0 0 -0.08" rpy="0 0 0"/>
+      <origin xyz="0.03 0 -0.08" rpy="0 0 0"/>
       <parent link="GripCube"/>
       <child link="tool_rod"/>
     </joint>
 
     <link name="tool_rod">
       <visual>
-        <origin xyz="0 0 ${-tool_length/2}" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.008" length="${tool_length}"/></geometry>
-        <material name="ToolColor"><color rgba="0.95 0.75 0.05 1"/></material>
+        <origin xyz="0 0 ${-dedo_garfo_h/2}"/>
+        <geometry><box size="0.020 0.025 ${dedo_garfo_h}"/></geometry>
+        <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
       </visual>
       <collision>
-        <origin xyz="0 0 ${-tool_length/2}" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.008" length="${tool_length}"/></geometry>
+        <origin xyz="0 0 ${-dedo_garfo_h/2}"/>
+        <geometry><box size="0.020 0.025 ${dedo_garfo_h}"/></geometry>
       </collision>
+      <visual>
+        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h/2}"/>
+        <geometry><box size="0.015 0.022 ${dedo_afun_h}"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h/2}"/>
+        <geometry><box size="0.015 0.022 ${dedo_afun_h}"/></geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h - dedo_haste_l/2}"/>
+        <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_haste_l}"/></geometry>
+        <material name="ToolColor"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h - dedo_haste_l/2}"/>
+        <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_haste_l}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.12"/>
+        <inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.00002"/>
+      </inertial>
     </link>
 
     <joint name="JToolTip" type="fixed">
@@ -437,68 +560,30 @@
       <child link="tool_tip"/>
     </joint>
 
-    <!-- tool_tip: frame no VÃO do gancho — o ponto onde o anel do
-         olhal se aloja quando engatado. É este frame que o controlador
-         mira, então o gancho é desenhado EM VOLTA da origem dele: se o
-         controlador leva tool_tip até o centro do olhal, o anel cai
-         dentro do vão.
+    <!-- DEGRAU — o dedo horizontal que atravessa o olhal.
+         Sai em −X a partir do eixo da haste; girando J5 a peça aponta
+         para a direita ou para a esquerda, como o Marco descreveu.
 
-         Formato de gancho pedido pelo Marco (2026-08-13): "para
-         realizar a abertura a ferramenta deve ter na ponta um formato
-         de gancho". Antes era um disco chato, que não engancharia
-         nada. URDF não tem primitiva curva, então o gancho é
-         aproximado por segmentos retos: a haste continua um pouco além
-         do vão, curva e volta, formando um J aberto para o lado — o
-         anel entra pela abertura e fica preso no vão quando a
-         ferramenta puxa. -->
+         A ORIGEM DESTE LINK é a referência da tarefa: é aqui que o
+         arame do anel repousa depois da descida de 5 mm. -->
     <link name="tool_tip">
-      <!-- continuação da haste, passando o vão -->
       <visual>
-        <origin xyz="0 0 -0.018" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.006" length="0.05"/></geometry>
-        <material name="ToolColor"/>
+        <origin xyz="${-dedo_degrau_l/2} 0 ${-dedo_degrau_z/2}"/>
+        <geometry><box size="${dedo_degrau_l + dedo_haste_x} ${dedo_haste_y} ${dedo_degrau_z}"/></geometry>
+        <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
       </visual>
-      <!-- curva do gancho (dois segmentos inclinados) -->
-      <visual>
-        <origin xyz="0.016 0 -0.045" rpy="0 -0.9 0"/>
-        <geometry><cylinder radius="0.006" length="0.042"/></geometry>
-        <material name="ToolColor"/>
-      </visual>
-      <visual>
-        <origin xyz="0.038 0 -0.026" rpy="0 -2.0 0"/>
-        <geometry><cylinder radius="0.006" length="0.04"/></geometry>
-        <material name="ToolColor"/>
-      </visual>
-      <!-- bico do gancho, apontando de volta para a haste -->
-      <visual>
-        <origin xyz="0.040 0 0.003" rpy="0 -2.7 0"/>
-        <geometry><cylinder radius="0.005" length="0.026"/></geometry>
-        <material name="ToolColor"/>
-      </visual>
-      <!-- Colisão FINA (10 mm), condizente com um gancho de arame. A
-           esfera de 20 mm anterior tratava a ponta como uma bola e
-           batia em tudo perto do olhal. -->
       <collision>
-        <origin xyz="0.018 0 -0.022"/>
-        <geometry><sphere radius="0.010"/></geometry>
+        <origin xyz="${-dedo_degrau_l/2} 0 ${-dedo_degrau_z/2}"/>
+        <geometry><box size="${dedo_degrau_l + dedo_haste_x} ${dedo_haste_y} ${dedo_degrau_z}"/></geometry>
       </collision>
+      <inertial>
+        <mass value="0.04"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>
+      </inertial>
     </link>
 
-    <!-- <material><color> puro do URDF some na fusão de corpo rígido do
-         Gazebo (mesmo comportamento documentado em
-         chave_seccionadora_lf.urdf.xacro) — só os dois links novos da
-         ferramenta ganham <gazebo reference> aqui; o resto da árvore
-         fixa do EE (CameraSupport/GripCube/Grip1/Grip2) já tinha esse
-         problema antes desta mudança e fica fora de escopo. -->
-    <gazebo reference="tool_rod">
-      <material>Gazebo/Yellow</material>
-    </gazebo>
-    <gazebo reference="tool_tip">
-      <material>Gazebo/Yellow</material>
-    </gazebo>
-
-    <!-- ── Transmissões para ros_control (Gazebo) ───────────────────── -->
-    <!-- VelocityJointInterface: controladores de velocidade para cada junta -->
+    <gazebo reference="tool_rod"><material>Gazebo/Yellow</material></gazebo>
+    <gazebo reference="tool_tip"><material>Gazebo/Yellow</material></gazebo>
 
     <xacro:macro name="arm_transmission" params="joint_name">
       <transmission name="${joint_name}_trans">
@@ -528,4 +613,5 @@
     </gazebo>
 
   </xacro:macro>
+
 </robot>

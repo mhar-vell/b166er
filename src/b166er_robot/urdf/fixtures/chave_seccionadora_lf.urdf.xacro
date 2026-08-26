@@ -57,6 +57,19 @@
     <xacro:property name="ring_t" value="0.006"/>      <!-- espessura do arame -->
     <xacro:property name="ring_seg" value="10"/>       <!-- segmentos do círculo -->
 
+    <!-- ABERTURA POR CONTATO (2026-08-25). Com isto em true o olhal e a
+         lâmina ganham colisão e a chave passa a abrir porque o gancho
+         PUXA, não porque a missão comanda o ângulo por serviço do
+         Gazebo. É o que precisa valer para a bancada real ter sentido:
+         hoje o MISSION_OK prova que a ponta chegou aos waypoints, não
+         que a chave abriria.
+
+         Fica parametrizado porque o acoplamento cinemático continua
+         útil como regressão — separa "a trajetória está certa" de "a
+         força é suficiente", que são duas perguntas diferentes. -->
+    <xacro:property name="olhal_colide" value="true"/>
+    <xacro:property name="lamina_colide" value="true"/>
+
     <!-- Fechada: lâmina vertical, olhal direto acima do pivô. -->
     <xacro:property name="pivot_z" value="${olhal_height - blade_length}"/>
 
@@ -137,16 +150,23 @@
         <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
         <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
-      <!-- Lâmina SEM colisão, pelo mesmo motivo do olhal: o anel fica
-           no TOPO dela, então o gancho que mira o centro do anel
-           encosta na lâmina e trava. Medido: J4 cravado enquanto a IK
-           pedia de -41,9° a -2,9° (defasagem crescendo até 30,7°),
-           ponta congelada 5,7 cm aquém.
+      <!-- Lâmina com colisão MAIS ESTREITA que o visual quando a
+           abertura é por contato. Ela ficou sem colisão em 2026-08-13
+           porque o gancho, mirando o centro do anel, encostava nela e
+           travava — mas isso era consequência do olhal ser uma esfera
+           maciça, que empurrava o gancho para trás. Com o anel vazado
+           de verdade o gancho passa pelo furo, e a lâmina precisa de
+           colisão: é ela que transmite o puxão até a junta.
 
-           Colisão só faz sentido nas partes ESTRUTURAIS (placa,
-           brackets), que é onde o robô realmente não pode entrar. A
-           lâmina é o alvo da manipulação e sua abertura é acoplada
-           cinematicamente (set_blade_angle), não pelo contato. -->
+           A folga (colisão 60% da largura visual) existe porque o
+           contato aqui é lateral e rasante; apertar demais devolve o
+           travamento antigo por outro caminho. -->
+      <xacro:if value="${lamina_colide}">
+        <collision>
+          <origin xyz="0 0 ${blade_length/2}"/>
+          <geometry><box size="0.0096 0.0132 ${blade_length}"/></geometry>
+        </collision>
+      </xacro:if>
       <inertial>
         <mass value="0.5"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.0002"/>
@@ -164,10 +184,22 @@
       <origin xyz="0 ${wall_standoff} 0" rpy="0 0 0"/>
       <axis xyz="-1 0 0"/>
       <limit lower="0.0" upper="0.60" effort="40" velocity="1.0"/>
-      <!-- Atrito alto: chave de manobra é dura, não cai sozinha pela
-           gravidade nem oscila. Também deixa a posição estável quando
-           o ângulo é imposto por set_model_configuration. -->
-      <dynamics damping="5.0" friction="8.0"/>
+      <!-- ATRITO: PARÂMETRO A CALIBRAR CONTRA A CHAVE REAL.
+           Com a abertura por contato este número deixa de ser
+           cosmético e passa a decidir se a tarefa é possível.
+
+           Conta rápida: o olhal fica a ${blade_length} m do pivô, então
+           um atrito de F N·m exige uma força de F/${blade_length} N na
+           ponta do gancho. Com os 8 N·m anteriores seriam 40 N — muito
+           acima do que um RV-M2 entrega (carga útil ~1,2 kg ≈ 12 N).
+           Ou seja: o valor antigo tornava a tarefa infazível pelo braço,
+           e ninguém percebia porque o ângulo era imposto por serviço.
+
+           Baixado para 1,5 N·m (7,5 N na ponta), dentro do que o braço
+           faz. Se a chave real for mais dura que isso, a força terá de
+           vir da BASE — que é o que o recuo com as rodas já faz, e é
+           onde o whole-body ganha sentido físico. -->
+      <dynamics damping="0.5" friction="1.5"/>
     </joint>
 
     <!-- ═══ OLHAL: anel no topo da lâmina, a 810 mm do chão. Este é o
@@ -181,16 +213,40 @@
          contato fino do gancho no anel não é simulado nesta fase (a
          tarefa é validada por posição do EE, não por contato). ═══ -->
     <link name="${prefix}olhal_link">
+      <!-- PLANO DO ANEL: contém Y e Z, normal em X (2026-08-26).
+           Antes o círculo era desenhado no plano XZ, com a normal em Y —
+           ou seja, o furo encarava o robô. Está errado: o Marco
+           descreveu que o furo olha PARA O LADO, e que atravessar o
+           olhal é um movimento perpendicular ao eixo Y.
+
+           Não é detalhe de aparência. É essa normal que decide por onde
+           a ferramenta entra: com o furo em X, o degrau do dedo fixo
+           avança paralelo à parede, e não contra ela. Todo o desenho da
+           ferramenta e a sequência de fases dependem disso. -->
       <xacro:macro name="ring_seg_vis" params="i">
         <xacro:property name="a" value="${2*pi*i/ring_seg}"/>
         <visual>
-          <origin xyz="${ring_r*cos(a)} 0 ${ring_r*sin(a)}"
-                  rpy="${pi/2} ${-a} 0"/>
+          <origin xyz="0 ${ring_r*cos(a)} ${ring_r*sin(a)}"
+                  rpy="0 ${pi/2} ${-a}"/>
           <geometry>
             <cylinder radius="${ring_t/2}" length="${2*pi*ring_r/ring_seg*1.15}"/>
           </geometry>
           <material name="galvanized"/>
         </visual>
+        <!-- COLISÃO SEGMENTO A SEGMENTO, não uma primitiva envolvente.
+             É a diferença entre um anel e uma bola para o motor de
+             física: aproximar por esfera fecha o furo, que é justamente
+             por onde o gancho tem de passar. Cada cilindro é barato de
+             testar, e juntos preservam a topologia da peça. -->
+        <xacro:if value="${olhal_colide}">
+          <collision>
+            <origin xyz="0 ${ring_r*cos(a)} ${ring_r*sin(a)}"
+                    rpy="0 ${pi/2} ${-a}"/>
+            <geometry>
+              <cylinder radius="${ring_t/2}" length="${2*pi*ring_r/ring_seg*1.15}"/>
+            </geometry>
+          </collision>
+        </xacro:if>
       </xacro:macro>
       <xacro:ring_seg_vis i="0"/>
       <xacro:ring_seg_vis i="1"/>
