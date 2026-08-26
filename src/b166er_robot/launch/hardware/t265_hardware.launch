@@ -18,7 +18,11 @@
          simulação. O AprilTag da chave é detectado a partir daqui — ver
          apriltag_localizer, parâmetro ~fisheye. -->
     <arg name="enable_fisheye1" value="true"/>
-    <arg name="enable_fisheye2" value="false"/>   <!-- uma basta para o PnP monocular -->
+    <!-- AS DUAS, obrigatoriamente. A T265 recusa habilitar uma só:
+         "Invalid profile configuration - setting a single FE stream is
+         not supported" (verificado na bancada em 2026-08-26). O PnP usa
+         só a fisheye1, mas o driver exige o par. -->
+    <arg name="enable_fisheye2" value="true"/>
     <arg name="publish_odom_tf" value="$(arg publish_odom_tf)"/>
   </include>
 </launch>
