@@ -15,10 +15,61 @@
        montagem). A T265 vem junto, no end-effector — ver movemaster.urdf.xacro. -->
   <xacro:movemaster_rv_m2 parent="top_plate" xyz="0 0 0.02" rpy="0 0 0"/>
 
-  <!-- Hokuyo UST-05LX — centralizado (y=0), 2.5 cm da frente da plataforma
-       em direção ao centro. FOV 270°, alcance 0.06-5.0 m, 0.25°/amostra. -->
+  <!-- ═══ Prolongamento frontal da plataforma (medido 2026-08-26) ═══
+       O Marco alongou a plataforma do Pioneer PARA A FRENTE. O chassi e
+       o entre-eixos NÃO mudaram — só o prato de cima:
+
+         top.stl original ....... 508,2 mm  (±254,1 no frame top_plate)
+         plataforma real hoje ... 600   mm
+         acréscimo .............. 91,8 mm, todo à frente
+
+       Modelado como um link próprio em vez de mexer no mesh do Pioneer:
+       o pioneer3at-m.urdf.xacro é o modelo de fábrica e deve continuar
+       descrevendo o robô de fábrica. Tem COLISÃO porque é ela que a
+       parede enxerga — sem isso o Gazebo deixaria a parede invadir 9 cm
+       de plataforma antes de tocar em qualquer coisa. -->
+  <xacro:property name="ext_len"   value="0.0918"/>
+  <xacro:property name="plate_x0"  value="0.25410"/>
+  <xacro:property name="plate_hw"  value="0.19154"/>
+  <xacro:property name="plate_t"   value="0.00658"/>
+  <!-- Face frontal da plataforma, no frame do top_plate. -->
+  <xacro:property name="plate_front" value="${plate_x0 + ext_len}"/>
+
+  <joint name="front_plate_ext_joint" type="fixed">
+    <origin xyz="${plate_x0 + ext_len/2} 0 0" rpy="0 0 0"/>
+    <parent link="top_plate"/>
+    <child link="front_plate_ext"/>
+  </joint>
+
+  <link name="front_plate_ext">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="${ext_len} ${2*plate_hw} ${plate_t}"/></geometry>
+      <material name="TopBlack"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="${ext_len} ${2*plate_hw} ${plate_t}"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="0.25"/>
+      <inertia ixx="0.003" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.003"/>
+    </inertial>
+  </link>
+  <gazebo reference="front_plate_ext"><material>Gazebo/Black</material></gazebo>
+
+  <!-- Hokuyo UST-05LX — centralizado (y=0), 3 cm atrás da borda frontal
+       do prato (medido na bancada em 2026-08-26). Com a plataforma
+       alongada isso o põe em x=0,3159 no frame do top_plate, ou seja
+       0,3189 do centro da base — 10 cm mais à frente do que o modelo
+       antigo supunha. Esse era o erro que fazia o laser_safety achar que
+       a parede estava 10 cm mais longe do que está, e é por isso que o
+       robô encostava demais. laser_safety.py:~laser_offset_x precisa
+       casar com este número.
+       FOV 270°, alcance 0.06-5.0 m, 0.25°/amostra. -->
   <xacro:custom_laser name="hokuyo" color="Black"
-                      x="0.215" y="0" z="0.025" roll="0" pitch="0" yaw="0"
+                      x="${plate_front - 0.030}" y="0" z="0.025"
+                      roll="0" pitch="0" yaw="0"
                       samples="1081" resolution="1"
                       min_angle="${-3*PI/4}" max_angle="${3*PI/4}"
                       min_range="0.06" max_range="5.0" range_resolution="0.001"/>

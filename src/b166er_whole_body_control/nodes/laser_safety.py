@@ -46,9 +46,15 @@ class LaserSafety(object):
         self._sector = rospy.get_param('~front_sector', 0.35)   # ±20°
         # Retornos mais próximos que isto são o próprio robô.
         self._self_ignore = rospy.get_param('~self_ignore', 0.25)
-        # Deslocamento do laser à frente do centro da base (URDF:
-        # custom_laser x=0.215 em b166er.urdf.xacro).
-        self._laser_offset = rospy.get_param('~laser_offset_x', 0.215)
+        # Deslocamento do laser à frente do CENTRO DA BASE (base_link).
+        #
+        # 0,3189 = 0,003 (base_link -> top_plate) + 0,3159 (x do laser no
+        # frame do top_plate, ver b166er.urdf.xacro). Era 0,215, medido
+        # sobre a plataforma de fábrica; a plataforma foi alongada 91,8 mm
+        # à frente e o Hokuyo ficou a 3 cm da nova borda. Manter o valor
+        # antigo fazia o nó reportar a parede ~10 cm mais longe do que
+        # está — exatamente o sintoma de o robô encostar demais.
+        self._laser_offset = rospy.get_param('~laser_offset_x', 0.3189)
         self._close_thresh = rospy.get_param('~close_threshold', 0.55)
 
         self._pub_clear = rospy.Publisher('/b166er/front_clearance', Float64,
