@@ -105,6 +105,23 @@ _T_L5_TASKCAMERA = (_trans(0, 0, -0.08)    # JCam:      L5 → CameraSupport
 
 T_T265_TASKCAMERA = np.linalg.inv(_T_L5_T265) @ _T_L5_TASKCAMERA
 
+# ── FISHEYE1 DA T265 ──────────────────────────────────────────────────
+# Extrínseca MEDIDA na bancada em 2026-08-26 (série 925122110468):
+#
+#   t265_link -> t265_fisheye1_optical_frame
+#     translação [0, 0,032, 0]      -> 32 mm em Y
+#     rotação    [-90°, 0°, -90°]   -> a convenção óptica padrão
+#
+# Aqui guardamos a transformada até o frame do LINK, não até o óptico:
+# quem consome (apriltag_localizer) aplica R_LINK_OPTICAL em seguida, e
+# incluir a rotação óptica nesta constante a duplicaria.
+#
+# O que importa e não estava modelado são os 32 mm: a câmera que VÊ não
+# fica na origem do sensor que dá a POSE. Deslocamento fixo na origem do
+# raio de projeção vira erro de pose que cresce com a distância angular à
+# tag — suspeito do erro proporcional observado na simulação.
+T_T265_FISHEYE1 = _trans(0.0, 0.032, 0.0)
+
 
 def tooltip_target_to_t265_target(T_world_tooltip_target):
     """
