@@ -34,6 +34,16 @@ JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar
 SETTLE_S = 12.0       # tempo máximo esperando estabilizar
 
+# Pose de partida — TEM QUE CASAR com os args x/y/yaw de
+# b166er_gazebo.launch. Ficam duplicados porque o reset roda fora do
+# launch (é um script solto chamado entre execuções da bateria) e não
+# tem como ler os args de um launch que já terminou.
+#
+# 2 m da parede (parede em y=3,0). Antes era y=0, ou seja 3,0 m, onde a
+# tag de 132 mm não é detectável — o SEARCH girava 90 s e abortava.
+START_X = 0.0
+START_Y = 1.0
+
 
 # Tolerância de postura no reset. Folgada de propósito: o PID assenta
 # com alguns graus de erro estacionário e isso não atrapalha nada — o
@@ -114,6 +124,8 @@ def main():
     time.sleep(0.5)
     ms = ModelState()
     ms.model_name = 'b166er'
+    ms.pose.position.x = START_X
+    ms.pose.position.y = START_Y
     ms.pose.position.z = 0.25
     ms.pose.orientation.w = 1.0
     ms.reference_frame = 'world'
