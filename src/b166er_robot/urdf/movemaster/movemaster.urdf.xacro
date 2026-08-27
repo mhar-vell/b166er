@@ -278,13 +278,44 @@
          5,4 px/grau contra 7,4 da câmera que inventei: mais campo,
          menos resolução angular. Consequência já calculada: a detecção
          confiável com a tag de 220 mm cai de ~3,9 m para ~2,8 m. ═══ -->
-    <gazebo reference="t265_link">
+    <!-- A FISHEYE1 NÃO ESTÁ NO CENTRO DA T265 (medido em 2026-08-26).
+         O driver publica a extrínseca t265_link -> fisheye1_optical como
+         translação de 32 mm em Y, rotação [-90°, 0°, -90°] (a convenção
+         óptica padrão).
+
+         O modelo assumia os dois no mesmo ponto. Um deslocamento fixo na
+         origem do raio de projeção produz erro de pose que cresce com a
+         distância angular à tag — candidato direto ao erro proporcional
+         que travou a simulação em 2026-08-26.
+
+         Aqui o sensor é declarado num link próprio, deslocado, em vez de
+         pendurado direto no t265_link. -->
+    <joint name="JFisheye1" type="fixed">
+      <origin xyz="0 0.032 0" rpy="0 0 0"/>
+      <parent link="t265_link"/>
+      <child link="t265_fisheye1_frame"/>
+    </joint>
+
+    <link name="t265_fisheye1_frame">
+      <inertial>
+        <mass value="0.001"/>
+        <inertia ixx="1e-7" ixy="0" ixz="0" iyy="1e-7" iyz="0" izz="1e-7"/>
+      </inertial>
+    </link>
+
+    <gazebo reference="t265_fisheye1_frame">
       <sensor type="wideanglecamera" name="t265_fisheye1">
         <update_rate>15.0</update_rate>
         <always_on>1</always_on>
         <visualize>false</visualize>
         <camera>
-          <horizontal_fov>2.7367</horizontal_fov>
+          <!-- 170,3° — MEDIDO na T265 real em 2026-08-26, não a
+               especificação. Invertendo fx=285,32 do camera_info do
+               driver para 848 px com r=f·θ: hfov = 2·(w/2)/fx = 2,9724
+               rad. A especificação de 163° diagonal me levara a assumir
+               157° horizontais; a lente é mais aberta que isso, o que
+               reduz a resolução angular de 5,41 para 4,98 px/grau. -->
+          <horizontal_fov>2.9724</horizontal_fov>
           <image><width>848</width><height>800</height><format>R8G8B8</format></image>
           <clip><near>0.05</near><far>50.0</far></clip>
           <lens>
@@ -301,7 +332,7 @@
                descreve a lente como pinhole e com fx errado. Quem publica
                o /camera/fisheye1/camera_info é o fisheye_info_fixer. -->
           <cameraInfoTopicName>camera_info_gazebo</cameraInfoTopicName>
-          <frameName>t265_link</frameName>
+          <frameName>t265_fisheye1_frame</frameName>
           <hackBaseline>0.0</hackBaseline>
         </plugin>
       </sensor>
@@ -401,29 +432,26 @@
       <child link="Grip1"/>
     </joint>
 
-    <joint name="JGrip2" type="fixed">
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <parent link="GripCube"/>
-      <child link="Grip2"/>
-    </joint>
+    <!-- Grip2 REMOVIDO em 2026-08-27.
+
+         Nas fotos da bancada (IMG_0593 / IMG_0599, 2026-08-26) só UMA
+         das castanhas da HM-01 tem dedo montado — é nela que a placa em
+         L do dedo fixo é parafusada (4 parafusos, grade 2x2). A castanha
+         oposta está NUA, apenas com os furos roscados à vista.
+
+         O modelo mantinha os dois meshes originais, então a simulação
+         desenhava um dedo azul em −X que não existe no robô. Como a
+         garra não abre nem fecha na tarefa (ver o bloco do DEDO FIXO
+         abaixo), esse dedo é massa e geometria fantasma: some daqui.
+
+         Grip1 (em +0.03, mesma origem do JTool) fica: é a lingueta que o
+         garfo do dedo fixo abraça. -->
 
     <link name="Grip1">
       <visual>
         <origin xyz="0.03 0 -0.08" rpy="0 1.57 -1.57" />
         <geometry>
           <mesh filename="package://movemaster_control/3D_Models/Grip1.stl" scale="0.001 0.001 0.001"/>
-        </geometry>
-        <material name="L1Color">
-          <color rgba="0.15 0.2 0.8 1"/>
-        </material>
-      </visual>
-    </link>
-
-    <link name="Grip2">
-      <visual>
-        <origin xyz="-0.03 0 -0.08" rpy="0 1.57 -1.57" />
-        <geometry>
-          <mesh filename="package://movemaster_control/3D_Models/Grip2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="L1Color">
           <color rgba="0.15 0.2 0.8 1"/>
@@ -446,7 +474,7 @@
 
          Montada no mesmo ponto que o gripper visual (GripCube, ponta
          em z=-0.08 no frame do GripCube, mesmo offset dos meshes
-         Grip1/Grip2) — SEM junta própria (fixed), então herda a fusão
+         Grip1) — SEM junta própria (fixed), então herda a fusão
          de corpo rígido do Gazebo junto com L5/CameraSupport/GripCube
          (mesmo comportamento já documentado nas fixtures: um
          <gazebo reference> por link, não <material><color> puro).
