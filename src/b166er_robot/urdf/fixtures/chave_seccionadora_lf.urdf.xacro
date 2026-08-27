@@ -148,15 +148,29 @@
 
     <!-- ═══ Bracket superior = contato fixo (a lâmina fechada encosta
          nele) ═══ -->
+    <!-- PROFUNDIDADE DO TERMINAL: NÃO MEDIDA, e por isso conservadora.
+         Em 2026-08-27 eu dei a este bloco a profundidade inteira do
+         standoff (130 mm), por simetria com o bracket do pivô. O bracket
+         PRECISA disso — ele vai da parede até o pivô. O terminal fixo
+         não carrega pivô nenhum: é a peça de contato onde a lâmina
+         encosta quando fechada.
+         O resultado foi um bloco maciço de 130x45x190 mm bem na
+         trajetória da ferramenta: ~50 000 contatos ferramenta x terminal
+         numa única missão, e a fase "atravessa" travando com 51,7 mm de
+         resíduo — obstáculo que existe só no meu modelo.
+         Volta a ser uma peça de contato de 40 mm, no plano do mecanismo.
+         A geometria real está na lista de medições da bancada. -->
+    <xacro:property name="terminal_prof" value="0.040"/>
+
     <link name="${prefix}fixed_terminal">
       <visual>
-        <origin xyz="0 ${wall_standoff/2} 0"/>
-        <geometry><box size="0.045 ${wall_standoff} 0.19"/></geometry>
+        <origin xyz="0 ${wall_standoff} 0"/>
+        <geometry><box size="0.045 ${terminal_prof} 0.19"/></geometry>
         <material name="galvanized"/>
       </visual>
       <collision>
-        <origin xyz="0 ${wall_standoff/2} 0"/>
-        <geometry><box size="0.045 ${wall_standoff} 0.19"/></geometry>
+        <origin xyz="0 ${wall_standoff} 0"/>
+        <geometry><box size="0.045 ${terminal_prof} 0.19"/></geometry>
       </collision>
       <inertial>
         <mass value="0.4"/>

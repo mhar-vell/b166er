@@ -72,7 +72,7 @@ from gazebo_msgs.srv import GetJointProperties, SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
-    ik_tooltip_position, ik_tooltip_com_degrau)
+    ik_tooltip_position, ik_tooltip_com_degrau, ik_tooltip_nivelado)
 from b166er_whole_body_control import chave_task
 
 # pre_engage primeiro: aproxima por um ponto afastado da parede e só
@@ -1378,6 +1378,8 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     p_goal = np.asarray(p_goal, dtype=float)
     p_aim  = p_goal.copy()
 
+    escolha = {'modo': None}      # decidido na 1a iteração, vale a fase toda
+
     def _resolve_ik(p_local, R_arm_world):
         """IK da fase. Com ~degrau_alinhado, impõe também a DIREÇÃO do
         degrau — sem isso ele chega perpendicular ao furo.
@@ -1396,8 +1398,49 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             q, e = ik_tooltip_position(p_local, q_current=q_atual)
             return q, e, None
         eixo_arm = R_arm_world @ (ctx.wall_R @ np.array([1.0, 0.0, 0.0]))
-        q, e, ang = ik_tooltip_com_degrau(p_local, eixo_arm, q_current=q_atual)
-        return q, e, ang
+
+        # NIVELADO PRIMEIRO, EIXO COMO RESERVA.
+        #
+        # A IK nivelada usa 2 de posição (transversal, pesando pouco a
+        # direção do furo) + 3 de atitude, e é ela que impede o degrau de
+        # chegar rolado — foi rolado 13,6° que ele raspou o arame de cima
+        # do anel em 2026-08-27.
+        #
+        # Mas a atitude completa nem sempre é alcançável: medido, a fase
+        # 'orienta' (150 mm afastada da parede) não fecha com o degrau
+        # nivelado, enquanto fecha em 0,3 mm só com o eixo alinhado. Em
+        # vez de configurar fase a fase — que envelhece mal e some quando
+        # alguém mexe no YAML — a escolha degrada sozinha: se a nivelada
+        # não alcança, vale a de eixo, que já é muito melhor que posição
+        # pura.
+        up_arm = R_arm_world @ np.array([0.0, 0.0, 1.0])
+
+        # A ESCOLHA É FEITA UMA VEZ POR FASE, e mantida.
+        #
+        # A primeira versão decidia a cada iteração: se a nivelada
+        # alcançasse, usava a atitude completa; se não, caía na de eixo.
+        # As duas formulações levam o braço a posturas bem diferentes, e
+        # alternar entre elas no meio da fase é a MESMA troca de ramo que
+        # já tinha custado caro — só que agora entre formulações.
+        # Medido em 2026-08-27: a fase 'aproxima_lateral', que fechava em
+        # 8,4 mm com 2 iterações, passou a falhar com 58 mm depois de 5,
+        # com a IK reportando resíduo 0,000 m — sinal clássico de o braço
+        # perseguir alvos que mudam de natureza a cada passo.
+        if escolha['modo'] is None:
+            q, e, ang = ik_tooltip_nivelado(p_local, eixo_arm, up_arm,
+                                            q_current=q_atual)
+            q2, e2, ang2 = ik_tooltip_com_degrau(p_local, eixo_arm,
+                                                 q_current=q_atual)
+            escolha['modo'] = 'nivelado' if e <= max(e2, ctx.deploy_ik_tol) else 'eixo'
+            rospy.loginfo('[mission] fase "%s": IK nivelada %.3f m, só eixo '
+                          '%.3f m — usando "%s" na fase inteira',
+                          phase, e, e2, escolha['modo'])
+            return (q, e, ang) if escolha['modo'] == 'nivelado' else (q2, e2, ang2)
+
+        if escolha['modo'] == 'nivelado':
+            return ik_tooltip_nivelado(p_local, eixo_arm, up_arm,
+                                       q_current=q_atual)
+        return ik_tooltip_com_degrau(p_local, eixo_arm, q_current=q_atual)
 
     for it in range(ctx.ik_max_iters):
         if ctx.tilt_critical:

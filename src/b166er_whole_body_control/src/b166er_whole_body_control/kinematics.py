@@ -604,6 +604,166 @@ def degrau_dir(q):
     return -T[:3, 0]
 
 
+def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
+                        max_iter=400, max_step=0.08, q_current=None,
+                        continuity_weight=0.35, ik_reach_tol=0.005,
+                        peso_ang=0.05, ang_tol=0.15, peso_x=0.15):
+    """
+    IK para ATRAVESSAR o furo: 2 de posição + 3 de orientação.
+
+    POR QUE TROCAR UMA RESTRIÇÃO DE POSIÇÃO POR UMA DE ORIENTAÇÃO.
+    `ik_tooltip_com_degrau` alinha o EIXO do degrau (2 restrições) e fixa
+    a posição da ponta (3) — os 5 DOF do braço, todos consumidos. Sobra
+    zero para o ROLL do degrau em torno do próprio eixo, que sai como o
+    ramo da IK entregar.
+
+    Medido em 2026-08-27, na fase "atravessa": eixo do degrau impecável
+    (−0,2° de elevação) mas ROLADO 13,6°, o que sobe a altura efetiva
+    apresentada ao furo de 17,0 para 21,2 mm. A ferramenta encostava no
+    arame de cima do anel (contato medido em Z=+23 mm do centro do
+    olhal, com Y centrado em −1 mm) em vez de atravessar.
+
+    A troca vem de uma observação sobre a TAREFA, não sobre o
+    controlador: a posição AO LONGO do eixo do furo é folgada — o degrau
+    tem 30 mm e o arame 6 mm, então alguns milímetros a mais ou a menos
+    nessa direção não mudam nada. O que precisa ser exato é a posição
+    TRANSVERSAL (profundidade e altura, onde o furo dá 5 e 11,5 mm de
+    folga) e a ATITUDE completa. Fica 2 + 3 = 5, e o degrau passa a ser
+    nivelado por construção, como o desenho do Marco pede — é nivelado
+    que ele sustenta o arame na fase de captura.
+
+    p_target_arm  : (3,) alvo da ponta. A componente ao longo do eixo do
+                    furo é IGNORADA de propósito.
+    eixo_furo_arm : (3,) eixo do furo, no frame da base do braço.
+    up_arm        : (3,) vertical do mundo, no frame da base do braço.
+    peso_x        : peso da componente de posição AO LONGO do eixo do
+                    furo (1,0 = tão importante quanto as outras).
+    peso_ang      : metros equivalentes por radiano de erro de atitude.
+    ang_tol       : erro de atitude (rad) aceito no filtro de candidatos.
+
+    Retorna (q, erro_pos_transversal_m, erro_ang_rad).
+    """
+    a = np.asarray(eixo_furo_arm, dtype=float)
+    a = a / max(np.linalg.norm(a), 1e-12)
+    up = np.asarray(up_arm, dtype=float)
+    up = up / max(np.linalg.norm(up), 1e-12)
+    alvo_p = np.asarray(p_target_arm, dtype=float)
+
+    # PESO BAIXO no eixo do furo, NÃO projeção fora.
+    #
+    # A primeira versão zerava essa componente ("a posição ao longo do
+    # eixo é folgada"). É verdade DENTRO de uma fase — o degrau tem 30 mm
+    # e o arame 6 — mas é justamente ela que DISTINGUE as fases:
+    # aproxima_lateral fica 90 mm ao lado e atravessa fica no furo, e a
+    # diferença entre as duas é só X. Zerando, as duas colapsaram na
+    # mesma solução (10,7 mm / 3,1° / 4,9° idênticos nas duas) e orienta,
+    # arco2 e desengata estouraram para 155-180 mm de erro.
+    #
+    # Com peso, o problema vira mínimos quadrados ponderados: 6 vínculos
+    # (3 de posição, 2 de eixo, 1 de roll) sobre 5 DOF, e quem cede
+    # primeiro é a componente barata. Que é exatamente a intenção.
+    W = np.eye(3) - (1.0 - peso_x) * np.outer(a, a)
+
+    def _alvo_R(R_atual):
+        """Atitude desejada do tool_tip.
+
+        O degrau aponta em −X do tool_tip; a LARGURA (20 mm) é Y e a
+        ALTURA (17 mm) é −Z. A atitude pedida põe a LARGURA na VERTICAL,
+        e não a altura.
+
+        Por quê: o furo é 30 mm na horizontal e 40 mm na vertical. Com a
+        largura em pé o degrau apresenta 17 mm no vão de 30 (6,5 mm de
+        folga por lado) e 20 mm no vão de 40 (10 mm) — mais equilibrado
+        que o contrário, que daria 5 e 11,5 mm. E, medido em 2026-08-27,
+        é a configuração que o braço ALCANÇA: pedindo a altura em pé, a
+        IK não convergia e devolvia 80° de roll com 30 mm de erro
+        transversal; 80° é precisamente esta orientação.
+
+        O sinal do eixo e o da vertical saem por proximidade da atitude
+        atual — atravessar vale nos dois sentidos, e forçar um sinal
+        criaria giros de 180° gratuitos.
+        """
+        s = 1.0 if float((-R_atual[:, 0]) @ a) >= 0.0 else -1.0
+        x = -s * a                       # degrau aponta em -X do tool_tip
+        v = up - float(up @ x) * x       # vertical, ortogonalizada ao eixo
+        n = np.linalg.norm(v)
+        if n < 1e-6:                     # furo vertical: qualquer roll serve
+            base = np.array([0.0, 0.0, 1.0])
+            v = base - float(base @ x) * x
+            n = np.linalg.norm(v)
+        v = v / n
+        t = 1.0 if float(R_atual[:, 1] @ v) >= 0.0 else -1.0
+        y = t * v                        # LARGURA na vertical
+        z = np.cross(x, y)
+        return np.column_stack([x, y, z])
+
+    if q_seeds is None:
+        q_seeds = [
+            np.zeros(5),
+            np.array([0.0,  0.6, -0.4, -1.2, 0.0]),
+            np.array([0.0, -0.9,  0.5,  0.7, 0.0]),
+            np.array([0.0,  0.3,  0.3,  0.0, 0.0]),
+            np.array([0.0, -0.3, -0.3,  0.5, 0.0]),
+        ]
+        q_seeds += [np.array([0.0, 0.6, -0.4, -1.2, ang])
+                    for ang in (-2.36, -1.57, -0.79, 0.79, 1.57, 2.36)]
+        if q_current is not None:
+            q_seeds = [np.array(q_current, dtype=float)] + q_seeds
+
+    def _T(q):
+        return fk_arm(q) @ T_T265_TOOLTIP
+
+    def _erro(q):
+        T = _T(q)
+        e_p = W @ (alvo_p - T[:3, 3])
+        e_o = so3_log(_alvo_R(T[:3, :3]) @ T[:3, :3].T)
+        return np.concatenate([e_p, peso_ang * e_o])
+
+    def _metricas(q):
+        T = _T(q)
+        e_p = float(np.linalg.norm(W @ (alvo_p - T[:3, 3])))
+        e_o = float(np.linalg.norm(so3_log(_alvo_R(T[:3, :3]) @ T[:3, :3].T)))
+        return e_p, e_o
+
+    candidatos = []
+    for seed in q_seeds:
+        q = np.clip(np.array(seed, dtype=float), JOINT_LOWER, JOINT_UPPER)
+        for _ in range(max_iter):
+            err = _erro(q)
+            if np.linalg.norm(err) < 1e-4:
+                break
+            Jm = np.zeros((6, 5))
+            for i in range(5):
+                d = np.zeros(5); d[i] = IK_DQ_STEP
+                Jm[:, i] = (_erro(q - d) - _erro(q + d)) / (2 * IK_DQ_STEP)
+            dq = np.linalg.solve(Jm.T @ Jm + IK_LAMBDA**2 * np.eye(5),
+                                 Jm.T @ err)
+            m = np.max(np.abs(dq))
+            if m > max_step:
+                dq *= max_step / m
+            q = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
+        e_p, e_o = _metricas(q)
+        dist = (float(np.linalg.norm(q - np.asarray(q_current, dtype=float)))
+                if q_current is not None else 0.0)
+        candidatos.append((e_p, e_o, dist, q.copy()))
+
+    # Mesmos três estágios de ik_tooltip_com_degrau, pelo mesmo motivo:
+    # continuidade só decide DEPOIS do filtro rígido, senão o desempate
+    # some e a IK alterna entre soluções espelhadas.
+    bons = [c for c in candidatos if c[0] < ik_reach_tol and c[1] < ang_tol]
+    if bons:
+        e_p, e_o, _, q = min(bons, key=lambda c: c[2] * continuity_weight)
+    else:
+        alcancam = [c for c in candidatos if c[0] < ik_reach_tol]
+        if alcancam:
+            e_p, e_o, _, q = min(alcancam,
+                                 key=lambda c: (c[1], c[2] * continuity_weight))
+        else:
+            e_p, e_o, _, q = min(candidatos,
+                                 key=lambda c: (c[0], c[2] * continuity_weight))
+    return q, e_p, e_o
+
+
 def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                           max_iter=400, max_step=0.08, q_current=None,
                           continuity_weight=0.35, ik_reach_tol=0.005,
@@ -722,15 +882,42 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
     # crítica. Um erro de posição sem limite superior é sempre pior que
     # um erro de orientação, porque orientação errada não move o robô
     # para dentro de um obstáculo.
-    bons = [c for c in candidatos if c[0] < ik_reach_tol]
+    # TRÊS ESTÁGIOS, e a ordem importa.
+    #
+    # A versão anterior ordenava por (ângulo, continuidade) como TUPLA.
+    # Isso apaga o desempate: dois candidatos com 0,005 e 0,006 rad de
+    # desalinho são "diferentes", o ângulo decide sozinho e a
+    # continuidade nunca é consultada. Como a restrição é de EIXO, existe
+    # sempre um par de soluções espelhadas (J5 defasado de 180°, J2 e J4
+    # invertidos) que alinham igualmente bem — e a IK passou a alternar
+    # entre elas a cada iteração.
+    #
+    # Medido em 2026-08-27, fase "captura": J5 saltando entre +1,5° e
+    # -179,4° em iterações consecutivas, com o braço tentando girar 180°
+    # POR DENTRO do mecanismo — defasagens de 105° e 164° em J4, dezenas
+    # de milhares de contatos ferramenta x bracket, e o erro crescendo de
+    # 34 mm para 293 mm.
+    #
+    # É a mesma lição já registrada em `ik_tooltip_position`:
+    # continuidade é DESEMPATE, não compromisso. Filtro rígido primeiro,
+    # continuidade pura depois.
+    bons = [c for c in candidatos
+            if c[0] < ik_reach_tol and c[1] < ang_tol]
     if bons:
-        # Entre as que alcançam: a mais alinhada. Continuidade entra
-        # como desempate fino, com o mesmo peso da IK de posição pura.
-        e_p, e_a, _, q = min(bons, key=lambda c: (c[1], c[2] * continuity_weight))
+        # Alcança E está alinhada: entre essas, a mais próxima da postura
+        # atual. É isto que impede o salto entre as duas soluções
+        # espelhadas.
+        e_p, e_a, _, q = min(bons, key=lambda c: c[2] * continuity_weight)
     else:
-        # Nenhuma alcança: mesmo critério da IK de posição pura, com a
-        # continuidade desempatando. Quem chamou decide se o resíduo
-        # serve — e a missão já tem esse teste (deploy_ik_tol).
-        e_p, e_a, _, q = min(candidatos,
-                             key=lambda c: (c[0], c[2] * continuity_weight))
+        alcancam = [c for c in candidatos if c[0] < ik_reach_tol]
+        if alcancam:
+            # Alcança mas nenhuma alinhada o bastante: a mais alinhada.
+            e_p, e_a, _, q = min(alcancam,
+                                 key=lambda c: (c[1], c[2] * continuity_weight))
+        else:
+            # Nenhuma alcança. ALCANCE PRIMEIRO, SEMPRE — priorizar o
+            # alinhamento aqui já derrubou o robô uma vez (330 mm de erro
+            # de posição por 7° de alinhamento, braço dentro da parede).
+            e_p, e_a, _, q = min(candidatos,
+                                 key=lambda c: (c[0], c[2] * continuity_weight))
     return q, e_p, e_a

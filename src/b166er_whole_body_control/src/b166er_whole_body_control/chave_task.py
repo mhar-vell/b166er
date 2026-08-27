@@ -69,8 +69,27 @@ OLHAL_OFFSET_FROM_WALL_LINK = np.array([
     OLHAL_HEIGHT,
 ])
 
-# Offset fixo de wall_link até o centro da placa da tag.
-TAG_OFFSET_FROM_WALL_LINK = np.array([TAG_X_OFFSET, 0.0, TAG_MOUNT_Z])
+# Offset fixo de wall_link até a SUPERFÍCIE VISÍVEL da tag.
+#
+# O Y era 0.0, como se a tag estivesse colada no plano da parede. Não
+# está: em apriltag_mount.urdf.xacro a placa é montada com
+# wall_standoff = 0,02 e tem 0,005 de espessura, então a face que a
+# câmera enxerga fica a 0,02 + 0,005/2 = 0,0225 m à frente da parede.
+#
+# Isso não é detalhe: o PnP mede a SUPERFÍCIE da tag, e tratá-la como se
+# estivesse no plano da parede empurra toda a estimativa 22,5 mm para
+# perto do robô. Medido em 2026-08-27 sobre a bateria de 8 execuções, o
+# viés da pose da parede era dY = −45 mm mediano, sistemático (dZ entre
+# −14 e −15 mm nas seis), com o offset parede→olhal exato em 0,0 mm.
+# Estes 22,5 mm são metade dele.
+#
+# Se o wall_standoff ou a espessura mudarem no xacro, mudar aqui também
+# — é a mesma duplicação inevitável descrita no cabeçalho deste módulo.
+TAG_STANDOFF      = 0.02      # apriltag_mount: wall_standoff
+TAG_PLATE_THICK   = 0.005     # apriltag_mount: tag_plate_thickness
+TAG_FACE_Y        = TAG_STANDOFF + TAG_PLATE_THICK / 2.0
+
+TAG_OFFSET_FROM_WALL_LINK = np.array([TAG_X_OFFSET, TAG_FACE_Y, TAG_MOUNT_Z])
 
 # Normal da face frontal da parede (onde chave e tag estão montadas),
 # no frame local do fixture — aponta para fora, na direção de onde o

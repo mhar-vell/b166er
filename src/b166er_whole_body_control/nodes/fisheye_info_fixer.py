@@ -57,8 +57,30 @@ class FisheyeInfoFixer(object):
         # distância errava proporcionalmente à distância.
         fx = rospy.get_param('~fx', 285.3222961425781)
         fy = rospy.get_param('~fy', 285.4494934082031)
-        cx = rospy.get_param('~cx', 417.1328125)
-        cy = rospy.get_param('~cy', 393.86590576171875)
+
+        # ── cx/cy: os do RENDERIZADOR, não os da câmera real ──
+        #
+        # fx, fy e D são propriedades da LENTE, e reproduzi-los aqui é o
+        # que faz a simulação exercitar o mesmo PnP da bancada. Mas
+        # cx/cy são o centro óptico do SENSOR MONTADO, e o Gazebo não
+        # reproduz isso: ele renderiza com o ponto principal no centro
+        # geométrico da imagem. Publicar os 417,1/393,9 da câmera real
+        # criava um descasamento de 6,9 px em x e 5,6 px em y contra o
+        # que a imagem de fato mostra.
+        #
+        # 6,9 px / 285 px/rad = 1,39°, e o erro de yaw medido era
+        # exatamente +1,38°. Medido em 2026-08-27, o efeito na pose da
+        # parede:
+        #
+        #                     cx/cy reais    cx/cy do renderizador
+        #   dX a 1,3 m          -19 mm              -1 mm
+        #   dZ a 1,3 m          -19 mm              +1 mm
+        #
+        # Era um viés QUE SÓ EXISTE NA SIMULAÇÃO: na bancada a câmera
+        # real tem o ponto principal real e não há descasamento nenhum.
+        # Mantê-lo aqui não aproximava a simulação do hardware, afastava.
+        cx = rospy.get_param('~cx', self._width / 2.0)
+        cy = rospy.get_param('~cy', self._height / 2.0)
         # k1..k4 do modelo Kannala-Brandt, calibração de fábrica.
         d = rospy.get_param('~D', [-0.007719085086137056,
                                    0.044336311519145966,

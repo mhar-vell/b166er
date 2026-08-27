@@ -84,7 +84,8 @@ from tf.transformations import quaternion_matrix, quaternion_from_matrix
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (T_T265_FISHEYE1,
                                                   T_T265_TASKCAMERA)
-from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
+from b166er_whole_body_control.chave_task import (TAG_OFFSET_FROM_WALL_LINK,
+                                                  flatten_wall_R)
 
 TAG_SIZE = 0.132  # m — quadrado preto.
 #
@@ -441,14 +442,33 @@ class AprilTagLocalizer:
         R_world_tagplate = T_world_tag[:3, :3] @ _R_PNP_TO_FIXTURE
         p_world_tagplate = T_world_tag[:3, 3]
 
-        p_world_wall = p_world_tagplate - R_world_tagplate @ TAG_OFFSET_FROM_WALL_LINK
+        # ACHATA ANTES DE ALAVANCAR, não depois.
+        #
+        # O vínculo de verticalidade da parede já existia (flatten_wall_R)
+        # mas era aplicado pela missão, DEPOIS que a posição da parede já
+        # tinha sido calculada com a rotação crua do PnP. E essa conta
+        # multiplica o tilt espúrio por um braço de 0,885 m (0,37 em X,
+        # 0,805 em Z do offset tag→parede): 1° de inclinação falsa vira
+        # ~15 mm de erro de posição.
+        #
+        # Medido em 2026-08-27, depois de corrigir o afastamento da placa
+        # da tag, sobrava um dZ de −15 a −18 mm em TODAS as distâncias
+        # (1,3 / 1,0 / 0,8 m) — fixo, não proporcional, exatamente a
+        # assinatura de um braço de alavanca constante.
+        #
+        # Achatar aqui preserva o yaw, que é a única componente que a
+        # tarefa realmente precisa da tag, e impede o ruído de roll/pitch
+        # de virar erro de posição.
+        R_world_wall = flatten_wall_R(R_world_tagplate)
+
+        p_world_wall = p_world_tagplate - R_world_wall @ TAG_OFFSET_FROM_WALL_LINK
 
         out = PoseStamped()
         out.header.frame_id = self._world_frame
         out.header.stamp    = msg.header.stamp
         out.pose.position.x, out.pose.position.y, out.pose.position.z = p_world_wall
         T_out = np.eye(4)
-        T_out[:3, :3] = R_world_tagplate
+        T_out[:3, :3] = R_world_wall
         qx, qy, qz, qw = quaternion_from_matrix(T_out)
         out.pose.orientation.x = qx
         out.pose.orientation.y = qy
