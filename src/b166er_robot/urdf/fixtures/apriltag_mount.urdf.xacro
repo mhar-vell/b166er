@@ -16,7 +16,7 @@
        ~/apriltag_36h11_id0.png, copiada para materials/textures/),
        material OGRE em materials/scripts/apriltag.material. -->
 
-  <xacro:macro name="apriltag_mount" params="parent prefix:=tag_ xyz:='0 0 0' rpy:='0 0 0'">
+  <xacro:macro name="apriltag_mount" params="parent prefix:=tag_ xyz:='0 0 0' rpy:='0 0 0' black_size:=0.132">
 
     <!-- A textura apriltag_36h11_id0.png tem quiet zone branca: o
          quadrado preto ocupa exatamente 80% da imagem (medido pixel a
@@ -46,8 +46,19 @@
          132 mm continua válida, mas só a partir de ~1,4 m — o que
          obriga a busca a acontecer mais perto da chave. Descoberto ao vivo: o PnP superestimava a
          distância em ~25% quando a placa media 132mm (preto = 105,6mm
-         renderizado, tratado como 132mm pelo detector). -->
-    <xacro:property name="tag_black_size" value="0.220"/>   <!-- 220 mm — ver nota abaixo -->
+         renderizado, tratado como 132mm pelo detector).
+
+         VIROU PARÂMETRO em 2026-08-27 (black_size). O tamanho deixou de
+         ser uma constante escondida aqui porque ele agora INTERAGE com
+         a geometria medida da bancada: a tag fica a 17 cm do olhal, e
+         nessa distância a placa de 220 mm invade a placa da chave. Quem
+         escolhe é chave_com_tag.urdf.xacro, onde as duas medidas se
+         encontram. Padrão 132 mm = a tag que o Marco tem impressa.
+
+         CURVA DE ALCANCE REAL (T265, 2026-08-26), tag de 132 mm:
+           detecta até ~1,8 m; mede bem só até ~1,2 m; colapsa em 2,5 m.
+         Extrapolando para 220 mm: ~3,0 m detecta, ~2,0 m mede bem. -->
+    <xacro:property name="tag_black_size" value="${black_size}"/>
     <xacro:property name="tag_size" value="${tag_black_size/0.8}"/>  <!-- placa: preto + quiet zone da textura -->
     <xacro:property name="tag_plate_thickness" value="0.005"/>
     <xacro:property name="wall_standoff" value="0.02"/>

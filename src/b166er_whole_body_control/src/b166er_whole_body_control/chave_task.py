@@ -20,15 +20,28 @@ import math
 import numpy as np
 
 # ── Espelha chave_seccionadora_lf.urdf.xacro + chave_com_tag.urdf.xacro ──
+# ATUALIZADO em 2026-08-27 com as medidas de trena da bancada
+# (olhal-dimension.png, 2026-08-26). O que era spec/estimativa virou
+# medição — e as três que mudaram mudam a tarefa, não só o desenho:
+#   olhal   0,810 -> 0,805 m do chão
+#   standoff 0,08 -> 0,13 m da parede   (5 cm a mais de folga)
+#   tag      37 -> 17 cm do olhal, e na MESMA ALTURA (era 22 cm acima)
 CHAVE_X_OFFSET     = -0.20    # chave_x_offset
-OLHAL_HEIGHT       = 0.810    # olhal_height (spec do Marco)
-BLADE_LENGTH       = 0.200    # blade_length
+OLHAL_HEIGHT       = 0.805    # olhal_height (MEDIDO)
+BLADE_LENGTH       = 0.200    # blade_length (não medido — segue estimado)
 BLADE_ANGLE_CLOSED = 0.0      # fechada = lâmina VERTICAL (correção do Marco:
                               # os 20° da versão anterior eram a posição ABERTA)
 BLADE_ANGLE_OPEN   = 0.524    # 30° — curso de abertura confirmado pelo Marco
-WALL_STANDOFF      = 0.08     # wall_standoff da chave (mecanismo destacado da placa)
-TAG_X_OFFSET       = -0.50    # tag_x_offset (outro lado da chave, 0,30 m dela)
-TAG_MOUNT_Z        = 1.030    # tag_mount_z
+WALL_STANDOFF      = 0.13     # wall_standoff da chave (MEDIDO)
+TAG_OLHAL_DX       = 0.17     # separação tag↔olhal (MEDIDO)
+TAG_X_OFFSET       = CHAVE_X_OFFSET - TAG_OLHAL_DX
+TAG_MOUNT_Z        = OLHAL_HEIGHT   # tag na mesma altura do olhal (MEDIDO)
+
+# Furo do olhal (MEDIDO): oval, interno 40 mm em Z e 30 mm em Y, arame
+# de ~6 mm. Fica aqui porque a descida da fase de captura sai daqui —
+# ver config/chave_seccionadora_task.yaml.
+OLHAL_FURO_Z       = 0.040
+OLHAL_FURO_Y       = 0.030
 
 _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
 

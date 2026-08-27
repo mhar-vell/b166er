@@ -26,34 +26,49 @@
   <xacro:property name="wall_thickness" value="0.10"/>
   <xacro:property name="wall_height" value="1.40"/>
   <xacro:property name="chave_x_offset" value="-0.20"/>
-  <!-- Tag do OUTRO LADO da chave (pedido do Marco, 2026-08-13):
-       antes ficava em +0.20, com a chave em -0.20; agora do lado oposto.
-       Aproximada da chave em seguida (também a pedido do Marco): a
-       separação caiu de 0,40 m para 0,30 m, com a tag em -0.50.
 
-       Por que não mais perto: ao subir a tag de 132 para 220 mm, a
-       PLACA foi de 16,5 para 27,5 cm de largura, e em -0.42 a borda
-       dela ficava a 2 mm da placa da chave — visualmente encostadas
-       (o Marco notou: "a tag está em cima da chave"). Em -0.50 sobram
-       8 cm de folga. A conta que governa: meia-placa da tag (13,75 cm)
-       + meia-placa da chave (8 cm) + margem.
-       Ficar perto importa para a percepção: quanto menor a distância
-       entre a tag e o alvo de manipulação, menor o braço de alavanca
-       do erro angular da detecção sobre a posição estimada do olhal.
-       A parede segue com 1,6 m de largura. -->
-  <xacro:property name="tag_x_offset" value="-0.50"/>
+  <!-- ═══ POSIÇÃO DA TAG — MEDIDA NA BANCADA (2026-08-26) ═══
+       olhal-dimension.png: o centro da tag fica a 17 cm do olhal, na
+       horizontal, e NA MESMA ALTURA dele. Toda a geometria anterior era
+       arbitrada: 30 cm de separação e 22 cm acima do olhal.
 
-  <!-- Altura de montagem do macro da chave = altura do PIVÔ (embaixo),
-       não mais do bracket sob o isolador. Precisa bater com o cálculo
-       interno de chave_seccionadora_lf (pivot_z), que o xacro não
-       expõe para fora do macro: olhal_height=0.810, blade_length=0.200,
-       lâmina VERTICAL quando fechada. Mecânica invertida em 2026-08-13
-       (pivô embaixo, olhal em cima) e depois rotacionada 90° no eixo Z
-       (lâmina abre para fora da parede). O olhal segue a 0.810 m. -->
+       Isso muda o erro de percepção de forma direta. A missão estima a
+       pose da PAREDE pela tag e depois aplica offsets em YAML para
+       chegar ao olhal; quanto maior esse braço, mais o erro ANGULAR da
+       detecção vira erro de POSIÇÃO no alvo. Passar de 37 cm de
+       distância tag→olhal para 17 cm corta esse braço por 2,2.
+
+       CONSEQUÊNCIA QUE PRECISA DE DECISÃO: com 17 cm de separação a tag
+       de 220 mm não cabe mais ao lado da chave. Contas de meia-placa:
+         meia-placa da chave ......... 8,0 cm
+         meia-placa da tag 220 mm .... 13,75 cm  -> precisa de 21,75 cm
+         meia-placa da tag 132 mm .... 8,25 cm   -> precisa de 16,25 cm
+       Só a de 132 mm cabe nos 17 cm medidos — e é justamente a que o
+       Marco tem impressa. Por isso o padrão volta para 132 mm.
+
+       O preço é conhecido e já estava documentado: com 132 mm a
+       detecção confiável termina em ~1,8 m (T265 real, medido em
+       2026-08-26), e o SEARCH da missão acontece a 2,8 m. Ou a busca
+       desce para menos de 1,8 m, ou a bancada precisa afastar a tag do
+       olhal para caber a de 220 mm. As duas saídas são medições, não
+       chutes — mas são decisão do Marco. -->
+  <xacro:property name="tag_olhal_dx" value="0.17"/>
+  <xacro:property name="tag_x_offset" value="${chave_x_offset - tag_olhal_dx}"/>
+  <xacro:property name="tag_black_size" value="0.132"/>
+
+  <!-- Altura de montagem do macro da chave = altura do PIVÔ (embaixo).
+       Precisa bater com o cálculo interno de chave_seccionadora_lf
+       (pivot_z), que o xacro não expõe para fora do macro:
+       olhal_height=0.805 (MEDIDO), blade_length=0.200, lâmina VERTICAL
+       quando fechada. Mecânica invertida em 2026-08-13 (pivô embaixo,
+       olhal em cima) e depois rotacionada 90° no eixo Z (lâmina abre
+       para fora da parede). -->
+  <xacro:property name="olhal_z" value="0.805"/>
   <xacro:property name="chave_pivot_z"
-    value="${0.810 - 0.200}"/>  <!-- 0,610 m — lâmina VERTICAL na posição fechada -->
+    value="${olhal_z - 0.200}"/>  <!-- 0,605 m — lâmina VERTICAL na posição fechada -->
 
-  <xacro:property name="tag_mount_z" value="1.030"/>
+  <!-- Mesma altura do olhal (medido). Era 1.030. -->
+  <xacro:property name="tag_mount_z" value="${olhal_z}"/>
 
   <!-- ═══ Parede: base no chão, face frontal (mounting) em Y=0 do frame
        local, corpo se estendendo para -Y (atrás) ═══ -->
@@ -85,7 +100,8 @@
     xyz="${chave_x_offset} 0 ${chave_pivot_z}" rpy="0 0 0"/>
 
   <xacro:apriltag_mount parent="wall_link" prefix="tag_"
-    xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"/>
+    xyz="${tag_x_offset} 0 ${tag_mount_z}" rpy="0 0 0"
+    black_size="${tag_black_size}"/>
 
   <!-- A fixture NÃO pode mais ser <static>: modelo estático no Gazebo
        não simula juntas, e a lâmina precisa girar para a chave abrir

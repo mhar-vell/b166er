@@ -89,31 +89,22 @@ from b166er_whole_body_control.kinematics import pose_error, tooltip_position_to
 
 PHASE_ORDER = ['engage', 'release', 'pos1', 'pos2']
 
-# ── Geometria replicada de urdf/fixtures/chave_seccionadora_lf.urdf.xacro
-#    e chave_com_tag.urdf.xacro (terceira cópia da fórmula do pivô — ver
-#    docstring do módulo para o motivo). Se os parâmetros dimensionais da
-#    chave mudarem lá, atualizar aqui também. ──
-_CHAVE_X_OFFSET     = -0.20    # chave_x_offset, chave_com_tag.urdf.xacro
-_OLHAL_HEIGHT       = 0.810    # olhal_height, spec do Marco
-_BLADE_LENGTH       = 0.200    # blade_length
-_BLADE_ANGLE_CLOSED = 0.349    # blade_angle, 20° em rad, posição fechada
-_WALL_STANDOFF      = 0.03     # wall_standoff
-
-_PIVOT_X = _BLADE_LENGTH * math.sin(_BLADE_ANGLE_CLOSED)
-
-# Offset fixo de wall_link (origem = pose de spawn do fixture) até
-# chave_olhal_link, no frame local do fixture (X horizontal ao longo
-# da parede, Y profundidade/normal da parede, Z vertical). O Z é
-# exatamente _OLHAL_HEIGHT porque wall_link nasce no chão (spawn z=0
-# por padrão) e toda a cadeia bracket→blade→olhal foi construída, de
-# propósito, para que o olhal caia exatamente nessa altura (ver nota
-# em chave_seccionadora_lf.urdf.xacro) — os termos de bracket_height/
-# pivot_z se cancelam por construção, não precisam ser repetidos aqui.
-OLHAL_OFFSET_FROM_WALL_LINK = np.array([
-    _CHAVE_X_OFFSET - _PIVOT_X,
-    _WALL_STANDOFF,
-    _OLHAL_HEIGHT,
-])
+# ── Geometria: vem de chave_task, NÃO mais copiada aqui.
+#
+# Este bloco era a terceira cópia da fórmula do pivô, e apodreceu: ficou
+# com a mecânica de antes de 2026-08-13 (fechada = 20°, standoff 0,03 m)
+# enquanto o fixture já tinha sido invertido e rotacionado duas vezes.
+# Uma cópia que ninguém atualiza é pior que nenhuma — ela mente com
+# aparência de fonte.
+#
+# ATENÇÃO: este nó está SUPERADO por chave_mission.py. Seu PHASE_ORDER
+# ainda fala de 'engage'/'release'/'pos1'/'pos2', nomes que sumiram do
+# config/chave_seccionadora_task.yaml quando a sequência do Marco
+# (Notebook 18, pág. 4) entrou. Ele não roda como está. Fica aqui como
+# referência, agora ao menos com a geometria certa. ──
+from b166er_whole_body_control.chave_task import (      # noqa: E402
+    OLHAL_OFFSET_FROM_WALL_LINK,
+)
 
 
 def _quat_to_matrix(o):
