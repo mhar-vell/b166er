@@ -17,6 +17,12 @@
 # A geometria do arco vem de: olhal a 200 mm do pivô, giro em torno de
 # X. Para 15° -> ΔY=+51,8 ΔZ=−6,8 mm; para 30° -> ΔY=+100,0 ΔZ=−26,8 mm.
 # Se o raio real da bancada for diferente, SÓ ESTES NÚMEROS mudam.
+#
+# Furo do olhal MEDIDO na bancada em 2026-08-26 (olhal-dimension.png):
+# oval, interno 40 mm (Z) x 30 mm (Y), centro a 805 mm do chão e 130 mm
+# da parede. O degrau atravessa com seção 20 (Y) x 17 (Z) mm, ou seja
+# 5 mm de folga de cada lado em Y — Y é a direção apertada, e é ela que
+# a precisão de estacionamento tem de vencer.
 chave_seccionadora_task:
   target_frame: "chave_olhal_link"
 
@@ -33,27 +39,34 @@ chave_seccionadora_task:
     offset_xyz_m: [0.0, 0.0, 0.0085]
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
-  # É aqui que a captura acontece. O curso depende do raio do furo:
-  # com Ø27 mm dá os 5 mm que o Marco especificou; com os Ø56 mm que
-  # estão modelados hoje dá 19,5 mm. Quando o olhal real for medido,
-  # este é o número a corrigir — e a descida especificada é, na prática,
-  # uma medida indireta do furo.
+  # É aqui que a captura acontece. O curso é
+  #
+  #     descida = meia-altura interna do furo − meia-altura do degrau
+  #
+  # ou seja, desce até o degrau encostar na aba de baixo do anel.
+  #
+  # ATUALIZADO com o furo MEDIDO (2026-08-26): interno 40 mm em Z, logo
+  # 20 − 8,5 = 11,5 mm de descida, e o tool_tip fica 3,0 mm ABAIXO do
+  # centro do furo. Antes eram 19,5 mm, calculados sobre um furo
+  # circular de Ø56 mm que eu tinha inventado; a bancada é um OVAL de
+  # 40 (Z) x 30 (Y). Os 5 mm que o Marco citou vinham de supor Ø27.
   captura:
-    offset_xyz_m: [0.0, 0.0, -0.0195]
+    offset_xyz_m: [0.0, 0.0, -0.0030]
 
   # ── 4. acompanha o arco ──
   # Força pequena em Y: o degrau sustenta por baixo e o anel desliza
   # livremente sobre ele. A ferramenta não persegue a trajetória, só
   # não pode descer menos que o olhal nem recuar mais rápido que ele.
+  # Z = captura + ΔZ do arco (−6,8 mm a 15°, −26,8 mm a 30°).
   arco1:
-    offset_xyz_m: [0.0, 0.0518, -0.0263]
+    offset_xyz_m: [0.0, 0.0518, -0.0098]
     blade_angle_deg: 15
   arco2:
-    offset_xyz_m: [0.0, 0.1000, -0.0463]
+    offset_xyz_m: [0.0, 0.1000, -0.0298]
     blade_angle_deg: 30
 
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
   # fora do anel sem puxá-lo de volta.
   desengata:
-    offset_xyz_m: [-0.090, 0.1000, -0.0463]
+    offset_xyz_m: [-0.090, 0.1000, -0.0298]

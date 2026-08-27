@@ -82,11 +82,23 @@ from geometry_msgs.msg import PoseStamped, Point
 from tf.transformations import quaternion_matrix, quaternion_from_matrix
 
 from b166er_whole_body_control.msg import RobotState
-from b166er_whole_body_control.kinematics import T_T265_TASKCAMERA
+from b166er_whole_body_control.kinematics import (T_T265_FISHEYE1,
+                                                  T_T265_TASKCAMERA)
 from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
 
-TAG_SIZE = 0.220  # m — quadrado preto. Subiu de 132 mm para alcançar
-                  # a distância do SEARCH (~3 m); ver apriltag_mount.urdf.xacro
+TAG_SIZE = 0.132  # m — quadrado preto.
+#
+# VOLTOU DE 220 PARA 132 mm em 2026-08-27. Os 220 mm existiam para a
+# tag ser legível no SEARCH a ~3 m, mas a medição da bancada
+# (olhal-dimension.png) põe a tag a 17 cm do olhal, e nessa separação a
+# placa de 220 mm (27,5 cm de largura) invade a placa da chave. 132 mm é
+# o que cabe — e é a tag que o Marco tem impressa e caracterizou contra
+# a T265 real.
+#
+# O preço está medido e é real: com 132 mm a T265 detecta até ~1,8 m e
+# só MEDE bem até ~1,2 m. O SEARCH da missão acontece a 2,8 m, onde esta
+# tag não aparece. Ou a busca desce, ou a bancada afasta a tag do olhal
+# para caber a de 220 mm — decisão do Marco, não deste arquivo.
 
 # Offset de wall_link até a tag: IMPORTADO de chave_task, NÃO copiado.
 #
@@ -176,13 +188,22 @@ class AprilTagLocalizer:
         # Extrínseca T265 -> câmera. Na simulação é a da câmera de
         # tarefa; com a fisheye da própria T265 vem do TF do driver.
         self._fisheye = rospy.get_param('~fisheye', False)
+        # Quociente mínimo entre o erro de reprojeção da solução
+        # descartada e o da escolhida. Abaixo disso as duas são
+        # indistinguíveis e a medida é descartada — devolver uma pose
+        # ambígua com cara de boa é o modo de falha que queremos evitar.
+        self._pnp_razao_min = rospy.get_param('~pnp_razao_minima', 2.0)
+        self._pnp_razao = float('inf')
+        # Default: a fisheye da T265, que é a câmera do robô real. A
+        # câmera de tarefa (T_T265_TASKCAMERA) só existe na simulação e
+        # fica disponível por parâmetro para comparação.
         self._T_t265_cam = np.array(
-            rospy.get_param('~T_t265_camera', T_T265_TASKCAMERA.tolist()),
+            rospy.get_param('~T_t265_camera', T_T265_FISHEYE1.tolist()),
             dtype=float)
         if self._T_t265_cam.shape != (4, 4):
             rospy.logwarn('[apriltag] ~T_t265_camera não é 4x4 — usando a '
                           'transformada da câmera de tarefa')
-            self._T_t265_cam = T_T265_TASKCAMERA.copy()
+            self._T_t265_cam = T_T265_FISHEYE1.copy()
 
         self._bridge = CvBridge()
         self._K = None
@@ -295,17 +316,58 @@ class AprilTagLocalizer:
         (K = identidade, distorção nula), o que é equivalente e evita
         desdistorcer a imagem inteira a cada quadro.
         """
-        if not self._fisheye:
-            return cv2.solvePnP(self._obj_points, img_points,
-                                self._K, self._dist)
+        if self._fisheye:
+            # Desprojeta pelo modelo equidistante e resolve contra uma
+            # câmera ideal — equivalente a desdistorcer a imagem inteira,
+            # e muito mais barato.
+            d = self._dist.flatten()
+            d4 = np.zeros((4, 1))
+            d4[:min(4, len(d)), 0] = d[:4]
+            pts = img_points.reshape(-1, 1, 2).astype(np.float64)
+            pontos = cv2.fisheye.undistortPoints(pts, self._K,
+                                                 d4).astype(np.float32)
+            K, D = np.eye(3), np.zeros(5)
+        else:
+            pontos, K, D = img_points, self._K, self._dist
 
-        d = self._dist.flatten()
-        d4 = np.zeros((4, 1))
-        d4[:min(4, len(d)), 0] = d[:4]
-        pts = img_points.reshape(-1, 1, 2).astype(np.float64)
-        norm = cv2.fisheye.undistortPoints(pts, self._K, d4)
-        return cv2.solvePnP(self._obj_points, norm.astype(np.float32),
-                            np.eye(3), np.zeros(5))
+        # IPPE_SQUARE COM DESEMPATE POR ERRO DE REPROJEÇÃO (2026-08-27).
+        #
+        # O solvePnP comum devolve UMA solução, e para um alvo PLANAR
+        # existem duas quase igualmente boas — a tag e sua imagem
+        # espelhada em relação ao plano da câmera. Vista de frente e com
+        # muitos pixels, a escolha é óbvia; vista de esquina e com poucos
+        # pixels, o solver escolhe errado com frequência.
+        #
+        # Medido na simulação com a fisheye, quatro poses do robô:
+        # o erro de orientação da parede foi 9,3° / 21,0° / 24,7° e
+        # 155,4° — o último é o flip clássico, e os demais crescem com o
+        # ângulo de visada. Todos com posição errada por centenas de
+        # milímetros. Na bancada isso não apareceu porque lá medimos
+        # DISTÂNCIA (|tvec|), que é imune à ambiguidade.
+        #
+        # IPPE_SQUARE é específico para alvos planares quadrados e
+        # devolve AS DUAS soluções com seus erros de reprojeção. Escolher
+        # a de menor erro resolve a ambiguidade quando ela é
+        # distinguível, e o quociente entre os dois erros diz quando NÃO
+        # é — caso em que é melhor descartar a medida do que arriscar.
+        ok, rvecs, tvecs, erros = cv2.solvePnPGeneric(
+            self._obj_points, pontos, K, D,
+            flags=cv2.SOLVEPNP_IPPE_SQUARE)
+        if not ok or not len(rvecs):
+            return False, None, None
+
+        e = np.asarray(erros).flatten()
+        i = int(np.argmin(e))
+        self._pnp_razao = float(e[1 - i] / e[i]) if len(e) > 1 and e[i] > 1e-9 else float('inf')
+        if self._pnp_razao < self._pnp_razao_min:
+            # As duas soluções são igualmente plausíveis: a pose é
+            # ambígua e qualquer escolha é chute. Descartar.
+            rospy.logwarn_throttle(
+                2.0, '[apriltag] pose ambígua (erros de reprojeção %.3f vs '
+                     '%.3f, razão %.2f) — descartando', e[i], e[1 - i],
+                self._pnp_razao)
+            return False, None, None
+        return True, rvecs[i], tvecs[i]
 
     def _cb_image(self, msg):
         if self._K is None or self._t265_pose is None:
