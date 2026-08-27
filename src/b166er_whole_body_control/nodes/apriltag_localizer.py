@@ -194,6 +194,7 @@ class AprilTagLocalizer:
         # ambígua com cara de boa é o modo de falha que queremos evitar.
         self._pnp_razao_min = rospy.get_param('~pnp_razao_minima', 2.0)
         self._pnp_razao = float('inf')
+        self._n_frames = 0
         # Default: a fisheye da T265, que é a câmera do robô real. A
         # câmera de tarefa (T_T265_TASKCAMERA) só existe na simulação e
         # fica disponível por parâmetro para comparação.
@@ -292,6 +293,18 @@ class AprilTagLocalizer:
             _draw_text(out, 'faixa confiavel (d/11): ate %.2f m  ->  %s'
                        % (d_max, 'OK' if ok else 'FORA DE FAIXA'), 48,
                        (0, 255, 0) if ok else (0, 0, 255))
+
+        # BATIMENTO. Quando a T265 fica olhando para o próprio robô — que
+        # é o que acontece com o braço recolhido — a cena é estática e a
+        # janela parece CONGELADA, indistinguível de pipeline morto. O
+        # Marco relatou "a câmera está travada" em 2026-08-27 com a
+        # câmera publicando normalmente a 6 Hz, e o diagnóstico custou
+        # uma varredura inteira. Um contador que anda resolve a dúvida
+        # sem ninguém precisar rodar `rostopic hz`.
+        self._n_frames += 1
+        _draw_text(out, 'frame %d  t=%.1fs' % (self._n_frames,
+                                               rospy.get_time()),
+                   out.shape[0] - 16, (255, 255, 0))
         self._pub_debug.publish(_to_imgmsg(out))
 
     def _cb_camera_info(self, msg):
