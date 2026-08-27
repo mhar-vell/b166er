@@ -23,39 +23,61 @@
          lâmina encosta no contato fixo de cima; abrir é girá-la 30°
          para fora (curso confirmado pelo Marco).
 
-       · OLHAL É UM ANEL, não uma barra. É por dentro dele que o gancho
-         da ferramenta passa. URDF não tem primitiva de toroide, então
-         o anel é aproximado por segmentos cilíndricos em círculo, no
-         plano X-Z — furo voltado para o robô, para o gancho entrar de
-         frente e puxar.
+       · OLHAL É UM ANEL OVAL, não uma barra e não um círculo. É por
+         dentro dele que o degrau do dedo fixo passa. URDF não tem
+         primitiva de toroide, então o anel é aproximado por segmentos
+         cilíndricos, no plano Y-Z — FURO VOLTADO PARA O LADO (normal em
+         X), como o Marco descreveu e como a foto da bancada mostra.
 
        Continua sendo aproximação por primitivas, não réplica de CAD. -->
 
   <xacro:macro name="chave_seccionadora_lf" params="parent prefix:=chave_ xyz:='0 0 0' rpy:='0 0 0'">
 
-    <xacro:property name="olhal_height" value="0.810"/>      <!-- altura do olhal (spec do Marco) -->
+    <!-- MEDIDO NA BANCADA REAL em 2026-08-26 (olhal-dimension.png):
+         centro do olhal a 80,5 cm do chão. Era 0,810 por estimativa. -->
+    <xacro:property name="olhal_height" value="0.805"/>
     <xacro:property name="blade_length" value="0.200"/>      <!-- pivô → olhal -->
-    <!-- Afastamento do mecanismo em relação à placa. Subiu de 0,03 m
-         para 0,08 m em 2026-08-13, por dois motivos que convergem:
-         · FÍSICO: a foto da bancada mostra o mecanismo bem destacado da
-           placa (a barra e a articulação se projetam vários cm), não
-           colado como 3 cm sugeriam.
-         · FUNCIONAL: com 3 cm o olhal ficava a 30 mm da face, enquanto
-           o bracket ocupa até 28 mm — o gancho (esfera de colisão de
-           20 mm) não tinha por onde entrar. O J4 travava contra o
-           bracket e a ponta parava 5 cm aquém do alvo, sintoma que
-           levou horas a isolar porque parecia droop ou IK ruim. -->
-    <xacro:property name="wall_standoff" value="0.08"/>
+    <!-- Afastamento do mecanismo em relação à face da placa.
+         Foi 0,03 (estimado da foto) → 0,08 (estimado de novo, para o
+         gancho ter por onde entrar) → 0,13 MEDIDO com trena na bancada
+         em 2026-08-26 (olhal-dimension.png): o centro do olhal está a
+         13 cm da parede.
+
+         Os 5 cm a mais em relação ao chute anterior não são cosméticos:
+         é a folga entre a ferramenta e a parede durante o engate, e é
+         justamente onde o manipulador vinha entrando dentro da parede
+         nas simulações. -->
+    <xacro:property name="wall_standoff" value="0.13"/>
 
     <!-- Placa de fundo (a branca da foto, parafusada na parede). -->
     <xacro:property name="plate_w" value="0.16"/>
     <xacro:property name="plate_h" value="0.62"/>
     <xacro:property name="plate_t" value="0.012"/>
 
-    <!-- Anel do olhal -->
-    <xacro:property name="ring_r" value="0.028"/>      <!-- raio do furo -->
-    <xacro:property name="ring_t" value="0.006"/>      <!-- espessura do arame -->
-    <xacro:property name="ring_seg" value="10"/>       <!-- segmentos do círculo -->
+    <!-- ═══ Anel do olhal — OVAL, medido em 2026-08-26 ═══
+         O anel nunca foi um círculo de 28 mm de raio. Medidas reais
+         (olhal-dimension.png), no plano do anel:
+
+                       vertical (Z)   horizontal (Y)
+           furo interno   40 mm          30 mm
+           externo        55 mm          40 mm
+           => arame        7,5 mm         5 mm  -> ~6 mm de bitola
+
+         Os semi-eixos abaixo são da LINHA DE CENTRO do arame
+         (interno + metade da bitola), que é onde os cilindros ficam:
+           Z: 20 + 3 = 23 mm      Y: 15 + 3 = 18 mm
+         Isso devolve externo 52 x 42 mm contra os 55 x 40 medidos.
+
+         POR QUE O FORMATO IMPORTA: o degrau do dedo fixo atravessa o
+         furo com seção 20 mm (Y) x 17 mm (Z). No furo real de 30 x 40
+         isso passa com 5 mm de folga de cada lado em Y — e Y é a
+         direção apertada. Com o círculo de 56 mm que estava aqui, a
+         simulação dava 18 mm de folga onde a bancada dá 5, ou seja,
+         escondia exatamente a tolerância que a tarefa precisa vencer. -->
+    <xacro:property name="ring_ay" value="0.018"/>     <!-- semi-eixo horizontal (perpendicular à parede) -->
+    <xacro:property name="ring_az" value="0.023"/>     <!-- semi-eixo vertical -->
+    <xacro:property name="ring_t" value="0.006"/>      <!-- bitola do arame -->
+    <xacro:property name="ring_seg" value="12"/>       <!-- segmentos do oval -->
 
     <!-- ABERTURA POR CONTATO (2026-08-25). Com isto em true o olhal e a
          lâmina ganham colisão e a chave passa a abrir porque o gancho
@@ -96,16 +118,21 @@
       <origin xyz="${xyz}" rpy="${rpy}"/>
     </joint>
 
-    <!-- ═══ Bracket inferior = PIVÔ ═══ -->
+    <!-- ═══ Bracket inferior = PIVÔ ═══
+         O braço vai da face da placa até o pivô, então sua PROFUNDIDADE
+         é o próprio wall_standoff. Antes era uma caixa de 20 mm plantada
+         a 0,6·standoff, o que com 8 cm quase alcançava o pivô por acaso;
+         com os 13 cm medidos ficaria um bloco solto no ar, com o pivô
+         fora dele. -->
     <link name="${prefix}bracket">
       <visual>
-        <origin xyz="0 ${wall_standoff*0.6} 0"/>
-        <geometry><box size="0.045 0.020 0.14"/></geometry>
+        <origin xyz="0 ${wall_standoff/2} 0"/>
+        <geometry><box size="0.045 ${wall_standoff} 0.14"/></geometry>
         <material name="galvanized"><color rgba="0.55 0.55 0.58 1"/></material>
       </visual>
       <collision>
-        <origin xyz="0 ${wall_standoff*0.6} 0"/>
-        <geometry><box size="0.045 0.020 0.14"/></geometry>
+        <origin xyz="0 ${wall_standoff/2} 0"/>
+        <geometry><box size="0.045 ${wall_standoff} 0.14"/></geometry>
       </collision>
       <inertial>
         <mass value="0.4"/>
@@ -123,13 +150,13 @@
          nele) ═══ -->
     <link name="${prefix}fixed_terminal">
       <visual>
-        <origin xyz="0 ${wall_standoff*0.6} 0"/>
-        <geometry><box size="0.045 0.020 0.19"/></geometry>
+        <origin xyz="0 ${wall_standoff/2} 0"/>
+        <geometry><box size="0.045 ${wall_standoff} 0.19"/></geometry>
         <material name="galvanized"/>
       </visual>
       <collision>
-        <origin xyz="0 ${wall_standoff*0.6} 0"/>
-        <geometry><box size="0.045 0.020 0.19"/></geometry>
+        <origin xyz="0 ${wall_standoff/2} 0"/>
+        <geometry><box size="0.045 ${wall_standoff} 0.19"/></geometry>
       </collision>
       <inertial>
         <mass value="0.4"/>
@@ -202,16 +229,15 @@
       <dynamics damping="0.5" friction="1.5"/>
     </joint>
 
-    <!-- ═══ OLHAL: anel no topo da lâmina, a 810 mm do chão. Este é o
-         frame que o controlador mira, e é por dentro dele que o gancho
-         da ferramenta passa.
+    <!-- ═══ OLHAL: anel oval no topo da lâmina, a 805 mm do chão e a
+         130 mm da parede (medidos). Este é o frame que o controlador
+         mira, e é por dentro dele que o degrau do dedo fixo passa.
 
-         O anel fica no plano X-Z (normal ao longo de Y), ou seja, com o
-         FURO VOLTADO PARA O ROBÔ — o gancho entra de frente e puxa.
-         Aproximado por ${ring_seg} cilindros curtos em círculo, já que
-         o URDF não tem toroide. A colisão é uma esfera única: o
-         contato fino do gancho no anel não é simulado nesta fase (a
-         tarefa é validada por posição do EE, não por contato). ═══ -->
+         O anel fica no plano Y-Z (normal ao longo de X): o FURO OLHA
+         PARA O LADO, e atravessá-lo é um movimento paralelo à parede.
+         Aproximado por ${ring_seg} cilindros curtos, já que o URDF não
+         tem toroide, e cada um com colisão própria — ver a nota sobre
+         por que uma primitiva envolvente não serve. ═══ -->
     <link name="${prefix}olhal_link">
       <!-- PLANO DO ANEL: contém Y e Z, normal em X (2026-08-26).
            Antes o círculo era desenhado no plano XZ, com a normal em Y —
@@ -223,13 +249,36 @@
            a ferramenta entra: com o furo em X, o degrau do dedo fixo
            avança paralelo à parede, e não contra ela. Todo o desenho da
            ferramenta e a sequência de fases dependem disso. -->
+      <!-- ORIENTAÇÃO DOS SEGMENTOS — corrigida em 2026-08-27.
+           A versão anterior tinha rpy="0 pi/2 -a", herdada de quando o
+           anel era desenhado no plano XZ. Depois que as POSIÇÕES foram
+           levadas para o plano YZ, essa rotação passou a apontar os
+           cilindros para FORA do plano do anel (eixo em (cos a, -sen a,
+           0), que vive no plano XY): o "anel" era na verdade um punhado
+           de espetos saindo de lado. Como cada cilindro também tem
+           colisão, isso plantava obstáculos bem na boca do furo.
+
+           Agora o eixo é a tangente do oval no ponto, obtida do próprio
+           parâmetro: um cilindro alinhado com +Z local vira (0, -sen θ,
+           cos θ) com um roll θ, e θ = atan2(-dy, dz) sobre a corda do
+           segmento. Para o círculo isso dá θ = a; para o oval corrige a
+           inclinação onde os semi-eixos diferem.
+
+           O comprimento também vem da corda (não de 2πr/n, que só vale
+           para círculo), com 15% de sobreposição para não deixar frestas
+           nas emendas. -->
       <xacro:macro name="ring_seg_vis" params="i">
-        <xacro:property name="a" value="${2*pi*i/ring_seg}"/>
+        <xacro:property name="a"  value="${2*pi*i/ring_seg}"/>
+        <xacro:property name="h"  value="${pi/ring_seg}"/>
+        <xacro:property name="dy" value="${ring_ay*(cos(a+h) - cos(a-h))}"/>
+        <xacro:property name="dz" value="${ring_az*(sin(a+h) - sin(a-h))}"/>
+        <xacro:property name="seg_len" value="${1.15*sqrt(dy*dy + dz*dz)}"/>
+        <xacro:property name="seg_roll" value="${atan2(-dy, dz)}"/>
         <visual>
-          <origin xyz="0 ${ring_r*cos(a)} ${ring_r*sin(a)}"
-                  rpy="0 ${pi/2} ${-a}"/>
+          <origin xyz="0 ${ring_ay*cos(a)} ${ring_az*sin(a)}"
+                  rpy="${seg_roll} 0 0"/>
           <geometry>
-            <cylinder radius="${ring_t/2}" length="${2*pi*ring_r/ring_seg*1.15}"/>
+            <cylinder radius="${ring_t/2}" length="${seg_len}"/>
           </geometry>
           <material name="galvanized"/>
         </visual>
@@ -240,10 +289,10 @@
              testar, e juntos preservam a topologia da peça. -->
         <xacro:if value="${olhal_colide}">
           <collision>
-            <origin xyz="0 ${ring_r*cos(a)} ${ring_r*sin(a)}"
-                    rpy="0 ${pi/2} ${-a}"/>
+            <origin xyz="0 ${ring_ay*cos(a)} ${ring_az*sin(a)}"
+                    rpy="${seg_roll} 0 0"/>
             <geometry>
-              <cylinder radius="${ring_t/2}" length="${2*pi*ring_r/ring_seg*1.15}"/>
+              <cylinder radius="${ring_t/2}" length="${seg_len}"/>
             </geometry>
           </collision>
         </xacro:if>
@@ -258,21 +307,19 @@
       <xacro:ring_seg_vis i="7"/>
       <xacro:ring_seg_vis i="8"/>
       <xacro:ring_seg_vis i="9"/>
-      <!-- SEM COLISÃO no olhal (2026-08-13). Havia aqui uma esfera
-           sólida de raio ${ring_r} "aproximando" o anel — mas para a
-           física isso é uma BOLA MACIÇA, não um anel vazado: o gancho
-           batia nela em vez de atravessar. Sintoma medido: durante o
-           engate o J4 ficava cravado em ~-84° por mais que a IK
-           pedisse (-77,8° → -55,5°), a ponta congelada a 3 cm do alvo,
-           e a iteração só aumentava a defasagem (-5,1° → -29,8°).
-           Nada disso era droop nem IK ruim — era o gancho empurrando
-           uma esfera invisível.
+      <xacro:ring_seg_vis i="10"/>
+      <xacro:ring_seg_vis i="11"/>
+      <!-- HISTÓRICO, para não repetir: em 2026-08-13 havia aqui uma
+           ESFERA sólida "aproximando" o anel. Para a física isso é uma
+           bola maciça, não um anel vazado: o gancho batia nela em vez
+           de atravessar. Sintoma medido — durante o engate o J4 ficava
+           cravado em ~-84° por mais que a IK pedisse (-77,8° → -55,5°),
+           a ponta congelada a 3 cm do alvo, e a iteração só aumentava a
+           defasagem (-5,1° → -29,8°). Não era droop nem IK ruim: era o
+           gancho empurrando uma esfera invisível.
 
-           Modelar o anel como toroide de colisão (vários cilindros)
-           seria caro e inútil aqui: a abertura da chave é acoplada
-           CINEMATICAMENTE (ver set_blade_angle em chave_mission.py),
-           não pelo contato gancho-anel. Sem colisão, o gancho alcança
-           o centro do anel, que é o que o controlador mira. -->
+           Por isso a colisão hoje é segmento a segmento (acima): é a
+           única forma de o furo continuar sendo furo. -->
       <inertial>
         <mass value="0.08"/>
         <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00002"/>
