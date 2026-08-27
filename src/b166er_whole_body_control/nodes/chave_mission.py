@@ -72,7 +72,7 @@ from gazebo_msgs.srv import GetJointProperties, SetModelConfiguration
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
-    ik_tooltip_position)
+    ik_tooltip_position, ik_tooltip_com_degrau)
 from b166er_whole_body_control import chave_task
 
 # pre_engage primeiro: aproxima por um ponto afastado da parede e só
@@ -87,13 +87,29 @@ from b166er_whole_body_control import chave_task
 # A saída lateral é nova e não é detalhe: antes a missão ia direto para
 # o recolhimento com a ferramenta ainda enfiada no anel, o que na
 # bancada arrastaria a chave de volta.
-PHASE_ORDER = ['aproxima_lateral', 'atravessa', 'captura',
+# 'orienta' entrou em 2026-08-27, por observação do Marco vendo a
+# missão rodar: a cinemática estava traçando a trajetória POR BAIXO da
+# chave. A primeira fase já ficava 90 mm ao lado do olhal, mas o braço
+# CHEGAVA lá partindo do recolhido — subia de baixo para cima, rente ao
+# mecanismo, e na execução daquele dia a ferramenta bateu na lâmina
+# (19 contatos tool_rod x chave_blade) e o robô tombou.
+#
+# 'orienta' é o mesmo ponto lateral, porém 150 mm AFASTADO da parede: o
+# braço ganha altura e já assume a atitude com o degrau alinhado longe
+# da chave, e só então entra. Com isso a sequência fica:
+#
+#   orienta          sobe e alinha, a 150 mm da parede
+#   aproxima_lateral entra em -Y, mantendo o deslocamento lateral
+#   atravessa        move em +X, o degrau enfia no furo
+#
+# ou seja, aproximação LATERAL, nunca de baixo para cima.
+PHASE_ORDER = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
                'arco1', 'arco2', 'desengata']
 
 # Fases em que a base NÃO deve participar do movimento: são
-# deslocamentos ao longo do eixo do furo (X, lateral à parede), e a base
-# não anda de lado. Quem faz é o braço.
-PHASES_SO_BRACO = {'aproxima_lateral', 'atravessa', 'desengata'}
+# deslocamentos ao longo do eixo do furo (X, lateral à parede), ou de
+# afastamento, e a base não anda de lado. Quem faz é o braço.
+PHASES_SO_BRACO = {'orienta', 'aproxima_lateral', 'atravessa', 'desengata'}
 
 
 def _yaw_of(quat):
@@ -175,6 +191,16 @@ class MissionContext(object):
         self.nav_w         = rospy.get_param('~nav_angular_vel', 0.4)
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
+        # ── Alinhamento do degrau com o eixo do furo ──
+        #
+        # Com False, a manipulação volta à IK de posição pura, em que a
+        # atitude da ferramenta é a que o ramo da IK calhar de entregar.
+        # Existe como chave de comparação, não como modo de operação: na
+        # bateria de 2026-08-27 a IK de posição pura entregou o degrau
+        # PERPENDICULAR ao furo nas seis fases (89,6° / 88,2° / 88,2° /
+        # 85,7° / 84,3° / 79,8°), e a chave não abriu em nenhuma das 8.
+        self.degrau_alinhado = rospy.get_param('~degrau_alinhado', True)
+
         # Distância mínima (centro da base → obstáculo) pelo laser.
         #
         # SUBIU de 0,55 para 0,64 em 2026-08-27. O número é medido do
@@ -788,14 +814,30 @@ class Deploy(smach.State):
         T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
                                   b.orientation.z, b.orientation.w])
         T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
-        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_tip, 1))[:3]
+        T_arm_world = np.linalg.inv(T_wb @ T_BASELINK_ARM)
+        p_local = (T_arm_world @ np.append(p_tip, 1))[:3]
 
-        q_ik, err_ik = ik_tooltip_position(
-            p_local, q_current=np.array(ctx.robot_state.q_arm))
+        # Pré-posicionamento COM a direção do degrau, igual às fases.
+        # Se o DEPLOY deixasse o braço num ramo com o degrau
+        # perpendicular ao furo, a primeira fase teria de girar a
+        # ferramenta ~90° no meio da manobra, perto da parede — que é o
+        # tipo de rearranjo grande que já derrubou execuções antes.
+        q_atual = np.array(ctx.robot_state.q_arm)
+        ang_ik = None
+        if ctx.degrau_alinhado and ctx.wall_R is not None:
+            eixo_arm = T_arm_world[:3, :3] @ (ctx.wall_R
+                                              @ np.array([1.0, 0.0, 0.0]))
+            q_ik, err_ik, ang_ik = ik_tooltip_com_degrau(p_local, eixo_arm,
+                                                         q_current=q_atual)
+        else:
+            q_ik, err_ik = ik_tooltip_position(p_local, q_current=q_atual)
         if err_ik < ctx.deploy_ik_tol:
             rospy.loginfo('[mission] DEPLOY: IK da ponta resolvida (resíduo '
-                          '%.4f m) — pré-posicionando em %s graus',
-                          err_ik, np.degrees(q_ik).round(1))
+                          '%.4f m, degrau %s) — pré-posicionando em %s graus',
+                          err_ik,
+                          ('%.1f°' % math.degrees(ang_ik)) if ang_ik is not None
+                          else 'n/d',
+                          np.degrees(q_ik).round(1))
             msg = JointState()
             msg.header.stamp = rospy.Time.now()
             msg.name     = JOINT_NAMES
@@ -1336,6 +1378,27 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     p_goal = np.asarray(p_goal, dtype=float)
     p_aim  = p_goal.copy()
 
+    def _resolve_ik(p_local, R_arm_world):
+        """IK da fase. Com ~degrau_alinhado, impõe também a DIREÇÃO do
+        degrau — sem isso ele chega perpendicular ao furo.
+
+        Medido em 2026-08-27, com a IK de posição pura, o ângulo entre o
+        degrau e o eixo do furo nas seis fases: 89,6° / 88,2° / 88,2° /
+        85,7° / 84,3° / 79,8°. Não é desalinho, é ortogonal — a
+        ferramenta não tinha como atravessar o anel em nenhuma execução,
+        e é por isso que a lâmina ficou em 0,0° nas 8 da bateria.
+
+        O eixo do furo é o X LOCAL da parede (o furo olha para o lado);
+        `wall_R` já vem achatado para yaw puro.
+        """
+        q_atual = np.array(ctx.robot_state.q_arm)
+        if not ctx.degrau_alinhado or ctx.wall_R is None:
+            q, e = ik_tooltip_position(p_local, q_current=q_atual)
+            return q, e, None
+        eixo_arm = R_arm_world @ (ctx.wall_R @ np.array([1.0, 0.0, 0.0]))
+        q, e, ang = ik_tooltip_com_degrau(p_local, eixo_arm, q_current=q_atual)
+        return q, e, ang
+
     for it in range(ctx.ik_max_iters):
         if ctx.tilt_critical:
             rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
@@ -1346,10 +1409,10 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         T_wb = quaternion_matrix([b.orientation.x, b.orientation.y,
                                   b.orientation.z, b.orientation.w])
         T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
-        p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM) @ np.append(p_aim, 1))[:3]
+        T_arm_world = np.linalg.inv(T_wb @ T_BASELINK_ARM)
+        p_local = (T_arm_world @ np.append(p_aim, 1))[:3]
 
-        q_ik, err_ik = ik_tooltip_position(
-            p_local, q_current=np.array(ctx.robot_state.q_arm))
+        q_ik, err_ik, ang_ik = _resolve_ik(p_local, T_arm_world[:3, :3])
 
         if err_ik > ctx.deploy_ik_tol:
             # O ponto EXTRAPOLADO saiu do alcance — não o alvo real.
@@ -1364,10 +1427,9 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                               'de alcance (%.3f m) — recuando para o alvo real',
                               phase, it, err_ik)
                 p_aim = p_goal.copy()
-                p_local = (np.linalg.inv(T_wb @ T_BASELINK_ARM)
-                           @ np.append(p_aim, 1))[:3]
-                q_ik, err_ik = ik_tooltip_position(
-                    p_local, q_current=np.array(ctx.robot_state.q_arm))
+                p_local = (T_arm_world @ np.append(p_aim, 1))[:3]
+                q_ik, err_ik, ang_ik = _resolve_ik(p_local,
+                                                   T_arm_world[:3, :3])
             if err_ik > ctx.deploy_ik_tol:
                 rospy.logwarn('[mission] fase "%s" it%d: IK não fechou (%.3f m) '
                               '— alvo fora de alcance deste standoff',
@@ -1394,8 +1456,10 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         q_real = np.array(ctx.robot_state.q_arm)
         dq = np.degrees(q_real - q_ik)
         rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
-                      'erro=%.4f | IK pediu %s | faltou %s graus',
+                      'erro=%.4f | degrau %s | IK pediu %s | faltou %s graus',
                       phase, it, *p_now, n_err,
+                      ('%.1f°' % math.degrees(ang_ik)) if ang_ik is not None
+                      else 'n/d',
                       np.degrees(q_ik).round(1), dq.round(1))
 
         if n_err < ctx.tol_pos:

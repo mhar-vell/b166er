@@ -26,7 +26,22 @@
 chave_seccionadora_task:
   target_frame: "chave_olhal_link"
 
+  # ── 0. ORIENTA: sobe e alinha o degrau LONGE da chave ──
+  # Mesmo ponto lateral da fase seguinte, porém 150 mm afastado da
+  # parede. Existe desde 2026-08-27, quando o Marco viu a missão rodar e
+  # notou que "a cinemática está criando uma trajetória por baixo da
+  # chave": a primeira fase já ficava ao lado do olhal, mas o braço
+  # CHEGAVA lá vindo do recolhido, subindo rente ao mecanismo. Naquela
+  # execução a ferramenta bateu na lâmina e o robô tombou.
+  #
+  # Com esta fase o braço assume a altura e a atitude com o degrau
+  # alinhado enquanto ainda está a 15 cm da parede, e a aproximação
+  # passa a ser LATERAL em vez de de baixo para cima.
+  orienta:
+    offset_xyz_m: [-0.090, 0.150, 0.0085]
+
   # ── 1. ao lado do furo, na altura do centro dele ──
+  # Entra em −Y a partir de 'orienta', mantendo o deslocamento lateral.
   # A folga lateral é generosa de propósito: é a etapa que depende da
   # precisão de estacionamento (~2 cm medidos), e errar aqui só custa
   # uma nova tentativa, não uma colisão.
