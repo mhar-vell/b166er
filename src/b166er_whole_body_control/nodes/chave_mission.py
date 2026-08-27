@@ -176,7 +176,14 @@ class MissionContext(object):
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
         # Distância mínima (centro da base → obstáculo) pelo laser.
-        self.min_clearance = rospy.get_param('~min_clearance', 0.55)
+        #
+        # SUBIU de 0,55 para 0,64 em 2026-08-27. O número é medido do
+        # CENTRO da base, e foi calibrado quando a borda dianteira ficava
+        # a 0,257 m do centro — ou seja, valia 0,29 m de folga física.
+        # Com a plataforma alongada 92 mm, a borda passou para 0,349 m e
+        # a MESMA constante virou 0,20 m de folga, sem ninguém mexer
+        # nela. 0,64 = 0,349 + 0,29 devolve a margem original.
+        self.min_clearance = rospy.get_param('~min_clearance', 0.64)
 
         # ── Manipulação por whole-body (ver _reach_by_wholebody) ──
         # DESLIGADO por padrão até ser medido contra o caminho atual.
