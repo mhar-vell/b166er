@@ -201,6 +201,29 @@ class MissionContext(object):
         # 85,7° / 84,3° / 79,8°), e a chave não abriu em nenhuma das 8.
         self.degrau_alinhado = rospy.get_param('~degrau_alinhado', True)
 
+        # Voltar à pose de partida também quando a missão ABORTA. Sem
+        # isso o robô fica onde a falha o pegou, encostado na chave, e a
+        # execução seguinte começa de lá.
+        self.retorna_no_abort = rospy.get_param('~retorna_no_abort', True)
+
+        # Recolher o braço nos trechos de deslocamento do APPROACH.
+        #
+        # DESLIGADO POR PADRÃO até ser corrigido. A ideia é boa e a
+        # medição que a motiva é sólida — a postura alinhada joga a
+        # ferramenta 735 mm para fora do eixo J1 contra 388 mm da
+        # recolhida, e são 28 kg de braço num robô que já tombou. Mas
+        # ligar isto REGREDIU a missão em 2026-08-27: com as sete fases
+        # fechando antes, passou a não fechar nenhuma.
+        #
+        # Causa provável, não confirmada: trocar de postura no meio do
+        # APPROACH muda o ramo em que o braço chega à manipulação, e a
+        # fase 'orienta' deixa de partir de onde partia. A continuidade
+        # de ramo é justamente o que segura a repetibilidade aqui.
+        #
+        # Para retomar: comparar A/B com este parâmetro, olhando o ramo
+        # (J2/J4/J5) com que cada fase começa, não só o erro final.
+        self.recolhe_para_andar = rospy.get_param('~recolhe_para_andar', False)
+
         # Distância mínima (centro da base → obstáculo) pelo laser.
         #
         # SUBIU de 0,55 para 0,64 em 2026-08-27. O número é medido do
@@ -721,18 +744,47 @@ class Approach(smach.State):
                           'alvo (%.2f, %.2f, %.2f rad)',
                           i + 1, len(stages), dist, *goal)
             ctx.publish_markers(goal)
+
+            # RECOLHE O BRAÇO PARA ANDAR, ESTENDE PARA OLHAR.
+            #
+            # A postura de busca alinha J3/J4/J5 na horizontal, que é o
+            # que nivela a câmera — e é também o que joga a ferramenta
+            # 735 mm para fora do eixo J1, contra 388 mm da postura
+            # recolhida (medido em 2026-08-27). São 35 cm de balanço a
+            # mais durante o deslocamento, num braço de 28 kg que já
+            # tombou o robô antes.
+            #
+            # O Marco apontou isso olhando a J2, e o instinto estava
+            # certo mesmo com o dedo no lugar errado: levar J2 ao limite
+            # recolhe só 29 mm; quem recolhe 347 mm é dobrar J4.
+            #
+            # Como andar e olhar são momentos DIFERENTES — o SEARCH gira
+            # parado, o APPROACH dirige —, dá para ter os dois: recolhido
+            # nos trechos de deslocamento, alinhado nas medições.
+            if ctx.recolhe_para_andar:
+                ctx.send_posture('travel')
+                _wait_posture(ctx)
+
             if not _navigate_to(ctx, goal, ctx.approach_timeout, 'APPROACH'):
                 return 'failed'
 
             # Remede parado antes da próxima etapa (a última medição fina
             # fica a cargo do REFINE, já na pose de standoff).
             if i < len(stages) - 1:
+                if ctx.recolhe_para_andar:
+                    ctx.send_posture('search')
+                    _wait_posture(ctx)
                 rospy.sleep(1.0)
                 if not _sample_wall(ctx, ctx.refine_samples,
                                     ctx.refine_timeout, 'APPROACH/remedida'):
                     rospy.logerr('[mission] APPROACH: perdi a tag na etapa '
                                  'intermediária')
                     return 'failed'
+        if ctx.recolhe_para_andar:
+            # O REFINE mede parado: volta à postura alinhada, que é a que
+            # põe a tag no centro do quadro.
+            ctx.send_posture('search')
+            _wait_posture(ctx)
         return 'arrived'
 
 
@@ -1002,12 +1054,34 @@ class AbortSafe(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx = self.ctx
         rospy.logwarn('[mission] ABORT — parando base e recolhendo braço')
-        self.ctx.take_base()     # silencia o controlador PRIMEIRO
-        self.ctx.unlock_base()
-        self.ctx.stop_base()
-        self.ctx.send_posture('stow_home')
-        _wait_posture(self.ctx)
+        ctx.take_base()          # silencia o controlador PRIMEIRO
+        ctx.unlock_base()
+        ctx.stop_base()
+        ctx.send_posture('stow_home')
+        _wait_posture(ctx)
+
+        # VOLTA PARA A PARTIDA TAMBÉM NO ABORT.
+        #
+        # O estado RETURN existia, mas só no caminho de sucesso
+        # (MANIPULATE -> RETRACT -> RETURN). Como todas as execuções
+        # abortavam, o robô ficava parado onde a falha o pegou — em
+        # cima da chave — e a execução seguinte começava de lá. O Marco
+        # pediu que o robô volte ao ponto de spawn DEPOIS DA MISSÃO, sem
+        # qualificar sucesso ou falha, e ele está certo: deixar o robô
+        # encostado no alvo é o que já produziu colisões entre execuções.
+        #
+        # Só depois de recolher o braço: voltar com a ferramenta
+        # estendida arrastaria a chave.
+        if ctx.retorna_no_abort and ctx.start_pose is not None:
+            rospy.logwarn('[mission] ABORT — voltando à pose de partida '
+                          '(%.2f, %.2f, %.2f rad)', *ctx.start_pose)
+            if not _navigate_to(ctx, ctx.start_pose, ctx.approach_timeout,
+                                'ABORT/retorno'):
+                rospy.logerr('[mission] ABORT: retorno à partida falhou — '
+                             'o robô ficou onde estava')
+            ctx.stop_base()
         return 'aborted'
 
 

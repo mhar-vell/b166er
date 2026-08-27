@@ -70,6 +70,33 @@ arm_postures:
   # J5 90,1. J3 é o apertado; não aumentar J2 sem baixar J3 junto.
   search: [-0.5289, 1.0, -1.0, 0.0, -1.5692]
 
+  # ═══ Postura de DESLOCAMENTO ═══
+  #
+  # Observação do Marco em 2026-08-27, vendo a missão rodar: a J2
+  # deveria estar recolhida, perto do centro de gravidade, durante a
+  # movimentação. O instinto estava certo; medindo, o dedo estava na
+  # junta errada:
+  #
+  #   postura            J2     J4  | CG r_xy | ferramenta r_xy
+  #   recolhida (esta)  64,7  -103  |  170 mm |     388 mm
+  #   busca (alinhada)  57,3     0  |  182 mm |     735 mm
+  #   J2 no limite      65,0     0  |  169 mm |     706 mm
+  #
+  # Levar a J2 ao limite move o CG 13 mm e recolhe a ferramenta 29 mm.
+  # Quem recolhe 347 mm é DOBRAR A J4. E J4=0 é exatamente o que alinha
+  # J3/J4/J5 na horizontal para a busca da tag — as duas coisas que o
+  # Marco pediu se opõem na MESMA postura.
+  #
+  # Só que não precisam conviver: o SEARCH gira PARADO (olhar) e o
+  # APPROACH DIRIGE (andar). Esta postura é usada nos trechos de
+  # deslocamento; a 'search' volta para as medições.
+  #
+  # Mantém o J1 da postura de busca, para a câmera continuar apontada
+  # para a frente e a tag seguir no quadro durante o deslocamento — com
+  # 170° de campo ela aparece mesmo com o eixo óptico 52° para baixo,
+  # que foi como a missão funcionou até hoje.
+  travel: [-0.5289, 1.13, -1.04, -1.8, 0.0]
+
   # Postura de pré-manipulação. J1=0, NÃO 90° como a postura de busca:
   # a câmera está montada 90° defasada da direção de alcance do braço,
   # então J1=+90° aponta a CÂMERA para a frente mas o BRAÇO para o lado.
