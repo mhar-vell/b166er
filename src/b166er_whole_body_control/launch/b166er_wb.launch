@@ -226,6 +226,16 @@
           type="laser_safety.py"
           output="screen"/>
 
+    <!-- 1d · Watchdog da base — para as rodas se os comandos cessarem.
+         O plugin skid_steer_drive do Gazebo NÃO tem commandTimeout e
+         mantém o último /cmd_vel para sempre. Em 2026-08-27 a missão
+         morreu por pkill -9 no meio de um avanço e o robô seguiu
+         rolando ~420 mm até prensar a ferramenta na lâmina da chave. -->
+    <node name="base_watchdog"
+          pkg="b166er_whole_body_control"
+          type="base_watchdog.py"
+          output="screen"/>
+
     <!-- 2 · Fuzzy whole-body controller: Pioneer + RV-M2 como 8-DOF -->
     <node name="fuzzy_wb_controller"
           pkg="b166er_whole_body_control"

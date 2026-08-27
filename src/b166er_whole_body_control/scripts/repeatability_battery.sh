@@ -54,6 +54,13 @@ for i in $(seq 1 "$N"); do
     done
     sleep 3
     pkill -9 -f chave_mission.py 2>/dev/null
+    # PARE A BASE. O pkill -9 não dá chance de desligamento ordenado, e o
+    # plugin skid_steer do Gazebo mantém o último /cmd_vel para sempre:
+    # em 2026-08-27 o robô seguiu rolando ~420 mm depois do fim da
+    # execução e prensou a ferramenta na lâmina da chave. O
+    # base_watchdog já cobre isso, mas mandar o zero aqui é barato e
+    # torna a bateria independente dele.
+    rostopic pub -1 /cmd_vel geometry_msgs/Twist '{}' >/dev/null 2>&1
     # NÃO matar o apriltag_localizer nem nada do stack: eles pertencem ao
     # stack principal e derrubá-los aqui cegava todas as execuções
     # seguintes (erro cometido em 2026-08-21).

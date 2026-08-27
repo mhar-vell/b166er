@@ -42,7 +42,8 @@ CONDA_ENV="${CONDA_ENV:-ros_env}"
 # Nós que compõem o stack. Usados só para relatório — o desligamento
 # varre por caminho do workspace, para pegar também o que não está aqui.
 NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge
-       tilt_monitor laser_safety apriltag_localizer chave_mission)
+       tilt_monitor laser_safety base_watchdog apriltag_localizer
+       chave_mission)
 
 # Padrões de processo que pertencem à simulação. O caminho do workspace
 # cobre qualquer nó lançado do devel space, inclusive de sessões antigas.
@@ -252,7 +253,7 @@ cmd_preflight() {
     echo "── PREFLIGHT ───────────────────────────────────────────"
 
     for n in state_estimator fuzzy_wb_controller gazebo_arm_bridge \
-             tilt_monitor laser_safety apriltag_localizer; do
+             tilt_monitor laser_safety base_watchdog apriltag_localizer; do
         local c
         c=$(conta_proc "b166er_whole_body_control/$n.py")
         if [ "$c" -ne 1 ]; then
