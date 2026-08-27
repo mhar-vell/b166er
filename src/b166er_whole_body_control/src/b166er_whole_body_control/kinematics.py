@@ -587,3 +587,150 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
     else:
         e, _, q = min(candidatos, key=lambda c: c[0])
     return q, e
+
+
+# ---------------------------------------------------------------------------
+# IK com direção do degrau
+# ---------------------------------------------------------------------------
+
+def degrau_dir(q):
+    """Direção do DEGRAU (o dedo horizontal) no frame da base do braço.
+
+    O degrau se projeta em −X do frame `tool_tip` (ver o bloco DEDO FIXO
+    em movemaster.urdf.xacro). Conferido contra a TF publicada pelo
+    robot_state_publisher em 2026-08-27.
+    """
+    T = fk_arm(q) @ T_T265_TOOLTIP
+    return -T[:3, 0]
+
+
+def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
+                          max_iter=400, max_step=0.08, q_current=None,
+                          continuity_weight=0.35, ik_reach_tol=0.005,
+                          peso_dir=0.05, ang_tol=0.20):
+    """
+    IK de POSIÇÃO da ponta + DIREÇÃO do degrau.
+
+    POR QUE EXISTE. `ik_tooltip_position` controla só a posição, e a
+    atitude da ferramenta é o que o ramo da IK calhar de entregar.
+    Medido pela TF em 2026-08-27, na fase "atravessa": o degrau apontava
+    para [−0,02 −0,78 −0,62] — para fora da parede e 38° abaixo da
+    horizontal — quando precisava estar paralelo ao eixo do furo. A
+    ferramenta chegava ao anel girada ~90° do projeto e, mesmo com mira
+    perfeita, bateria de lado em vez de atravessar. Foi isso, e não o
+    viés de mira, que manteve a lâmina em 0,0° nas 8 execuções da
+    bateria de 2026-08-27.
+
+    CONTAGEM DE GRAUS DE LIBERDADE. O braço tem 5. Posição da ponta
+    consome 3; a direção de um eixo consome 2 — total 5, exatamente o
+    que há. Por isso NÃO dá para exigir também a haste vertical: pose 6D
+    precisaria de 6 DOF e o RV-M2 não tem (é a mesma limitação
+    registrada em fuzzy_wb_controller). A restrição que a tarefa
+    realmente precisa é a do degrau: é ele que atravessa o furo.
+
+    EIXO, NÃO VETOR. `eixo_furo_arm` é tratado como EIXO: a cada
+    iteração escolhe-se o sentido (±) mais próximo da atitude atual.
+    Atravessar o furo funciona nos dois sentidos, e fixar um sinal
+    arbitrário só criaria um giro de 180° desnecessário — o mesmo tipo
+    de armadilha do atrator de 180° que já custou caro em `pose_error`.
+
+    p_target_arm  : (3,) posição alvo da ponta, no frame da base do braço.
+    eixo_furo_arm : (3,) eixo do furo do olhal, no mesmo frame. Não
+                    precisa ser unitário nem ter sentido definido.
+    peso_dir      : metros equivalentes por unidade de erro de direção.
+                    0,05 faz 90° de desalinho pesar como ~7 cm.
+    ang_tol       : erro angular (rad) abaixo do qual a solução conta
+                    como alinhada, para o filtro de candidatos.
+
+    Retorna (q, erro_pos_m, erro_ang_rad).
+    """
+    eixo = np.asarray(eixo_furo_arm, dtype=float)
+    n = np.linalg.norm(eixo)
+    if n < 1e-9:
+        raise ValueError('eixo_furo_arm nulo')
+    eixo = eixo / n
+    alvo_p = np.asarray(p_target_arm, dtype=float)
+
+    if q_seeds is None:
+        q_seeds = [
+            np.zeros(5),
+            np.array([0.0,  0.6, -0.4, -1.2, 0.0]),
+            np.array([0.0, -0.9,  0.5,  0.7, 0.0]),
+            np.array([0.0,  0.3,  0.3,  0.0, 0.0]),
+            np.array([0.0, -0.3, -0.3,  0.5, 0.0]),
+        ]
+        # Sementes com J5 girado: o degrau gira principalmente com J5, e
+        # sem estas o multi-start nasce todo na mesma atitude errada.
+        q_seeds += [np.array([0.0, 0.6, -0.4, -1.2, a])
+                    for a in (-2.36, -1.57, -0.79, 0.79, 1.57, 2.36)]
+        if q_current is not None:
+            q_seeds = [np.array(q_current, dtype=float)] + q_seeds
+
+    def _feat(q):
+        T = fk_arm(q) @ T_T265_TOOLTIP
+        return T[:3, 3], -T[:3, 0]
+
+    def _erro(q):
+        p, d = _feat(q)
+        alvo_d = eixo if float(d @ eixo) >= 0.0 else -eixo
+        return np.concatenate([alvo_p - p, peso_dir * (alvo_d - d)])
+
+    def _metricas(q):
+        p, d = _feat(q)
+        cos = abs(float(d @ eixo))
+        return (float(np.linalg.norm(alvo_p - p)),
+                float(np.arccos(np.clip(cos, -1.0, 1.0))))
+
+    candidatos = []
+    for seed in q_seeds:
+        q = np.clip(np.array(seed, dtype=float), JOINT_LOWER, JOINT_UPPER)
+        for _ in range(max_iter):
+            err = _erro(q)
+            if np.linalg.norm(err) < 1e-4:
+                break
+            # Jacobiano numérico do VETOR DE FEIÇÕES (posição + direção),
+            # 6x5. Com J "alta" (mais linhas que colunas) a forma certa
+            # do DLS é (JᵀJ + λ²I)⁻¹Jᵀe, não a usada na IK de posição
+            # pura — lá J é 3x5 e a outra forma é a barata.
+            Jm = np.zeros((6, 5))
+            for i in range(5):
+                dq_i = np.zeros(5); dq_i[i] = IK_DQ_STEP
+                p1, d1 = _feat(q + dq_i)
+                p0, d0 = _feat(q - dq_i)
+                Jm[:3, i] = (p1 - p0) / (2 * IK_DQ_STEP)
+                Jm[3:, i] = peso_dir * (d1 - d0) / (2 * IK_DQ_STEP)
+            dq = np.linalg.solve(Jm.T @ Jm + IK_LAMBDA**2 * np.eye(5),
+                                 Jm.T @ err)
+            m = np.max(np.abs(dq))
+            if m > max_step:
+                dq *= max_step / m
+            q = np.clip(q + dq, JOINT_LOWER, JOINT_UPPER)
+        e_p, e_a = _metricas(q)
+        dist = (float(np.linalg.norm(q - np.asarray(q_current, dtype=float)))
+                if q_current is not None else 0.0)
+        candidatos.append((e_p, e_a, dist, q.copy()))
+
+    # ALCANCE PRIMEIRO, SEMPRE. O alinhamento é preferência ENTRE as
+    # soluções que alcançam o ponto, nunca alternativa a alcançá-lo.
+    #
+    # A primeira versão disto invertia a ordem: sem candidato que
+    # fechasse as duas coisas, escolhia pelo menor ângulo. Parecia
+    # razoável ("chegar perto com o degrau torto não engata") e derrubou
+    # o robô na primeira execução, 2026-08-27: aceitou uma solução com
+    # 330 mm de erro de posição por estar 7° melhor alinhada, num ramo
+    # com J4=+82° que enfia o braço na parede. A IMU acusou inclinação
+    # crítica. Um erro de posição sem limite superior é sempre pior que
+    # um erro de orientação, porque orientação errada não move o robô
+    # para dentro de um obstáculo.
+    bons = [c for c in candidatos if c[0] < ik_reach_tol]
+    if bons:
+        # Entre as que alcançam: a mais alinhada. Continuidade entra
+        # como desempate fino, com o mesmo peso da IK de posição pura.
+        e_p, e_a, _, q = min(bons, key=lambda c: (c[1], c[2] * continuity_weight))
+    else:
+        # Nenhuma alcança: mesmo critério da IK de posição pura, com a
+        # continuidade desempatando. Quem chamou decide se o resíduo
+        # serve — e a missão já tem esse teste (deploy_ik_tol).
+        e_p, e_a, _, q = min(candidatos,
+                             key=lambda c: (c[0], c[2] * continuity_weight))
+    return q, e_p, e_a
