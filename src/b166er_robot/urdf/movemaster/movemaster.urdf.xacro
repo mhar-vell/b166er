@@ -600,9 +600,25 @@
         <geometry><box size="${dedo_degrau_l + dedo_haste_x} ${dedo_haste_y} ${dedo_degrau_z}"/></geometry>
         <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
       </visual>
+      <!-- COLISÃO SÓ DA PARTE QUE SE PROJETA, não da largura visual.
+           A caixa visual acima vai de x=+5,2 mm a x=-25,2 mm para
+           desenhar o L inteiro — mas isso faz ela compartilhar uma FACE
+           inteira (z=0, de x=-5,2 a +5,2) com a haste do tool_rod. Duas
+           faces coincidentes no mesmo corpo rígido geram contato
+           permanentemente: a captura de 2026-08-27 registrou 1,1 MILHÃO
+           de pares tool_rod x tool_tip em ~90 s de simulação, e é o
+           suspeito do travamento do J1 numa execução anterior (J1
+           comandado subindo, medido parado, defasagem crescendo até 16°
+           enquanto J2..J5 seguiam dentro de 1°).
+
+           Aqui a caixa começa onde a haste termina, com 0,5 mm de
+           recuo, de modo que os dois sólidos se encostem no máximo por
+           uma aresta. A face SUPERIOR do degrau (z=0) é preservada
+           porque é ela que sustenta o arame do anel. -->
+      <xacro:property name="degrau_gap" value="0.0005"/>
       <collision>
-        <origin xyz="${-dedo_degrau_l/2} 0 ${-dedo_degrau_z/2}"/>
-        <geometry><box size="${dedo_degrau_l + dedo_haste_x} ${dedo_haste_y} ${dedo_degrau_z}"/></geometry>
+        <origin xyz="${-(dedo_degrau_l/2 + dedo_haste_x/2 + degrau_gap)} 0 ${-dedo_degrau_z/2}"/>
+        <geometry><box size="${dedo_degrau_l} ${dedo_haste_y} ${dedo_degrau_z}"/></geometry>
       </collision>
       <inertial>
         <mass value="0.04"/>
