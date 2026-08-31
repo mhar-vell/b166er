@@ -21,6 +21,7 @@
 #   sim_stack.sh start [args]  exige limpo, sobe o stack + fixture, espera pronto
 #   sim_stack.sh restart [args]  stop + start
 #   sim_stack.sh preflight     verifica se dá para TESTAR (use antes de bateria)
+#   sim_stack.sh watch         painel ao vivo da missão (fica na tela)
 #
 # Todo comando é seguro de repetir.
 #
@@ -297,13 +298,22 @@ cmd_preflight() {
     echo "[sim_stack] preflight aprovado — pode testar"
 }
 
+# Painel ao vivo da missão, no terminal. Pedido do Marco em 2026-08-27:
+# ver o estado da máquina enquanto roda, em vez de reconstruir do log
+# depois. Roda em primeiro plano de propósito — é para ficar na tela.
+cmd_watch() {
+    source_ros || { echo "[sim_stack] não consegui sourcear o ROS" >&2; return 1; }
+    exec rosrun b166er_whole_body_control mission_hud.py
+}
+
 case "${1:-status}" in
     stop)         cmd_stop ;;
+    watch)        cmd_watch ;;
     preflight)    cmd_preflight ;;
     status)       cmd_status ;;
     assert-clean) cmd_assert_clean ;;
     start)        shift; cmd_start "$@" ;;
     restart)      shift; cmd_stop && cmd_start "$@" ;;
-    *)            echo "uso: $0 {stop|start|restart|status|assert-clean|preflight}" >&2
+    *)            echo "uso: $0 {stop|start|restart|status|assert-clean|preflight|watch}" >&2
                   exit 2 ;;
 esac

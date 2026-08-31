@@ -64,7 +64,7 @@ import smach_ros
 from geometry_msgs.msg import PoseStamped, Twist, Point
 from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool, Float64
+from std_msgs.msg import Bool, Float64, String
 from tf.transformations import (quaternion_matrix, euler_from_quaternion,
                                 quaternion_from_matrix)
 
@@ -300,6 +300,20 @@ class MissionContext(object):
         # Arbitragem de /cmd_vel entre a missão (navegação de base) e o
         # fuzzy_wb_controller (manipulação whole-body). Sem isso os dois
         # publicam intercalado a 20 Hz e a base anda aos trancos.
+        # HUD: estado da máquina publicado como texto chave=valor.
+        #
+        # Pedido do Marco em 2026-08-27: "a cada etapa da máquina de
+        # estados, coloque a informação na simulação". O motivo é
+        # concreto — hoje eu diagnostico lendo números depois do fato e
+        # ele diagnostica olhando a tela, e ele acertou três vezes onde
+        # eu errei justamente por isso. Publicar torna o estado visível
+        # ao vivo para os dois.
+        #
+        # É só publicação: nenhuma decisão da missão depende disto, para
+        # o HUD não poder quebrar a missão.
+        self.pub_status = rospy.Publisher('/b166er/mission_status', String,
+                                          queue_size=5, latch=True)
+
         self.pub_wb_enable = rospy.Publisher('/b166er/wb_enable', Bool,
                                              queue_size=1, latch=True)
         # Trava de base durante a manipulação: o whole-body não conhece a
@@ -546,6 +560,24 @@ class MissionContext(object):
     def stop_base(self):
         self.pub_cmdvel.publish(Twist())
 
+    def status(self, **campos):
+        """Publica o estado corrente para o HUD (chave=valor).
+
+        Nunca levanta: um erro aqui não pode derrubar a missão.
+        """
+        try:
+            partes = []
+            for k, v in campos.items():
+                if v is None:
+                    continue
+                if isinstance(v, float):
+                    partes.append('%s=%.4f' % (k, v))
+                else:
+                    partes.append('%s=%s' % (k, v))
+            self.pub_status.publish(String(data='|'.join(partes)))
+        except Exception:            # noqa: BLE001 — HUD é acessório
+            pass
+
     def send_posture(self, name):
         q = self.postures[name]
         msg = JointState()
@@ -647,6 +679,9 @@ class StowInit(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="STOW_INIT")
         ctx = self.ctx
         if not ctx.wait_for_state():
             rospy.logerr('[mission] sem /b166er/robot_state — stack whole-body está rodando?')
@@ -669,6 +704,9 @@ class Search(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="SEARCH")
         ctx = self.ctx
         ctx.send_posture('search')
         if not _wait_posture(ctx):
@@ -728,6 +766,9 @@ class Approach(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="APPROACH")
         ctx = self.ctx
         # Etapas de distância ao olhal: a intermediária só entra se o
         # robô ainda estiver mais longe que ela.
@@ -806,6 +847,9 @@ class Refine(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="REFINE")
         ctx = self.ctx
         n_wanted = ctx.refine_samples
         rospy.loginfo('[mission] REFINE — remedindo a parede de perto (%d amostras)',
@@ -854,6 +898,9 @@ class Deploy(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="DEPLOY")
         ctx = self.ctx
         # Mira o primeiro waypoint (pré-engate, afastado da parede) —
         # não o olhal: pré-posicionar direto no olhal levaria o braço a
@@ -946,6 +993,9 @@ class Manipulate(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="MANIPULATE")
         ctx = self.ctx
         # Orientação do EE fixada agora e mantida em todas as fases —
         # o documento da tarefa especifica direções de força, não uma
@@ -1017,6 +1067,9 @@ class Retract(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="RETRACT")
         ctx = self.ctx
         # ORDEM IMPORTA: silencia o controlador ANTES de destravar. Ao
         # contrário, existe uma janela em que ele fica com a base livre
@@ -1035,6 +1088,9 @@ class Return(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="RETURN")
         ctx = self.ctx
         rospy.loginfo('[mission] RETURN — voltando a (%.2f, %.2f, %.2f rad)',
                       *ctx.start_pose)
@@ -1054,6 +1110,9 @@ class AbortSafe(smach.State):
         self.ctx = ctx
 
     def execute(self, _):
+        ctx_hud = getattr(self, "ctx", None)
+        if ctx_hud is not None:
+            ctx_hud.status(estado="ABORT_SAFE")
         ctx = self.ctx
         rospy.logwarn('[mission] ABORT — parando base e recolhendo braço')
         ctx.take_base()          # silencia o controlador PRIMEIRO
@@ -1572,12 +1631,26 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # mesmo sintoma (ponta longe do alvo).
         q_real = np.array(ctx.robot_state.q_arm)
         dq = np.degrees(q_real - q_ik)
+        # ROTULO CORRETO POR FORMULACAO. As duas IKs devolvem coisas
+        # DIFERENTES no terceiro retorno: a de eixo devolve o ângulo
+        # entre o degrau e o eixo do furo; a nivelada devolve o erro
+        # TOTAL de atitude. Eu imprimia as duas no mesmo campo com o
+        # mesmo nome, e li 85° de erro de atitude como se fosse a
+        # ferramenta de lado (2026-08-27). Grandezas diferentes, nomes
+        # diferentes.
+        rotulo = ('atitude' if escolha['modo'] == 'nivelado' else 'eixo')
+        ang_txt = ('%s %.1f°' % (rotulo, math.degrees(ang_ik))
+                   if ang_ik is not None else 'n/d')
         rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
                       'erro=%.4f | degrau %s | IK pediu %s | faltou %s graus',
-                      phase, it, *p_now, n_err,
-                      ('%.1f°' % math.degrees(ang_ik)) if ang_ik is not None
-                      else 'n/d',
+                      phase, it, *p_now, n_err, ang_txt,
                       np.degrees(q_ik).round(1), dq.round(1))
+        ctx.status(estado='MANIPULATE', fase=phase, it=it, erro_m=n_err,
+                   tol_m=ctx.tol_pos, ik=escolha['modo'] or 'n/d',
+                   ang_rotulo=rotulo,
+                   ang_deg=(math.degrees(ang_ik) if ang_ik is not None else None),
+                   q_pedido=np.degrees(q_ik).round(1).tolist(),
+                   faltou=dq.round(1).tolist())
 
         if n_err < ctx.tol_pos:
             rospy.loginfo('[mission] fase "%s" alcançada em %d iteração(ões) '
