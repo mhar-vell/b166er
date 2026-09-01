@@ -52,6 +52,8 @@ class BaseWatchdog(object):
         # comanda a 10-20 Hz) e curto o bastante para a base andar
         # poucos centímetros antes de parar. A 0,25 m/s são 12 cm.
         self._timeout = rospy.get_param('~timeout', 0.5)
+        # Quantas vezes reafirmar o zero ao frear (ver a nota no laço).
+        self._repeticoes = int(rospy.get_param('~repeticoes_parada', 5))
         self._topic = rospy.get_param('~cmd_topic', '/cmd_vel')
 
         self._ultimo = None        # último Twist recebido
@@ -82,12 +84,26 @@ class BaseWatchdog(object):
             idade = (rospy.Time.now() - self._t_ultimo).to_sec()
             if idade < self._timeout:
                 continue
-            self._pub.publish(Twist())
+            # REAFIRMA algumas vezes, não uma só.
+            #
+            # Um único Twist zero pode se perder, ou chegar ao plugin
+            # antes de ele processar o comando anterior — e o
+            # skid_steer do Gazebo mantém a última velocidade
+            # indefinidamente. Medido em 2026-08-31: a base derivando
+            # 2,3 mm/s com ZERO mensagens em /cmd_vel, ou seja depois de
+            # todo mundo ter parado de falar.
+            #
+            # Repetir custa nada (a base já deveria estar parada) e
+            # remove a dependência de um único pacote chegar.
+            for _ in range(self._repeticoes):
+                self._pub.publish(Twist())
+                rospy.sleep(0.05)
             self._parou = True
             rospy.logwarn('[base_watchdog] %.2f s sem comando com a base '
                           'em movimento (v=%.2f m/s, w=%.2f rad/s) — '
-                          'PARANDO', idade, self._ultimo.linear.x,
-                          self._ultimo.angular.z)
+                          'PARANDO (%d reafirmações)', idade,
+                          self._ultimo.linear.x, self._ultimo.angular.z,
+                          self._repeticoes)
 
 
 if __name__ == '__main__':
