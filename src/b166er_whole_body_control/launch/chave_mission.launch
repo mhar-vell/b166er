@@ -45,6 +45,12 @@
        aqui só se estiver rodando a missão contra um stack que não o
        tenha: roslaunch ... chave_mission.launch localizer:=true -->
   <arg name="localizer" default="false"/>
+
+  <!-- Execução POR ETAPA: congela ao fim de cada fase e espera
+       /b166er/mission_continue. Pedido do Marco em 2026-08-31, para
+       inspecionar a trajetória etapa a etapa em vez de reconstruí-la do
+       log depois. Ver scripts/continua.sh. -->
+  <arg name="pausa_por_fase" default="false"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
           type="apriltag_localizer.py" output="screen">
@@ -61,5 +67,6 @@
         type="chave_mission.py" output="screen">
     <param name="standoff_distance" value="$(arg standoff_distance)"/>
     <param name="search_omega"      value="$(arg search_omega)"/>
+    <param name="pausa_por_fase"    value="$(arg pausa_por_fase)"/>
   </node>
 </launch>

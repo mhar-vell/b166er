@@ -276,6 +276,34 @@ class MissionContext(object):
         # manter a tag centrada no quadro girando J1 enquanto a base
         # navega. Sem isso a tag sai do campo de visão na aproximação e a
         # estimativa degrada justamente quando mais precisa ser boa.
+        # ── GIMBAL DESLIGADO POR PADRÃO ──
+        #
+        # A malha girava J1 para recentrar a tag no quadro. MEDIDO em
+        # 2026-08-31, com a base PARADA e varrendo J1 de -59° a +15°:
+        #
+        #     J1 = -30,4°  ->  tag em +0,094
+        #     J1 = -14,9°  ->  tag em +0,110
+        #     J1 =   0,0°  ->  tag em +0,134
+        #
+        # Ganho de 0,075 por radiano, e com o SINAL INVERTIDO em relação
+        # ao que a malha assume. Produto de malha 0,04: para corrigir um
+        # erro de 0,10 seriam ~25 passos na direção certa — na direção
+        # errada, nunca. Foi o que se viu: o erro preso em +0,06..+0,11
+        # (sempre acima do deadband, portanto nunca satisfeito) enquanto
+        # J1 percorria 80° até quase o batente, levando a câmera para
+        # longe da tag e zerando as amostras do REFINE.
+        #
+        # A razão é geométrica: a câmera vive no END-EFFECTOR, não numa
+        # torre. Girar J1 TRANSLADA o braço em arco — muda muito a
+        # posição da câmera e quase nada o apontamento. J1 é o atuador
+        # errado para esta tarefa.
+        #
+        # Sem gimbal, a detecção depende de parar numa pose em que a tag
+        # já esteja no quadro. Medido na mesma pose de standoff: tag
+        # detectada com 60 px de lado e o localizador publicando 36
+        # amostras em 6 s. É o que este teste vai verificar de ponta a
+        # ponta.
+        self.usa_gimbal     = rospy.get_param('~usa_gimbal', False)
         self.gimbal_gain    = rospy.get_param('~gimbal_gain', 0.6)
         self.gimbal_deadband = rospy.get_param('~gimbal_deadband', 0.06)
         self.gimbal_period  = rospy.get_param('~gimbal_period', 0.4)   # s
@@ -313,6 +341,7 @@ class MissionContext(object):
         # o HUD não poder quebrar a missão.
         self.pub_status = rospy.Publisher('/b166er/mission_status', String,
                                           queue_size=5, latch=True)
+        self._status_campos = {}
 
         self.pub_wb_enable = rospy.Publisher('/b166er/wb_enable', Bool,
                                              queue_size=1, latch=True)
@@ -734,6 +763,7 @@ class Search(smach.State):
                     continue
                 rospy.loginfo('[mission] parede localizada em (%.3f, %.3f, %.3f)',
                               *ctx.wall_pos)
+                ctx.espera_etapa('SEARCH', True, _resumo_geometria(ctx))
                 return 'found'
 
             if (rospy.Time.now() - t0).to_sec() > ctx.search_timeout:
@@ -779,8 +809,27 @@ class Approach(smach.State):
         stages = [d for d in (ctx.coarse_distance,) if d > parada] + [parada]
 
         for i, dist in enumerate(stages):
+            # Na ETAPA FINAL, para de frente (lateral=0) quando o REFINE
+            # vai medir ali: é a pose em que a tag fica no centro do
+            # quadro. O deslocamento lateral é assumido depois, pelo
+            # próprio REFINE, já com a medida boa na mão.
+            # DE FRENTE PARA A TAG, não para o olhal.
+            #
+            # A decisão do Marco foi medir de frente, onde a tag cai no
+            # CENTRO do quadro (dispersão 0,9 mm contra 9,2 na periferia).
+            # Eu implementei zerando o deslocamento lateral — o que põe a
+            # base de frente para o OLHAL, e a tag fica 17 cm ao lado.
+            # Resultado medido em 2026-08-31: "REFINE: só 0 amostras da
+            # tag", e a missão seguiu com a estimativa ruim da etapa
+            # intermediária. Alvo errado, mesmo com a ideia certa.
+            #
+            # O deslocamento que põe a tag à frente é o dela em relação
+            # ao olhal, com sinal invertido: TAG_OLHAL_DX.
+            ultima = (i == len(stages) - 1)
+            lat = (chave_task.TAG_OLHAL_DX if (ultima and ctx.refine_de_frente)
+                   else ctx.standoff_lateral)
             goal = chave_task.standoff_base_pose(ctx.wall_pos, ctx.wall_R, dist,
-                                                lateral=ctx.standoff_lateral)
+                                                lateral=lat)
             rospy.loginfo('[mission] APPROACH etapa %d/%d — %.2f m do olhal, '
                           'alvo (%.2f, %.2f, %.2f rad)',
                           i + 1, len(stages), dist, *goal)
@@ -826,6 +875,7 @@ class Approach(smach.State):
             # põe a tag no centro do quadro.
             ctx.send_posture('search')
             _wait_posture(ctx)
+        ctx.espera_etapa('APPROACH', True, _resumo_geometria(ctx))
         return 'arrived'
 
 
@@ -875,6 +925,36 @@ class Refine(smach.State):
                           float(np.linalg.norm(ctx.wall_pos - antes)))
         rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f)',
                       *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
+
+        # NÃO DESLOCA A BASE. Fica onde mediu.
+        #
+        # A versão anterior media de frente e depois assumia a pose
+        # lateral por navegação. A base é skid-steer: para andar 90 mm
+        # de lado ela gira, avança meio metro e gira de volta — e o erro
+        # angular das três etapas vira erro lateral. MEDIDO em
+        # 2026-08-31: alvo x=0,09 e o robô parou em x=-0,028. **118 mm
+        # de erro para um deslocamento de 90 mm**, o que pôs o alvo do
+        # DEPLOY fora de alcance (resíduo 54 mm) e fez a missão cair na
+        # postura fixa de emergência.
+        #
+        # E o deslocamento nunca foi necessário por ALCANCE. Varredura
+        # de IK em 2026-08-31, resíduo por fase com a base de -13 a
+        # +17 cm de lado:
+        #
+        #   lateral   orienta  aprox_lat  atravessa  captura  arco2
+        #   -0,090      0,1       0,3        0,1       0,1     0,0
+        #   +0,170      0,0       0,2        0,5       0,5     0,3
+        #
+        # Todas abaixo de 0,5 mm. A justificativa original do
+        # deslocamento (dar curso lateral ao braço) era sobre conforto de
+        # trajetória, não sobre alcançar — e cobrava uma manobra de base
+        # que erra mais do que o furo tolera.
+        #
+        # PAUSA AQUI a pedido do Marco em 2026-08-31: é o instante em que
+        # a base já terminou de se posicionar e o braço AINDA NÃO se
+        # mexeu. É a etapa certa para fotografar a aproximação isolada,
+        # sem a postura de engate por cima dela.
+        ctx.espera_etapa('REFINE', True, _resumo_geometria(ctx))
         return 'ok'
 
 
@@ -976,6 +1056,11 @@ class Deploy(smach.State):
         ctx.take_base()
         ctx.stop_base()
 
+        # O ramo de solução é escolhido AQUI — é a etapa que mais
+        # interessa inspecionar antes de qualquer movimento fino.
+        ctx.espera_etapa('DEPLOY/pré-posicionamento', True,
+                         _resumo_geometria(ctx))
+
         # SEGUNDO MOMENTO: com o braço já armado, fecha a diferença entre
         # a distância de deploy e a de engate andando só com as rodas.
         avanco = ctx.deploy_dist - ctx.standoff_dist
@@ -1031,7 +1116,12 @@ class Manipulate(smach.State):
 
             alcancar = (_reach_by_wholebody if ctx.use_wholebody
                         else _reach_by_iterative_ik)
-            if not alcancar(ctx, p_tip, phase):
+            ok_fase = alcancar(ctx, p_tip, phase)
+            # Pausa TAMBÉM quando a fase falha: é justamente a postura de
+            # falha que precisa ser olhada.
+            ctx.espera_etapa('fase %s' % phase, ok_fase,
+                             _resumo_geometria(ctx))
+            if not ok_fase:
                 return 'failed'
 
             # A chave acompanha a ferramenta (ver set_blade_angle).
@@ -1078,6 +1168,9 @@ class Retract(smach.State):
         ctx.take_base()          # fuzzy cala, missão assume /cmd_vel
         ctx.unlock_base()        # só então destrava
         ctx.stop_base()
+        # A fase 'desengata' já afasta lateralmente no caminho normal,
+        # mas o RETRACT também pode ser alcançado com ela incompleta.
+        _sai_pelo_eixo(ctx, 'RETRACT')
         ctx.send_posture('stow_home')
         return 'ok' if _wait_posture(ctx) else 'failed'
 
@@ -1118,6 +1211,12 @@ class AbortSafe(smach.State):
         ctx.take_base()          # silencia o controlador PRIMEIRO
         ctx.unlock_base()
         ctx.stop_base()
+
+        # SAI DO ANEL ANTES DE RECOLHER. Sem isto o braço vai direto para
+        # a postura recolhida e, se o degrau estiver no olhal, arrasta a
+        # chave no caminho — foi o que o Marco viu.
+        _sai_pelo_eixo(ctx, 'ABORT')
+
         ctx.send_posture('stow_home')
         _wait_posture(ctx)
 
@@ -1156,6 +1255,109 @@ class AbortSafe(smach.State):
 # críticos — precisam só ficar no meio.
 _OUTLIER_POS_M   = 0.15
 _OUTLIER_YAW_RAD = 0.20
+
+
+def _resumo_geometria(ctx):
+    """Uma linha com o que interessa olhar numa pausa: juntas, ramo,
+    distância da ponta ao olhal e ângulo da lâmina."""
+    try:
+        q = np.degrees(np.array(ctx.robot_state.q_arm)).round(1)
+        p = _tooltip_now(ctx)
+        olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)
+        d = float(np.linalg.norm(p - olhal)) * 1000
+        ang = ctx.blade_angle_now()
+        return ('juntas %s | ponta a %.0f mm do olhal | lâmina %s'
+                % (q.tolist(), d,
+                   ('%.1f°' % ang) if ang is not None else 'n/d'))
+    except Exception:            # noqa: BLE001
+        return ''
+
+
+def _tolerancia_da_fase(ctx, phase):
+    """Tolerância da fase: por EIXO no frame da parede, ou esférica.
+
+    POR QUE POR EIXO. A tolerância era uma esfera de 20 mm, e o furo do
+    olhal não é uma esfera: dá ±15 mm em profundidade, ±20 mm em altura
+    e é folgado ao longo do próprio eixo, porque o degrau tem 30 mm de
+    comprimento. Uma esfera de 20 mm é FROUXA demais onde a tarefa é
+    apertada e apertada demais onde ela é folgada.
+
+    A consequência foi medida em 2026-08-27: as sete fases fecharam
+    entre 11 e 19 mm, todas dentro da tolerância, e a ferramenta passou
+    o tempo todo FORA do furo — mediana de 24,6 mm em profundidade,
+    contra os 15 mm de meio-vão. O critério de sucesso era mais frouxo
+    do que a tarefa permite, então "fase alcançada" não significava
+    nada para o engate.
+
+    Devolve (tol_xyz ou None, tol_escalar). Sem tol_xyz_m no YAML, a
+    fase segue no critério esférico de sempre.
+    """
+    cfg = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+    tol = cfg.get('tol_xyz_m')
+    if tol and len(tol) == 3:
+        return np.asarray(tol, dtype=float), None
+    return None, ctx.tol_pos
+
+
+def _fase_fechou(ctx, phase, err_world, n_err):
+    """A fase fechou? Compara no frame da PAREDE quando há tolerância
+    por eixo — é lá que os eixos têm significado (X = eixo do furo,
+    Y = profundidade, Z = altura)."""
+    tol_xyz, tol_esf = _tolerancia_da_fase(ctx, phase)
+    if tol_xyz is None or ctx.wall_R is None:
+        return n_err < tol_esf, None
+    e = ctx.wall_R.T @ np.asarray(err_world, dtype=float)
+    return bool(np.all(np.abs(e) < tol_xyz)), e
+
+
+def _sai_pelo_eixo(ctx, tag):
+    """Afasta a ponta ao longo do EIXO DO FURO antes de recolher o braço.
+
+    POR QUE EXISTE. Observação do Marco em 2026-08-27, vendo a missão na
+    tela: "para o robô retornar à posição de spawn ele deve realizar uma
+    trajetória de simples retirada do degrau do olhal, e novamente faz
+    uma trajetória maluca batendo em tudo".
+
+    Ele está certo, e o defeito é assimétrico. No caminho de SUCESSO
+    existe a fase 'desengata', que tira o degrau lateralmente. No caminho
+    de FALHA não existe nada: o ABORT_SAFE comanda a postura recolhida
+    direto, e o braço vai de onde estiver até lá pelo caminho que a
+    interpolação de juntas escolher — com o degrau possivelmente dentro
+    do anel, arrastando o mecanismo.
+
+    A saída correta é uma só: recuar ao longo do eixo do furo, que é a
+    direção em que o degrau entrou. Qualquer outra direção prende.
+
+    Não falha a missão: se não houver estimativa da parede, ou se a IK
+    não fechar, apenas avisa e deixa o recolhimento seguir — este é um
+    passo de segurança, não um objetivo.
+    """
+    if ctx.wall_R is None or ctx.robot_state is None:
+        return False
+    try:
+        p_now = _tooltip_now(ctx)
+        olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)
+        dist = float(np.linalg.norm(p_now - olhal))
+        if dist > ctx.saida_raio:
+            # Longe do anel: não há de que se desprender.
+            return False
+
+        eixo_mundo = ctx.wall_R @ np.array([1.0, 0.0, 0.0])
+        # Sentido: o que AFASTA do olhal a partir de onde a ponta está.
+        proj = float((p_now - olhal) @ eixo_mundo)
+        sentido = 1.0 if proj >= 0.0 else -1.0
+        alvo = p_now + sentido * ctx.saida_curso * eixo_mundo
+
+        rospy.logwarn('[mission] %s: ponta a %.3f m do olhal — saindo '
+                      '%.0f mm pelo eixo do furo antes de recolher',
+                      tag, dist, ctx.saida_curso * 1000)
+        ctx.status(estado=tag, saida_mm=ctx.saida_curso * 1000,
+                   dist_olhal_m=dist)
+        return _reach_by_iterative_ik(ctx, alvo, 'saida_eixo')
+    except Exception as exc:            # noqa: BLE001
+        rospy.logwarn('[mission] %s: saída pelo eixo falhou (%s) — '
+                      'recolhendo mesmo assim', tag, exc)
+        return False
 
 
 def _sample_wall(ctx, n_wanted, timeout, tag):
@@ -1272,7 +1474,8 @@ def _navigate_to(ctx, goal, timeout, tag):
         # — foi o que travou o "engage" em 2026-08-13, com o
         # controlador comandando velocidade e o braço parado.
         if (rospy.Time.now() - t_gimbal).to_sec() > ctx.gimbal_period:
-            ctx.gimbal_track()
+            if ctx.usa_gimbal:
+                ctx.gimbal_track()
             ctx.publish_markers(goal)
             t_gimbal = rospy.Time.now()
 
@@ -1638,7 +1841,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # mesmo nome, e li 85° de erro de atitude como se fosse a
         # ferramenta de lado (2026-08-27). Grandezas diferentes, nomes
         # diferentes.
-        rotulo = ('atitude' if escolha['modo'] == 'nivelado' else 'eixo')
+        rotulo = ('atitude' if ctx.ik_modo == 'nivelado' else 'eixo')
         ang_txt = ('%s %.1f°' % (rotulo, math.degrees(ang_ik))
                    if ang_ik is not None else 'n/d')
         rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
