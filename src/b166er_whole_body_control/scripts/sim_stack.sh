@@ -52,9 +52,18 @@ NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge
 # sobrevivem ao stop se não forem listados, e um rviz órfão de uma sessão
 # anterior fica publicando/assinando junto com o novo. Aconteceu em
 # 2026-08-24 — dois rviz reais ao mesmo tempo, achado pelo Marco.
+# "gz topic" e o roslaunch da missão entraram em 2026-08-31, depois de
+# uma limpeza revelar 29 capturas de contato órfãs no ar — uma por
+# investigação armada ao longo do dia, nenhuma encerrada. O tópico de
+# contatos do Gazebo é dos mais volumosos que existem, e 29 assinantes
+# dele podem ter degradado o desempenho da física nas medições da tarde
+# sem ninguém perceber. Pior: o assert-clean dizia "limpo" com todas
+# elas rodando, porque o padrão não as cobria — o script existe
+# justamente para garantir que não há resíduo, e tinha esse ponto cego.
 PATTERNS=("$WS/devel" "gzserver" "gzclient" "rosmaster" "roscore"
           "b166er_wb.launch" "chave_mission.launch"
-          "lib/rviz/rviz" "rqt_image_view")
+          "lib/rviz/rviz" "rqt_image_view" "mission_hud.py"
+          "topic -e /gazebo")
 
 # ROS não é sourceado aqui de propósito: `stop`, `status` e `assert-clean`
 # precisam funcionar mesmo com o master morto ou o ambiente quebrado.
@@ -242,6 +251,29 @@ cmd_start() {
         fi
     fi
 
+    # PAINEL DA MISSÃO, em janela própria.
+    #
+    # Sobe junto com o stack de propósito. Antes eu o abria à mão depois
+    # do restart, e duas coisas davam errado: o `stop` o mata (a linha de
+    # comando dele contém o caminho do workspace, que está em PATTERNS),
+    # e o teste "já está rodando?" feito com `pgrep -f mission_hud.py`
+    # CASA COM O PRÓPRIO SHELL que faz o teste — então ele achava que já
+    # havia um painel e não abria nenhum. É a mesma armadilha de
+    # auto-casamento documentada em conta_proc(), e por isso aqui o teste
+    # usa conta_proc, que exclui $$ e $PPID.
+    if [[ " ${args[*]} " != *"gui:=false"* ]] && command -v gnome-terminal >/dev/null; then
+        if [ "$(conta_proc 'mission_hud.py')" -eq 0 ]; then
+            echo "[sim_stack] abrindo o painel da missão"
+            setsid gnome-terminal --title="b166er · painel da missão" \
+                --geometry=96x34 -- bash -lc \
+                "source '$CONDA_SH' && conda activate '$CONDA_ENV' && \
+                 source '$WS/devel/setup.bash' && \
+                 exec rosrun b166er_whole_body_control mission_hud.py" \
+                >/dev/null 2>&1 &
+            disown
+        fi
+    fi
+
     cmd_status
     cmd_preflight
 }
@@ -278,6 +310,29 @@ cmd_preflight() {
     else
         echo "  AVISO  tag não detectada agora — normal se o robô não estiver"
         echo "         de frente para a parede; o SEARCH gira para procurar."
+    fi
+
+    # CAPTURAS DE CONTATO ÓRFÃS. Cada `gz topic -e .../contacts` armado
+    # para investigar e não encerrado continua assinando o tópico mais
+    # volumoso do Gazebo. Foram 29 de uma vez em 2026-08-31.
+    local caps
+    caps=$(conta_proc "topic -e /gazebo")
+    if [ "$caps" -eq 0 ]; then
+        echo "  ok     nenhuma captura de contato órfã"
+    else
+        echo "  FALHA  $caps captura(s) de contato órfã(s) — 'stop' antes de medir"
+        falhas=$((falhas + 1))
+    fi
+
+    # ROSLAUNCH ÓRFÃO da missão: sobrevive quando se mata só o nó filho,
+    # e relança/segura recursos sem aparecer na contagem por nó.
+    local rl
+    rl=$(conta_proc "chave_mission.launch")
+    if [ "$rl" -eq 0 ]; then
+        echo "  ok     nenhum roslaunch de missão pendente"
+    else
+        echo "  FALHA  $rl roslaunch de missão ainda no ar"
+        falhas=$((falhas + 1))
     fi
 
     # Estado crítico pendente congela o braço em toda execução seguinte.
