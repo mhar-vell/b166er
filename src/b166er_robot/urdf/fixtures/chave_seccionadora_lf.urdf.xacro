@@ -184,11 +184,28 @@
       <origin xyz="0 0 ${blade_length + 0.14}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ═══ Lâmina móvel — VERTICAL (posição fechada) ═══ -->
+    <!-- ═══ Lâmina móvel — VERTICAL (posição fechada) ═══
+
+         A BARRA ACABA ANTES DO OLHAL, e o furo fica livre.
+
+         Até 2026-09-01 a lâmina ia de 0 a blade_length, e o anel é
+         fixado justamente em z = blade_length — ou seja, a barra
+         terminava no CENTRO do furo e tapava a metade de baixo dele. A
+         ferramenta só tinha uma fresta de 20 mm por cima, em vez dos 46
+         mm de abertura que o oval oferece.
+
+         Está errado como modelo: na chave real o olhal é uma alça na
+         PONTA da lâmina, e a alça é vazada. O Marco apontou olhando a
+         cena ("o olhal precisa estar livre").
+
+         Agora a barra termina em blade_length - ring_az, encostando na
+         borda inferior do anel. A distância pivô→olhal segue sendo
+         blade_length (0,200 m), que é a medida de bancada. -->
+    <xacro:property name="blade_bar" value="${blade_length - ring_az}"/>
     <link name="${prefix}blade">
       <visual>
-        <origin xyz="0 0 ${blade_length/2}"/>
-        <geometry><box size="0.016 0.022 ${blade_length}"/></geometry>
+        <origin xyz="0 0 ${blade_bar/2}"/>
+        <geometry><box size="0.016 0.022 ${blade_bar}"/></geometry>
         <material name="switch_dark"><color rgba="0.22 0.14 0.10 1"/></material>
       </visual>
       <!-- Lâmina com colisão MAIS ESTREITA que o visual quando a
@@ -204,8 +221,8 @@
            travamento antigo por outro caminho. -->
       <xacro:if value="${lamina_colide}">
         <collision>
-          <origin xyz="0 0 ${blade_length/2}"/>
-          <geometry><box size="0.0096 0.0132 ${blade_length}"/></geometry>
+          <origin xyz="0 0 ${blade_bar/2}"/>
+          <geometry><box size="0.0096 0.0132 ${blade_bar}"/></geometry>
         </collision>
       </xacro:if>
       <inertial>
