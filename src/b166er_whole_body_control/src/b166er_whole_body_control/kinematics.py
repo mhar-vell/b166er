@@ -607,7 +607,8 @@ def degrau_dir(q):
 def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
                         max_iter=400, max_step=0.08, q_current=None,
                         continuity_weight=0.35, ik_reach_tol=0.005,
-                        peso_ang=0.05, ang_tol=0.15, peso_x=0.15):
+                        peso_ang=0.05, ang_tol=0.15, peso_x=0.15,
+                        sentido_fixo=False):
     """
     IK para ATRAVESSAR o furo: 2 de posição + 3 de orientação.
 
@@ -641,7 +642,22 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
     peso_ang      : metros equivalentes por radiano de erro de atitude.
     ang_tol       : erro de atitude (rad) aceito no filtro de candidatos.
 
-    Retorna (q, erro_pos_transversal_m, erro_ang_rad).
+    Retorna (q, erro_pos_m, erro_ang_rad).
+
+    O ERRO DE POSIÇÃO DEVOLVIDO É O COMPLETO, não o ponderado.
+
+    A ponderação (peso_x) existe para a OTIMIZAÇÃO: ela diz ao solver
+    qual direção ceder primeiro. Mas devolver o valor ponderado fazia o
+    número que sai daqui ser uma grandeza diferente da que a missão
+    verifica contra a tolerância, e as duas metades do sistema entravam
+    em impasse silencioso: medido em 2026-08-27, a IK anunciava 10 mm na
+    fase 'orienta' enquanto a missão media 68 mm e reprovava — nenhuma
+    das duas errando na sua própria conta. A fase não podia fechar por
+    construção.
+
+    Critério de parada e função objetivo podem ser diferentes de
+    propósito, mas então precisam ter NOMES diferentes. Aqui o que sai é
+    a distância de verdade até o alvo.
     """
     a = np.asarray(eixo_furo_arm, dtype=float)
     a = a / max(np.linalg.norm(a), 1e-12)
@@ -679,11 +695,20 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
         IK não convergia e devolvia 80° de roll com 30 mm de erro
         transversal; 80° é precisamente esta orientação.
 
-        O sinal do eixo e o da vertical saem por proximidade da atitude
-        atual — atravessar vale nos dois sentidos, e forçar um sinal
-        criaria giros de 180° gratuitos.
+        O sinal da VERTICAL sai por proximidade da atitude atual (a
+        largura em pé serve nos dois sentidos, e forçar um criaria giros
+        de 180° gratuitos).
+
+        O sinal do EIXO não: com `sentido_fixo` ele é imposto, porque a
+        ferramenta tem um dedo só e os dois sentidos engatam de forma
+        diferente — ver a nota extensa em ik_tooltip_com_degrau. Sem
+        isso, esta formulação aceitaria o ramo espelhado exatamente como
+        a outra aceitava.
         """
-        s = 1.0 if float((-R_atual[:, 0]) @ a) >= 0.0 else -1.0
+        if sentido_fixo:
+            s = 1.0
+        else:
+            s = 1.0 if float((-R_atual[:, 0]) @ a) >= 0.0 else -1.0
         x = -s * a                       # degrau aponta em -X do tool_tip
         v = up - float(up @ x) * x       # vertical, ortogonalizada ao eixo
         n = np.linalg.norm(v)
@@ -720,8 +745,14 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
         return np.concatenate([e_p, peso_ang * e_o])
 
     def _metricas(q):
+        """Métricas de AVALIAÇÃO — distância completa, não a ponderada.
+
+        A ponderação vive só em `_erro`, que é o que o solver minimiza.
+        Quem julga o resultado (o filtro de candidatos aqui e a
+        tolerância da missão lá fora) usa a distância real.
+        """
         T = _T(q)
-        e_p = float(np.linalg.norm(W @ (alvo_p - T[:3, 3])))
+        e_p = float(np.linalg.norm(alvo_p - T[:3, 3]))
         e_o = float(np.linalg.norm(so3_log(_alvo_R(T[:3, :3]) @ T[:3, :3].T)))
         return e_p, e_o
 
@@ -767,7 +798,7 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
 def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                           max_iter=400, max_step=0.08, q_current=None,
                           continuity_weight=0.35, ik_reach_tol=0.005,
-                          peso_dir=0.05, ang_tol=0.20):
+                          peso_dir=0.05, ang_tol=0.20, sentido_fixo=False):
     """
     IK de POSIÇÃO da ponta + DIREÇÃO do degrau.
 
@@ -788,11 +819,43 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
     registrada em fuzzy_wb_controller). A restrição que a tarefa
     realmente precisa é a do degrau: é ele que atravessa o furo.
 
-    EIXO, NÃO VETOR. `eixo_furo_arm` é tratado como EIXO: a cada
-    iteração escolhe-se o sentido (±) mais próximo da atitude atual.
-    Atravessar o furo funciona nos dois sentidos, e fixar um sinal
-    arbitrário só criaria um giro de 180° desnecessário — o mesmo tipo
-    de armadilha do atrator de 180° que já custou caro em `pose_error`.
+    EIXO OU VETOR — `sentido_fixo` DECIDE, E PARA ESTA TAREFA É VETOR.
+    Com `sentido_fixo=False` (default histórico), `eixo_furo_arm` é
+    tratado como EIXO: a cada iteração escolhe-se o sentido (±) mais
+    próximo da atitude atual. O raciocínio era que atravessar o furo
+    funciona nos dois sentidos, e que fixar um sinal criaria giros de
+    180° gratuitos — o atrator de 180° que já custou caro em
+    `pose_error`.
+
+    O RACIOCÍNIO ESTAVA ERRADO PARA ESTA FERRAMENTA. Ele vale para uma
+    haste simétrica. A do b166er tem UM DEDO SÓ (a garra perdeu o
+    segundo dedo no modelo em 2026-08-25, conferindo com as fotos), e
+    então os dois sentidos NÃO são equivalentes: num deles o degrau
+    engata o olhal, no outro aponta para fora e só consegue empurrar.
+
+    MEDIDO em 2026-08-31, com a mesma geometria de entrada em duas
+    execuções seguidas:
+
+      ramo A (J5 = -1°)    degrau -> [-0.216  +0.976  +0.016]
+      ramo B (J5 = -179°)  degrau -> [-0.108  -0.994  +0.015]
+      produto escalar -0,947 — 161° entre eles, LADOS OPOSTOS
+
+    Nos dois a IK reportava resíduo 0,0000 m e "degrau 0,9°", porque o
+    ângulo era medido contra o EIXO, sem sinal. Para a IK, o ramo
+    espelhado era uma solução perfeita. Isso é candidato a explicar a
+    observação do Marco de que "a ferramenta não engatou no olhal, ela
+    puxou por trás do olhal": não era erro de milímetros, era o dedo do
+    lado errado.
+
+    QUAL É O SINAL CERTO. O de inserção: as fases vão de "orienta" em
+    x = -0,090 (fora, do lado do robô) para "atravessa" em x = 0, ou
+    seja no sentido +X do frame da parede. É o vetor que o chamador já
+    passa como `eixo_furo_arm`. Verificado contra o ramo A, que produziu
+    as melhores execuções: produto escalar 0,997 com +X da parede.
+
+    Fixar o sinal também elimina metade da instabilidade de ramo de
+    graça — o ramo espelhado deixa de ser solução admissível, então não
+    há mais o que sortear entre execuções.
 
     p_target_arm  : (3,) posição alvo da ponta, no frame da base do braço.
     eixo_furo_arm : (3,) eixo do furo do olhal, no mesmo frame. Não
@@ -832,12 +895,18 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
 
     def _erro(q):
         p, d = _feat(q)
-        alvo_d = eixo if float(d @ eixo) >= 0.0 else -eixo
+        if sentido_fixo:
+            alvo_d = eixo
+        else:
+            alvo_d = eixo if float(d @ eixo) >= 0.0 else -eixo
         return np.concatenate([alvo_p - p, peso_dir * (alvo_d - d)])
 
     def _metricas(q):
         p, d = _feat(q)
-        cos = abs(float(d @ eixo))
+        # COM SINAL quando sentido_fixo: sem isso, o ramo espelhado
+        # (d ≈ -eixo) devolveria cos ≈ 1 e passaria como "alinhado" pelo
+        # filtro de candidatos, que é exatamente o defeito corrigido.
+        cos = float(d @ eixo) if sentido_fixo else abs(float(d @ eixo))
         return (float(np.linalg.norm(alvo_p - p)),
                 float(np.arccos(np.clip(cos, -1.0, 1.0))))
 
