@@ -4,6 +4,27 @@
   <!-- robot_state_pub:=false quando o launch pai já sobe o nó -->
   <arg name="robot_state_pub" default="true"/>
 
+  <!-- ═══ Pose inicial: 2 m da parede (sugestão do Marco, 2026-08-27) ═══
+       A parede da fixture fica em y=3,0 (spawn_chave_fixture.launch), e o
+       robô nascia em y=0 — 3,0 m de distância. Com a tag de 132 mm isso
+       não funciona: o SEARCH gira 90 s no vazio e a missão aborta, que é
+       o que aconteceu na execução de 2026-08-27.
+
+       Conta: a T265 real detecta a tag de 132 mm com ~16 px de lado no
+       piso absoluto; com fx=285 isso dá 285·0,132/16 = 2,35 m. A 2,0 m o
+       lado renderiza ~19 px — acima do piso, abaixo dos 30 px que a
+       bancada mostrou serem necessários para MEDIR bem. Ou seja: 2 m é
+       o suficiente para ACHAR; o refinamento fino continua dependendo de
+       o robô se aproximar antes de mirar o olhal, que é o que o
+       APPROACH/REFINE já fazem.
+
+       Muda junto com START_Y em scripts/reset_sim.py — se os dois
+       divergirem, a bateria repõe o robô num lugar diferente de onde ele
+       nasceu, e as execuções deixam de ser comparáveis. -->
+  <arg name="x"   default="0.0"/>
+  <arg name="y"   default="1.0"/>
+  <arg name="yaw" default="0.0"/>
+
   <param name="robot_description"
          command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
 
@@ -27,7 +48,8 @@
        Spawn em q=0 (dentro dos limites ±1.13 rad de J2) é determinístico
        e coincide com o q_spawn do bridge. -->
   <node name="spawn_b166er" pkg="gazebo_ros" type="spawn_model"
-        args="-urdf -model b166er -param robot_description -z -0.025"/>
+        args="-urdf -model b166er -param robot_description -z -0.025
+              -x $(arg x) -y $(arg y) -Y $(arg yaw)"/>
 
   <node if="$(arg robot_state_pub)"
         name="robot_state_publisher"

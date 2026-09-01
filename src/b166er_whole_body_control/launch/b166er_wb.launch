@@ -185,15 +185,79 @@
          execução, e a imagem anotada em /b166er/tag_debug_image é o
          principal recurso de diagnóstico visual do pipeline.
            rosrun image_view image_view image:=/b166er/tag_debug_image -->
+    <!-- Só na simulação: no hardware o driver da RealSense publica o
+         camera_info correto sozinho. -->
+    <node if="$(eval arg('mode') == 'gazebo')"
+          name="fisheye_info_fixer"
+          pkg="b166er_whole_body_control"
+          type="fisheye_info_fixer.py"
+          output="screen"/>
+
     <node name="apriltag_localizer"
           pkg="b166er_whole_body_control"
           type="apriltag_localizer.py"
-          output="screen"/>
+          output="screen">
+      <!-- CÂMERA DEPENDE DO MODO. /task_camera só existe no Gazebo: é uma
+           câmera acrescentada ao URDF que o robô real não possui. No
+           hardware a única disponível é a fisheye da própria T265, que
+           usa modelo equidistante e por isso precisa de ~fisheye=true
+           (ver _resolve_pnp no apriltag_localizer).
+
+           CUIDADO COM O ALCANCE: a fisheye tem 5,4 px/grau contra 7,4 da
+           simulada (mais campo, menos resolução angular). Com a tag de
+           220 mm a detecção confiável cai de ~3,9 m para ~2,8 m, que é
+           exatamente onde a busca acontece hoje. Na bancada, ou imprime
+           em A3 (A4 só comporta 155 mm de preto) ou aproxima o ponto de
+           busca com ~coarse_distance. -->
+      <!-- MESMA CÂMERA NOS DOIS MODOS (2026-08-26). A simulação passou
+           a ter a fisheye da T265 (wideanglecamera equidistante no
+           t265_link), publicando nos mesmos tópicos do driver real.
+           Assim o que se valida em simulação é o caminho que roda na
+           bancada — antes a percepção era exercitada por uma câmera
+           que o robô não tem. -->
+      <param name="image_topic"       value="/camera/fisheye1/image_raw"/>
+      <param name="camera_info_topic" value="/camera/fisheye1/camera_info"/>
+      <param name="fisheye"           value="true"/>
+
+      <!-- TAMANHO EFETIVO DA TAG NA SIMULAÇÃO — 130,2 mm, não 132.
+           O quadrado preto renderizado mede 132 mm, mas o detector
+           enxerga as bordas ~1,4% para dentro (antialiasing/mipmap da
+           textura: o canto é achado no ponto de 50% de intensidade, que
+           cai meio pixel dentro do preto de cada lado).
+
+           Medido em 2026-08-27, depois de corrigir o ponto principal, o
+           erro de PROFUNDIDADE da pose da parede era proporcional à
+           distância, que é a assinatura de escala e não de offset:
+
+             1,60 m -> +22 mm  (1,38%)
+             1,30 m -> +18 mm  (1,40%)
+             1,00 m -> +15 mm  (1,51%)
+
+           132 / 1,014 = 130,2 mm.
+
+           FICA NO LAUNCH, NÃO NO CÓDIGO. O default de TAG_SIZE segue
+           0,132 — que é a tag FÍSICA do Marco. Este número corrige um
+           artefato do renderizador do Gazebo e não vale na bancada, onde
+           a T265 real tem o viés dela (medido em +5 a +8 cm, de outra
+           natureza; ver a caracterização de 2026-08-26). Enterrar isto
+           no código faria a simulação mentir sobre o hardware. -->
+      <param name="tag_size"          value="0.1302"/>
+    </node>
 
     <!-- 1c · Segurança por laser (Hokuyo) — distância livre à frente -->
     <node name="laser_safety"
           pkg="b166er_whole_body_control"
           type="laser_safety.py"
+          output="screen"/>
+
+    <!-- 1d · Watchdog da base — para as rodas se os comandos cessarem.
+         O plugin skid_steer_drive do Gazebo NÃO tem commandTimeout e
+         mantém o último /cmd_vel para sempre. Em 2026-08-27 a missão
+         morreu por pkill -9 no meio de um avanço e o robô seguiu
+         rolando ~420 mm até prensar a ferramenta na lâmina da chave. -->
+    <node name="base_watchdog"
+          pkg="b166er_whole_body_control"
+          type="base_watchdog.py"
           output="screen"/>
 
     <!-- 2 · Fuzzy whole-body controller: Pioneer + RV-M2 como 8-DOF -->

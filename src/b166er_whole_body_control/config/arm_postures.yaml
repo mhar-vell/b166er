@@ -23,14 +23,79 @@
 arm_postures:
   stow_home: [0.0, 1.13, -1.04, -1.8, 0.0]
 
-  # Postura de busca/deslocamento: MESMA forma recolhida do stow_home,
-  # só com J1=+90° para a câmera de tarefa apontar para a FRENTE do
-  # robô (+X da base). Verificado por FK em 2026-08-13: com J1=0 o eixo
-  # óptico aponta para −Y (lado direito do robô), inútil para procurar
-  # a tag enquanto se navega; com J1=+90° aponta para +X. Mantém o CG
-  # tão compacto quanto o stow (a rotação de J1 não muda a distância
-  # horizontal do CG, só a direção).
-  search: [1.5708, 1.13, -1.04, -1.8, 0.0]
+  # ═══ Postura de BUSCA DA TAG — refeita em 2026-08-27 ═══
+  #
+  # Especificação do Marco: os links de J3, J4 e J5 PARALELOS AO CHÃO e
+  # alinhados entre si. Traduzido para a cadeia do URDF, o link depois de
+  # uma junta de pitch fica horizontal quando a soma dos ângulos de pitch
+  # acumulados até ele é zero. Logo:
+  #
+  #     L3 horizontal  <=>  J2 + J3 = 0
+  #     L4 horizontal  <=>  J2 + J3 + J4 = 0   =>  J4 = 0
+  #
+  # (Há uma segunda família de soluções em J2+J3 = π, mas ela não cabe:
+  # J2 vai a ±65° e J3 a ±60°, somando no máximo 125°.)
+  #
+  # A postura ANTERIOR era [1.5708, 1.13, -1.04, -1.8, 0]: L3 já estava a
+  # 5,2° da horizontal, mas J4 estava a **-82°**, com o punho apontado
+  # para baixo. O comentário antigo dizia que J1=+90° punha a câmera
+  # olhando para a frente; a FK diz outra coisa — o eixo óptico saía em
+  # azimute -90° e elevação **-51,7°**, ou seja, encarando o chão ao lado
+  # do robô. Só funcionava porque a fisheye tem 170° de campo e a tag
+  # aparecia na periferia, que é a região de pior projeção do modelo
+  # equidistante. Suspeito principal do resíduo de 20-30° de orientação
+  # do PnP que ficou sem explicação.
+  #
+  # Agora: J2=+57,3° / J3=-57,3° (L3 e L4 exatamente horizontais),
+  # J4=0, e J5=-89,9° para levantar o eixo óptico à horizontal — a T265
+  # é montada INCLINADA no gripper (rpy [0, 2.1, 1.57] em _T_L5_TOOLTIP),
+  # então alinhar os links não basta, quem endireita a câmera é J5.
+  # J1=-30,3° põe o eixo óptico no +X da base. Conferido por FK:
+  #
+  #     elevação do eixo óptico  -0,02°   (era -51,7°)
+  #     azimute                  +0,02°   (era -90°)
+  #     câmera a 0,642 m de altura; a tag (0,805 m) fica a +4,6° do eixo
+  #     a 2 m, e +13,1° no standoff de 0,70 m — perto do centro do quadro
+  #
+  # POR QUE J4=0 IMPORTA ALÉM DA CÂMERA: no RV-M2 o J5 aciona a interface
+  # mecânica através da ENGRENAGEM CÔNICA ⑰, que é carregada pela carcaça
+  # do punho — e é o J4 que gira essa carcaça (manual BFP-A5296E-A,
+  # Fig. 4.3.1 e seção 3.1, itens 4 e 5). Inclinar J4 rola a ferramenta
+  # mesmo com o motor do J5 parado. O URDF e o kinematics.py modelam as
+  # duas juntas como INDEPENDENTES, então esse termo não existe na
+  # simulação. Com J4 = 0 o termo é nulo por construção: esta é a postura
+  # em que o modelo e o braço real concordam melhor.
+  #
+  # Margem até os limites (graus): J1 119,7 | J2 7,7 | J3 2,7 | J4 110 |
+  # J5 90,1. J3 é o apertado; não aumentar J2 sem baixar J3 junto.
+  search: [-0.5289, 1.0, -1.0, 0.0, -1.5692]
+
+  # ═══ Postura de DESLOCAMENTO ═══
+  #
+  # Observação do Marco em 2026-08-27, vendo a missão rodar: a J2
+  # deveria estar recolhida, perto do centro de gravidade, durante a
+  # movimentação. O instinto estava certo; medindo, o dedo estava na
+  # junta errada:
+  #
+  #   postura            J2     J4  | CG r_xy | ferramenta r_xy
+  #   recolhida (esta)  64,7  -103  |  170 mm |     388 mm
+  #   busca (alinhada)  57,3     0  |  182 mm |     735 mm
+  #   J2 no limite      65,0     0  |  169 mm |     706 mm
+  #
+  # Levar a J2 ao limite move o CG 13 mm e recolhe a ferramenta 29 mm.
+  # Quem recolhe 347 mm é DOBRAR A J4. E J4=0 é exatamente o que alinha
+  # J3/J4/J5 na horizontal para a busca da tag — as duas coisas que o
+  # Marco pediu se opõem na MESMA postura.
+  #
+  # Só que não precisam conviver: o SEARCH gira PARADO (olhar) e o
+  # APPROACH DIRIGE (andar). Esta postura é usada nos trechos de
+  # deslocamento; a 'search' volta para as medições.
+  #
+  # Mantém o J1 da postura de busca, para a câmera continuar apontada
+  # para a frente e a tag seguir no quadro durante o deslocamento — com
+  # 170° de campo ela aparece mesmo com o eixo óptico 52° para baixo,
+  # que foi como a missão funcionou até hoje.
+  travel: [-0.5289, 1.13, -1.04, -1.8, 0.0]
 
   # Postura de pré-manipulação. J1=0, NÃO 90° como a postura de busca:
   # a câmera está montada 90° defasada da direção de alcance do braço,

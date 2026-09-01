@@ -20,15 +20,28 @@ import math
 import numpy as np
 
 # ── Espelha chave_seccionadora_lf.urdf.xacro + chave_com_tag.urdf.xacro ──
+# ATUALIZADO em 2026-08-27 com as medidas de trena da bancada
+# (olhal-dimension.png, 2026-08-26). O que era spec/estimativa virou
+# medição — e as três que mudaram mudam a tarefa, não só o desenho:
+#   olhal   0,810 -> 0,805 m do chão
+#   standoff 0,08 -> 0,13 m da parede   (5 cm a mais de folga)
+#   tag      37 -> 17 cm do olhal, e na MESMA ALTURA (era 22 cm acima)
 CHAVE_X_OFFSET     = -0.20    # chave_x_offset
-OLHAL_HEIGHT       = 0.810    # olhal_height (spec do Marco)
-BLADE_LENGTH       = 0.200    # blade_length
+OLHAL_HEIGHT       = 0.805    # olhal_height (MEDIDO)
+BLADE_LENGTH       = 0.200    # blade_length (não medido — segue estimado)
 BLADE_ANGLE_CLOSED = 0.0      # fechada = lâmina VERTICAL (correção do Marco:
                               # os 20° da versão anterior eram a posição ABERTA)
 BLADE_ANGLE_OPEN   = 0.524    # 30° — curso de abertura confirmado pelo Marco
-WALL_STANDOFF      = 0.08     # wall_standoff da chave (mecanismo destacado da placa)
-TAG_X_OFFSET       = -0.50    # tag_x_offset (outro lado da chave, 0,30 m dela)
-TAG_MOUNT_Z        = 1.030    # tag_mount_z
+WALL_STANDOFF      = 0.13     # wall_standoff da chave (MEDIDO)
+TAG_OLHAL_DX       = 0.17     # separação tag↔olhal (MEDIDO)
+TAG_X_OFFSET       = CHAVE_X_OFFSET - TAG_OLHAL_DX
+TAG_MOUNT_Z        = OLHAL_HEIGHT   # tag na mesma altura do olhal (MEDIDO)
+
+# Furo do olhal (MEDIDO): oval, interno 40 mm em Z e 30 mm em Y, arame
+# de ~6 mm. Fica aqui porque a descida da fase de captura sai daqui —
+# ver config/chave_seccionadora_task.yaml.
+OLHAL_FURO_Z       = 0.040
+OLHAL_FURO_Y       = 0.030
 
 _PIVOT_X = BLADE_LENGTH * math.sin(BLADE_ANGLE_CLOSED)
 
@@ -56,8 +69,27 @@ OLHAL_OFFSET_FROM_WALL_LINK = np.array([
     OLHAL_HEIGHT,
 ])
 
-# Offset fixo de wall_link até o centro da placa da tag.
-TAG_OFFSET_FROM_WALL_LINK = np.array([TAG_X_OFFSET, 0.0, TAG_MOUNT_Z])
+# Offset fixo de wall_link até a SUPERFÍCIE VISÍVEL da tag.
+#
+# O Y era 0.0, como se a tag estivesse colada no plano da parede. Não
+# está: em apriltag_mount.urdf.xacro a placa é montada com
+# wall_standoff = 0,02 e tem 0,005 de espessura, então a face que a
+# câmera enxerga fica a 0,02 + 0,005/2 = 0,0225 m à frente da parede.
+#
+# Isso não é detalhe: o PnP mede a SUPERFÍCIE da tag, e tratá-la como se
+# estivesse no plano da parede empurra toda a estimativa 22,5 mm para
+# perto do robô. Medido em 2026-08-27 sobre a bateria de 8 execuções, o
+# viés da pose da parede era dY = −45 mm mediano, sistemático (dZ entre
+# −14 e −15 mm nas seis), com o offset parede→olhal exato em 0,0 mm.
+# Estes 22,5 mm são metade dele.
+#
+# Se o wall_standoff ou a espessura mudarem no xacro, mudar aqui também
+# — é a mesma duplicação inevitável descrita no cabeçalho deste módulo.
+TAG_STANDOFF      = 0.02      # apriltag_mount: wall_standoff
+TAG_PLATE_THICK   = 0.005     # apriltag_mount: tag_plate_thickness
+TAG_FACE_Y        = TAG_STANDOFF + TAG_PLATE_THICK / 2.0
+
+TAG_OFFSET_FROM_WALL_LINK = np.array([TAG_X_OFFSET, TAG_FACE_Y, TAG_MOUNT_Z])
 
 # Normal da face frontal da parede (onde chave e tag estão montadas),
 # no frame local do fixture — aponta para fora, na direção de onde o
@@ -103,10 +135,20 @@ def wall_front_normal(wall_R):
     return wall_R @ WALL_FRONT_NORMAL_LOCAL
 
 
-def standoff_base_pose(wall_pos, wall_R, distance):
+def standoff_base_pose(wall_pos, wall_R, distance, lateral=0.0):
     """
     Pose de aproximação da BASE: parada a `distance` metros à frente do
-    olhal, sobre a normal da face da parede, encarando a parede.
+    olhal e deslocada `lateral` metros ao longo da parede, encarando-a.
+
+    O DESLOCAMENTO LATERAL existe desde 2026-08-26, quando o Marco
+    especificou que o degrau da ferramenta atravessa o olhal movendo-se
+    ao LONGO do eixo do furo — que é lateral à parede. Parar de frente
+    para o olhal, como antes, deixava o braço sem curso nessa direção:
+    ele teria de esticar 9 cm para o lado a partir de uma postura já
+    estendida para a frente.
+
+    Deslocando a base, o braço começa a fase de travessia com a
+    ferramenta já ao lado do furo e só precisa avançar em linha reta.
 
     A distância é medida do olhal (não da parede) porque é o alcance do
     braço até o olhal que limita — alcance horizontal da ponta da
@@ -126,7 +168,12 @@ def standoff_base_pose(wall_pos, wall_R, distance):
         raise ValueError('normal da parede é vertical — fixture mal orientada?')
     n_xy = n_xy / norm
 
-    pos_xy = np.array([olhal[0], olhal[1]]) + n_xy * distance
+    # Lateral da parede no plano do chão: perpendicular à normal.
+    lat_xy = np.array([-n_xy[1], n_xy[0]])
+
+    pos_xy = (np.array([olhal[0], olhal[1]])
+              + n_xy * distance
+              + lat_xy * lateral)
     # Encara a parede: heading é a normal invertida.
     yaw = math.atan2(-n_xy[1], -n_xy[0])
     return float(pos_xy[0]), float(pos_xy[1]), float(yaw)

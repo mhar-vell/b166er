@@ -113,3 +113,51 @@ roslaunch b166er_robot spawn_chave_fixture.launch
 # 3. sequência de abertura
 roslaunch b166er_whole_body_control chave_seccionadora_task.launch
 ```
+
+---
+
+## Pendências de medição na bancada (2026-08-27)
+
+Duas cotas do fixture são **chute meu**, não medida do Marco, e as duas
+estão no caminho da ferramenta:
+
+- **Profundidade e forma do terminal fixo** (o contato superior onde a
+  lâmina encosta quando fechada). Eu lhe dei a profundidade inteira do
+  standoff (130 mm) por simetria com o bracket do pivô — que precisa
+  disso porque carrega o pivô — e virou um bloco de 130×45×190 mm na
+  trajetória: ~50 000 contatos ferramenta×terminal numa única missão.
+  Reduzido para 40 mm, ainda é o contato dominante.
+- **Comprimento da lâmina**, do pivô ao olhal. Segue nos 200 mm
+  estimados, e é ele que define toda a geometria do arco (as fases
+  `arco1` e `arco2` derivam ΔY e ΔZ desse raio).
+
+Já medidas e aplicadas: olhal a 805 mm do chão e 130 mm da parede, furo
+OVAL de 40 (Z) × 30 (Y) mm, tag a 170 mm do olhal e na mesma altura.
+
+## Como avaliar o engate — e como NÃO avaliar
+
+O critério certo é **onde a ferramenta toca o anel**, não o ângulo final
+da lâmina. A lâmina pode girar porque a ferramenta a EMPURROU por trás,
+sem nunca ter atravessado o furo — foi o que aconteceu em 2026-08-27,
+quando ela chegou a 17,1° sem engate nenhum.
+
+Os contatos saem de:
+
+    gz topic -e /gazebo/default/physics/contacts
+
+**Filtrar linha a linha destrói a informação.** Um par
+ferramenta×fixture tem `collision1` numa linha e `collision2` na
+seguinte; um `grep` por "olhal" descarta a linha da ferramenta e sobra
+um par pela metade. Isso me fez reportar "zero contatos ferramenta×
+chave" quando havia milhares. Capturar inteiro e casar os pares depois.
+
+**E o referencial tem que ser o olhal CORRENTE, não o fechado.** O olhal
+é solidário à lâmina: quando ela abre, ele se desloca. Medindo contra a
+posição fechada, os contatos apareceram em Y = −59 mm — que é
+exatamente `200·sin(17°)`, ou seja, o olhal na posição girada, não a
+ferramenta fora do furo. Qualquer julgamento de "dentro ou fora da boca
+do furo" feito nesse referencial é inválido.
+
+Para valer, o teste precisa ler o ângulo da lâmina no mesmo instante do
+contato (`/gazebo/get_joint_properties` em `chave_blade_joint`) e
+transformar o ponto de contato para o frame do olhal naquele ângulo.

@@ -82,11 +82,24 @@ from geometry_msgs.msg import PoseStamped, Point
 from tf.transformations import quaternion_matrix, quaternion_from_matrix
 
 from b166er_whole_body_control.msg import RobotState
-from b166er_whole_body_control.kinematics import T_T265_TASKCAMERA
-from b166er_whole_body_control.chave_task import TAG_OFFSET_FROM_WALL_LINK
+from b166er_whole_body_control.kinematics import (T_T265_FISHEYE1,
+                                                  T_T265_TASKCAMERA)
+from b166er_whole_body_control.chave_task import (TAG_OFFSET_FROM_WALL_LINK,
+                                                  flatten_wall_R)
 
-TAG_SIZE = 0.220  # m — quadrado preto. Subiu de 132 mm para alcançar
-                  # a distância do SEARCH (~3 m); ver apriltag_mount.urdf.xacro
+TAG_SIZE = 0.132  # m — quadrado preto.
+#
+# VOLTOU DE 220 PARA 132 mm em 2026-08-27. Os 220 mm existiam para a
+# tag ser legível no SEARCH a ~3 m, mas a medição da bancada
+# (olhal-dimension.png) põe a tag a 17 cm do olhal, e nessa separação a
+# placa de 220 mm (27,5 cm de largura) invade a placa da chave. 132 mm é
+# o que cabe — e é a tag que o Marco tem impressa e caracterizou contra
+# a T265 real.
+#
+# O preço está medido e é real: com 132 mm a T265 detecta até ~1,8 m e
+# só MEDE bem até ~1,2 m. O SEARCH da missão acontece a 2,8 m, onde esta
+# tag não aparece. Ou a busca desce, ou a bancada afasta a tag do olhal
+# para caber a de 220 mm — decisão do Marco, não deste arquivo.
 
 # Offset de wall_link até a tag: IMPORTADO de chave_task, NÃO copiado.
 #
@@ -158,6 +171,42 @@ class AprilTagLocalizer:
         self._tag_size = rospy.get_param('~tag_size', TAG_SIZE)
         self._world_frame = rospy.get_param('~world_frame', 'odom')
 
+        # ── CÂMERA CONFIGURÁVEL (2026-08-25, preparando a bancada) ──
+        #
+        # Os tópicos eram fixos em /task_camera/*, que só existe na
+        # simulação: é uma câmera que eu acrescentei ao URDF e que o robô
+        # real NÃO tem. No laboratório a única câmera disponível é a
+        # T265, cujas duas fisheye o realsense2_camera publica.
+        #
+        # A troca não é só de tópico. A T265 usa modelo equidistante
+        # (Kannala-Brandt), e o solvePnP com K + coeficientes pinhole
+        # devolve lixo nesse modelo — daí o parâmetro ~fisheye, que
+        # desprojeta os cantos com cv2.fisheye antes do PnP.
+        self._img_topic  = rospy.get_param('~image_topic',
+                                           '/task_camera/image_raw')
+        self._info_topic = rospy.get_param('~camera_info_topic',
+                                           '/task_camera/camera_info')
+        # Extrínseca T265 -> câmera. Na simulação é a da câmera de
+        # tarefa; com a fisheye da própria T265 vem do TF do driver.
+        self._fisheye = rospy.get_param('~fisheye', False)
+        # Quociente mínimo entre o erro de reprojeção da solução
+        # descartada e o da escolhida. Abaixo disso as duas são
+        # indistinguíveis e a medida é descartada — devolver uma pose
+        # ambígua com cara de boa é o modo de falha que queremos evitar.
+        self._pnp_razao_min = rospy.get_param('~pnp_razao_minima', 2.0)
+        self._pnp_razao = float('inf')
+        self._n_frames = 0
+        # Default: a fisheye da T265, que é a câmera do robô real. A
+        # câmera de tarefa (T_T265_TASKCAMERA) só existe na simulação e
+        # fica disponível por parâmetro para comparação.
+        self._T_t265_cam = np.array(
+            rospy.get_param('~T_t265_camera', T_T265_FISHEYE1.tolist()),
+            dtype=float)
+        if self._T_t265_cam.shape != (4, 4):
+            rospy.logwarn('[apriltag] ~T_t265_camera não é 4x4 — usando a '
+                          'transformada da câmera de tarefa')
+            self._T_t265_cam = T_T265_FISHEYE1.copy()
+
         self._bridge = CvBridge()
         self._K = None
         self._dist = None
@@ -195,9 +244,11 @@ class AprilTagLocalizer:
         self._pub_debug = rospy.Publisher('/b166er/tag_debug_image', Image,
                                           queue_size=1)
 
-        rospy.Subscriber('/task_camera/camera_info', CameraInfo, self._cb_camera_info)
+        rospy.Subscriber(self._info_topic, CameraInfo, self._cb_camera_info)
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state)
-        rospy.Subscriber('/task_camera/image_raw', Image, self._cb_image, queue_size=1)
+        rospy.Subscriber(self._img_topic, Image, self._cb_image, queue_size=1)
+        rospy.loginfo('[apriltag] câmera: %s (fisheye=%s), tag %d de %.3f m',
+                      self._img_topic, self._fisheye, self._tag_id, self._tag_size)
 
         rospy.loginfo('[apriltag_localizer] pronto — procurando tag id=%d (%.0fmm)',
                       self._tag_id, self._tag_size * 1000)
@@ -243,6 +294,18 @@ class AprilTagLocalizer:
             _draw_text(out, 'faixa confiavel (d/11): ate %.2f m  ->  %s'
                        % (d_max, 'OK' if ok else 'FORA DE FAIXA'), 48,
                        (0, 255, 0) if ok else (0, 0, 255))
+
+        # BATIMENTO. Quando a T265 fica olhando para o próprio robô — que
+        # é o que acontece com o braço recolhido — a cena é estática e a
+        # janela parece CONGELADA, indistinguível de pipeline morto. O
+        # Marco relatou "a câmera está travada" em 2026-08-27 com a
+        # câmera publicando normalmente a 6 Hz, e o diagnóstico custou
+        # uma varredura inteira. Um contador que anda resolve a dúvida
+        # sem ninguém precisar rodar `rostopic hz`.
+        self._n_frames += 1
+        _draw_text(out, 'frame %d  t=%.1fs' % (self._n_frames,
+                                               rospy.get_time()),
+                   out.shape[0] - 16, (255, 255, 0))
         self._pub_debug.publish(_to_imgmsg(out))
 
     def _cb_camera_info(self, msg):
@@ -251,6 +314,74 @@ class AprilTagLocalizer:
 
     def _cb_state(self, msg):
         self._t265_pose = msg.ee_pose.pose
+
+    def _resolve_pnp(self, img_points):
+        """PnP respeitando o modelo de lente.
+
+        A lente pinhole e a equidistante divergem MUITO fora do centro do
+        quadro, que é justamente onde a tag aparece quando o robô se
+        aproxima. Rodar solvePnP com K pinhole sobre pontos de uma
+        fisheye não é uma aproximação ruim: é uma pose errada com cara de
+        boa — exatamente o tipo de falha silenciosa que já custou caro
+        neste projeto.
+
+        Com ~fisheye, os cantos são desprojetados para raios normalizados
+        pelo modelo certo e o PnP roda contra uma câmera ideal
+        (K = identidade, distorção nula), o que é equivalente e evita
+        desdistorcer a imagem inteira a cada quadro.
+        """
+        if self._fisheye:
+            # Desprojeta pelo modelo equidistante e resolve contra uma
+            # câmera ideal — equivalente a desdistorcer a imagem inteira,
+            # e muito mais barato.
+            d = self._dist.flatten()
+            d4 = np.zeros((4, 1))
+            d4[:min(4, len(d)), 0] = d[:4]
+            pts = img_points.reshape(-1, 1, 2).astype(np.float64)
+            pontos = cv2.fisheye.undistortPoints(pts, self._K,
+                                                 d4).astype(np.float32)
+            K, D = np.eye(3), np.zeros(5)
+        else:
+            pontos, K, D = img_points, self._K, self._dist
+
+        # IPPE_SQUARE COM DESEMPATE POR ERRO DE REPROJEÇÃO (2026-08-27).
+        #
+        # O solvePnP comum devolve UMA solução, e para um alvo PLANAR
+        # existem duas quase igualmente boas — a tag e sua imagem
+        # espelhada em relação ao plano da câmera. Vista de frente e com
+        # muitos pixels, a escolha é óbvia; vista de esquina e com poucos
+        # pixels, o solver escolhe errado com frequência.
+        #
+        # Medido na simulação com a fisheye, quatro poses do robô:
+        # o erro de orientação da parede foi 9,3° / 21,0° / 24,7° e
+        # 155,4° — o último é o flip clássico, e os demais crescem com o
+        # ângulo de visada. Todos com posição errada por centenas de
+        # milímetros. Na bancada isso não apareceu porque lá medimos
+        # DISTÂNCIA (|tvec|), que é imune à ambiguidade.
+        #
+        # IPPE_SQUARE é específico para alvos planares quadrados e
+        # devolve AS DUAS soluções com seus erros de reprojeção. Escolher
+        # a de menor erro resolve a ambiguidade quando ela é
+        # distinguível, e o quociente entre os dois erros diz quando NÃO
+        # é — caso em que é melhor descartar a medida do que arriscar.
+        ok, rvecs, tvecs, erros = cv2.solvePnPGeneric(
+            self._obj_points, pontos, K, D,
+            flags=cv2.SOLVEPNP_IPPE_SQUARE)
+        if not ok or not len(rvecs):
+            return False, None, None
+
+        e = np.asarray(erros).flatten()
+        i = int(np.argmin(e))
+        self._pnp_razao = float(e[1 - i] / e[i]) if len(e) > 1 and e[i] > 1e-9 else float('inf')
+        if self._pnp_razao < self._pnp_razao_min:
+            # As duas soluções são igualmente plausíveis: a pose é
+            # ambígua e qualquer escolha é chute. Descartar.
+            rospy.logwarn_throttle(
+                2.0, '[apriltag] pose ambígua (erros de reprojeção %.3f vs '
+                     '%.3f, razão %.2f) — descartando', e[i], e[1 - i],
+                self._pnp_razao)
+            return False, None, None
+        return True, rvecs[i], tvecs[i]
 
     def _cb_image(self, msg):
         if self._K is None or self._t265_pose is None:
@@ -281,8 +412,7 @@ class AprilTagLocalizer:
             y=float((cy - h / 2.0) / (h / 2.0)),
             z=side_px))
 
-        ok, rvec, tvec = cv2.solvePnP(self._obj_points, img_points,
-                                      self._K, self._dist)
+        ok, rvec, tvec = self._resolve_pnp(img_points)
         if not ok:
             return
 
@@ -304,7 +434,7 @@ class AprilTagLocalizer:
                                self._t265_pose.position.y,
                                self._t265_pose.position.z]
 
-        T_world_camera = T_world_t265 @ T_T265_TASKCAMERA
+        T_world_camera = T_world_t265 @ self._T_t265_cam
         T_world_tag    = T_world_camera @ T_link_optical @ T_optical_tag
 
         # Reorienta do frame PnP (X-direita,Y-cima,Z-saindo-da-tag) para
@@ -312,14 +442,33 @@ class AprilTagLocalizer:
         R_world_tagplate = T_world_tag[:3, :3] @ _R_PNP_TO_FIXTURE
         p_world_tagplate = T_world_tag[:3, 3]
 
-        p_world_wall = p_world_tagplate - R_world_tagplate @ TAG_OFFSET_FROM_WALL_LINK
+        # ACHATA ANTES DE ALAVANCAR, não depois.
+        #
+        # O vínculo de verticalidade da parede já existia (flatten_wall_R)
+        # mas era aplicado pela missão, DEPOIS que a posição da parede já
+        # tinha sido calculada com a rotação crua do PnP. E essa conta
+        # multiplica o tilt espúrio por um braço de 0,885 m (0,37 em X,
+        # 0,805 em Z do offset tag→parede): 1° de inclinação falsa vira
+        # ~15 mm de erro de posição.
+        #
+        # Medido em 2026-08-27, depois de corrigir o afastamento da placa
+        # da tag, sobrava um dZ de −15 a −18 mm em TODAS as distâncias
+        # (1,3 / 1,0 / 0,8 m) — fixo, não proporcional, exatamente a
+        # assinatura de um braço de alavanca constante.
+        #
+        # Achatar aqui preserva o yaw, que é a única componente que a
+        # tarefa realmente precisa da tag, e impede o ruído de roll/pitch
+        # de virar erro de posição.
+        R_world_wall = flatten_wall_R(R_world_tagplate)
+
+        p_world_wall = p_world_tagplate - R_world_wall @ TAG_OFFSET_FROM_WALL_LINK
 
         out = PoseStamped()
         out.header.frame_id = self._world_frame
         out.header.stamp    = msg.header.stamp
         out.pose.position.x, out.pose.position.y, out.pose.position.z = p_world_wall
         T_out = np.eye(4)
-        T_out[:3, :3] = R_world_tagplate
+        T_out[:3, :3] = R_world_wall
         qx, qy, qz, qw = quaternion_from_matrix(T_out)
         out.pose.orientation.x = qx
         out.pose.orientation.y = qy

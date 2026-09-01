@@ -50,5 +50,7 @@ catkin_install_python(PROGRAMS
   nodes/chave_mission.py
   nodes/tilt_monitor.py
   nodes/laser_safety.py
+  nodes/base_watchdog.py
+  nodes/mission_hud.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
