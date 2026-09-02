@@ -612,12 +612,15 @@
          temos como controlar bem e transforma a garra num ponto de
          ancoragem rígido.
 
-         Geometria do desenho (mm), ao longo de -Z a partir da montagem:
-           garfo   25 de altura, 20 de profundidade, abas de 10
-           afunil. 10
-           haste   80, seção 10,4 x 20,0
-           ponta   20 de altura, 30,4 de largura, 20 de profundidade
-           total  135
+         Geometria (mm), ao longo de -Z a partir da montagem — REVISADA
+         em 2026-09-02 com o Marco (ver o bloco de propriedades abaixo):
+           garfo   25 de altura, 20 x 25 de seção, abas de 10
+           afunil. 10, RAMPA de 20 x 25 para 10 x 10 (inclinada, sem
+                   canto vivo — o bloco 15 x 22 que estava aqui era erro
+                   de modelagem meu, a peça é uma transição contínua)
+           haste   80, seção 10 x 10
+           degrau  10 de altura, 10 de largura, 20 de projeção em -X
+           total  125
 
          A ponta alargada é o que prende o elo: a haste de 10,4 mm passa
          pelo olhal, e o degrau de 20 mm (30,4 − 10,4) impede o anel de
@@ -644,13 +647,28 @@
     <xacro:property name="dedo_garfo_h"  value="0.025"/>
     <xacro:property name="dedo_afun_h"   value="0.010"/>
     <xacro:property name="dedo_haste_l"  value="0.080"/>
-    <xacro:property name="dedo_haste_x"  value="0.0104"/>
-    <xacro:property name="dedo_haste_y"  value="0.020"/>
-    <!-- Saliência do degrau além da haste: 30,4 − 10,4 = 20 mm. É o
+    <!-- SEÇÃO 10 x 10 (2026-09-02). O Marco reduziu a haste e o degrau
+         no plano Y de 20 para 10 mm — "teremos uma haste 10 mm x 10 mm, e
+         o degrau vai acompanhar essa medida também", altura do degrau
+         inclusive. Os 10,4 em X eram escolha minha (lingueta de 10 +
+         folga); "10 ou 10,4 não fará muita diferença", então 10.
+
+         O QUE ISSO COMPRA: o degrau era 20 x 17 num oval de 30 x 40, e
+         a ROLAGEM em torno do próprio eixo decidia se ele passava — além
+         de ~20° o canto saía do contorno (foi isso que fixou a distância
+         de engate em 0,54 contra 0,62, ver chave_mission.py). Um 10 x 10
+         tem diagonal de 14,1 mm: cabe no vão de 30 em QUALQUER rolagem.
+         A restrição que mandava na tarefa deixa de existir.
+
+         O QUE CUSTA: rigidez à flexão no plano Y cai por 8 (I ∝ h³), e a
+         face de apoio do arame encurta de 20 para 10 mm. -->
+    <xacro:property name="dedo_haste_x"  value="0.010"/>
+    <xacro:property name="dedo_haste_y"  value="0.010"/>
+    <!-- Projeção do degrau além da haste: 20 mm, inalterada. É o
          comprimento útil que fica atravessado no furo e sustenta o
          arame do olhal. -->
     <xacro:property name="dedo_degrau_l" value="0.020"/>
-    <xacro:property name="dedo_degrau_z" value="0.017"/>
+    <xacro:property name="dedo_degrau_z" value="0.010"/>
 
     <xacro:property name="tool_length"
                     value="${dedo_garfo_h + dedo_afun_h + dedo_haste_l}"/>
@@ -671,14 +689,23 @@
         <origin xyz="0 0 ${-dedo_garfo_h/2}"/>
         <geometry><box size="0.020 0.025 ${dedo_garfo_h}"/></geometry>
       </collision>
+      <!-- AFUNILAMENTO INCLINADO. Tronco de pirâmide gerado em código
+           (meshes/movemaster/dedo_afunilamento.stl, em METROS, já no
+           frame deste link: topo 20 x 25 em z = -0,025, base 10 x 10 em
+           z = -0,035). Se dedo_garfo_h ou dedo_afun_h mudarem, a malha
+           tem que ser regerada — ela não lê as propriedades.
+
+           A colisão fica como CAIXA 10 x 10, a seção menor: a rampa
+           nunca encosta em nada (fica 90 mm acima do degrau), e caixa é
+           mais barata e mais estável no ODE que trimesh. -->
       <visual>
-        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h/2}"/>
-        <geometry><box size="0.015 0.022 ${dedo_afun_h}"/></geometry>
+        <origin xyz="0 0 0"/>
+        <geometry><mesh filename="package://b166er_robot/meshes/movemaster/dedo_afunilamento.stl"/></geometry>
         <material name="ToolColor"/>
       </visual>
       <collision>
         <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h/2}"/>
-        <geometry><box size="0.015 0.022 ${dedo_afun_h}"/></geometry>
+        <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_afun_h}"/></geometry>
       </collision>
       <visual>
         <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h - dedo_haste_l/2}"/>

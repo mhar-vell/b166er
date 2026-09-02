@@ -34,9 +34,15 @@
 # nada para o engate.
 #
 # Os números abaixo saem da folga geométrica, não de tentativa: o
-# degrau apresenta ~17 mm ao vão de 30 (sobram 6,5 por lado) e ~20 mm
-# ao vão de 40 (sobram 10). Uso metade disso como tolerância, para o
-# erro nunca consumir a folga inteira.
+# degrau apresentava ~17 mm ao vão de 30 (sobravam 6,5 por lado) e
+# ~20 mm ao vão de 40 (sobravam 10). Uso metade disso como tolerância,
+# para o erro nunca consumir a folga inteira.
+#
+# SEÇÃO REDUZIDA PARA 10 x 10 em 2026-09-02 (ver movemaster.urdf.xacro,
+# dedo_haste_*). As folgas dobraram: 10 por lado no vão de 30, 15 no de
+# 40. As tolerâncias abaixo NÃO foram relaxadas junto — elas foram
+# medidas contra a geometria antiga, e afrouxar sem medir é o que este
+# arquivo existe para impedir. Reavaliar na revalidação.
 #
 # AVISO HONESTO: apertar isto NÃO faz a chave abrir — faz a missão
 # PARAR DE MENTIR que chegou. Com o desvio sistemático de ~10 mm em
@@ -45,9 +51,10 @@
 
 # Furo do olhal MEDIDO na bancada em 2026-08-26 (olhal-dimension.png):
 # oval, interno 40 mm (Z) x 30 mm (Y), centro a 805 mm do chão e 130 mm
-# da parede. O degrau atravessa com seção 20 (Y) x 17 (Z) mm, ou seja
-# 5 mm de folga de cada lado em Y — Y é a direção apertada, e é ela que
-# a precisão de estacionamento tem de vencer.
+# da parede. O degrau atravessa com seção 10 (Y) x 10 (Z) mm desde
+# 2026-09-02 (era 20 x 17): 10 mm de folga de cada lado em Y — Y
+# continua sendo a direção apertada, e é ela que a precisão de
+# estacionamento tem de vencer.
 chave_seccionadora_task:
   target_frame: "chave_olhal_link"
 
@@ -117,13 +124,18 @@ chave_seccionadora_task:
   #
   # ou seja, desce até o degrau encostar na aba de baixo do anel.
   #
-  # ATUALIZADO com o furo MEDIDO (2026-08-26): interno 40 mm em Z, logo
-  # 20 − 8,5 = 11,5 mm de descida, e o tool_tip fica 3,0 mm ABAIXO do
-  # centro do furo. Antes eram 19,5 mm, calculados sobre um furo
-  # circular de Ø56 mm que eu tinha inventado; a bancada é um OVAL de
-  # 40 (Z) x 30 (Y). Os 5 mm que o Marco citou vinham de supor Ø27.
+  # ATUALIZADO com o furo MEDIDO (2026-08-26): interno 40 mm em Z. Antes
+  # eram 19,5 mm, calculados sobre um furo circular de Ø56 mm que eu
+  # tinha inventado; a bancada é um OVAL de 40 (Z) x 30 (Y). Os 5 mm que
+  # o Marco citou vinham de supor Ø27.
+  #
+  # DEGRAU DE 10 mm (2026-09-02): 20 − 5 = 15 mm de descida, e o
+  # tool_tip (face de cima do degrau) fica 10,0 mm ABAIXO do centro do
+  # furo, com a face de baixo encostada na aba inferior do anel, em −20.
+  # Com o degrau de 17 eram 11,5 mm de descida e −3,0 de alvo. CALCULADO
+  # pela mesma fórmula, ainda não medido na simulação com a peça nova.
   captura:
-    offset_xyz_m: [0.0, 0.0, -0.0030]
+    offset_xyz_m: [0.0, 0.0, -0.0100]
     tol_xyz_m: [0.040, 0.006, 0.010]
 
   # ── 4. acompanha o arco ──

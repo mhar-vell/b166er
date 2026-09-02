@@ -41,3 +41,19 @@ sobre o plano de apoio em `z_stl = 6,50`).
 
 O `<visual>` do `CameraSupport` continua com a mesma origem e escala: a
 malha nova está no sistema de coordenadas da original.
+
+## `dedo_afunilamento.stl`
+
+O afunilamento **inclinado** do dedo fixo: tronco de pirâmide de 20 × 25 mm
+(topo, encostado no garfo) para 10 × 10 mm (base, a seção da haste), com
+10 mm de altura. Gerado em código (12 triângulos), **em metros e já no
+frame do `tool_rod`** — topo em z = −0,025, base em z = −0,035 — por isso
+o `<visual>` o usa com origem zero e sem `scale`.
+
+Substituiu um bloco 15 × 22 de cantos vivos que estava no URDF: o Marco
+apontou que a peça real é uma transição contínua ("o afunilamento é
+inclinado, não algo como canto vivo"). Se `dedo_garfo_h` ou `dedo_afun_h`
+mudarem, a malha tem que ser regerada — ela não lê as propriedades.
+
+Só o visual usa a malha; a colisão é uma caixa 10 × 10, porque a rampa
+nunca encosta em nada e caixa é mais estável no ODE que trimesh.
