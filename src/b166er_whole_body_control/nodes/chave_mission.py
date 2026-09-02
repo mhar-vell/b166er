@@ -128,7 +128,14 @@ class MissionContext(object):
 
     def __init__(self):
         self.rate_hz       = rospy.get_param('~rate', 20.0)
-        self.standoff_dist = rospy.get_param('~standoff_distance', 0.70)
+        # DISTÂNCIA DE ENGATE — 0,62 m, não 0,70.
+        #
+        # Medido em 2026-09-01 varrendo a pose da base: há um degrau
+        # entre 0,62 e 0,66. Abaixo dele o braço consegue posição E
+        # alinhamento no waypoint de inserção; acima, cede a direção.
+        # Na pose de operação o pior desalinho ao longo das fases era
+        # 13,6°; a 0,62 com lateral zero, 1,5°.
+        self.standoff_dist = rospy.get_param('~standoff_distance', 0.62)
 
         # DUAS DISTÂNCIAS, NÃO UMA (2026-08-25, pedido do Marco).
         #
@@ -158,7 +165,15 @@ class MissionContext(object):
         # Casado com o offset X da primeira fase (aproxima_lateral): o
         # robô para já ao lado do furo, e o braço só avança em linha
         # reta para atravessar o degrau.
-        self.standoff_lateral = rospy.get_param('~standoff_lateral', -0.090)
+        # DESLOCAMENTO LATERAL DE ENGATE — zero.
+        #
+        # Era -90 mm, para o braço começar a travessia já ao lado do
+        # furo e só precisar avançar em linha reta. O raciocínio é
+        # plausível e a medição o contradiz: deslocar a base para
+        # QUALQUER lado piora o alinhamento, nos dois sentidos e em
+        # todas as distâncias varridas. De frente para o olhal é onde o
+        # braço tem os dois graus de liberdade que a tarefa pede.
+        self.standoff_lateral = rospy.get_param('~standoff_lateral', 0.0)
         self.search_omega  = rospy.get_param('~search_omega', 0.35)
         self.search_timeout   = rospy.get_param('~search_timeout', 90.0)
         self.approach_timeout = rospy.get_param('~approach_timeout', 120.0)
@@ -1301,34 +1316,32 @@ class Deploy(smach.State):
                                   b.orientation.z, b.orientation.w])
         T_wb[:3, 3] = [b.position.x, b.position.y, b.position.z]
 
-        # RESOLVE PARA A POSE QUE A BASE VAI TER, NÃO PARA A ATUAL.
+        # RESOLVE PARA A POSE DE MANIPULAÇÃO, NÃO PARA A ATUAL.
         #
-        # Logo abaixo o DEPLOY avança `deploy_dist - standoff_dist` só
-        # com as rodas. Enquanto a IK aqui mirava a pose ATUAL, esse
-        # avanço invalidava a solução recém-calculada e a primeira fase
-        # tinha de refazer o braço inteiro — JÁ PERTO DA CHAVE, que é
-        # exatamente o que o pré-posicionamento existe para evitar. A
-        # ordem derrotava o próprio objetivo.
+        # Logo abaixo o DEPLOY leva a base à pose de engate. Enquanto a
+        # IK aqui mirava a pose ATUAL, esse deslocamento invalidava a
+        # solução recém-calculada e a primeira fase tinha de refazer o
+        # braço inteiro — JÁ PERTO DA CHAVE, que é exatamente o que o
+        # pré-posicionamento existe para evitar. A ordem derrotava o
+        # próprio objetivo: medido em 2026-08-31, a fase "orienta"
+        # gastou 151° de junta para um deslocamento líquido de 4 mm.
+        # Prevendo a pose final, caiu para 9-12°.
         #
-        # MEDIDO em 2026-08-31, execução por etapas: o pré-posicionamento
-        # deixava a ponta a 159 mm do olhal com o degrau a 0,1° do eixo
-        # do furo — pronta. Depois do avanço de 182 mm, a fase "orienta"
-        # gastou 151° de junta (J2 -40°, J3 +46°, J4 +56°) para recuar a
-        # ponta 204 mm e voltar a 163 mm do olhal: um deslocamento
-        # líquido de 4 mm ao custo do rearranjo grande colado na chave.
-        # O Marco apontou o movimento na tela: "no final do deploy a
-        # ferramenta está bem próxima do olhal, bastava orientação e
-        # deslocamento".
-        #
-        # Prevendo o avanço, o braço é armado UMA VEZ, longe da parede, e
-        # já chega na configuração certa — a base entra por baixo dele.
-        avanco = ctx.deploy_dist - ctx.standoff_dist
-        if avanco > 0.005:
-            T_wb = T_wb.copy()
-            T_wb[0, 3] += avanco * math.cos(yaw)
-            T_wb[1, 3] += avanco * math.sin(yaw)
-            rospy.loginfo('[mission] DEPLOY: IK resolvida para a pose PÓS-avanço '
-                          '(%.3f m à frente), não para a atual', avanco)
+        # A previsão passou a ser a POSE COMPLETA (2026-09-01), não só um
+        # avanço para a frente: a base agora também se desloca
+        # lateralmente entre medir e manipular (ver abaixo).
+        goal_manip = chave_task.standoff_base_pose(
+            ctx.wall_pos, ctx.wall_R, ctx.standoff_dist,
+            lateral=ctx.standoff_lateral)
+        gx, gy, gyaw = goal_manip
+        cg, sg = math.cos(gyaw), math.sin(gyaw)
+        T_wb = np.eye(4)
+        T_wb[:3, :3] = np.array([[cg, -sg, 0.0], [sg, cg, 0.0],
+                                 [0.0, 0.0, 1.0]])
+        T_wb[:3, 3] = [gx, gy, b.position.z]
+        rospy.loginfo('[mission] DEPLOY: IK resolvida para a POSE DE '
+                      'MANIPULAÇÃO (%.2f, %.2f, %.2f rad), não para a atual',
+                      gx, gy, gyaw)
 
         T_arm_world = np.linalg.inv(T_wb @ T_BASELINK_ARM)
         p_local = (T_arm_world @ np.append(p_tip, 1))[:3]
@@ -1441,12 +1454,38 @@ class Deploy(smach.State):
         ctx.espera_etapa('DEPLOY/pré-posicionamento', True,
                          _resumo_geometria(ctx))
 
-        # SEGUNDO MOMENTO: com o braço já armado, fecha a diferença entre
-        # a distância de deploy e a de engate andando só com as rodas.
-        avanco = ctx.deploy_dist - ctx.standoff_dist
-        if avanco > 0.005:
-            if not _creep_base(ctx, avanco, 'DEPLOY/aproxima'):
-                return 'failed'
+        # SEGUNDO MOMENTO: com o braço já armado, a base vai para a pose
+        # de engate. Era um avanço reto; virou navegação, porque a pose
+        # de engate deixou de estar na mesma linha da de medição.
+        #
+        # POR QUE A BASE PRECISA SE DESLOCAR DE LADO. O robô mede DE
+        # FRENTE PARA A TAG, que fica 17 cm ao lado do olhal — decisão
+        # certa, que tirou a tag da periferia do fisheye e ganhou uma
+        # ordem de grandeza na percepção. Só que ele vinha MANIPULANDO
+        # da mesma pose, 17 cm de lado.
+        #
+        # MEDIDO em 2026-09-01, varrendo a pose da base e resolvendo a
+        # cadeia inteira de waypoints em cada uma (pior desalinho do
+        # degrau ao longo das fases, em graus):
+        #
+        #   dist \ lateral   -90mm     0    +60   +120   +170
+        #        0,62         4,3     1,5    2,4    4,5    6,6
+        #        0,70        10,2     4,0    6,0   10,1   13,6  <- operação
+        #
+        # Os 13,6° previstos batem com os 14,2° medidos ao vivo. Na mesma
+        # distância, sair de +170 mm para zero vale 13,6° -> 4,0°; com a
+        # distância em 0,62 vai a 1,5°, que sobre os 90 mm de inserção
+        # são 2,4 mm de desvio contra 18 mm de meio-eixo do oval.
+        #
+        # O deslocamento lateral já tinha sido REMOVIDO de propósito
+        # (custa erro de odometria, e numa tentativa passou 118 mm do
+        # alvo). Volta porque agora é curto, acontece DEPOIS da medida
+        # boa, e a âncora segura a base. E a imprecisão da manobra é
+        # tolerável: a IK de cada fase é resolvida com a pose REAL da
+        # base, então ±6 cm ainda caem na região boa do mapa.
+        if not _navigate_to(ctx, goal_manip, ctx.approach_timeout,
+                            'DEPLOY/aproxima'):
+            return 'failed'
         return 'ok'
 
 

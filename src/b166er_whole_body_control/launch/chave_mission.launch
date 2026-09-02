@@ -13,8 +13,12 @@
          rosrun smach_viewer smach_viewer.py
   -->
 
-  <arg name="standoff_distance" default="0.70"
+  <arg name="standoff_distance" default="0.62"
        doc="Distância (m) do olhal em que a base para para manipular.
+            0,62 e não 0,70: varrendo a pose da base em 2026-09-01 há um
+            degrau entre 0,62 e 0,66 — abaixo dele o braço consegue
+            posição E alinhamento no waypoint de inserção, acima ele
+            cede a direção (pior desalinho 1,5° contra 13,6°).
             Alcance horizontal da ponta da ferramenta na altura do olhal
             é ~0,93 m (varredura de FK).
 

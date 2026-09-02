@@ -138,6 +138,15 @@ class GazeboArmBridge:
         # com o resíduo que sobrar. Sem isto o DEPLOY ficava preso até o
         # timeout de 30 s da missão.
         self._corr_timeout = rospy.get_param('~correcao_timeout', 5.0)
+        # DWELL ANTES DE CORRIGIR — ver a nota extensa no laço.
+        # A correção só faz sentido contra erro ESTACIONÁRIO; enquanto o
+        # braço ainda está chegando, o que ela vê é transiente.
+        self._corr_dwell = rospy.get_param('~correcao_dwell', 0.8)
+        # Erro por junta abaixo do qual não se corrige nada: empurrar uma
+        # junta que já está no lugar só injeta movimento.
+        self._corr_min_junta = rospy.get_param('~correcao_min_junta', 0.05)
+        self._err_ant = None
+        self._t_err_estavel = None
         self._correcao = np.zeros(5)
         self._t_no_alvo = None
         self._modelo_no_alvo = False
@@ -286,6 +295,8 @@ class GazeboArmBridge:
     def _start_posture(self, q_target, why):
         self._q_posture_target = q_target
         self._correcao = np.zeros(5)   # cada postura recomeça do zero
+        self._err_ant = None
+        self._t_err_estavel = None
         self._modelo_no_alvo = False
         self._t_no_alvo = None
         self._pub_posture_reached.publish(Bool(data=False))
@@ -444,7 +455,59 @@ class GazeboArmBridge:
                     # erro estacionário dos controladores de posição sob
                     # carga. Sem teto isso viraria fuga descontrolada se a
                     # medida estiver ruim.
+                    #
+                    # SÓ DEPOIS QUE O BRAÇO PARA DE MELHORAR (2026-09-01).
+                    #
+                    # O latch `_modelo_no_alvo` dispara quando o MODELO da
+                    # rampa chega ao alvo — e nesse instante o braço real
+                    # ainda está a caminho. A correção começava a integrar
+                    # contra um TRANSIENTE de trajetória, que se resolveria
+                    # sozinho, e o resultado era uma malha instável:
+                    #
+                    #   t+0s  erro 0,173 rad (pior J1)  por junta [ 9.9  1.4  -0.1  -0.0  3.0]
+                    #   t+2s  erro 0,190 rad (pior J3)  por junta [ 9.6  4.4 -10.9   5.7  3.9]
+                    #   t+4s  erro 0,606 rad (pior J3)  por junta [ 9.5 14.3 -34.7  17.8 -0.0]
+                    #   t+5s  postura fechada com 0,693 rad de resíduo
+                    #
+                    # Leia a evolução: o J1, que era o único fora, continua
+                    # nos mesmos 9,5° — a correção não consertou o que veio
+                    # consertar — enquanto J2, J3 e J4 saíram do zero para
+                    # dezenas de graus. Ela empurra o comando, o braço
+                    # acelera, o acoplamento dinâmico sacode as outras
+                    # juntas, e ela passa a perseguir o erro que ela mesma
+                    # criou. Saturava em 0,60 rad e o bridge fechava a
+                    # postura com 42° de resíduo — o que eu vinha
+                    # atribuindo a "erro estacionário sob carga" e não era.
+                    #
+                    # Era essa malha que fazia a fase "atravessa" nunca
+                    # fechar: a ponta travava a 30 mm do furo enquanto o
+                    # braço se debatia. Nenhuma réplica estática
+                    # reproduzia, porque nelas o braço assentava antes de
+                    # medir e a correção nunca era acionada.
+                    #
+                    # Agora só corrige quando o erro medido PAROU DE CAIR
+                    # por `~correcao_dwell` — que é a definição operacional
+                    # de estacionário — e só nas juntas que de fato estão
+                    # fora de `~correcao_min_junta`.
+                    if self._err_ant is None or err_med < self._err_ant - 1e-3:
+                        self._err_ant = err_med
+                        self._t_err_estavel = rospy.Time.now()
+                    estavel = (
+                        self._t_err_estavel is not None
+                        and (rospy.Time.now()
+                             - self._t_err_estavel).to_sec() >= self._corr_dwell)
+                    if not estavel:
+                        rospy.loginfo_throttle(
+                            2.0, '[gazebo_arm_bridge] braço ainda chegando '
+                                 '(%.3f rad) — correção em espera', err_med)
+                        dq = np.zeros(5)
+                        rate.sleep()
+                        continue
+
                     alvo_med = self._q_posture_target - self._q_medido()
+                    # Junta que já está no lugar não é empurrada.
+                    alvo_med = np.where(np.abs(alvo_med) > self._corr_min_junta,
+                                        alvo_med, 0.0)
                     passo = np.clip(alvo_med, -self._corr_vel * dt,
                                     self._corr_vel * dt)
                     novo = np.clip(self._correcao + passo,
