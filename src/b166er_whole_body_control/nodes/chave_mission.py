@@ -263,6 +263,10 @@ class MissionContext(object):
         # em 5 s); 0,5 ≈ 43°. Mais para dentro que isso a tag pequena
         # (~22 px a 1,8 m) vira frontal e volta a ser ambígua.
         self.search_raio_max      = rospy.get_param('~search_raio_max', 0.5)
+        # Recuo da BASE entre a saída pelo eixo e o recolhimento do braço.
+        # Ver _afasta_da_parede: sem ele a rampa do stow leva a ferramenta
+        # 100-120 mm para dentro da placa da chave.
+        self.saida_recuo_m        = rospy.get_param('~saida_recuo_m', 0.25)
         self.search_omega_fina    = rospy.get_param('~search_omega_fina', 0.15)
         self.search_centra_timeout = rospy.get_param('~search_centra_timeout', 8.0)
         self.search_sample_timeout = rospy.get_param('~search_sample_timeout', 25.0)
@@ -1670,6 +1674,7 @@ class Retract(smach.State):
         # A fase 'desengata' já afasta lateralmente no caminho normal,
         # mas o RETRACT também pode ser alcançado com ela incompleta.
         _sai_pelo_eixo(ctx, 'RETRACT')
+        _afasta_da_parede(ctx, 'RETRACT')
         ctx.send_posture('stow_home')
         return 'ok' if _wait_posture(ctx) else 'failed'
 
@@ -1715,6 +1720,7 @@ class AbortSafe(smach.State):
         # a postura recolhida e, se o degrau estiver no olhal, arrasta a
         # chave no caminho — foi o que o Marco viu.
         _sai_pelo_eixo(ctx, 'ABORT')
+        _afasta_da_parede(ctx, 'ABORT')
 
         ctx.send_posture('stow_home')
         _wait_posture(ctx)
@@ -2115,6 +2121,34 @@ def _navigate_to(ctx, goal, timeout, tag):
 
         rate.sleep()
     return False
+
+
+def _afasta_da_parede(ctx, tag):
+    """Recua a BASE pelas rodas antes de recolher o braço.
+
+    POR QUE EXISTE (2026-09-02). O Marco, vendo a run9: "depois do
+    MANIPULATE, a saída/retorno do robot está colidindo com a chave".
+    Captura de contatos na run10 mostrou o punho fundido (L5) contra a
+    lâmina e a PLACA da chave nos 2 s seguintes ao comando de stow_home,
+    e a FK sobre o rastro de juntas explicou: _sai_pelo_eixo recua a
+    ponta 120 mm pelo eixo do FURO, que é paralelo à parede — a ponta
+    sai do aro mas continua no plano da placa (y = 2,87). A rampa do
+    stow interpola J2, J3 e J4 juntos, e nos primeiros 2 s a ponta vai
+    para y = 2,97..2,99: 100-120 mm para DENTRO da placa, a 0,85 m de
+    altura, antes de subir.
+
+    Recuar a base 0,25 m com o braço parado tira a ferramenta inteira
+    da parede sem IK perto da placa; a rampa varre depois com folga.
+    Reusa _creep_base (linha reta, sem girar, odometria) pelo mesmo
+    motivo que o puxão dos arcos: base parada e braço parado é mais
+    estável do que varrer o punho junto da parede. Passo de segurança:
+    se falhar (inclinação, timeout), avisa e deixa o recolhimento seguir.
+    """
+    if ctx.robot_state is None or ctx.saida_recuo_m <= 0:
+        return
+    if not _creep_base(ctx, -abs(ctx.saida_recuo_m), tag + '/afasta'):
+        rospy.logwarn('[mission] %s: recuo da base antes do stow não '
+                      'completou — recolhendo assim mesmo', tag)
 
 
 def _tooltip_now(ctx):
