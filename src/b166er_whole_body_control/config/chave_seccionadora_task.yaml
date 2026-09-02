@@ -114,7 +114,23 @@ chave_seccionadora_task:
     # ou seja 30 mm ANTES do furo, e parou de iterar com 3 iterações
     # ainda disponíveis. O J1 tinha ficado devendo 4,4° (≈38 mm de
     # ponta) e a tolerância larga escondeu isso.
-    offset_xyz_m: [0.0, 0.0, 0.010]
+    # EIXO −8 mm (2026-09-02): O ALVO ERA INALCANÇÁVEL POR CONSTRUÇÃO.
+    #
+    # Com eixo 0 o alvo pede a origem do tool_tip NO PLANO do furo. Mas a
+    # haste tem 10 mm (meia-largura 5) e o arame do aro 6 (raio 3): ela
+    # para na face do arame com a origem a 5 + 3 = 8 mm do plano. Em seis
+    # execuções de hoje o resíduo final no eixo ficou entre 7,1 e 8,6 mm —
+    # fechou com 7,1/7,6/7,4/7,1 (run6/8/9/12), travou com 8,6 e 8,3
+    # (run10/13, "5 iterações sem fechar"), com contato contínuo de
+    # tool_tip e tool_rod nos segmentos do aro. Batente físico exatamente
+    # em cima da tolerância de 8.
+    #
+    # O alvo passa a ser onde a ferramenta fisicamente para: a fase fecha
+    # por convergência, não por tolerância. A proteção de 01/09 contra a
+    # "haste que nunca entrou" (+30 mm) continua valendo, e a captura
+    # desce com 12 mm de degrau sob o arame (20 de projeção − 8).
+    # Sinal: +eixo entra no furo (o desengata SAI com −0,090).
+    offset_xyz_m: [-0.008, 0.0, 0.010]
     tol_xyz_m: [0.008, 0.006, 0.005]
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
