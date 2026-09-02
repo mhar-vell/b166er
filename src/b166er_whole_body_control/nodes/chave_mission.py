@@ -140,8 +140,15 @@ class MissionContext(object):
         # alinhamento da DIREÇÃO da haste, e por ele 0,62 estava ótimo.
         # Faltava medir a ROLAGEM do degrau em torno do próprio eixo —
         # que é o que decide se ele passa pelo aro, e que ninguém
-        # imprimia. O degrau é uma caixa de 20x17 mm e a abertura livre
-        # do oval é 30x40; rolado além de ~20° o canto sai do contorno.
+        # imprimia. O degrau ERA uma caixa de 20x17 mm e a abertura livre
+        # do oval é 30x40; rolado além de ~20° o canto saía do contorno.
+        #
+        # DEGRAU 10x10 DESDE 2026-09-02 (movemaster.urdf.xacro). Diagonal
+        # de 14,1 mm: cabe no vão de 30 em qualquer rolagem. A restrição
+        # que motivou 0,54 contra 0,62 deixou de existir na geometria —
+        # o mapa abaixo continua válido como MEDIDA de rolagem, mas o
+        # limite de ~20° que o tornava decisivo não vale mais. A escolha
+        # da distância de engate fica para ser refeita na revalidação.
         #
         # Mapeado em 2026-09-02, pior rolagem nas fases de inserção:
         #
