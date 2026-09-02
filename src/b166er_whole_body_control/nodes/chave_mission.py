@@ -135,6 +135,39 @@ class MissionContext(object):
         # alinhamento no waypoint de inserção; acima, cede a direção.
         # Na pose de operação o pior desalinho ao longo das fases era
         # 13,6°; a 0,62 com lateral zero, 1,5°.
+        #
+        # 0,54 E NÃO 0,62 (2026-09-02). O critério de ontem era o
+        # alinhamento da DIREÇÃO da haste, e por ele 0,62 estava ótimo.
+        # Faltava medir a ROLAGEM do degrau em torno do próprio eixo —
+        # que é o que decide se ele passa pelo aro, e que ninguém
+        # imprimia. O degrau é uma caixa de 20x17 mm e a abertura livre
+        # do oval é 30x40; rolado além de ~20° o canto sai do contorno.
+        #
+        # Mapeado em 2026-09-02, pior rolagem nas fases de inserção:
+        #
+        #   dist \ lateral   -90mm     0    +60   +120   +170
+        #        0,54          3,2*    2,7    7,1    4,2    7,0
+        #        0,58         10,6     8,7   14,8   11,6   14,0
+        #        0,62         18,0    16,1   22,4   18,9   21,1
+        #        0,70         57,3    55,0   55,2   56,5   58,4
+        #
+        # A 0,62 a previsão era 16,1° com limite 20 — e ao vivo mediu
+        # 24,8°: os ~9° de erro de percepção e rastreio consomem a
+        # margem inteira.
+        #
+        # APROXIMAR NÃO FUNCIONOU (2026-09-02). O mapa da rolagem
+        # apontava 0,54 (2,7°) e 0,58 (8,7°) como muito melhores que
+        # 0,62 (16,1°). As duas foram TENTADAS e as duas COLIDIRAM: a
+        # haste prensada contra `chave_plate` e `tag_plate`, com a
+        # missão emperrando na fase de encenação. O mapa resolve
+        # cinemática inversa e mede alcance e rolagem — ele NÃO tem
+        # modelo de colisão, então serve como filtro e não como prova de
+        # que a pose é viável.
+        #
+        # 0,62 fica porque é a última distância que roda de ponta a
+        # ponta. A margem de rolagem continua fina (4°) e é problema
+        # aberto: reduzi-la exige mexer no waypoint de encenação, que é
+        # quem joga a haste contra a parede quando a base se aproxima.
         self.standoff_dist = rospy.get_param('~standoff_distance', 0.62)
 
         # DUAS DISTÂNCIAS, NÃO UMA (2026-08-25, pedido do Marco).
@@ -2151,6 +2184,31 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             ctx.publish_keepout()
 
 
+def _rolagem_degrau(ctx, q):
+    """Giro do degrau em torno do próprio eixo, contra a vertical (graus).
+
+    É ESTA a grandeza que decide se o degrau passa pelo aro, e ela nunca
+    era medida. O log imprimia o ângulo da DIREÇÃO da haste — que estava
+    impecável em 0,1° — enquanto a peça batia na borda por estar rolada.
+
+    O degrau é uma caixa de 20 x 17 mm; a abertura livre do oval é
+    30 x 40 mm (já descontado o arame de 6 mm). Rolado, o retângulo
+    apresenta uma silhueta maior, e além de ~20° o canto sai do contorno
+    da elipse. Medido em 2026-09-02: chegava a 24,8° e travava, com
+    `tool_tip_collision_3` contra os segmentos 3 a 7 do anel.
+    """
+    if ctx.wall_R is None:
+        return None
+    T = fk_arm(list(q)) @ T_T265_TOOLTIP
+    x = -T[:3, 0]
+    up = np.array([0.0, 0.0, 1.0])
+    v = up - float(up @ x) * x
+    n = float(np.linalg.norm(v))
+    if n < 1e-9:
+        return None
+    return math.degrees(math.acos(min(1.0, abs(float(T[:3, 2] @ (v / n))))))
+
+
 def _reach_by_iterative_ik(ctx, p_goal, phase):
     """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
 
@@ -2329,9 +2387,12 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         rotulo = ('atitude' if ctx.ik_modo == 'nivelado' else 'eixo')
         ang_txt = ('%s %.1f°' % (rotulo, math.degrees(ang_ik))
                    if ang_ik is not None else 'n/d')
+        rol = _rolagem_degrau(ctx, q_real)
+        rol_txt = ('rolagem %.1f°' % rol) if rol is not None else 'rolagem n/d'
         rospy.loginfo('[mission] fase "%s" it%d: ponta (%.3f, %.3f, %.3f) '
-                      'erro=%.4f | degrau %s | IK pediu %s | faltou %s graus',
-                      phase, it, *p_now, n_err, ang_txt,
+                      'erro=%.4f | degrau %s | %s | IK pediu %s | '
+                      'faltou %s graus',
+                      phase, it, *p_now, n_err, ang_txt, rol_txt,
                       np.degrees(q_ik).round(1), dq.round(1))
         ctx.status(estado='MANIPULATE', fase=phase, it=it, erro_m=n_err,
                    tol_m=ctx.tol_pos, ik=ctx.ik_modo or 'n/d',
