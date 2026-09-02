@@ -68,7 +68,36 @@ arm_postures:
   #
   # Margem até os limites (graus): J1 119,7 | J2 7,7 | J3 2,7 | J4 110 |
   # J5 90,1. J3 é o apertado; não aumentar J2 sem baixar J3 junto.
-  search: [-0.5289, 1.0, -1.0, 0.0, -1.5692]
+  #
+  # ── J1 = 0 e J5 = 0 (2026-09-02) ──
+  #
+  # Os dois valores acima (J1 = -30,3°, J5 = -89,9°) COMPENSAVAM a T265
+  # montada torta (rpy 0 2.1 1.57): J1 girava o braço para pôr o eixo
+  # óptico no +X da base, e J5 endireitava a câmera inclinada. A T265
+  # foi remontada nos furos do suporte, olhando reto ao longo da
+  # ferramenta (PR #37), e as duas compensações viraram erro:
+  #
+  #   · J1 = -30,3° passou a apontar a câmera 30° para o LADO
+  #     (FK: azimute -30,3°). run1 da revalidação: SEARCH mediu a
+  #     parede 0,57 m curta e a remedida perdeu a tag.
+  #   · J5 = -89,9° deixou de apontar nada — com a câmera reta ele só
+  #     ROLA a imagem, e rolava a ferramenta para exatamente a faixa
+  #     do quadro por onde a tag entra. Medido na bancada de pose
+  #     (mesma parada do SEARCH, girando a base): com J5 = -90 a tag
+  #     some atrás do dedo fixo entre 24° e 49° fora do eixo (zero
+  #     detecções), e no standoff do REFINE (0,49 m, tag a 22°) o
+  #     localizador ficou 20 s sem uma detecção. Com J5 = 0:
+  #
+  #       fora do eixo   48°    35°    22°     REFINE 0,49 m
+  #       aceitas/5 s     47     41     22        74 de 74
+  #       parede (m)    3,07   3,06   2,96      3,025   (verdade 2,98)
+  #
+  # O que J5 = 0 NÃO resolve: a ~1,5 m (24 px) uma tag vista de FRENTE
+  # (< ~10° fora do eixo) é rejeitada por ambiguidade do PnP em quase
+  # 100% dos quadros — a 1,28 m (29 px) passa. E o SEARCH ainda amostra
+  # na primeira detecção, a ~71° na borda, onde mede 0,37 m curto; a
+  # curva diz que entre 22° e 48° o erro cai para 2–9 cm.
+  search: [0.0, 1.0, -1.0, 0.0, 0.0]
 
   # ═══ Postura de DESLOCAMENTO ═══
   #
