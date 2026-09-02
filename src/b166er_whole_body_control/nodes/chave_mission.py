@@ -229,6 +229,42 @@ class MissionContext(object):
         # O REFINE mede de perto e continua com 10: ali a dispersão é
         # pequena e amostrar demais só custa tempo.
         self.search_samples   = rospy.get_param('~search_samples', 25)
+        # ── PARADA DO SEARCH PELA POSIÇÃO DA TAG NO QUADRO (2026-09-02) ──
+        #
+        # O SEARCH parava na PRIMEIRA detecção, com a tag entrando pela
+        # borda da fisheye (~71° fora do eixo). Medido na bancada de pose,
+        # girando a base a partir dessa parada (tag de 132 mm a ~1,8 m):
+        #
+        #     fora do eixo   71°    60°    48°    35°    22°
+        #     aceitas/5 s     19     27     47     41     22
+        #     parede (m)    2,61   2,95   3,07   3,06   2,96   (real 2,98)
+        #
+        # Na borda o PnP mede 0,4–1,0 m curto; entre 22° e 48° erra 2–9 cm.
+        # Com a parede curta, a etapa intermediária do APPROACH parava a
+        # 1,6–2,1 m da tag em vez de 1,3 — na zona onde a tag (24 px) é
+        # rejeitada por ambiguidade — e a remedida ficava sem amostras
+        # (run2, run3, run5, run7 de 2026-09-02).
+        #
+        # Regra: avistada a tag, a base CONTINUA girando, devagar, até o
+        # raio normalizado do tag_pixel (0 = centro, 1 = borda) cair a
+        # ~search_raio_max, e só então para e amostra. Raio 0,6 ≈ 52° fora
+        # do eixo na equidistante (r = f·θ, f = 285 px, meia-largura 424).
+        #
+        # Não é o gimbal: nenhuma malha em J1; é a base concluindo o giro
+        # que já estava fazendo. Se a tag sumir do quadro durante o ajuste
+        # ou o tempo esgotar, para onde estiver e amostra como antes.
+        #
+        # 0,5 E NÃO 0,6 (run8, 2026-09-02): parado a raio 0,60 (~52°) a tag
+        # era detectada em todo quadro e REJEITADA em todo quadro, com a
+        # razão de ambiguidade congelada em 1,37 e 1,32 — duas coletas de
+        # 25 s com 1 e 0 amostras; a terceira parada, uns graus adiante,
+        # rendeu 25 e a parede saiu em 3,069 (real 2,98). A curva da
+        # bancada põe a aceitação robusta entre 35° e 48° (41–47 aceitas
+        # em 5 s); 0,5 ≈ 43°. Mais para dentro que isso a tag pequena
+        # (~22 px a 1,8 m) vira frontal e volta a ser ambígua.
+        self.search_raio_max      = rospy.get_param('~search_raio_max', 0.5)
+        self.search_omega_fina    = rospy.get_param('~search_omega_fina', 0.15)
+        self.search_centra_timeout = rospy.get_param('~search_centra_timeout', 8.0)
         self.search_sample_timeout = rospy.get_param('~search_sample_timeout', 25.0)
         # Nome do modelo da fixture no Gazebo — usado para girar a
         # lâmina da chave (set_blade_angle).
@@ -1109,10 +1145,14 @@ class Search(smach.State):
         ctx.wall_pose = None
 
         rospy.loginfo('[mission] SEARCH — girando à procura da tag...')
+        rospy.loginfo('[mission] SEARCH: amostra quando a tag estiver a raio '
+                      '<= %.2f do quadro (omega fina %.2f rad/s)',
+                      ctx.search_raio_max, ctx.search_omega_fina)
         rate = rospy.Rate(ctx.rate_hz)
         t0 = rospy.Time.now()
         while not rospy.is_shutdown():
             if ctx.wall_pose is not None:
+                _centra_tag_girando(ctx)
                 ctx.stop_base()
                 rospy.loginfo('[mission] tag avistada — parando para medir')
                 rospy.sleep(1.0)   # deixa a base assentar antes de amostrar
@@ -1817,6 +1857,53 @@ def _sai_pelo_eixo(ctx, tag):
         rospy.logwarn('[mission] %s: saída pelo eixo falhou (%s) — '
                       'recolhendo mesmo assim', tag, exc)
         return False
+
+
+def _raio_tag(ctx, max_idade=0.5):
+    """Raio normalizado da tag no quadro (0 = centro, 1 = borda), ou None
+    se a última detecção for mais velha que max_idade s."""
+    if ctx.tag_pixel is None or ctx.tag_pixel_t is None:
+        return None
+    if (rospy.Time.now() - ctx.tag_pixel_t).to_sec() > max_idade:
+        return None
+    return float(np.hypot(ctx.tag_pixel.x, ctx.tag_pixel.y))
+
+
+def _centra_tag_girando(ctx):
+    """Depois da primeira detecção, segue girando devagar até a tag sair da
+    borda do quadro (raio <= ~search_raio_max). Ver o comentário em
+    search_raio_max: na borda o PnP mede 0,4-1,0 m curto; entre 22 e 48
+    graus fora do eixo erra centímetros. Se a tag sumir ou o tempo
+    esgotar, devolve com a base onde estiver — a amostragem segue como
+    antes."""
+    r = _raio_tag(ctx)
+    if r is None or r <= ctx.search_raio_max:
+        return
+    rospy.loginfo('[mission] SEARCH: tag a raio %.2f — girando até <= %.2f',
+                  r, ctx.search_raio_max)
+    rate = rospy.Rate(ctx.rate_hz)
+    t0 = rospy.Time.now()
+    perdida_desde = None
+    while not rospy.is_shutdown():
+        r = _raio_tag(ctx)
+        if r is not None and r <= ctx.search_raio_max:
+            rospy.loginfo('[mission] SEARCH: tag a raio %.2f — parando', r)
+            return
+        if r is None:
+            perdida_desde = perdida_desde or rospy.Time.now()
+            if (rospy.Time.now() - perdida_desde).to_sec() > 1.5:
+                rospy.logwarn('[mission] SEARCH: tag saiu do quadro durante '
+                              'o ajuste — amostrando onde parou')
+                return
+        else:
+            perdida_desde = None
+        if (rospy.Time.now() - t0).to_sec() > ctx.search_centra_timeout:
+            rospy.logwarn('[mission] SEARCH: ajuste não convergiu em %.0fs '
+                          '(raio %s) — amostrando assim mesmo',
+                          ctx.search_centra_timeout, 'n/d' if r is None else '%.2f' % r)
+            return
+        ctx.drive(0.0, ctx.search_omega_fina)
+        rate.sleep()
 
 
 def _sample_wall(ctx, n_wanted, timeout, tag):
