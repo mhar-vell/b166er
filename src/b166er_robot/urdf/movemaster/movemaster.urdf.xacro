@@ -231,7 +231,18 @@
       <visual>
         <origin xyz="0.255 -0.18 0" rpy="0 3.14 0" />
         <geometry>
-          <mesh filename="package://movemaster_control/3D_Models/suporte_movemaster_com_cameras.stl" scale="0.001 0.001 0.001"/>
+          <!-- SEM AS CÂMERAS DECORATIVAS (2026-09-02, a pedido do Marco).
+               A malha original, suporte_movemaster_com_cameras.stl, traz
+               DUAS D435 desenhadas em cima da chapa. Nenhuma delas existe
+               na bancada: o robô tem uma T265, e ela é declarada como
+               link próprio logo abaixo. Câmera desenhada que não é sensor
+               engana quem olha a simulação para conferir a montagem — foi
+               exatamente uma delas que a gente confundiu com a T265.
+               Aqui ficou só a estrutura: 1104 triângulos contra 269936,
+               e os furos de fixação preservados (é por eles que a T265 se
+               posiciona). Gerada por componentes conectadas; a original
+               segue intocada no submódulo. -->
+          <mesh filename="package://b166er_robot/meshes/movemaster/suporte_movemaster.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="CameraSupportColor">
           <color rgba="0.15 0.2 0.8 1"/>
