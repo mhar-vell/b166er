@@ -74,7 +74,7 @@ from gazebo_msgs.srv import (GetJointProperties, GetModelState,
                              SetModelConfiguration, SetModelState)
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM,
+    JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM, fk_arm,
     ik_tooltip_position, ik_tooltip_com_degrau, ik_tooltip_nivelado)
 from b166er_whole_body_control import chave_task
 
