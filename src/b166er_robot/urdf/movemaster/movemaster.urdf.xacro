@@ -239,18 +239,115 @@
       </visual>
     </link>
 
-    <!-- T265 montada no end-effector, mesma região do gripper (confirmado por foto do robô real) -->
+    <!-- T265 NO BERÇO DE CIMA DO SUPORTE — posição MEDIDA na malha, não
+         estimada (2026-09-02, a pedido do Marco: "a T265 deve ir para o
+         suporte na posição superior").
+
+         O suporte_movemaster_com_cameras.stl tem DUAS câmeras modeladas
+         nele (o nome do arquivo não é acidente), ambas de 90x25x25 mm com
+         três lentes espaçadas de 50 mm — geometria de D435, uma no berço
+         de baixo (inclinada) e outra no de cima (alinhada aos eixos). A
+         T265 vai no de cima.
+
+         MAS A POSIÇÃO NÃO É O BERÇO: é onde os FUROS põem a T265. O
+         Marco: "ela fixou-se na mesma posição dos furos do suporte". A
+         câmera modelada no berço de cima é uma D435 (90x25x25 mm, três
+         lentes espaçadas de 50 mm); a T265 da bancada tem 108x24,5x12,5
+         mm — METADE da espessura. Apoiar a T265 no mesmo plano e assumir
+         a face da D435 punha a origem 12,8 mm à frente do lugar.
+
+         Medido na malha, separada em componentes conectadas e
+         transformada pelo <visual> do CameraSupport (escala 1e-3,
+         rpy 0 3.14 0, xyz 0.255 -0.18 0):
+
+           furos de fixação (⌀3,5 mm = M3)  x_stl 230.92 e 281.42
+                                            y_stl 266.03 (mesma linha)
+           espaçamento entre furos          50,50 mm
+           plano de apoio da peça           z_stl 6,50
+
+         Os 50,50 mm entre furos são o padrão de montagem da T265 — é o
+         que confirma que estes furos são dela, e não do berço da D435.
+
+         Face das lentes = apoio + espessura = 6,50 + 12,5 = 19,00 mm.
+
+         A ORIGEM DO t265_link É O CENTRO DE RASTREAMENTO, e a doc da
+         Intel (doc/t265.md do librealsense) é explícita: "the center of
+         tracking corresponds to the center location between the right and
+         left monochrome imagers on the PCB" — nem o centro do corpo, nem
+         um canto. É por isso que JFisheye1 desloca 32 mm logo abaixo:
+         metade da baseline de 64 mm. Origem, então, no meio dos furos em
+         X e Y, no plano das lentes em Z.
+
+         ORIENTAÇÃO: rpy="-1.5708 1.5708 0" põe o eixo óptico (+X) em -Z
+         do CameraSupport — exatamente para onde a ferramenta aponta. A
+         montagem anterior (rpy="0 2.1 1.57") olhava 30,3° fora de -Z, e
+         era a tal "rotação tortuosa" que o comentário da câmera de tarefa
+         menciona logo abaixo.
+
+         ROLAGEM: 180° em torno do EIXO ÓPTICO em relação ao que estava
+         aqui até 2026-09-02. Eu tinha preservado a rolagem antiga por
+         conservadorismo, e ficou errado — o Marco viu na simulação e
+         corrigiu: "a conexão da camera fica do outro lado". O conector
+         USB-C fica na ponta -X da malha (a face de lá tem 338 triângulos
+         em 231 mm², contra 120 em 331 mm² do outro lado: mais geometria
+         em menos área é o recorte do conector), e essa ponta estava
+         caindo em +X do CameraSupport quando deveria cair em -X.
+
+         O giro é em torno do eixo óptico porque é a ÚNICA rotação rígida
+         que troca o conector de lado sem tirar a câmera de mira: o eixo
+         óptico continua em -Z. Em troca, a câmera fica de cabeça para
+         baixo em relação a antes — que é a montagem real da bancada.
+
+         CONSEQUÊNCIA QUE NÃO É COSMÉTICA: a fisheye1 fica 32 mm em +Y do
+         link, então ela atravessou 64 mm para o outro lado do suporte. A
+         câmera que enxerga mudou de lugar, e com ela a geometria da
+         detecção. A extrínseca interna (JFisheye1, medida na bancada em
+         2026-08-26) não muda com isso: ela descreve o dispositivo por
+         dentro, não como ele foi parafusado.
+
+         ATENÇÃO: esta transformada é duplicada em kinematics.py
+         (_T_L5_T265). As duas TÊM que andar juntas — foi uma cópia
+         desatualizada desse tipo que pôs a parede 0,795 m fora do lugar e
+         ainda assim terminou a missão em MISSION_OK. -->
     <joint name="t265_mount_joint" type="fixed">
-      <origin xyz="0 0.075 -0.070" rpy="0 2.1 1.57"/>
+      <origin xyz="-0.0011 0.0860 -0.0194" rpy="1.5708 1.5708 0"/>
       <parent link="CameraSupport"/>
       <child link="t265_link"/>
     </joint>
 
     <link name="t265_link">
+      <!-- MALHA OFICIAL DA INTEL, não uma aproximação.
+           A realsense.stl que estava aqui mede 148x30x28 mm e não é uma
+           T265 — o Marco reparou olhando a simulação ("a modelagem da
+           T265 que vc está simulando é um pouco diferente da T265 que
+           tenho na bancada") e mandou a foto da peça e o repositório.
+           Esta malha vem de common/res/sources/T265.obj do librealsense
+           (Apache-2.0), convertida para STL binário, e mede
+           108,00 x 24,49 x 12,50 mm — a T265 de verdade.
+
+           POSE DA MALHA, e por que não é arbitrária: a origem do link é o
+           CENTRO DE RASTREAMENTO, que a doc da Intel define como o ponto
+           médio entre as duas fisheyes. Achei as duas na malha (as
+           concavidades da face frontal) em X = -30,86 e X = +33,88 mm,
+           separadas por 64,74 mm — a baseline nominal de 64 mm. O rpy
+           gira os eixos da malha (X = linha das fisheyes, Y = altura,
+           Z = frente) para os do link (X = eixo óptico, Y = linha das
+           fisheyes, Z = altura), e o xyz leva o ponto médio delas para a
+           origem.
+
+           A CONFERÊNCIA QUE IMPORTA: com esta pose, as fisheyes caem em
+           y = ±0,03237 m no t265_link. O JFisheye1 logo abaixo usa
+           +0,032, medido na bancada em 2026-08-26, por outro caminho e
+           em outro dia. 0,4 mm de diferença entre a malha da Intel e a
+           régua da bancada — as duas descrevem a mesma peça.
+
+           O corpo fica assimétrico em torno da origem (y de -0,0636 a
+           +0,0444) e isso está certo: o centro de rastreamento não é o
+           centro do corpo, as fisheyes não são simétricas nas pontas. -->
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 -0.00151 0.00033" rpy="1.5708 0 1.5708"/>
         <geometry>
-          <mesh filename="package://movemaster_control/3D_Models/realsense.stl"/>
+          <mesh filename="package://b166er_robot/meshes/movemaster/t265.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="t265_color">
           <color rgba="0.1 0.1 0.1 1.0"/>
@@ -359,9 +456,14 @@
 
          Montada no mesmo ponto/direção do JTool (offset z=-0.08 a
          partir do GripCube, mesmo "para frente" que a ferramenta
-         aponta) — olhando para onde o robô vai manipular, não para
-         onde o T265 fisicamente aponta (rotação tortuosa,
-         rpy="0 2.1 1.57", inconveniente para uma câmera de tarefa). ═══ -->
+         aponta) — olhando para onde o robô vai manipular.
+
+         NOTA (2026-09-02): a justificativa original era que o T265
+         apontava para outro lado (a "rotação tortuosa" rpy="0 2.1 1.57").
+         Isso deixou de valer: remontado nos furos do berço de cima, o
+         T265 olha reto para -Z, a MESMA direção desta câmera. O que
+         separa as duas hoje é só o sensor — fisheye equidistante contra
+         pinhole — e esta continua não existindo na bancada. ═══ -->
     <joint name="JTaskCamera" type="fixed">
       <origin xyz="0 0 -0.08" rpy="0 0 0"/>
       <parent link="GripCube"/>
@@ -628,6 +730,16 @@
 
     <gazebo reference="tool_rod"><material>Gazebo/Yellow</material></gazebo>
     <gazebo reference="tool_tip"><material>Gazebo/Yellow</material></gazebo>
+
+    <!-- T265 em VERDE no Gazebo (pedido do Marco, 2026-09-02). O
+         <material> do URDF, logo acima no t265_link, vale só para o
+         RViz; o Gazebo ignora e usa este bloco. Em cinza escuro a
+         câmera se confundia com o corpo do punho nas capturas de tela,
+         que é como acompanhamos a manipulação. Verde e não laranja
+         porque a haste e o degrau já são amarelos: laranja ficava perto
+         demais deles na paleta, e o que precisa se distinguir é
+         justamente câmera x ferramenta. -->
+    <gazebo reference="t265_link"><material>Gazebo/Green</material></gazebo>
 
     <xacro:macro name="arm_transmission" params="joint_name">
       <transmission name="${joint_name}_trans">

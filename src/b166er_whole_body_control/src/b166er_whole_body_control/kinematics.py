@@ -61,7 +61,12 @@ def _tf(xyz, rpy):
     return T
 
 T_BASELINK_ARM = _tf([0.003, 0, 0.294], [0, 0, 0])
-_T_L5_T265     = _trans(0, 0, -0.08) @ _tf([0, 0.075, -0.07], [0, 2.1, 1.57])
+# Montagem da T265 no berço de CIMA do suporte (2026-09-02). Espelha
+# t265_mount_joint no movemaster.urdf.xacro, onde estão a medição da
+# malha e o porquê de cada número — mudar aqui sem mudar lá (ou o
+# contrário) é o erro que já pôs a parede 0,795 m fora do lugar.
+_T_L5_T265     = _trans(0, 0, -0.08) @ _tf([-0.0011, 0.0860, -0.0194],
+                                           [1.5708, 1.5708, 0])
 
 # DEDO FIXO (desenho do Marco, 2026-08-25) — cadeia rígida do L5 até a
 # ponta, via GripCube (JCam + JGripCube + JTool + JToolTip, todas fixed).
