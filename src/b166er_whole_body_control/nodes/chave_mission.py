@@ -1684,7 +1684,7 @@ class Manipulate(smach.State):
             # deixaria menos de 13 mm para descer e a fase nunca fecharia.
             cfg = ctx.phases[phase]
             if cfg.get('curso_min_m') is not None and ctx.alt_captura is not None:
-                margem = float(cfg.get('curso_margem_m', 0.005))
+                margem = float(cfg.get('curso_margem_m', 0.002))
                 offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
                 rospy.loginfo('[mission] fase "%s": alvo em altura relativo à '
                               'captura: %+.1f mm (captura %+.1f − curso %.0f − '
@@ -2474,6 +2474,13 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         rate = rospy.Rate(10)
         estaveis = 0
         melhor = float('inf')
+        cfg_fase = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+        cfg_curso = cfg_fase.get('curso_min_m')
+        cfg_estagna = float(cfg_fase.get('curso_estagna_m', 0.010))
+        tol_fase = _tolerancia_da_fase(ctx, phase)[0]
+        if tol_fase is None:
+            tol_fase = np.array([ctx.tol_pos] * 3)
+        hist = []
         while not rospy.is_shutdown():
             if ctx.tilt_critical:
                 rospy.logerr('[mission] fase "%s": abortada por inclinação '
@@ -2502,6 +2509,32 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                            e_eixo_mm=e_parede[0] * 1000,
                            e_prof_mm=e_parede[1] * 1000,
                            e_alt_mm=e_parede[2] * 1000, erro_m=n_err)
+            # ESTAGNAÇÃO = FIM DE CURSO (2026-09-03). A sonda da run62
+            # mostrou o que acontece quando a fase de descida continua
+            # empurrando depois que o anel bateu no fim de curso: J2/J3
+            # a −20 N·m, o J4 saturado em −20 N·m e retro-acionado de 66°
+            # (setpoint) para 110° (real) — o punho colapsa, a profundidade
+            # foge e a fase estoura o timeout. Numa fase com curso_min_m,
+            # se a descida medida parou de crescer (< 0,5 mm em 1,5 s)
+            # depois de pelo menos curso_estagna_m, a fase fecha AQUI: o
+            # mecanismo chegou onde podia. Na bancada é a mesma leitura
+            # (a T265 vê a ponta parar com o comando ainda descendo).
+            desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
+            if desc is not None and cfg_curso is not None:
+                hist.append(((rospy.Time.now() - t0).to_sec(), desc))
+                while hist and hist[-1][0] - hist[0][0] > 1.5:
+                    hist.pop(0)
+                if (len(hist) >= 10 and desc >= cfg_estagna
+                        and hist[-1][1] - hist[0][1] < 0.0005
+                        and abs(e_parede[0]) < tol_fase[0]
+                        and abs(e_parede[1]) < tol_fase[1]):
+                    rospy.logwarn('[mission] fase "%s": descida estagnou em %.1f mm '
+                                  '(mín %.0f para aceitar; alvo %.0f) — fim de curso do '
+                                  'mecanismo, fechando a fase', phase, desc * 1000,
+                                  cfg_estagna * 1000, cfg_curso * 1000)
+                    ctx.status(descida_mm=desc * 1000, estagnou=1)
+                    ok = True
+                    return True
 
             # Exige a tolerância SUSTENTADA: um instante dentro dela pode
             # ser a ponta passando de raspão durante o transitório.

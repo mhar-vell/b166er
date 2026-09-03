@@ -215,6 +215,14 @@ chave_seccionadora_task:
     # modelo (18 − 4 ≈ 14 no anel). Medido, não deduzido: conferir a
     # lingueta no log das próximas missões.
     curso_min_m: 0.018
+    # ESTAGNAÇÃO (2026-09-03): se a descida parou de crescer (< 0,5 mm
+    # em 1,5 s) depois de pelo menos curso_estagna_m, a fase fecha — o
+    # anel chegou ao fim de curso. Sem isto o braço continua empurrando
+    # contra o batente da lingueta (20 mm no modelo), J2/J3 vão a
+    # −20 N·m, o J4 satura e é retro-acionado até 110° (sonda da run62).
+    # A margem do alvo relativo caiu de 5 para 2 mm pelo mesmo motivo.
+    curso_estagna_m: 0.010
+    curso_margem_m: 0.002
 
   # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
   # Com o olhal pressionado, puxar para fora faz a aba passar POR BAIXO
