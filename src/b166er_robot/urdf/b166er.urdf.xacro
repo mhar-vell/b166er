@@ -67,8 +67,13 @@
        robô encostava demais. laser_safety.py:~laser_offset_x precisa
        casar com este número.
        FOV 270°, alcance 0.06-5.0 m, 0.25°/amostra. -->
-  <xacro:custom_laser name="hokuyo" color="Black"
-                      x="${plate_front - 0.030}" y="0" z="0.025"
+  <!-- z = 0,034: a origem do link é o PLANO DE VARREDURA, e a malha do
+       UST-05LX tem a janela a 34 mm da base — assim a base assenta na
+       placa (era 0,025 para um cubo de 25 mm). Sobe o plano 9 mm; a
+       altura real da janela na bancada não foi medida (assumida pela
+       malha). Laranja para ser visível sobre o chassi escuro. -->
+  <xacro:custom_laser name="hokuyo" color="Orange"
+                      x="${plate_front - 0.030}" y="0" z="0.034"
                       roll="0" pitch="0" yaw="0"
                       samples="1081" resolution="1"
                       min_angle="${-3*PI/4}" max_angle="${3*PI/4}"
