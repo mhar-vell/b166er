@@ -2522,10 +2522,13 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
             if desc is not None and cfg_curso is not None:
                 hist.append(((rospy.Time.now() - t0).to_sec(), desc))
-                while hist and hist[-1][0] - hist[0][0] > 1.5:
+                # Janela 1,5 s / 0,5 mm → 3 s / 0,3 mm (bateria 63-67): perto
+                # do alvo o servo desce a ~0,3 mm/s e a janela curta lia
+                # "parou" com o anel em 2-9 mm — o gatilho não soltava.
+                while hist and hist[-1][0] - hist[0][0] > 3.0:
                     hist.pop(0)
-                if (len(hist) >= 10 and desc >= cfg_estagna
-                        and hist[-1][1] - hist[0][1] < 0.0005
+                if (len(hist) >= 20 and desc >= cfg_estagna
+                        and hist[-1][1] - hist[0][1] < 0.0003
                         and abs(e_parede[0]) < tol_fase[0]
                         and abs(e_parede[1]) < tol_fase[1]):
                     rospy.logwarn('[mission] fase "%s": descida estagnou em %.1f mm '
