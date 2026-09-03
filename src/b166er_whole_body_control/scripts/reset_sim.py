@@ -137,9 +137,12 @@ def main():
     time.sleep(1.0)
 
     # Chave de volta a fechada (modelo separado, sem física acoplada).
+    # A lingueta (gatilho, 2026-09-03) volta sozinha pela mola, mas
+    # zerá-la junto garante a aba DENTRO do laço antes de a lâmina ser
+    # posta em 0°: na ordem inversa a aba subiria contra os batentes.
     try:
         set_cfg('chave_seccionadora_fixture', 'chave_fixture_description',
-                ['chave_blade_joint'], [0.0])
+                ['chave_lingueta_joint', 'chave_blade_joint'], [0.0, 0.0])
     except rospy.ServiceException as exc:
         print('aviso: chave não resetada (%s)' % exc)
 
