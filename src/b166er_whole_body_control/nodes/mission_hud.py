@@ -51,8 +51,14 @@ from std_msgs.msg import Bool, Float64, String
 
 ESTADOS = ['STOW_INIT', 'SEARCH', 'APPROACH', 'REFINE', 'DEPLOY',
            'MANIPULATE', 'RETRACT', 'RETURN']
+# Fases cartesianas do MANIPULATE (PHASE_ORDER em chave_mission.py).
 FASES = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
          'destrava', 'libera', 'arco1', 'arco2', 'desengata']
+# Abreviações da trilha: só a fase ATUAL sai por extenso.
+FASES_ABREV = {'orienta': 'ORI', 'aproxima_lateral': 'APROX',
+               'atravessa': 'ATRAV', 'captura': 'CAPT', 'destrava': 'DESTR',
+               'libera': 'LIB', 'arco1': 'ARC1', 'arco2': 'ARC2',
+               'desengata': 'DESENG'}
 
 V, R, A, C, N, F = ('\033[32m', '\033[31m', '\033[33m', '\033[90m',
                     '\033[1m', '\033[0m')
@@ -139,24 +145,36 @@ class Hud(object):
             self.q = [math.degrees(d[x]) for x in nn]
 
     # ── desenho ──────────────────────────────────────────────────────
-    def _trilha(self, atual, seq, apagada=False):
+    def _trilha(self, atual, seq, apagada=False, abrev=None):
         """✓ já passou · ▶ atual · · pendente. Devolve LINHAS que cabem
-        no quadro (nove fases não cabem em uma), todas cinza se a
-        missão já acabou."""
+        no quadro, todas cinza se a missão já acabou.
+
+        Com `abrev`, os nomes que NÃO são o atual saem abreviados e só
+        o atual aparece por extenso — ideia do Marco (2026-09-03) para a
+        trilha de fases caber em uma linha depois que ganhou nove nomes.
+        Um nome fora da sequência (saida_eixo, na saída) é acrescentado
+        no fim, para não sumir."""
         if atual in seq:
             i_at = seq.index(atual)
         else:
             i_at = -1
+        def rot(i, nome):
+            if abrev and i != i_at:
+                return abrev.get(nome, nome)
+            return nome
         itens = []
         for i, nome in enumerate(seq):
             if apagada:
-                itens.append(C + ('✓' if 0 <= i <= i_at else '·') + nome + F)
+                itens.append(C + ('✓' if 0 <= i <= i_at else '·')
+                             + rot(i, nome) + F)
             elif i_at >= 0 and i < i_at:
-                itens.append(V + '✓' + nome + F)
+                itens.append(V + '✓' + rot(i, nome) + F)
             elif i == i_at:
                 itens.append(N + A + '▶' + nome + F)
             else:
-                itens.append(C + '·' + nome + F)
+                itens.append(C + '·' + rot(i, nome) + F)
+        if i_at < 0 and atual and atual != '—':
+            itens.append((C if apagada else N + A) + '▶' + atual + F)
         larg = LARG - 12
         linhas, atual_l = [], ''
         for it in itens:
@@ -217,7 +235,8 @@ class Hud(object):
         self._campo_trilha('ESTADO', self._trilha(st.get('estado', '—'),
                                                   ESTADOS, encerrada))
         self._campo_trilha('FASE', self._trilha(st.get('fase', '—'),
-                                                FASES, encerrada))
+                                                FASES, encerrada,
+                                                abrev=FASES_ABREV))
         if self.gatilho is not None:
             l_mm, b_deg = self.gatilho
             cor_l = V if l_mm >= 12.0 else (A if l_mm > 1.0 else C)
@@ -288,8 +307,9 @@ class Hud(object):
             l = self._gj('chave_lingueta_joint')
             b = self._gj('chave_blade_joint')
             if l.success and b.success and l.position and b.position:
-                self.gatilho = (1000.0 * l.position[0],
-                                math.degrees(b.position[0]))
+                # + 0.0 mata o "-0.0" que a mola deixa no repouso
+                self.gatilho = (round(1000.0 * l.position[0], 1) + 0.0,
+                                round(math.degrees(b.position[0]), 1) + 0.0)
             else:
                 self.gatilho = None
         except rospy.ServiceException:

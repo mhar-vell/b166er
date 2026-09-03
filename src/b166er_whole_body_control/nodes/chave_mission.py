@@ -2607,7 +2607,11 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                       'faltou %s graus',
                       phase, it, *p_now, n_err, ang_txt, rol_txt,
                       np.degrees(q_ik).round(1), dq.round(1))
-        ctx.status(estado='MANIPULATE', fase=phase, it=it, erro_m=n_err,
+        # 'saida_eixo' passa por aqui durante o RETRACT/ABORT: não
+        # carimbar MANIPULATE nesse caso (o painel mostrava a saída
+        # como se fosse manipulação — Marco, 2026-09-03).
+        est = {'estado': 'MANIPULATE'} if phase in PHASE_ORDER else {}
+        ctx.status(fase=phase, it=it, erro_m=n_err, **est,
                    tol_m=ctx.tol_pos, ik=ctx.ik_modo or 'n/d',
                    ang_rotulo=rotulo,
                    ang_deg=(math.degrees(ang_ik) if ang_ik is not None else None),
@@ -2621,7 +2625,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           'eixo=%+.1f prof=%+.1f alt=%+.1f mm '
                           '(tolerância %.0f/%.0f/%.0f)',
                           phase, it, *(e_parede * 1000), *(tol_xyz * 1000))
-            ctx.status(estado='MANIPULATE', fase=phase,
+            ctx.status(fase=phase, **est,
                        e_eixo_mm=e_parede[0] * 1000,
                        e_prof_mm=e_parede[1] * 1000,
                        e_alt_mm=e_parede[2] * 1000)
