@@ -234,9 +234,12 @@ class Hud(object):
 
         self._campo_trilha('ESTADO', self._trilha(st.get('estado', '—'),
                                                   ESTADOS, encerrada))
-        self._campo_trilha('FASE', self._trilha(st.get('fase', '—'),
-                                                FASES, encerrada,
-                                                abrev=FASES_ABREV))
+        # 'FASE MANIP.': a trilha é só do MANIPULATE, e o rótulo diz isso
+        # (sugestão do Marco, 2026-09-03). Onze caracteres, o máximo do
+        # campo.
+        self._campo_trilha('FASE MANIP.', self._trilha(st.get('fase', '—'),
+                                                       FASES, encerrada,
+                                                       abrev=FASES_ABREV))
         if self.gatilho is not None:
             l_mm, b_deg = self.gatilho
             cor_l = V if l_mm >= 12.0 else (A if l_mm > 1.0 else C)
