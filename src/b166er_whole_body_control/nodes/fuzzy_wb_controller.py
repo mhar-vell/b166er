@@ -768,6 +768,11 @@ class FuzzyWBController:
                 if self._q_dot_prev is not None:
                     no_sup = (q_lim > JOINT_UPPER - self._limit_margin) & (self._q_dot_prev[3:] > 1e-4)
                     no_inf = (q_lim_inf < JOINT_LOWER + self._limit_margin) & (self._q_dot_prev[3:] < -1e-4)
+                    # O diagnóstico de 2026-09-03 (run61) mostrou que esta
+                    # condição não dispara na chave: o J4 vai a 110° pela
+                    # força de contato (retro-acionado, setpoint descendo),
+                    # não pelo comando. Fica como proteção para o caso em
+                    # que o comando de fato empurre uma junta ao batente.
                     if bool(np.any(no_sup | no_inf)):
                         w[:3] = self._base_w_limit
                         rospy.loginfo_throttle(1.0,
