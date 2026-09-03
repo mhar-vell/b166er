@@ -55,6 +55,15 @@
        inspecionar a trajetória etapa a etapa em vez de reconstruí-la do
        log depois. Ver scripts/continua.sh. -->
   <arg name="pausa_por_fase" default="false"/>
+  <!-- Modo de movimentação do braço nas fases da manipulação (ver
+       _reach_by_wholebody em chave_mission.py e a Seção III-B do artigo):
+         false: IK iterativa com posturas (padrão; todas as runs 6-20)
+         true : laço whole-body de velocidade com o controlador Fuzzy
+       Exposto aqui em 2026-09-03 para a bateria que compara os dois —
+       antes o parâmetro só existia dentro do nó, e passar
+       use_wholebody:=true na linha de comando era silenciosamente
+       ignorado pelo roslaunch. -->
+  <arg name="use_wholebody" default="false"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
           type="apriltag_localizer.py" output="screen">
@@ -72,5 +81,6 @@
     <param name="standoff_distance" value="$(arg standoff_distance)"/>
     <param name="search_omega"      value="$(arg search_omega)"/>
     <param name="pausa_por_fase"    value="$(arg pausa_por_fase)"/>
+    <param name="use_wholebody"     value="$(arg use_wholebody)"/>
   </node>
 </launch>
