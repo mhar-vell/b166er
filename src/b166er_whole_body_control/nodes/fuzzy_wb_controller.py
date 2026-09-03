@@ -29,6 +29,7 @@ Tópicos
     /b166er/wb_jacobian   (Float64MultiArray) — J_wb para diagnóstico
 """
 
+import math
 import rospy
 import numpy as np
 from geometry_msgs.msg import PoseStamped, Twist
@@ -165,6 +166,31 @@ class FuzzyWBController:
         # fração da base, não só o custo das juntas. Fica implementado e
         # DESLIGADO por padrão até haver evidência de ganho.
         self._limit_aware = rospy.get_param('~limit_aware_weights', False)
+        # BASE BARATA QUANDO O BRAÇO SATURA (2026-09-03, item 2 do Marco).
+        # A sonda da run33 (destrava de 23,7 s) mostrou o que o peso 12
+        # faz quando o J4 encosta em 110°: a base avança no PISO de
+        # 10 mm/s (11 cm em 24 s) enquanto o braço, que continua sendo o
+        # DOF "barato" da solução, recua 6 cm para compensar — a ponta
+        # anda 2 mm/s líquidos. Encarecer o J4 (pesos de Chan & Dubey)
+        # não bastou porque a base continuava 12x mais cara que J2/J3.
+        # Aqui: enquanto alguma junta do braço está no batente E o
+        # comando a empurra contra ele, o peso da base cai para
+        # ~base_weight_at_limit (1 = tão barata quanto uma junta), e o
+        # DLS passa a mandar a base andar de verdade, com o braço
+        # consistente com isso em vez de contra.
+        self._base_w_limit = rospy.get_param('~base_weight_at_limit', 1.0)
+        # Margem 1,5 → 5°: a bateria 51-55 não disparou a condição uma
+        # vez sequer. O q_arm que o controlador vê é o ESTIMADO (IK da
+        # T265), que fica em média 1,7° (até 13,6°) abaixo do J4 real
+        # quando este encosta em 110° — com 1,5° de margem o estimado
+        # quase nunca entra. E, além do estimado, o teste usa o comando
+        # INTEGRADO (o que a ponte/integrador recebe e satura no limite,
+        # igual na bancada): q_cmd, semeado do estimado ao (re)assumir e
+        # integrado com o q̇ publicado.
+        self._limit_margin = math.radians(rospy.get_param('~limit_margin_deg', 5.0))
+        self._q_dot_prev = None
+        self._q_cmd = None
+        self._t_q_cmd = None
         self._limit_w_cap = rospy.get_param('~limit_weight_cap', 100.0)
         self._grad_prev = None
 
@@ -724,6 +750,35 @@ class FuzzyWBController:
                 # juntas que estão indo para o batente (_pesos_batente).
                 w = np.ones(J_pos.shape[1])
                 w[:3] = BASE_WEIGHT
+                # Junta no batente sendo empurrada contra ele (pelo comando
+                # do ciclo anterior): a base fica barata neste ciclo.
+                # Comando integrado (o que o braço de fato recebe), saturado
+                # nos limites como a ponte faz. Semeia do estimado quando o
+                # laço (re)começa ou depois de >1 s parado.
+                if (self._q_cmd is None or self._t_q_cmd is None
+                        or (now - self._t_q_cmd).to_sec() > 1.0):
+                    self._q_cmd = np.array(q_arm, dtype=float)
+                elif self._q_dot_prev is not None:
+                    dt_c = (now - self._t_q_cmd).to_sec()
+                    self._q_cmd = np.clip(self._q_cmd + self._q_dot_prev[3:] * dt_c,
+                                          JOINT_LOWER, JOINT_UPPER)
+                self._t_q_cmd = now
+                q_lim = np.maximum(q_arm, self._q_cmd)   # o mais perto do limite superior
+                q_lim_inf = np.minimum(q_arm, self._q_cmd)
+                if self._q_dot_prev is not None:
+                    no_sup = (q_lim > JOINT_UPPER - self._limit_margin) & (self._q_dot_prev[3:] > 1e-4)
+                    no_inf = (q_lim_inf < JOINT_LOWER + self._limit_margin) & (self._q_dot_prev[3:] < -1e-4)
+                    # O diagnóstico de 2026-09-03 (run61) mostrou que esta
+                    # condição não dispara na chave: o J4 vai a 110° pela
+                    # força de contato (retro-acionado, setpoint descendo),
+                    # não pelo comando. Fica como proteção para o caso em
+                    # que o comando de fato empurre uma junta ao batente.
+                    if bool(np.any(no_sup | no_inf)):
+                        w[:3] = self._base_w_limit
+                        rospy.loginfo_throttle(1.0,
+                            '[fuzzy_wb] batente em %s — base barata (peso %.0f)',
+                            [JOINT_NAMES[i] for i in np.where(no_sup | no_inf)[0]],
+                            self._base_w_limit)
                 if self._limit_aware:
                     w_arm = self._pesos_batente(q_arm)
                     w[3:] = w_arm
@@ -748,6 +803,7 @@ class FuzzyWBController:
                 # IK do sequenciador (em 2026-08-13 arrastou J3 de +58°
                 # até o batente oposto).
 
+                self._q_dot_prev = q_dot.copy()
                 if self._base_locked:
                     self._pub_cmdvel.publish(Twist())
                     self._publish_arm_vel(q_dot, now)
