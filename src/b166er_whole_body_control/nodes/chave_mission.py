@@ -486,7 +486,7 @@ class MissionContext(object):
         # conhecido por um desconhecido. Fica opt-in
         # (use_wholebody:=true) até uma bateria comparar os dois.
         self.use_wholebody     = rospy.get_param('~use_wholebody', False)
-        self.wb_phase_timeout  = rospy.get_param('~wb_phase_timeout', 25.0)
+        self.wb_phase_timeout  = rospy.get_param('~wb_phase_timeout', 40.0)
         # Amostras consecutivas dentro da tolerância (a 10 Hz) para
         # aceitar a fase. Um instante dentro dela pode ser a ponta
         # passando de raspão no transitório.
@@ -2367,28 +2367,56 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 return False
             if (rospy.Time.now() - t0).to_sec() > ctx.wb_phase_timeout:
                 rospy.logerr('[mission] fase "%s": whole-body não fechou em '
-                             '%.0fs (melhor %.4f m, tolerância %.3f)',
-                             phase, ctx.wb_phase_timeout, melhor, ctx.tol_pos)
+                             '%.0fs (melhor %.4f m; régua por eixo da fase)',
+                             phase, ctx.wb_phase_timeout, melhor)
                 return False
 
             p_now = _tooltip_now(ctx)
-            n_err = float(np.linalg.norm(p_goal - p_now))
+            err   = p_goal - p_now
+            n_err = float(np.linalg.norm(err))
             melhor = min(melhor, n_err)
+
+            # A MESMA RÉGUA DA IK ITERATIVA (2026-09-03, pedido do Marco:
+            # "vamos realizar os testes com a mesma régua"). Até a bateria
+            # das runs 21-25 este modo fechava por esfera de 20 mm e a
+            # postura por eixo (4-15 mm): o 'destrava' fechava em ~1 s com
+            # a lingueta em 0-7 mm porque o alvo já cabia na esfera. Agora
+            # é _fase_fechou nos dois caminhos.
+            fechou, e_parede = _fase_fechou(ctx, phase, err, n_err)
+            if e_parede is not None:
+                ctx.status(estado='MANIPULATE', fase=phase,
+                           e_eixo_mm=e_parede[0] * 1000,
+                           e_prof_mm=e_parede[1] * 1000,
+                           e_alt_mm=e_parede[2] * 1000, erro_m=n_err)
 
             # Exige a tolerância SUSTENTADA: um instante dentro dela pode
             # ser a ponta passando de raspão durante o transitório.
-            if n_err < ctx.tol_pos:
+            if fechou:
                 estaveis += 1
                 if estaveis >= ctx.wb_settle_samples:
-                    rospy.loginfo('[mission] fase "%s" alcançada por whole-body '
-                                  'em %.1fs (%.4f m)', phase,
-                                  (rospy.Time.now() - t0).to_sec(), n_err)
+                    if e_parede is not None:
+                        tol_xyz, _ = _tolerancia_da_fase(ctx, phase)
+                        rospy.loginfo('[mission] fase "%s" alcançada por '
+                                      'whole-body em %.1fs (%.4f m) — no frame '
+                                      'da parede eixo=%+.1f prof=%+.1f alt=%+.1f '
+                                      'mm (tolerância %.0f/%.0f/%.0f)', phase,
+                                      (rospy.Time.now() - t0).to_sec(), n_err,
+                                      *(e_parede * 1000), *(tol_xyz * 1000))
+                    else:
+                        rospy.loginfo('[mission] fase "%s" alcançada por '
+                                      'whole-body em %.1fs (%.4f m)', phase,
+                                      (rospy.Time.now() - t0).to_sec(), n_err)
                     ok = True
                     return True
             else:
                 estaveis = 0
-            rospy.loginfo_throttle(2.0,
-                '[mission] fase "%s": whole-body a %.4f m do alvo', phase, n_err)
+            if e_parede is not None:
+                rospy.loginfo_throttle(2.0,
+                    '[mission] fase "%s": whole-body a %.4f m do alvo — eixo=%+.1f '
+                    'prof=%+.1f alt=%+.1f mm', phase, n_err, *(e_parede * 1000))
+            else:
+                rospy.loginfo_throttle(2.0,
+                    '[mission] fase "%s": whole-body a %.4f m do alvo', phase, n_err)
             rate.sleep()
         return False
     finally:
