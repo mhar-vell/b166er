@@ -239,6 +239,19 @@ class MissionContext(object):
         # rejeição de outliers em _sample_wall) atacam justamente isso.
         # O REFINE mede de perto e continua com 10: ali a dispersão é
         # pequena e amostrar demais só custa tempo.
+        #
+        # VIÉS DE YAW DO SEARCH — ACEITO E DOCUMENTADO (2026-09-03). A
+        # estimativa da parede no SEARCH sai com yaw ≈ −9° em quase toda
+        # missão. Não é ruído que mais amostras resolvam: a ~2,8 m a tag
+        # subtende ~23 px e a pose de um alvo PLANO tem duas soluções
+        # quase igualmente boas, ~15° apartadas (ambiguidade do PnP); a
+        # mediana escolhe um lado. O que esse yaw governa é só o rumo do
+        # APPROACH; o REFINE remede de perto e fecha em ~0,3°, e é essa
+        # a estimativa que a manipulação usa. Em 70 missões o APPROACH
+        # nunca falhou por isso. Decisão do Marco: "aceita e documenta,
+        # não vale a segunda vista" (girar e recoletar de outro ângulo
+        # custaria ~10 s e mais uma etapa). Se um dia a primeira vista
+        # precisar ser boa em yaw, a segunda vista é o caminho.
         self.search_samples   = rospy.get_param('~search_samples', 25)
         # ── PARADA DO SEARCH PELA POSIÇÃO DA TAG NO QUADRO (2026-09-02) ──
         #
