@@ -346,7 +346,31 @@
           slip1 0.5 /slip1
            slip2 0 /slip2
         -->
-        <!-- fdir1 0 1 0 /fdir1 -->
+        <!-- fdir1 DECLARADO (2026-09-02). Estava comentado, e sem ele o ODE
+             escolhe a direção da pirâmide de atrito a cada contato entre o
+             cilindro da roda e o plano; o resíduo dessas escolhas é
+             retificado num avanço constante — 2,6 mm/s com o robô parado
+             e cmd_vel em zero, medido em 01 e 02/09 (atrito de junta e
+             taxa do plugin não mudaram nada). A direção é expressa no
+             frame da COLISÃO; o cilindro é girado -90° em X, então a
+             lateral (eixo do rolamento) podia ser "0 1 0" ou "0 0 1" —
+             decidido por MEDIÇÃO (robô parado, 20 s de assentamento,
+             janelas de 10 s, deslocamento pela verdade do Gazebo):
+
+               sem fdir1        2,58 mm/s  (25,8 mm em 10 s)
+               fdir1 0 0 1      2,57 / 2,58 mm/s — zero efeito
+               fdir1 0 1 0      0,98 -> 0,60 -> 0,05 -> 0,01 mm/s
+                                (cauda do pouso do spawn decaindo; em
+                                 regime, 0,1-0,5 mm em 10 s)
+
+             As rodas continuam girando ~0,04 rad/s no lugar (o motor de
+             velocidade do plugin não segura zero exatamente), mas o
+             contato deixou de transformar isso em avanço do corpo. A
+             odometria da missão vem do gazebo_sensor_sim (verdade), não
+             do plugin, então o giro residual não contamina nada. A
+             vibração vertical do contato é nula (1 µm pico-a-pico) — a
+             hipótese de "vibração retificada" não explica o resíduo. -->
+        <fdir1>0 1 0</fdir1>
         <!-- see http://github.com/MobileRobots/simulate_traversability-ros-config/issues/6 -->
         <maxVel>0.0</maxVel>
         <minDepth>0.001</minDepth>
@@ -368,7 +392,31 @@
           slip1 0.5 /slip1
            slip2 0 /slip2
         -->
-        <!-- fdir1 0 1 0 /fdir1 -->
+        <!-- fdir1 DECLARADO (2026-09-02). Estava comentado, e sem ele o ODE
+             escolhe a direção da pirâmide de atrito a cada contato entre o
+             cilindro da roda e o plano; o resíduo dessas escolhas é
+             retificado num avanço constante — 2,6 mm/s com o robô parado
+             e cmd_vel em zero, medido em 01 e 02/09 (atrito de junta e
+             taxa do plugin não mudaram nada). A direção é expressa no
+             frame da COLISÃO; o cilindro é girado -90° em X, então a
+             lateral (eixo do rolamento) podia ser "0 1 0" ou "0 0 1" —
+             decidido por MEDIÇÃO (robô parado, 20 s de assentamento,
+             janelas de 10 s, deslocamento pela verdade do Gazebo):
+
+               sem fdir1        2,58 mm/s  (25,8 mm em 10 s)
+               fdir1 0 0 1      2,57 / 2,58 mm/s — zero efeito
+               fdir1 0 1 0      0,98 -> 0,60 -> 0,05 -> 0,01 mm/s
+                                (cauda do pouso do spawn decaindo; em
+                                 regime, 0,1-0,5 mm em 10 s)
+
+             As rodas continuam girando ~0,04 rad/s no lugar (o motor de
+             velocidade do plugin não segura zero exatamente), mas o
+             contato deixou de transformar isso em avanço do corpo. A
+             odometria da missão vem do gazebo_sensor_sim (verdade), não
+             do plugin, então o giro residual não contamina nada. A
+             vibração vertical do contato é nula (1 µm pico-a-pico) — a
+             hipótese de "vibração retificada" não explica o resíduo. -->
+        <fdir1>0 1 0</fdir1>
         <!-- see http://github.com/MobileRobots/simulate_traversability-ros-config/issues/6 -->
         <maxVel>0.0</maxVel>
         <minDepth>0.001</minDepth>
