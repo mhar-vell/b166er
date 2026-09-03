@@ -106,13 +106,24 @@ from b166er_whole_body_control import chave_task
 #   atravessa        move em +X, o degrau enfia no furo
 #
 # ou seja, aproximação LATERAL, nunca de baixo para cima.
+#
+# 'destrava' e 'libera' entraram em 2026-09-03: o olhal da bancada está
+# numa lingueta com mola, presa num laço do contato fixo. É preciso
+# DESCER o olhal ~15 mm (solta a aba) e então puxar ~20 mm segurando
+# embaixo (a aba passa sob o laço) antes de o arco existir. O Marco:
+# "o primeiro movimento ... deve ser um movimento bem acentuado em -Z,
+# pois é aí q ocorre o destravamento do gatilho que trava a chave."
 PHASE_ORDER = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
-               'arco1', 'arco2', 'desengata']
+               'destrava', 'libera', 'arco1', 'arco2', 'desengata']
 
 # Fases em que a base NÃO deve participar do movimento: são
 # deslocamentos ao longo do eixo do furo (X, lateral à parede), ou de
 # afastamento, e a base não anda de lado. Quem faz é o braço.
-PHASES_SO_BRACO = {'orienta', 'aproxima_lateral', 'atravessa', 'desengata'}
+# 'libera' também: são 3 cm de avanço segurando o olhal embaixo —
+# curto demais para as rodas fazerem com precisão, e o braço tem
+# folga de sobra ali. A base volta a puxar a partir do arco1.
+PHASES_SO_BRACO = {'orienta', 'aproxima_lateral', 'atravessa', 'libera',
+                   'desengata'}
 
 
 def _yaw_of(quat):
@@ -792,6 +803,27 @@ class MissionContext(object):
         except (rospy.ServiceException, rospy.ROSException) as exc:
             rospy.logwarn_throttle(10.0,
                 '[mission] não consegui ler o ângulo da lâmina (%s)', exc)
+        return None
+
+    def lingueta_now(self):
+        """Curso atual da lingueta (mm, positivo = olhal para baixo), lido
+        do Gazebo. None se falhar.
+
+        Existe desde 2026-09-03, junto com o gatilho no fixture: é a
+        medida de que a fase 'destrava' fez o que diz. Chegar ao alvo em
+        Z com a ferramenta não prova que o OLHAL desceu — a haste pode
+        ter escorregado pelo furo. A junta prova.
+        """
+        try:
+            rospy.wait_for_service('/gazebo/get_joint_properties', timeout=2.0)
+            srv = rospy.ServiceProxy('/gazebo/get_joint_properties',
+                                     GetJointProperties)
+            r = srv('chave_lingueta_joint')
+            if r.success and len(r.position):
+                return 1000.0 * r.position[0]
+        except (rospy.ServiceException, rospy.ROSException) as exc:
+            rospy.logwarn_throttle(10.0,
+                '[mission] não consegui ler a lingueta (%s)', exc)
         return None
 
     def set_blade_angle(self, deg):
@@ -1655,6 +1687,22 @@ class Manipulate(smach.State):
             ang = ctx.phases[phase].get('blade_angle_deg')
             if ang is not None:
                 ctx.set_blade_angle(float(ang))
+
+            # O GATILHO SOLTOU? A fase 'destrava' só vale se o olhal
+            # desceu de verdade (lingueta ≥ ~12 mm dos 15 pedidos). Não
+            # aborta aqui: o arco seguinte é que vai falhar, e falhar
+            # com a lingueta medida no log é o relato correto.
+            if phase == 'destrava':
+                curso = ctx.lingueta_now()
+                if curso is None:
+                    rospy.logwarn('[mission] destrava: não li a lingueta')
+                elif curso < 12.0:
+                    rospy.logwarn('[mission] destrava: lingueta em %.1f mm '
+                                  '(esperado ≥ 12) — o gatilho pode não '
+                                  'ter soltado', curso)
+                else:
+                    rospy.loginfo('[mission] destrava: lingueta em %.1f mm '
+                                  '— gatilho solto', curso)
             rospy.sleep(0.5)
 
         # A CHAVE ABRIU MESMO? Com o acoplamento cinemático a pergunta
@@ -2559,7 +2607,11 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                       'faltou %s graus',
                       phase, it, *p_now, n_err, ang_txt, rol_txt,
                       np.degrees(q_ik).round(1), dq.round(1))
-        ctx.status(estado='MANIPULATE', fase=phase, it=it, erro_m=n_err,
+        # 'saida_eixo' passa por aqui durante o RETRACT/ABORT: não
+        # carimbar MANIPULATE nesse caso (o painel mostrava a saída
+        # como se fosse manipulação — Marco, 2026-09-03).
+        est = {'estado': 'MANIPULATE'} if phase in PHASE_ORDER else {}
+        ctx.status(fase=phase, it=it, erro_m=n_err, **est,
                    tol_m=ctx.tol_pos, ik=ctx.ik_modo or 'n/d',
                    ang_rotulo=rotulo,
                    ang_deg=(math.degrees(ang_ik) if ang_ik is not None else None),
@@ -2573,7 +2625,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           'eixo=%+.1f prof=%+.1f alt=%+.1f mm '
                           '(tolerância %.0f/%.0f/%.0f)',
                           phase, it, *(e_parede * 1000), *(tol_xyz * 1000))
-            ctx.status(estado='MANIPULATE', fase=phase,
+            ctx.status(fase=phase, **est,
                        e_eixo_mm=e_parede[0] * 1000,
                        e_prof_mm=e_parede[1] * 1000,
                        e_alt_mm=e_parede[2] * 1000)

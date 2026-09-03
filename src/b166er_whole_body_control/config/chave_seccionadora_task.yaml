@@ -154,24 +154,65 @@ chave_seccionadora_task:
     offset_xyz_m: [0.0, 0.0, -0.0100]
     tol_xyz_m: [0.040, 0.006, 0.010]
 
+  # ── 3b. DESTRAVA: desce mais 15 mm e solta o gatilho ──
+  # O Marco, em 2026-09-03: "o primeiro movimento (que chamamos de arco
+  # 1) deve ser um movimento bem acentuado em -Z, pois é aí q ocorre o
+  # destravamento do gatilho que trava a chave."
+  #
+  # O olhal da bancada não está na lâmina: está numa LINGUETA com mola,
+  # cuja aba fica presa num laço do contato fixo. Só depois de o olhal
+  # descer ~15 mm ("15 mm está bom") a aba sai do laço e a lâmina pode
+  # girar. Isto já estava na descrição original da tarefa (12 Ago,
+  # "release: -15 mm") e foi perdido na reescrita de 26 Ago — sete
+  # missões passaram sem a fase porque o modelo também não tinha o
+  # gatilho. Agora tem (chave_seccionadora_lf.urdf.xacro, lingueta).
+  #
+  # O degrau já está apoiado no arame de baixo, por dentro do furo:
+  # continuar descendo empurra o olhal junto. Alvo = captura − 15 mm.
+  # Tolerância em Z apertada de propósito: se não desceu, não destravou.
+  destrava:
+    offset_xyz_m: [0.0, 0.0, -0.0250]
+    tol_xyz_m: [0.040, 0.006, 0.004]
+
+  # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
+  # Com o olhal pressionado, puxar para fora faz a aba passar POR BAIXO
+  # do laço; o Marco confirmou ~20 mm de curso do olhal ("os 20 mm
+  # também"). O degrau tem 10 mm de folga em Y dentro do furo de 30
+  # antes de tocar o arame de fora, então o tool_tip anda 30 para o
+  # olhal andar 20. É movimento do BRAÇO (PHASES_SO_BRACO): 3 cm é
+  # pouco para as rodas fazerem com precisão, e a base entra no arco.
+  libera:
+    offset_xyz_m: [0.0, 0.0300, -0.0250]
+    tol_xyz_m: [0.040, 0.008, 0.006]
+
   # ── 4. acompanha o arco ──
   # Força pequena em Y: o degrau sustenta por baixo e o anel desliza
   # livremente sobre ele. A ferramenta não persegue a trajetória, só
   # não pode descer menos que o olhal nem recuar mais rápido que ele.
-  # Z = captura + ΔZ do arco (−6,8 mm a 15°, −26,8 mm a 30°).
+  #
+  # Z = captura (−10) + destrava (−15) + ΔZ do arco (L = 200 mm:
+  # −6,8 mm a 15°, −26,8 mm a 30°). O olhal fica PRESSIONADO durante o
+  # arco: soltá-lo custaria uma fase de subida sem ganho nenhum — a
+  # mola é fraca e a aba já passou o laço. (Se um dia for preciso
+  # soltar antes do arco, os valores voltam a −0,0168 e −0,0368.)
+  #
+  # HISTÓRICO: até 2026-09-03 estes offsets eram −0,0098 e −0,0298, que
+  # é ΔZ do arco somado à captura ANTIGA de −3 mm (degrau de 17 mm). A
+  # captura mudou para −10 em 02/09 e os arcos não acompanharam; a
+  # tolerância de 15 mm em altura escondeu a diferença.
   arco1:
     # Já engatado: o arame repousa sobre o degrau e a folga em altura
     # deixa de ser crítica. Profundidade continua sendo.
     tol_xyz_m: [0.040, 0.010, 0.015]
-    offset_xyz_m: [0.0, 0.0518, -0.0098]
+    offset_xyz_m: [0.0, 0.0518, -0.0318]
     blade_angle_deg: 15
   arco2:
     tol_xyz_m: [0.040, 0.010, 0.015]
-    offset_xyz_m: [0.0, 0.1000, -0.0298]
+    offset_xyz_m: [0.0, 0.1000, -0.0518]
     blade_angle_deg: 30
 
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
   # fora do anel sem puxá-lo de volta.
   desengata:
-    offset_xyz_m: [-0.090, 0.1000, -0.0298]
+    offset_xyz_m: [-0.090, 0.1000, -0.0518]

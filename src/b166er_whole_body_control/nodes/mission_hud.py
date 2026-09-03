@@ -19,6 +19,21 @@ agora não está marcando no painel". Dois defeitos:
   · o quadro não fechava: eu media a largura das linhas COM os códigos
     de cor dentro, então cada cor comia caracteres da borda.
 
+REVISTO em 2026-09-03, a pedido do Marco: "o painel precisa ser
+revisado, adequado quanto as fases, e precisa ser sempre resetado
+quando começar uma nova missão". Três coisas:
+
+  · a trilha de fases ganhou 'destrava' e 'libera' (o gatilho da chave)
+    e com nove nomes não cabia mais em uma linha: a borda direita
+    quebrava. Agora a trilha QUEBRA EM LINHAS dentro do quadro;
+  · o zeramento por execução nova existia, mas trocava o deque de
+    eventos por uma lista sem limite — a partir da segunda missão o
+    quadro só crescia. E nada dizia quando a missão tinha acabado: o
+    último estado ficava lá como se fosse o atual. Agora o cabeçalho
+    mostra há quanto tempo não há mensagem, e a trilha apaga;
+  · GATILHO: curso da lingueta e ângulo da lâmina, lidos do Gazebo —
+    só quando o serviço existe (na bancada não existe, e o campo some).
+
 Uso:  sim_stack.sh watch     (ou rosrun b166er_whole_body_control mission_hud.py)
 """
 
@@ -36,8 +51,24 @@ from std_msgs.msg import Bool, Float64, String
 
 ESTADOS = ['STOW_INIT', 'SEARCH', 'APPROACH', 'REFINE', 'DEPLOY',
            'MANIPULATE', 'RETRACT', 'RETURN']
+# Fases cartesianas do MANIPULATE (PHASE_ORDER em chave_mission.py).
 FASES = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
-         'arco1', 'arco2', 'desengata']
+         'destrava', 'libera', 'arco1', 'arco2', 'desengata']
+# NOMES EM INGLÊS NO PAINEL, como os estados (Marco, 2026-09-03: "se
+# estamos usando as palavras em ingles para os estados porque não usar
+# também para as fases do manipulate?"). Só a exibição: o YAML, o
+# PHASE_ORDER e os logs continuam com os nomes em português — renomear
+# tudo é outra mudança, maior, se ele quiser.
+FASES_EN = {'orienta': 'ORIENT', 'aproxima_lateral': 'SIDE_APPROACH',
+            'atravessa': 'INSERT', 'captura': 'CAPTURE',
+            'destrava': 'UNLATCH', 'libera': 'RELEASE',
+            'arco1': 'ARC1', 'arco2': 'ARC2', 'desengata': 'DISENGAGE',
+            'saida_eixo': 'EXIT_AXIS'}
+# Abreviações da trilha: só a fase ATUAL sai por extenso.
+FASES_ABREV = {'orienta': 'ORIENT', 'aproxima_lateral': 'SIDE_APP',
+               'atravessa': 'INSRT', 'captura': 'CAPTR', 'destrava': 'UNLATCH',
+               'libera': 'RELEASE', 'arco1': 'ARC1', 'arco2': 'ARC2',
+               'desengata': 'DISENG'}
 
 V, R, A, C, N, F = ('\033[32m', '\033[31m', '\033[33m', '\033[90m',
                     '\033[1m', '\033[0m')
@@ -57,11 +88,21 @@ class Hud(object):
         rospy.init_node('mission_hud', anonymous=True, disable_signals=True)
         self.st = {}
         self.clearance = self.close = self.tilt = None
-        self.lamina = self.wall = self.q = None
-        self.eventos = collections.deque(maxlen=5)
+        self.wall = self.q = None
+        self.eventos = collections.deque(maxlen=6)
         self.t0 = time.time()
+        self.t_status = None          # última mensagem da missão
         self.tty = sys.stdout.isatty()
         self._ult = None
+        self.gatilho = None           # (lingueta_mm, lamina_deg) ou None
+        self._gj = None
+        try:
+            rospy.wait_for_service('/gazebo/get_joint_properties', timeout=1.0)
+            from gazebo_msgs.srv import GetJointProperties
+            self._gj = rospy.ServiceProxy('/gazebo/get_joint_properties',
+                                          GetJointProperties)
+        except (rospy.ROSException, ImportError):
+            self._gj = None
 
         rospy.Subscriber('/b166er/mission_status', String, self._cb_status)
         rospy.Subscriber('/b166er/front_clearance', Float64,
@@ -88,8 +129,9 @@ class Hud(object):
         # aqueles nomes e nada os apagava. Parecia painel congelado.
         if novo.get('run') and novo['run'] != self.st.get('run'):
             self.st = {}
-            self.eventos = []
+            self.eventos.clear()        # era `= []`: virava lista sem limite
             self.t0 = time.time()
+        self.t_status = time.time()
         ant_e, ant_f = self.st.get('estado'), self.st.get('fase')
         self.st.update(novo)
         if novo.get('estado') and novo['estado'] != ant_e:
@@ -113,21 +155,54 @@ class Hud(object):
             self.q = [math.degrees(d[x]) for x in nn]
 
     # ── desenho ──────────────────────────────────────────────────────
-    def _trilha(self, atual, seq):
-        """✓ já passou · ▶ atual · · pendente."""
+    def _trilha(self, atual, seq, apagada=False, abrev=None, nomes=None):
+        """✓ já passou · ▶ atual · · pendente. Devolve LINHAS que cabem
+        no quadro, todas cinza se a missão já acabou.
+
+        Com `abrev`, os nomes que NÃO são o atual saem abreviados e só
+        o atual aparece por extenso — ideia do Marco (2026-09-03) para a
+        trilha de fases caber em uma linha depois que ganhou nove nomes.
+        Um nome fora da sequência (saida_eixo, na saída) é acrescentado
+        no fim, para não sumir."""
         if atual in seq:
             i_at = seq.index(atual)
         else:
             i_at = -1
-        out = []
+        nomes = nomes or {}
+        def rot(i, nome):
+            if abrev and i != i_at:
+                return abrev.get(nome, nome)
+            return nomes.get(nome, nome)
+        itens = []
         for i, nome in enumerate(seq):
-            if i_at >= 0 and i < i_at:
-                out.append(V + '✓' + nome + F)
+            if apagada:
+                itens.append(C + ('✓' if 0 <= i <= i_at else '·')
+                             + rot(i, nome) + F)
+            elif i_at >= 0 and i < i_at:
+                itens.append(V + '✓' + rot(i, nome) + F)
             elif i == i_at:
-                out.append(N + A + '▶' + nome + F)
+                itens.append(N + A + '▶' + rot(i, nome) + F)
             else:
-                out.append(C + '·' + nome + F)
-        return ' '.join(out)
+                itens.append(C + '·' + rot(i, nome) + F)
+        if i_at < 0 and atual and atual != '—':
+            itens.append((C if apagada else N + A) + '▶'
+                         + nomes.get(atual, atual) + F)
+        larg = LARG - 12
+        linhas, atual_l = [], ''
+        for it in itens:
+            cand = (atual_l + ' ' + it) if atual_l else it
+            if vis(cand) > larg and atual_l:
+                linhas.append(atual_l)
+                atual_l = it
+            else:
+                atual_l = cand
+        if atual_l:
+            linhas.append(atual_l)
+        return linhas
+
+    def _campo_trilha(self, rot, linhas):
+        for i, l in enumerate(linhas):
+            self._campo(rot if i == 0 else '', l)
 
     def _lin(self, txt=''):
         pad = max(0, LARG - vis(txt))
@@ -151,15 +226,40 @@ class Hud(object):
             self._ult = ch
 
         pausado = st.get('pausado') == '1'
+        # MISSÃO ENCERRADA OU AUSENTE: sem mensagem há mais de 20 s o
+        # quadro deixa de parecer "ao vivo" — o último estado não é o
+        # atual, é o último. Zera de verdade quando a próxima missão
+        # publicar o carimbo 'run' novo.
+        silencio = (time.time() - self.t_status) if self.t_status else None
+        encerrada = silencio is None or silencio > 20.0
         print('┌' + '─' * (LARG + 2) + '┐')
         cab = N + 'b166er · missão da chave seccionadora' + F
-        if pausado:
+        if pausado and not encerrada:
             cab += '   ' + N + A + '⏸ PAUSADA' + F
+        if silencio is None:
+            cab += '   ' + C + 'sem missão (nenhuma mensagem ainda)' + F
+        elif encerrada:
+            cab += '   ' + C + ('sem missão há %ds — abaixo, a ÚLTIMA'
+                                % silencio) + F
         self._lin(cab)
         self._sep()
 
-        self._campo('ESTADO', self._trilha(st.get('estado', '—'), ESTADOS))
-        self._campo('FASE', self._trilha(st.get('fase', '—'), FASES))
+        self._campo_trilha('ESTADO', self._trilha(st.get('estado', '—'),
+                                                  ESTADOS, encerrada))
+        # 'FASE MANIP.': a trilha é só do MANIPULATE, e o rótulo diz isso
+        # (sugestão do Marco, 2026-09-03). Onze caracteres, o máximo do
+        # campo.
+        self._campo_trilha('FASE MANIP.', self._trilha(st.get('fase', '—'),
+                                                       FASES, encerrada,
+                                                       abrev=FASES_ABREV,
+                                                       nomes=FASES_EN))
+        if self.gatilho is not None:
+            l_mm, b_deg = self.gatilho
+            cor_l = V if l_mm >= 12.0 else (A if l_mm > 1.0 else C)
+            cor_b = V if b_deg >= 25.0 else (A if b_deg > 1.0 else C)
+            self._campo('GATILHO', 'lingueta %s%5.1f mm%s   lâmina %s%5.1f°%s'
+                        '   %s(Gazebo)%s'
+                        % (cor_l, l_mm, F, cor_b, b_deg, F, C, F))
 
         if pausado:
             self._sep()
@@ -216,10 +316,29 @@ class Hud(object):
             self._lin('%s%7.1fs  %s%s' % (C, t, ev, F))
         print('└' + '─' * (LARG + 2) + '┘')
 
+    def _le_gatilho(self):
+        if self._gj is None:
+            return
+        try:
+            l = self._gj('chave_lingueta_joint')
+            b = self._gj('chave_blade_joint')
+            if l.success and b.success and l.position and b.position:
+                # + 0.0 mata o "-0.0" que a mola deixa no repouso
+                self.gatilho = (round(1000.0 * l.position[0], 1) + 0.0,
+                                round(math.degrees(b.position[0]), 1) + 0.0)
+            else:
+                self.gatilho = None
+        except rospy.ServiceException:
+            self.gatilho = None
+
     def spin(self):
         rate = rospy.Rate(4.0)
+        n = 0
         while not rospy.is_shutdown():
             try:
+                if n % 2 == 0:
+                    self._le_gatilho()      # 2 Hz basta, e o serviço é leve
+                n += 1
                 self.desenha()
             except Exception as exc:            # noqa: BLE001
                 print('HUD: %s' % exc)
