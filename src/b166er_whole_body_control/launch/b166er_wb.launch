@@ -268,7 +268,15 @@
       <param name="rate"            value="$(arg rate)"/>
       <param name="nonholonomic"    value="true"/>
       <param name="null_space_gain" value="0.3"/>
-      <param name="tol_pos"         value="0.005"/>
+      <!-- tol_pos é a banda em que o controlador PARA de empurrar
+           (histerese: volta a agir acima de 1,5x). Quem decide se a
+           fase fechou é a MISSÃO, com a régua por eixo da fase (4-15 mm,
+           chave_seccionadora_task.yaml); o controlador precisa continuar
+           servindo abaixo dessa régua, senão a fase mais apertada
+           (destrava, 4 mm em altura) nunca fecha. Era 5 mm; 2 mm desde
+           2026-09-03. Lido uma vez, no início: mudar aqui exige subir o
+           stack de novo. -->
+      <param name="tol_pos"         value="0.002"/>
       <param name="tol_orient"      value="0.02"/>
       <!-- Manobra girar-avançar-girar (limitação lateral, Fase 3) -->
       <param name="maneuver_enable"      value="true"/>

@@ -71,10 +71,11 @@
     </node>
   </group>
 
-  <!-- Alinha a tolerância do controlador com a da missão (20 mm): sem
-       isso ele continua empurrando o braço atrás dos 5 mm default
-       depois que a missão já considerou a fase concluída. -->
-  <param name="/fuzzy_wb_controller/tol_pos" value="0.020"/>
+  <!-- A tolerância do controlador Fuzzy NÃO se ajusta daqui: ele lê
+       ~tol_pos uma vez, ao subir com o stack (b166er_wb.launch), e a
+       linha que existia aqui (0,020) chegava tarde e nunca teve efeito
+       — o controlador servia a 5 mm enquanto a missão fechava a fase a
+       20 mm. Removida em 2026-09-03; o valor vive em b166er_wb.launch. -->
 
   <node name="chave_mission" pkg="b166er_whole_body_control"
         type="chave_mission.py" output="screen">
