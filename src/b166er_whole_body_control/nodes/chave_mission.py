@@ -2336,6 +2336,10 @@ def _reach_by_wholebody(ctx, p_goal, phase):
     """
     p_goal = np.asarray(p_goal, dtype=float)
 
+    # O painel só sabia da fase pelo caminho da IK iterativa: neste modo
+    # a trilha FASE MANIP. ficava vazia a missão inteira (bateria de
+    # 2026-09-03). Carimba a fase aqui também.
+    ctx.status(estado='MANIPULATE', fase=phase, it=0)
     alvo = PoseStamped()
     alvo.header.stamp = rospy.Time.now()
     alvo.header.frame_id = 'odom'
