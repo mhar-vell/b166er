@@ -195,6 +195,26 @@ chave_seccionadora_task:
     modo: wb
     offset_xyz_m: [0.0, 0.0, -0.0250]
     tol_xyz_m: [0.040, 0.006, 0.004]
+    # CRITÉRIO OBSERVÁVEL (2026-09-03). A fase NÃO fecha por atingir a
+    # altura-alvo acima; fecha quando a ponta, medida pela T265, DESCEU
+    # pelo menos curso_min_m desde o instante em que a captura fechou
+    # (o degrau apoiado no arame). Eixo e profundidade seguem por
+    # tolerância; a tolerância em altura fica sem efeito aqui. Nas 40
+    # missões anteriores a fase fechava por altura com a lingueta em
+    # 3-7 mm e quem soltava o gatilho era a libera. 13 mm é o curso em
+    # que a aba passa sob o laço no modelo (bancada: ~15); o alvo de
+    # -25 mm continua sendo o comando, para a ferramenta ter para onde
+    # empurrar.
+    #
+    # 13 → 18 mm (bateria 41-45): a ponta desce mais do que o anel. Com
+    # 13 mm de ponta a lingueta ficou em 8,4 / 7,9 / 16,7 / 11,2 mm nas
+    # quatro missões que fecharam — perde-se 3-5 mm entre a ponta e o
+    # anel (deformação de contato do ODE e/ou o degrau deslizando no
+    # arame curvo). A bancada aceita 10-20 mm de curso; 18 mm de ponta
+    # dá o gatilho com margem sem chegar ao fim de curso de 20 mm do
+    # modelo (18 − 4 ≈ 14 no anel). Medido, não deduzido: conferir a
+    # lingueta no log das próximas missões.
+    curso_min_m: 0.018
 
   # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
   # Com o olhal pressionado, puxar para fora faz a aba passar POR BAIXO
