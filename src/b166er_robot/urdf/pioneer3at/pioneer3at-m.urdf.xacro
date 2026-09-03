@@ -434,22 +434,35 @@
     </joint>
 
     <link name="laser_${name}_link">
+        <!-- HOKUYO UST-05LX MODELADO (2026-09-02, pedido do Marco: "o hokuyo
+             precisa ser renderizado/modelado, e mudado de cor para que
+             possamos enxergar na simulação"). Era um cubo de 25 mm preto,
+             invisível sobre o chassi. A malha é a hokuyo.dae do gazebo_plugins
+             (forma da família URG/UST, mesmo envelope de 50 x 50 x 70 mm do
+             UST-05LX), convertida para STL em pé, base em z = 0, e a janela
+             de varredura a 34 mm da base (o lado de cima foi conferido pelo Marco
+             contra o sensor real: a heurística pela faixa branca errou) — ver
+             meshes/hokuyo/README.md.
+
+             A ORIGEM DESTE LINK É O PLANO DE VARREDURA (é onde o sensor ray
+             emite), então a malha desce 36 mm para a base assentar na placa.
+             STL e não DAE de propósito: com materiais embutidos o Gazebo
+             ignora o <material> do link, e a cor é o pedido. -->
         <collision>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <origin xyz="0 0 -0.001" rpy="0 0 0"/>
           <geometry>
-            <box size="0.025 0.025 0.025"/>
+            <box size="0.050 0.050 0.070"/>
           </geometry>
         </collision>
 
         <visual>
-          <origin xyz="0 0 0" rpy="0 0 0"/>
+          <origin xyz="0 0 -0.034" rpy="0 0 0"/>
           <geometry>
-            <box size="0.025 0.025 0.025"/>
+            <mesh filename="package://b166er_robot/meshes/hokuyo/hokuyo_ust05lx.stl"/>
           </geometry>
-          <!-- "red" sem <color> = material indefinido no RViz → link renderizado branco.
-               Definição explícita garante cor vermelha em vez do branco padrão. -->
-          <material name="red">
-            <color rgba="0.8 0.1 0.1 1"/>
+          <!-- RViz lê este <material>; o Gazebo lê o <gazebo reference> abaixo. -->
+          <material name="hokuyo_laranja">
+            <color rgba="1.0 0.5 0.0 1"/>
           </material>
         </visual>
 
@@ -472,15 +485,15 @@
           <ray>
             <scan>
               <horizontal>
-                <samples>${samples}</samples> <!-- 720 -->
+                <samples>${samples}</samples> <!-- UST-05LX: 1081 (0,25°) -->
                 <resolution>${resolution}</resolution> <!-- 1 -->
                 <min_angle>${min_angle}</min_angle> <!-- minus 1.570796 -->
                 <max_angle>${max_angle}</max_angle> <!-- 1.570796 -->
               </horizontal>
             </scan>
             <range>
-              <min>${min_range}</min> <!-- 0.10 -->
-              <max>${max_range}</max> <!-- 30.0 -->
+              <min>${min_range}</min> <!-- UST-05LX: 0.06 -->
+              <max>${max_range}</max> <!-- UST-05LX: 5.0 -->
               <resolution>${range_resolution}</resolution> <!-- 0.01 -->
             </range>
             <noise>
