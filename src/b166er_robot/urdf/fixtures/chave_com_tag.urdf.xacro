@@ -94,6 +94,12 @@
        links filhos ligados por junta fixa). -->
   <gazebo reference="wall_link">
     <material>Gazebo/Grey</material>
+    <!-- O laço do gatilho (chave_laco) é fundido aqui pelas juntas
+         fixas, e a aba da lingueta precisa COLIDIR com ele — par de
+         links do mesmo modelo, que o Gazebo só testa com selfCollide.
+         Links ligados por junta (a lâmina) continuam excluídos. Ver a
+         nota da lingueta em chave_seccionadora_lf.urdf.xacro. -->
+    <selfCollide>true</selfCollide>
   </gazebo>
 
   <xacro:chave_seccionadora_lf parent="wall_link" prefix="chave_"

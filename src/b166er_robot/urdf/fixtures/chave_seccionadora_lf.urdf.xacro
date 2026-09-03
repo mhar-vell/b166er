@@ -92,6 +92,11 @@
     <xacro:property name="olhal_colide" value="true"/>
     <xacro:property name="lamina_colide" value="true"/>
 
+    <!-- Curso máximo da lingueta do gatilho (ver a seção LINGUETA). Fica
+         aqui em cima porque o comprimento da barra da lâmina depende
+         dele. -->
+    <xacro:property name="lingueta_curso" value="0.020"/>
+
     <!-- Fechada: lâmina vertical, olhal direto acima do pivô. -->
     <xacro:property name="pivot_z" value="${olhal_height - blade_length}"/>
 
@@ -200,8 +205,18 @@
 
          Agora a barra termina em blade_length - ring_az, encostando na
          borda inferior do anel. A distância pivô→olhal segue sendo
-         blade_length (0,200 m), que é a medida de bancada. -->
-    <xacro:property name="blade_bar" value="${blade_length - ring_az}"/>
+         blade_length (0,200 m), que é a medida de bancada.
+
+         E DESDE 2026-09-03 TERMINA 25 mm MAIS ABAIXO: o anel desce
+         com a lingueta (até lingueta_curso) e a barra não. Na run18 o
+         degrau empurrou o olhal ~3 mm e parou em cima da barra, a
+         lingueta nunca chegou aos 13 mm e a fase 'destrava' morreu com
+         "5 iterações sem fechar". Na chave real o anel fica AO LADO da
+         lâmina, não em cima dela; aqui o anel é centrado no eixo da
+         lâmina (aproximação de 26 Ago), então a coluna do furo precisa
+         ficar livre por todo o curso da lingueta. O trecho visual entre
+         a barra e o anel é o corpo da lingueta, que desce junto. -->
+    <xacro:property name="blade_bar" value="${blade_length - ring_az - lingueta_curso - 0.005}"/>
     <link name="${prefix}blade">
       <visual>
         <origin xyz="0 0 ${blade_bar/2}"/>
@@ -256,13 +271,168 @@
            Baixado para 1,5 N·m (7,5 N na ponta), dentro do que o braço
            faz. Se a chave real for mais dura que isso, a força terá de
            vir da BASE — que é o que o recuo com as rodas já faz, e é
-           onde o whole-body ganha sentido físico. -->
+           onde o whole-body ganha sentido físico.
+
+           DESDE 2026-09-03 o atrito não é o que segura a chave fechada:
+           é a LINGUETA (abaixo). Este número passa a valer só depois
+           que o gatilho soltou. -->
       <dynamics damping="0.5" friction="1.5"/>
+    </joint>
+
+    <!-- ═══ LINGUETA TIPO GATILHO (2026-09-03) ═══
+
+         A chave da bancada NÃO abre só puxando o olhal para fora. O
+         Marco, ao rever os arcos: "o primeiro movimento (que chamamos
+         de arco 1) deve ser um movimento bem acentuado em -Z, pois é aí
+         q ocorre o destravamento do gatilho que trava a chave."
+
+         O que o vídeo da bancada (IMG_0525, 2026-09-03) mostra:
+
+         · O OLHAL DE LATÃO NÃO ESTÁ NA LÂMINA: está numa LINGUETA
+           presa à lâmina por um pino, com duas molas de arame que a
+           empurram para cima.
+         · Na outra ponta da lingueta há uma ABA, voltada para a parede,
+           que fica DENTRO do laço em U da barra fixa do contato
+           superior. É essa aba presa no laço que impede a lâmina de
+           girar — não é atrito.
+         · Puxar o olhal ~15 mm para baixo (curso confirmado pelo Marco:
+           "15 mm está bom") leva a aba para baixo do laço. Segurando
+           embaixo e puxando para fora, a aba passa POR BAIXO do laço
+           nos primeiros ~20 mm de curso do olhal ("os 20 mm também").
+           Daí em diante a lâmina está livre e a mola devolve a lingueta.
+         · O fechamento é automático: a aba tem rampa e volta a entrar
+           por baixo do laço quando a lâmina é empurrada de volta.
+
+         Essa fase de liberação já existia na descrição original da
+         tarefa (12 Ago, "release: -15 mm") e foi perdida na reescrita
+         em seis fases de 26 Ago. Sem ela no modelo, nenhuma missão
+         sentia falta dela — e a bancada vai sentir.
+
+         COMO ESTÁ MODELADO. A lingueta real é uma alavanca; qual é o
+         pino exato e quanto o olhal recua em Y ao descer não ficou
+         claro nas fotos. O que o robô sente é o CURSO VERTICAL do
+         olhal, e é isso que fica fiel: uma junta PRISMÁTICA ao longo da
+         lâmina, 0 → ${lingueta_curso} m para baixo, com mola de retorno
+         (springStiffness do sdformat) e o anel montado nela. A aba é
+         um bloco na lingueta, do lado da parede; o laço são dois batentes
+         fixos que a aba encontra ao tentar sair enquanto está em cima e
+         que ela passa por baixo quando desce ≥ 6 mm além do necessário.
+
+         NÚMEROS (frame da lâmina, olhal em repouso em z = blade_length):
+           aba      y −40..−25 mm, z +2..+8 mm  (36 mm de largura em X)
+           batentes y −23..−19 mm, z −5..+11 mm, em x = ±14 mm
+           · lâmina em repouso: aba a 2 mm dos batentes -> travada
+             (medido no teste de bancada: 20 N no olhal, lâmina para em
+             0,55° e fica)
+           · a aba passa por baixo dos batentes com a lingueta a 13 mm
+             (8 + 5): os 15 mm da fase 'destrava' sobram 2 mm. Medido:
+             com 8 N para baixo e 20 N para fora a chave abre ao cruzar
+             esse curso e vai ao fim (34°).
+           · a aba sai do laço depois de 21 mm de curso do olhal (40−19)
+           · a ferramenta atravessa o furo em y ≈ 0 ± 8 mm, a ≥ 11 mm dos
+             batentes: eles não entram no caminho do degrau.
+         Mola: k = ${lingueta_k} N/m, referência −10 mm (2 N de pré-carga,
+         mais que o peso lingueta+anel, 1,3 N), ou seja ~4 N para segurar
+         o olhal 15 mm abaixo — molas de arame, não de gatilho de arma.
+         A lâmina só pode ser ABERTA por quem descer o olhal primeiro. -->
+    <xacro:property name="lingueta_k" value="200.0"/>
+
+    <link name="${prefix}lingueta">
+      <!-- corpo entre as hastes do garfo (visual apenas). Termina na
+           borda de baixo do anel, como a barra da lâmina: a primeira
+           versão subia até 5 mm acima do centro do furo e o Marco viu
+           "um objeto marrom no meio do olhal" — o furo tem de ficar
+           livre, é por ele que o degrau passa. -->
+      <visual>
+        <origin xyz="0 0 ${blade_length - ring_az - 0.0225}"/>
+        <geometry><box size="0.012 0.016 0.039"/></geometry>
+        <material name="brass"><color rgba="0.72 0.58 0.22 1"/></material>
+      </visual>
+      <!-- ABA, para o lado da parede -->
+      <visual>
+        <origin xyz="0 -0.0325 ${blade_length + 0.005}"/>
+        <geometry><box size="0.036 0.015 0.006"/></geometry>
+        <material name="switch_dark"/>
+      </visual>
+      <collision>
+        <origin xyz="0 -0.0325 ${blade_length + 0.005}"/>
+        <geometry><box size="0.036 0.015 0.006"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.00003" ixy="0" ixz="0" iyy="0.00003" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}lingueta_joint" type="prismatic">
+      <parent link="${prefix}blade"/>
+      <child link="${prefix}lingueta"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 0 -1"/>   <!-- positivo = olhal DESCE -->
+      <limit lower="0.0" upper="${lingueta_curso}" effort="50" velocity="0.5"/>
+      <dynamics damping="5.0" friction="0.2"/>
+    </joint>
+    <gazebo reference="${prefix}lingueta_joint">
+      <implicitSpringDamper>true</implicitSpringDamper>
+      <springStiffness>${lingueta_k}</springStiffness>
+      <springReference>-0.010</springReference>
+    </gazebo>
+
+    <!-- ═══ LAÇO: os batentes fixos que prendem a aba ═══
+         Presos à placa, na altura do olhal em repouso. Dois blocos, um
+         de cada lado da lâmina em X, para não tocar nem a lâmina
+         (±4,8 mm) nem o anel (±3 mm). O braço até a placa é só visual:
+         colisão ali seria mais um obstáculo inventado no caminho da
+         ferramenta (ver o histórico do terminal fixo). -->
+    <link name="${prefix}laco">
+      <visual>
+        <origin xyz="0 ${-(wall_standoff + 0.021)/2} 0.005"/>
+        <geometry><box size="0.010 ${wall_standoff - 0.021} 0.010"/></geometry>
+        <material name="galvanized"/>
+      </visual>
+      <visual>
+        <origin xyz="0 -0.021 0.005" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="0.003" length="0.036"/></geometry>
+        <material name="galvanized"/>
+      </visual>
+      <visual>
+        <origin xyz="0.014 -0.021 0.003"/>
+        <geometry><box size="0.008 0.004 0.016"/></geometry>
+        <material name="galvanized"/>
+      </visual>
+      <visual>
+        <origin xyz="-0.014 -0.021 0.003"/>
+        <geometry><box size="0.008 0.004 0.016"/></geometry>
+        <material name="galvanized"/>
+      </visual>
+      <collision>
+        <origin xyz="0.014 -0.021 0.003"/>
+        <geometry><box size="0.008 0.004 0.016"/></geometry>
+      </collision>
+      <collision>
+        <origin xyz="-0.014 -0.021 0.003"/>
+        <geometry><box size="0.008 0.004 0.016"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
+      </inertial>
+    </link>
+
+    <joint name="${prefix}laco_joint" type="fixed">
+      <parent link="${prefix}plate"/>
+      <child link="${prefix}laco"/>
+      <origin xyz="0 ${wall_standoff} ${blade_length}" rpy="0 0 0"/>
     </joint>
 
     <!-- ═══ OLHAL: anel oval no topo da lâmina, a 805 mm do chão e a
          130 mm da parede (medidos). Este é o frame que o controlador
          mira, e é por dentro dele que o degrau do dedo fixo passa.
+
+         DESDE 2026-09-03 O ANEL É FILHO DA LINGUETA, não da lâmina: é
+         ela que desce 15 mm quando a ferramenta empurra o arame de
+         baixo. Em repouso o frame é o mesmo de antes (z = blade_length
+         acima do pivô), então nada muda para REFINE nem para os alvos.
 
          O anel fica no plano Y-Z (normal ao longo de X): o FURO OLHA
          PARA O LADO, e atravessá-lo é um movimento paralelo à parede.
@@ -358,7 +528,7 @@
     </link>
 
     <joint name="${prefix}olhal_joint" type="fixed">
-      <parent link="${prefix}blade"/>
+      <parent link="${prefix}lingueta"/>
       <child link="${prefix}olhal_link"/>
       <origin xyz="0 0 ${blade_length}" rpy="0 0 0"/>
     </joint>
@@ -379,6 +549,23 @@
     </gazebo>
     <gazebo reference="${prefix}olhal_link">
       <material>Gazebo/Orange</material>
+    </gazebo>
+    <!-- AUTOCOLISÃO: o gatilho é um contato ENTRE LINKS DO MESMO MODELO
+         (aba da lingueta x batentes do laço), e por padrão o Gazebo não
+         testa esses pares. Sem isto a aba atravessa o batente e a chave
+         abre sem destravar — foi o que o teste de bancada mostrou na
+         primeira tentativa (2026-09-03). Pares ligados por junta
+         (lingueta-lâmina, lâmina-bracket) continuam excluídos pelo ODE,
+         então o anel pode sobrepor a barra da lâmina ao descer. O laço
+         é fundido no wall_link pelas juntas fixas; o selfCollide dele
+         fica em chave_com_tag.urdf.xacro. -->
+    <gazebo reference="${prefix}lingueta">
+      <material>Gazebo/Gold</material>
+      <selfCollide>true</selfCollide>
+    </gazebo>
+    <gazebo reference="${prefix}laco">
+      <material>Gazebo/Grey</material>
+      <selfCollide>true</selfCollide>
     </gazebo>
 
   </xacro:macro>
