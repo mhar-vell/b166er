@@ -2522,13 +2522,19 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
             if desc is not None and cfg_curso is not None:
                 hist.append(((rospy.Time.now() - t0).to_sec(), desc))
-                # Janela 1,5 s / 0,5 mm → 3 s / 0,3 mm (bateria 63-67): perto
-                # do alvo o servo desce a ~0,3 mm/s e a janela curta lia
-                # "parou" com o anel em 2-9 mm — o gatilho não soltava.
-                while hist and hist[-1][0] - hist[0][0] > 3.0:
+                # JANELA: 1,5 s / 0,5 mm. A versão 3 s / 0,3 mm com mínimo de
+                # 15 mm (run68) não protegeu o punho: quando o anel bate no
+                # fim de curso a ponta CONTINUA descendo — pelo colapso do J4
+                # (retro-acionado a 20 N·m), não pelo anel — e a estagnação
+                # nunca é vista; o braço tombou. Com a janela curta a fase
+                # fecha cedo (anel em 2-9 mm, a libera termina o serviço),
+                # mas o punho fica íntegro (esforço do J4 2-3 N·m, 5/5 na
+                # bateria 63-67). Enquanto o braço simulado tiver um punho
+                # de 20 N·m, é este o compromisso honesto.
+                while hist and hist[-1][0] - hist[0][0] > 1.5:
                     hist.pop(0)
-                if (len(hist) >= 20 and desc >= cfg_estagna
-                        and hist[-1][1] - hist[0][1] < 0.0003
+                if (len(hist) >= 10 and desc >= cfg_estagna
+                        and hist[-1][1] - hist[0][1] < 0.0005
                         and abs(e_parede[0]) < tol_fase[0]
                         and abs(e_parede[1]) < tol_fase[1]):
                     rospy.logwarn('[mission] fase "%s": descida estagnou em %.1f mm '
