@@ -497,6 +497,11 @@ class MissionContext(object):
         # forçam um modo só, para reproduzir as baterias puras. O antigo
         # use_wholebody:=true equivale a 'wb'.
         self.modo_fases = rospy.get_param('~modo_fases', 'yaml')
+        # Altura da ponta (frame da parede) no instante em que a captura
+        # fechou: é o zero do critério observável do destrava. Ver
+        # _fase_fechou e a nota em chave_seccionadora_task.yaml.
+        self.alt_captura = None
+        self.offset_efetivo = None   # offset da fase corrente, já ajustado
         if self.use_wholebody and self.modo_fases == 'yaml':
             self.modo_fases = 'wb'
         if self.modo_fases not in ('yaml', 'ik', 'wb'):
@@ -1671,7 +1676,22 @@ class Manipulate(smach.State):
         # engatar.
         y_anterior = ctx.phases[PHASE_ORDER[0]]['offset_xyz_m'][1]
         for phase in PHASE_ORDER:
-            offset = ctx.phases[phase]['offset_xyz_m']
+            offset = list(ctx.phases[phase]['offset_xyz_m'])
+            # ALVO RELATIVO À CAPTURA. Uma fase com curso_min_m fecha por
+            # descida medida, então o comando também tem de ser relativo:
+            # alt_alvo = alt_captura − curso − margem. Com o alvo fixo do
+            # YAML, uma captura que fechasse baixo (a tolerância é 10 mm)
+            # deixaria menos de 13 mm para descer e a fase nunca fecharia.
+            cfg = ctx.phases[phase]
+            if cfg.get('curso_min_m') is not None and ctx.alt_captura is not None:
+                margem = float(cfg.get('curso_margem_m', 0.005))
+                offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
+                rospy.loginfo('[mission] fase "%s": alvo em altura relativo à '
+                              'captura: %+.1f mm (captura %+.1f − curso %.0f − '
+                              'margem %.0f)', phase, offset[2] * 1000,
+                              ctx.alt_captura * 1000, cfg['curso_min_m'] * 1000,
+                              margem * 1000)
+            ctx.offset_efetivo = offset
 
             # PUXAR COM AS RODAS. A componente Y do offset é o quanto o
             # olhal se afasta da parede — exatamente o que recuar o chassi
@@ -1714,15 +1734,29 @@ class Manipulate(smach.State):
             # desceu de verdade (lingueta ≥ ~12 mm dos 15 pedidos). Não
             # aborta aqui: o arco seguinte é que vai falhar, e falhar
             # com a lingueta medida no log é o relato correto.
+            if phase == 'captura':
+                # Zero do critério observável do destrava: onde a ponta
+                # parou quando o degrau apoiou no arame.
+                ctx.alt_captura = _alt_na_parede(ctx, _tooltip_now(ctx))
+                ctx.status(alt_captura_mm=ctx.alt_captura * 1000)
+                rospy.loginfo('[mission] captura: altura da ponta registrada '
+                              'em %+.1f mm (zero da descida do destrava)',
+                              ctx.alt_captura * 1000)
             if phase == 'destrava':
+                desc = None
+                if ctx.alt_captura is not None:
+                    desc = ctx.alt_captura - _alt_na_parede(ctx, _tooltip_now(ctx))
                 curso = ctx.lingueta_now()
-                if curso is None:
-                    rospy.logwarn('[mission] destrava: não li a lingueta')
-                elif curso < 12.0:
+                rospy.loginfo('[mission] destrava: ponta desceu %s desde a '
+                              'captura (critério observável) | lingueta %s '
+                              '(só na simulação)',
+                              '%.1f mm' % (desc * 1000) if desc is not None else 'n/d',
+                              '%.1f mm' % curso if curso is not None else 'n/d')
+                if curso is not None and curso < 12.0:
                     rospy.logwarn('[mission] destrava: lingueta em %.1f mm '
                                   '(esperado ≥ 12) — o gatilho pode não '
                                   'ter soltado', curso)
-                else:
+                elif curso is not None:
                     rospy.loginfo('[mission] destrava: lingueta em %.1f mm '
                                   '— gatilho solto', curso)
             rospy.sleep(0.5)
@@ -1913,14 +1947,57 @@ def _modo_da_fase(ctx, phase):
     return modo
 
 
+def _alt_na_parede(ctx, p_world):
+    """Altura de um ponto do mundo no frame da parede, relativa ao centro
+    do olhal estimado (mm positivos = acima)."""
+    olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)
+    return float((ctx.wall_R.T @ (np.asarray(p_world, dtype=float) - olhal))[2])
+
+
+def _descida_desde_captura(ctx, phase, e_parede):
+    """Quanto a ponta desceu desde o fecho da captura (m), ou None.
+    A altura atual sai do erro por eixo: alt_atual = alt_alvo − e_alt."""
+    cfg = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+    if ctx.alt_captura is None or e_parede is None:
+        return None
+    off = ctx.offset_efetivo if ctx.offset_efetivo is not None else cfg.get('offset_xyz_m', [0, 0, 0])
+    alt_alvo = float(off[2])
+    alt_atual = alt_alvo - float(e_parede[2])
+    return ctx.alt_captura - alt_atual
+
+
 def _fase_fechou(ctx, phase, err_world, n_err):
     """A fase fechou? Compara no frame da PAREDE quando há tolerância
     por eixo — é lá que os eixos têm significado (X = eixo do furo,
-    Y = profundidade, Z = altura)."""
+    Y = profundidade, Z = altura).
+
+    CRITÉRIO OBSERVÁVEL (2026-09-03, item do Marco: "criar critério de
+    destrava observável (soltura é no libera)"). Uma fase com
+    `curso_min_m` no YAML não fecha por chegar a uma altura-alvo, e sim
+    por ter DESCIDO pelo menos esse curso desde o instante em que a
+    captura fechou — medido pela ponta (T265), sem depender da
+    estimativa do olhal. Nas 40 missões anteriores o destrava fechava
+    por altura com a lingueta em 3-7 mm e quem soltava o gatilho era a
+    libera; com este critério a fase só fecha se a ponta (e o olhal com
+    ela) desceu o curso do gatilho. Eixo e profundidade continuam por
+    tolerância. Na bancada é a mesma medida; na simulação a lingueta
+    confirma."""
     tol_xyz, tol_esf = _tolerancia_da_fase(ctx, phase)
     if tol_xyz is None or ctx.wall_R is None:
         return n_err < tol_esf, None
     e = ctx.wall_R.T @ np.asarray(err_world, dtype=float)
+    cfg = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+    curso_min = cfg.get('curso_min_m')
+    if curso_min is not None:
+        desc = _descida_desde_captura(ctx, phase, e)
+        if desc is None:
+            rospy.logwarn_throttle(5.0, '[mission] fase "%s": sem altura da '
+                                   'captura — critério por altura-alvo', phase)
+            return bool(np.all(np.abs(e) < tol_xyz)), e
+        ctx.status(descida_mm=desc * 1000, curso_min_mm=float(curso_min) * 1000)
+        ok = (abs(e[0]) < tol_xyz[0] and abs(e[1]) < tol_xyz[1]
+              and desc >= float(curso_min))
+        return bool(ok), e
     return bool(np.all(np.abs(e) < tol_xyz)), e
 
 

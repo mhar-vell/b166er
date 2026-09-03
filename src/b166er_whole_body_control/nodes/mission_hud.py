@@ -253,6 +253,10 @@ class Hud(object):
                                                        FASES, encerrada,
                                                        abrev=FASES_ABREV,
                                                        nomes=FASES_EN))
+        if st.get('descida_mm') is not None:
+            d = float(st['descida_mm']); cm = float(st.get('curso_min_mm', 13))
+            self._campo('DESCIDA', '%s%5.1f mm%s desde a captura  (mín %.0f)'
+                        % (V if d >= cm else A, d, F, cm))
         if st.get('modo'):
             self._campo('MODO', ('whole-body / Fuzzy' if st['modo'] == 'wb'
                                  else 'IK iterativa') + C + '  (da fase)' + F)
