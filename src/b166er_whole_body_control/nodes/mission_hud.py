@@ -253,6 +253,9 @@ class Hud(object):
                                                        FASES, encerrada,
                                                        abrev=FASES_ABREV,
                                                        nomes=FASES_EN))
+        if st.get('modo'):
+            self._campo('MODO', ('whole-body / Fuzzy' if st['modo'] == 'wb'
+                                 else 'IK iterativa') + C + '  (da fase)' + F)
         if self.gatilho is not None:
             l_mm, b_deg = self.gatilho
             cor_l = V if l_mm >= 12.0 else (A if l_mm > 1.0 else C)
