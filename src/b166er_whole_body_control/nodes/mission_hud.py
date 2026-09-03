@@ -66,7 +66,7 @@ FASES_EN = {'orienta': 'ORIENT', 'aproxima_lateral': 'SIDE_APPROACH',
             'saida_eixo': 'EXIT_AXIS'}
 # Abreviações da trilha: só a fase ATUAL sai por extenso.
 FASES_ABREV = {'orienta': 'ORIENT', 'aproxima_lateral': 'SIDE_APP',
-               'atravessa': 'INSRT', 'captura': 'CAPT', 'destrava': 'UNLATCH',
+               'atravessa': 'INSRT', 'captura': 'CAPTR', 'destrava': 'UNLATCH',
                'libera': 'RELEASE', 'arco1': 'ARC1', 'arco2': 'ARC2',
                'desengata': 'DISENG'}
 
