@@ -179,8 +179,18 @@ class FuzzyWBController:
         # DLS passa a mandar a base andar de verdade, com o braço
         # consistente com isso em vez de contra.
         self._base_w_limit = rospy.get_param('~base_weight_at_limit', 1.0)
-        self._limit_margin = math.radians(rospy.get_param('~limit_margin_deg', 1.5))
+        # Margem 1,5 → 5°: a bateria 51-55 não disparou a condição uma
+        # vez sequer. O q_arm que o controlador vê é o ESTIMADO (IK da
+        # T265), que fica em média 1,7° (até 13,6°) abaixo do J4 real
+        # quando este encosta em 110° — com 1,5° de margem o estimado
+        # quase nunca entra. E, além do estimado, o teste usa o comando
+        # INTEGRADO (o que a ponte/integrador recebe e satura no limite,
+        # igual na bancada): q_cmd, semeado do estimado ao (re)assumir e
+        # integrado com o q̇ publicado.
+        self._limit_margin = math.radians(rospy.get_param('~limit_margin_deg', 5.0))
         self._q_dot_prev = None
+        self._q_cmd = None
+        self._t_q_cmd = None
         self._limit_w_cap = rospy.get_param('~limit_weight_cap', 100.0)
         self._grad_prev = None
 
@@ -742,9 +752,22 @@ class FuzzyWBController:
                 w[:3] = BASE_WEIGHT
                 # Junta no batente sendo empurrada contra ele (pelo comando
                 # do ciclo anterior): a base fica barata neste ciclo.
+                # Comando integrado (o que o braço de fato recebe), saturado
+                # nos limites como a ponte faz. Semeia do estimado quando o
+                # laço (re)começa ou depois de >1 s parado.
+                if (self._q_cmd is None or self._t_q_cmd is None
+                        or (now - self._t_q_cmd).to_sec() > 1.0):
+                    self._q_cmd = np.array(q_arm, dtype=float)
+                elif self._q_dot_prev is not None:
+                    dt_c = (now - self._t_q_cmd).to_sec()
+                    self._q_cmd = np.clip(self._q_cmd + self._q_dot_prev[3:] * dt_c,
+                                          JOINT_LOWER, JOINT_UPPER)
+                self._t_q_cmd = now
+                q_lim = np.maximum(q_arm, self._q_cmd)   # o mais perto do limite superior
+                q_lim_inf = np.minimum(q_arm, self._q_cmd)
                 if self._q_dot_prev is not None:
-                    no_sup = (q_arm > JOINT_UPPER - self._limit_margin) & (self._q_dot_prev[3:] > 1e-4)
-                    no_inf = (q_arm < JOINT_LOWER + self._limit_margin) & (self._q_dot_prev[3:] < -1e-4)
+                    no_sup = (q_lim > JOINT_UPPER - self._limit_margin) & (self._q_dot_prev[3:] > 1e-4)
+                    no_inf = (q_lim_inf < JOINT_LOWER + self._limit_margin) & (self._q_dot_prev[3:] < -1e-4)
                     if bool(np.any(no_sup | no_inf)):
                         w[:3] = self._base_w_limit
                         rospy.loginfo_throttle(1.0,
