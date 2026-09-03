@@ -267,6 +267,30 @@ class MissionContext(object):
         # Ver _afasta_da_parede: sem ele a rampa do stow leva a ferramenta
         # 100-120 mm para dentro da placa da chave.
         self.saida_recuo_m        = rospy.get_param('~saida_recuo_m', 0.25)
+        # ── DITHER NAS COLETAS (2026-09-02) ──
+        #
+        # Com o robô PERFEITAMENTE parado (depois do fdir1 nas rodas), os
+        # quadros da fisheye ficam idênticos e a razão de ambiguidade do
+        # PnP congela: a mesma pose é aceita ou rejeitada em 100% dos
+        # quadros, conforme o lado de 2,0 em que ela caiu. Medido na
+        # bancada de pose com J5 = 0, a 1,5-1,8 m: a 60°, 24° e 4° fora do
+        # eixo, 37-74 detecções e ZERO aceitas em 5 s; a 49°, 37° e 12°,
+        # 23-41 aceitas. Antes, os 2,6 mm/s de deriva eram um dither
+        # involuntário que desfazia isso.
+        #
+        # E o yaw da parede medido no SEARCH sai com SINAL ALTERNADO de
+        # 11 a 17° (−16,7°, +17,5°, −11,1° em poses vizinhas) com a
+        # posição boa: ambiguidade de pose planar de uma tag de 23 px —
+        # a rotação em torno da vertical é o que os cantos menos
+        # restringem. Uma coleta parada pega um lado só; girando a base
+        # devagar, as amostras alternam e a média circular cai perto de
+        # zero.
+        #
+        # ±coleta_dither_omega rad/s, invertendo a cada meio período: a
+        # ±0,05 por 1,5 s são ±4° de rumo, que a navegação seguinte
+        # (APPROACH/DEPLOY) refaz de qualquer jeito. 0 desliga.
+        self.coleta_dither_omega   = rospy.get_param('~coleta_dither_omega', 0.05)
+        self.coleta_dither_periodo = rospy.get_param('~coleta_dither_periodo', 3.0)
         self.search_omega_fina    = rospy.get_param('~search_omega_fina', 0.15)
         self.search_centra_timeout = rospy.get_param('~search_centra_timeout', 8.0)
         self.search_sample_timeout = rospy.get_param('~search_sample_timeout', 25.0)
@@ -1951,10 +1975,21 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
     # entra como viés na média, na direção do avanço. É a mesma deriva
     # que contaminou as caracterizações de percepção deste mês.
     ctx.ancora_engata('coleta do %s' % tag)
+    dither = float(getattr(ctx, 'coleta_dither_omega', 0.0) or 0.0)
+    periodo = max(0.5, float(getattr(ctx, 'coleta_dither_periodo', 3.0)))
+    if dither > 0:
+        rospy.loginfo('[mission] %s: coleta com dither ±%.2f rad/s (período %.1f s)',
+                      tag, dither, periodo)
     while len(positions) < n_wanted and not rospy.is_shutdown():
         if (rospy.Time.now() - t0).to_sec() > timeout:
             break
         ctx.ancora_mantem()
+        if dither > 0:
+            # Ver coleta_dither_omega: a base gira devagar para os quadros
+            # não ficarem idênticos (razão de ambiguidade congelada) e
+            # para o yaw alternado da tag pequena se cancelar na média.
+            fase = ((rospy.Time.now() - t0).to_sec() % periodo) < periodo / 2.0
+            ctx.drive(0.0, dither if fase else -dither)
         if ctx.wall_pose is not None:
             p = ctx.wall_pose.pose
             positions.append([p.position.x, p.position.y, p.position.z])
@@ -1970,6 +2005,8 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
                           'SIMULADO não andou — a física do Gazebo está '
                           'pausada. A coleta retoma sozinha quando despausar.',
                           tag)
+    if dither > 0:
+        ctx.stop_base()
     n_corr = ctx.ancora_solta()
     if n_corr:
         rospy.loginfo('[mission] %s: âncora corrigiu a deriva %d vez(es) '
