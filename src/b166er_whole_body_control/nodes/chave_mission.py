@@ -486,6 +486,23 @@ class MissionContext(object):
         # conhecido por um desconhecido. Fica opt-in
         # (use_wholebody:=true) até uma bateria comparar os dois.
         self.use_wholebody     = rospy.get_param('~use_wholebody', False)
+        # MODO POR FASE (2026-09-03, "monta o híbrido por fase"). As duas
+        # baterias do dia disseram o que cada modo sabe fazer: a IK
+        # iterativa fecha tolerância por eixo e alinha o degrau (fases de
+        # geometria); o whole-body insiste até o critério ceder e traz a
+        # base (fases de contato) — mas estaciona em profundidade fina e,
+        # com a base solta, empurrou a lâmina de volta no desengata.
+        # Cada fase declara `modo: ik | wb` no YAML. Este parâmetro
+        # sobrepõe tudo: 'yaml' (padrão) respeita o YAML; 'ik' e 'wb'
+        # forçam um modo só, para reproduzir as baterias puras. O antigo
+        # use_wholebody:=true equivale a 'wb'.
+        self.modo_fases = rospy.get_param('~modo_fases', 'yaml')
+        if self.use_wholebody and self.modo_fases == 'yaml':
+            self.modo_fases = 'wb'
+        if self.modo_fases not in ('yaml', 'ik', 'wb'):
+            rospy.logwarn('[mission] modo_fases=%r desconhecido — usando yaml',
+                          self.modo_fases)
+            self.modo_fases = 'yaml'
         self.wb_phase_timeout  = rospy.get_param('~wb_phase_timeout', 40.0)
         # Amostras consecutivas dentro da tolerância (a 10 Hz) para
         # aceitar a fase. Um instante dentro dela pode ser a ponta
@@ -1673,8 +1690,13 @@ class Manipulate(smach.State):
             # com a base, então o que sobra para a IK é o resíduo.
             p_tip  = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
 
-            alcancar = (_reach_by_wholebody if ctx.use_wholebody
+            modo = _modo_da_fase(ctx, phase)
+            alcancar = (_reach_by_wholebody if modo == 'wb'
                         else _reach_by_iterative_ik)
+            rospy.loginfo('[mission] fase "%s": modo %s (%s)', phase,
+                          'whole-body/Fuzzy' if modo == 'wb' else 'IK iterativa',
+                          'forçado' if ctx.modo_fases != 'yaml' else 'YAML')
+            ctx.status(modo=modo)
             ok_fase = alcancar(ctx, p_tip, phase)
             # Pausa TAMBÉM quando a fase falha: é justamente a postura de
             # falha que precisa ser olhada.
@@ -1874,6 +1896,21 @@ def _tolerancia_da_fase(ctx, phase):
     if tol and len(tol) == 3:
         return np.asarray(tol, dtype=float), None
     return None, ctx.tol_pos
+
+
+def _modo_da_fase(ctx, phase):
+    """'ik' ou 'wb' para a fase: o YAML decide, salvo ~modo_fases forçado.
+    Fase sem `modo` no YAML fica em IK iterativa, que é o caminho validado
+    desde 26 Ago."""
+    if ctx.modo_fases in ('ik', 'wb'):
+        return ctx.modo_fases
+    cfg = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+    modo = str(cfg.get('modo', 'ik')).strip().lower()
+    if modo not in ('ik', 'wb'):
+        rospy.logwarn('[mission] fase "%s": modo %r desconhecido no YAML — IK',
+                      phase, modo)
+        return 'ik'
+    return modo
 
 
 def _fase_fechou(ctx, phase, err_world, n_err):
