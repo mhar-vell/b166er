@@ -54,11 +54,21 @@ ESTADOS = ['STOW_INIT', 'SEARCH', 'APPROACH', 'REFINE', 'DEPLOY',
 # Fases cartesianas do MANIPULATE (PHASE_ORDER em chave_mission.py).
 FASES = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
          'destrava', 'libera', 'arco1', 'arco2', 'desengata']
+# NOMES EM INGLÊS NO PAINEL, como os estados (Marco, 2026-09-03: "se
+# estamos usando as palavras em ingles para os estados porque não usar
+# também para as fases do manipulate?"). Só a exibição: o YAML, o
+# PHASE_ORDER e os logs continuam com os nomes em português — renomear
+# tudo é outra mudança, maior, se ele quiser.
+FASES_EN = {'orienta': 'ORIENT', 'aproxima_lateral': 'SIDE_APPROACH',
+            'atravessa': 'INSERT', 'captura': 'CAPTURE',
+            'destrava': 'UNLATCH', 'libera': 'RELEASE',
+            'arco1': 'ARC1', 'arco2': 'ARC2', 'desengata': 'DISENGAGE',
+            'saida_eixo': 'EXIT_AXIS'}
 # Abreviações da trilha: só a fase ATUAL sai por extenso.
-FASES_ABREV = {'orienta': 'ORI', 'aproxima_lateral': 'APROX',
-               'atravessa': 'ATRAV', 'captura': 'CAPT', 'destrava': 'DESTR',
-               'libera': 'LIB', 'arco1': 'ARC1', 'arco2': 'ARC2',
-               'desengata': 'DESENG'}
+FASES_ABREV = {'orienta': 'ORI', 'aproxima_lateral': 'SIDE',
+               'atravessa': 'INS', 'captura': 'CAPT', 'destrava': 'UNL',
+               'libera': 'REL', 'arco1': 'ARC1', 'arco2': 'ARC2',
+               'desengata': 'DIS'}
 
 V, R, A, C, N, F = ('\033[32m', '\033[31m', '\033[33m', '\033[90m',
                     '\033[1m', '\033[0m')
@@ -145,7 +155,7 @@ class Hud(object):
             self.q = [math.degrees(d[x]) for x in nn]
 
     # ── desenho ──────────────────────────────────────────────────────
-    def _trilha(self, atual, seq, apagada=False, abrev=None):
+    def _trilha(self, atual, seq, apagada=False, abrev=None, nomes=None):
         """✓ já passou · ▶ atual · · pendente. Devolve LINHAS que cabem
         no quadro, todas cinza se a missão já acabou.
 
@@ -158,10 +168,11 @@ class Hud(object):
             i_at = seq.index(atual)
         else:
             i_at = -1
+        nomes = nomes or {}
         def rot(i, nome):
             if abrev and i != i_at:
                 return abrev.get(nome, nome)
-            return nome
+            return nomes.get(nome, nome)
         itens = []
         for i, nome in enumerate(seq):
             if apagada:
@@ -170,11 +181,12 @@ class Hud(object):
             elif i_at >= 0 and i < i_at:
                 itens.append(V + '✓' + rot(i, nome) + F)
             elif i == i_at:
-                itens.append(N + A + '▶' + nome + F)
+                itens.append(N + A + '▶' + rot(i, nome) + F)
             else:
                 itens.append(C + '·' + rot(i, nome) + F)
         if i_at < 0 and atual and atual != '—':
-            itens.append((C if apagada else N + A) + '▶' + atual + F)
+            itens.append((C if apagada else N + A) + '▶'
+                         + nomes.get(atual, atual) + F)
         larg = LARG - 12
         linhas, atual_l = [], ''
         for it in itens:
@@ -239,7 +251,8 @@ class Hud(object):
         # campo.
         self._campo_trilha('FASE MANIP.', self._trilha(st.get('fase', '—'),
                                                        FASES, encerrada,
-                                                       abrev=FASES_ABREV))
+                                                       abrev=FASES_ABREV,
+                                                       nomes=FASES_EN))
         if self.gatilho is not None:
             l_mm, b_deg = self.gatilho
             cor_l = V if l_mm >= 12.0 else (A if l_mm > 1.0 else C)
