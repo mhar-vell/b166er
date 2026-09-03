@@ -146,6 +146,27 @@ class FuzzyWBController:
         self._rate_hz = rospy.get_param('~rate',          20.0)
         self._nonholo = rospy.get_param('~nonholonomic',  True)
         self._ns_gain = rospy.get_param('~null_space_gain', K_NULL)
+        # PONDERAÇÃO CIENTE DE BATENTE (2026-09-03, Chan & Dubey 1995).
+        # Na variante de ponta os pesos eram fixos (base 12, juntas 1) e
+        # a pseudo-inversa não sabia dos limites: na bateria híbrida o J4
+        # ficou no batente de 110° enquanto o comando continuava pedindo
+        # mais, a parcela da tarefa se perdia e a base recebia só o piso
+        # de 10 mm/s — 11 mm em profundidade levavam 10-20 s. Agora o
+        # custo de cada junta cresce ao se aproximar do limite, só
+        # quando o movimento a leva para lá, e a solução redistribui o
+        # movimento para quem ainda tem curso, inclusive a base.
+        # RESULTADO DA BATERIA (runs 36-40, híbrido): 4/5, contra 5/5 sem
+        # os pesos (runs 31-35). Os pesos atuaram (J4 a 100 no log), mas
+        # a base seguiu no piso de 10 mm/s e o J4 ainda encostou no
+        # batente na run que falhou: perto do alvo o escalonador Fuzzy
+        # está na banda NEAR (k_pos 0,1-0,35), a velocidade cartesiana
+        # pedida é de poucos mm/s e a parte da base, mesmo redistribuída,
+        # fica abaixo do piso. O gargalo é o ganho na banda NEAR somado à
+        # fração da base, não só o custo das juntas. Fica implementado e
+        # DESLIGADO por padrão até haver evidência de ganho.
+        self._limit_aware = rospy.get_param('~limit_aware_weights', False)
+        self._limit_w_cap = rospy.get_param('~limit_weight_cap', 100.0)
+        self._grad_prev = None
 
         # Tolerâncias de parada
         self._tol_pos    = rospy.get_param('~tol_pos',    0.005)   # m
@@ -380,6 +401,29 @@ class FuzzyWBController:
                       msg.pose.position.z)
 
     # ------------------------------------------------------------------
+    def _pesos_batente(self, q_arm):
+        """Pesos w_i >= 1 das juntas do braço, à la Chan & Dubey (1995):
+        w_i = 1 + |dH/dq_i| quando a junta está indo PARA o batente
+        (|dH/dq_i| crescendo em relação ao ciclo anterior), 1 quando se
+        afasta. H é o custo clássico de limite,
+            H = Σ (q_max−q_min)² / [4 (q_max−q)(q−q_min)],
+        que vale 1 no centro do curso e explode nos limites. O peso é
+        limitado a ~limit_weight_cap para a matriz não degenerar.
+        """
+        q = np.clip(np.asarray(q_arm, dtype=float),
+                    JOINT_LOWER + 1e-3, JOINT_UPPER - 1e-3)
+        rng = JOINT_UPPER - JOINT_LOWER
+        grad = np.abs(rng ** 2 * (2.0 * q - JOINT_UPPER - JOINT_LOWER)
+                      / (4.0 * (JOINT_UPPER - q) ** 2 * (q - JOINT_LOWER) ** 2))
+        if self._grad_prev is None:
+            indo = np.zeros_like(grad, dtype=bool)
+        else:
+            indo = grad > self._grad_prev
+        self._grad_prev = grad
+        w = np.ones_like(grad)
+        w[indo] = 1.0 + grad[indo]
+        return np.minimum(w, self._limit_w_cap)
+
     def _update_delta_err(self, err_total_norm, now):
         """Estima d(||err||)/dt via diferença de primeira ordem."""
         if self._err_prev is None or self._t_prev is None:
@@ -675,14 +719,26 @@ class FuzzyWBController:
                 if sp > MAX_CART_VEL_LOCKED:
                     xdot = xdot * (MAX_CART_VEL_LOCKED / sp)
 
+                # DLS PONDERADO: q̇ = W⁻¹Jᵀ(JW⁻¹Jᵀ + λ²I)⁻¹ ẋ
+                # W penaliza a base (BASE_WEIGHT) e, desde 2026-09-03, as
+                # juntas que estão indo para o batente (_pesos_batente).
+                w = np.ones(J_pos.shape[1])
+                w[:3] = BASE_WEIGHT
+                if self._limit_aware:
+                    w_arm = self._pesos_batente(q_arm)
+                    w[3:] = w_arm
+                    if float(np.max(w_arm)) > 5.0:
+                        rospy.loginfo_throttle(1.0,
+                            '[fuzzy_wb] batente: pesos das juntas %s',
+                            np.round(w_arm, 1))
                 if self._base_locked:
-                    J_pin = dls_pseudoinverse(J_pos, lam)
-                    q_dot = J_pin @ xdot
+                    Jl = J_pos[:, 3:]
+                    Winv = np.diag(1.0 / w[3:])
+                    JW = Jl @ Winv
+                    q_dot = np.zeros(J_pos.shape[1])
+                    q_dot[3:] = Winv @ Jl.T @ np.linalg.solve(
+                        JW @ Jl.T + lam**2 * np.eye(3), xdot)
                 else:
-                    # DLS PONDERADO: q̇ = W⁻¹Jᵀ(JW⁻¹Jᵀ + λ²I)⁻¹ ẋ
-                    # W penaliza a base (ver BASE_WEIGHT).
-                    w = np.ones(J_pos.shape[1])
-                    w[:3] = BASE_WEIGHT
                     Winv = np.diag(1.0 / w)
                     JW = J_pos @ Winv
                     q_dot = Winv @ J_pos.T @ np.linalg.solve(
