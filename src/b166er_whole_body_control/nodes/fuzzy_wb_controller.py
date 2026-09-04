@@ -239,6 +239,13 @@ class FuzzyWBController:
 
         # Motor Fuzzy
         self._fuzzy = FuzzyGain()
+        # LINHA DE BASE (2026-09-03): ~fixed_gains = [k_pos, k_orient, lambda]
+        # substitui a saída do Mamdani por três constantes, para medir o
+        # que o escalonador de fato compra. Lido a cada vez que o laço
+        # ASSUME (/b166er/wb_enable true), não só na subida: assim o launch
+        # da missão troca a linha de base entre baterias sem reiniciar o
+        # stack. Lista vazia (padrão) = Fuzzy.
+        self._fixed_gains = None
 
         # Publicadores
         self._pub_cmdvel  = rospy.Publisher('/cmd_vel',
@@ -412,6 +419,21 @@ class FuzzyWBController:
             rospy.loginfo('[fuzzy_wb_ctrl] %s /cmd_vel',
                           'assumindo' if msg.data else 'liberando (stand-down)')
         self._wb_enabled = msg.data
+        if msg.data:
+            fg = rospy.get_param('~fixed_gains', [])
+            if isinstance(fg, str):
+                try:
+                    fg = [float(x) for x in fg.strip('[] ').split(',') if x.strip()]
+                except ValueError:
+                    fg = []
+            if fg and len(fg) == 3:
+                self._fixed_gains = (float(fg[0]), float(fg[1]), float(fg[2]))
+                rospy.logwarn('[fuzzy_wb_ctrl] LINHA DE BASE: ganhos fixos '
+                              'k_pos=%.2f k_orient=%.2f lambda=%.3f (Mamdani '
+                              'desligado)', *self._fixed_gains)
+            else:
+                self._fixed_gains = None
+                rospy.loginfo('[fuzzy_wb_ctrl] ganhos pelo escalonador Fuzzy')
         if not msg.data:
             # Zera o braço ao sair: navegação acontece com o braço parado.
             self._publish_arm_vel(np.zeros(5), rospy.Time.now())
@@ -662,8 +684,11 @@ class FuzzyWBController:
                 continue
 
             # ---- 2. Ganho Fuzzy ----------------------------------------
-            k_pos, k_orient, lam = self._fuzzy.compute(
-                err_pos_norm, err_orient_norm, self._delta_err)
+            if self._fixed_gains is not None:
+                k_pos, k_orient, lam = self._fixed_gains
+            else:
+                k_pos, k_orient, lam = self._fuzzy.compute(
+                    err_pos_norm, err_orient_norm, self._delta_err)
 
             # Vetor de velocidade cartesiana desejada
             xdot_d = np.concatenate([

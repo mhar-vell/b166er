@@ -64,6 +64,13 @@
        use_wholebody:=true na linha de comando era silenciosamente
        ignorado pelo roslaunch. -->
   <arg name="use_wholebody" default="false"/>
+  <!-- LINHA DE BASE do escalonador Fuzzy (2026-09-03): "[k_pos,k_orient,lambda]"
+       substitui o Mamdani por constantes nas fases whole-body desta
+       missão; "[]" (padrão) mantém o Fuzzy. O controlador relê o
+       parâmetro sempre que assume o laço, então vale sem reiniciar o
+       stack. Ex.: fixed_gains:="[0.8,0.8,0.08]" -->
+  <arg name="fixed_gains" default="[]"/>
+  <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
           type="apriltag_localizer.py" output="screen">
