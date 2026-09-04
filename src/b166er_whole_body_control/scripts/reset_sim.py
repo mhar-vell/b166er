@@ -17,6 +17,7 @@ Sai com código 1 se o robô não estabilizar nivelado, para a bateria
 parar em vez de gerar execuções inúteis.
 """
 
+import argparse
 import math
 import sys
 import time
@@ -83,7 +84,19 @@ def _erro_postura():
     return max(abs(_wrap(a - b)) for a, b in zip(q, STOW))
 
 
+def _args():
+    # Pose de partida por linha de comando (bateria de poses, 2026-09-04):
+    # o padrão continua sendo a pose do launch; a bateria passa outras
+    # para medir se a missão depende de onde o robô começa.
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('--x', type=float, default=START_X, help='m (padrão %(default)s)')
+    ap.add_argument('--y', type=float, default=START_Y, help='m (padrão %(default)s)')
+    ap.add_argument('--yaw', type=float, default=0.0, help='graus (padrão 0)')
+    return ap.parse_args(rospy.myargv(sys.argv)[1:])
+
+
 def main():
+    args = _args()
     rospy.init_node('reset_sim', anonymous=True, disable_signals=True)
     for s in ('/gazebo/set_model_state', '/gazebo/set_model_configuration',
               '/gazebo/pause_physics', '/gazebo/unpause_physics',
@@ -124,10 +137,11 @@ def main():
     time.sleep(0.5)
     ms = ModelState()
     ms.model_name = 'b166er'
-    ms.pose.position.x = START_X
-    ms.pose.position.y = START_Y
+    ms.pose.position.x = args.x
+    ms.pose.position.y = args.y
     ms.pose.position.z = 0.25
-    ms.pose.orientation.w = 1.0
+    ms.pose.orientation.z = math.sin(math.radians(args.yaw) / 2.0)
+    ms.pose.orientation.w = math.cos(math.radians(args.yaw) / 2.0)
     ms.reference_frame = 'world'
     set_state(ms)
     time.sleep(0.5)
@@ -172,8 +186,8 @@ def main():
     ok = (tilt is not None and tilt < LEVEL_TOL and crit['v'] is False
           and erro_q is not None and erro_q < POSTURA_TOL)
     q_real = _juntas_reais()
-    print('reset: tilt=%.3f rad  critico=%s  erro_postura=%s  q=%s  -> %s'
-          % (tilt if tilt is not None else -1, crit['v'],
+    print('reset: pose=(%.2f, %.2f, %.0f°)  tilt=%.3f rad  critico=%s  erro_postura=%s  q=%s  -> %s'
+          % (args.x, args.y, args.yaw, tilt if tilt is not None else -1, crit['v'],
              ('%.1f°' % math.degrees(erro_q)) if erro_q is not None else '?',
              [round(math.degrees(v), 1) for v in q_real] if q_real else None,
              'OK' if ok else 'FALHOU'))
