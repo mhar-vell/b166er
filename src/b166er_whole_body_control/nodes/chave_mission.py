@@ -287,6 +287,37 @@ class MissionContext(object):
         # em 5 s); 0,5 ≈ 43°. Mais para dentro que isso a tag pequena
         # (~22 px a 1,8 m) vira frontal e volta a ser ambígua.
         self.search_raio_max      = rospy.get_param('~search_raio_max', 0.5)
+        # VISTA OBLÍQUA TAMBÉM POR BAIXO (2026-09-04, bateria de poses de
+        # partida, RELATORIO9). O limite acima só impedia amostrar na
+        # borda; nada impedia amostrar com a tag no CENTRO. Partindo já de
+        # frente para a parede (yaw 90°, tag centrada, sem girar) o
+        # SEARCH devolveu 148,0 / 148,4 / 148,0° para uma parede a 180°:
+        # três vezes o mesmo número, ou seja, não é ruído — é a
+        # ambiguidade do alvo planar visto de frente, em que as duas
+        # soluções do PnP são simétricas em torno do eixo óptico e a
+        # mediana cai sempre na mesma. As três missões abortaram no
+        # APPROACH (standoff calculado 32° torto, tag fora do quadro na
+        # etapa intermediária). Nas partidas em que a base GIRA até a tag
+        # entrar a raio <= 0,5, a vista é oblíqua e o erro foi de 1-4°.
+        #
+        # Regra: a coleta só acontece com a tag na janela
+        # [search_raio_min, search_raio_max]; se ela já estiver mais para
+        # dentro, a base gira (omega fina) até empurrá-la para a janela.
+        # 0,35 ≈ 30° fora do eixo (r = f·θ, f = 285 px, meia-largura 424);
+        # a curva da bancada aceita bem entre 35° e 48°, e a 22° ainda
+        # media 2,96 m para 2,98 reais.
+        self.search_raio_min      = rospy.get_param('~search_raio_min', 0.35)
+        # RECUPERAÇÃO DA TAG NA ETAPA INTERMEDIÁRIA (2026-09-04). Quando o
+        # yaw do SEARCH vem torto o bastante (>= 27° nas 4 falhas da
+        # bateria de poses), o standoff intermediário deixa a tag fora
+        # do quadro e a remedida fica com 0 amostras — e a missão
+        # abortava ali, com o robô a 1,3 m de uma tag que estava logo ao
+        # lado. Em vez de abortar: girar no lugar para o lado em que a
+        # parede foi estimada, até a tag voltar ao quadro, levá-la à
+        # janela oblíqua e remedir. Não é uma segunda vista: é a mesma
+        # remedida, com alguém para responder. Tempo máximo do giro
+        # (uma volta a search_omega leva ~18 s).
+        self.recupera_timeout     = rospy.get_param('~recupera_timeout', 30.0)
         # Recuo da BASE entre a saída pelo eixo e o recolhimento do braço.
         # Ver _afasta_da_parede: sem ele a rampa do stow leva a ferramenta
         # 100-120 mm para dentro da placa da chave.
@@ -1241,8 +1272,8 @@ class Search(smach.State):
 
         rospy.loginfo('[mission] SEARCH — girando à procura da tag...')
         rospy.loginfo('[mission] SEARCH: amostra quando a tag estiver a raio '
-                      '<= %.2f do quadro (omega fina %.2f rad/s)',
-                      ctx.search_raio_max, ctx.search_omega_fina)
+                      '%.2f-%.2f do quadro (vista oblíqua; omega fina %.2f rad/s)',
+                      ctx.search_raio_min, ctx.search_raio_max, ctx.search_omega_fina)
         rate = rospy.Rate(ctx.rate_hz)
         t0 = rospy.Time.now()
         while not rospy.is_shutdown():
@@ -1364,9 +1395,13 @@ class Approach(smach.State):
                 rospy.sleep(1.0)
                 if not _sample_wall(ctx, ctx.refine_samples,
                                     ctx.refine_timeout, 'APPROACH/remedida'):
-                    rospy.logerr('[mission] APPROACH: perdi a tag na etapa '
-                                 'intermediária')
-                    return 'failed'
+                    # Antes abortava aqui (4 das 24 execuções da bateria
+                    # de poses, todas com o yaw do SEARCH >= 27° torto).
+                    # Ver recupera_timeout.
+                    if not _recupera_tag(ctx, 'APPROACH/remedida'):
+                        rospy.logerr('[mission] APPROACH: perdi a tag na etapa '
+                                     'intermediária')
+                        return 'failed'
         if ctx.recolhe_para_andar:
             # O REFINE mede parado: volta à postura alinhada, que é a que
             # põe a tag no centro do quadro.
@@ -2075,23 +2110,28 @@ def _raio_tag(ctx, max_idade=0.5):
 
 
 def _centra_tag_girando(ctx):
-    """Depois da primeira detecção, segue girando devagar até a tag sair da
-    borda do quadro (raio <= ~search_raio_max). Ver o comentário em
-    search_raio_max: na borda o PnP mede 0,4-1,0 m curto; entre 22 e 48
-    graus fora do eixo erra centímetros. Se a tag sumir ou o tempo
-    esgotar, devolve com a base onde estiver — a amostragem segue como
-    antes."""
+    """Depois da primeira detecção, segue girando devagar até a tag ficar
+    na janela oblíqua do quadro (search_raio_min <= raio <= search_raio_max).
+    Ver os comentários dos dois parâmetros: na borda o PnP mede 0,4-1,0 m
+    curto; no centro a tag plana vira frontal e o yaw sai ambíguo (-32°
+    sistemático na bateria de poses). Se a tag sumir ou o tempo esgotar,
+    devolve com a base onde estiver — a amostragem segue como antes."""
     r = _raio_tag(ctx)
-    if r is None or r <= ctx.search_raio_max:
+    if r is None or ctx.search_raio_min <= r <= ctx.search_raio_max:
         return
-    rospy.loginfo('[mission] SEARCH: tag a raio %.2f — girando até <= %.2f',
-                  r, ctx.search_raio_max)
+    if r > ctx.search_raio_max:
+        rospy.loginfo('[mission] SEARCH: tag a raio %.2f — girando até <= %.2f',
+                      r, ctx.search_raio_max)
+    else:
+        rospy.loginfo('[mission] SEARCH: tag FRONTAL a raio %.2f — girando até '
+                      '>= %.2f (vista oblíqua, yaw sem ambiguidade)',
+                      r, ctx.search_raio_min)
     rate = rospy.Rate(ctx.rate_hz)
     t0 = rospy.Time.now()
     perdida_desde = None
     while not rospy.is_shutdown():
         r = _raio_tag(ctx)
-        if r is not None and r <= ctx.search_raio_max:
+        if r is not None and ctx.search_raio_min <= r <= ctx.search_raio_max:
             rospy.loginfo('[mission] SEARCH: tag a raio %.2f — parando', r)
             return
         if r is None:
@@ -2109,6 +2149,39 @@ def _centra_tag_girando(ctx):
             return
         ctx.drive(0.0, ctx.search_omega_fina)
         rate.sleep()
+
+
+def _recupera_tag(ctx, tag):
+    """A remedida ficou sem amostras: gira no lugar, para o lado em que a
+    parede foi estimada, até a tag voltar ao quadro; leva-a à janela
+    oblíqua e remede. Ver recupera_timeout. False se a tag não aparecer
+    ou se a remedida falhar de novo."""
+    x, y, yaw = ctx.base_pose()
+    rumo = math.atan2(ctx.wall_pos[1] - y, ctx.wall_pos[0] - x)
+    lado = 1.0 if math.atan2(math.sin(rumo - yaw), math.cos(rumo - yaw)) >= 0 else -1.0
+    rospy.logwarn('[mission] %s: sem amostras — recuperando a tag: girando '
+                  '%s no lugar (até %.0fs)', tag,
+                  'à esquerda' if lado > 0 else 'à direita', ctx.recupera_timeout)
+    ctx.wall_pose = None
+    rate = rospy.Rate(ctx.rate_hz)
+    t0 = rospy.Time.now()
+    while not rospy.is_shutdown():
+        if ctx.wall_pose is not None:
+            _centra_tag_girando(ctx)
+            ctx.stop_base()
+            rospy.loginfo('[mission] %s: tag reencontrada em %.1fs — remedindo',
+                          tag, (rospy.Time.now() - t0).to_sec())
+            rospy.sleep(1.0)
+            return _sample_wall(ctx, ctx.refine_samples, ctx.refine_timeout,
+                                tag + '/recuperada')
+        if (rospy.Time.now() - t0).to_sec() > ctx.recupera_timeout:
+            ctx.stop_base()
+            rospy.logerr('[mission] %s: tag não reapareceu em %.0fs de giro',
+                         tag, ctx.recupera_timeout)
+            return False
+        ctx.drive(0.0, lado * ctx.search_omega)
+        rate.sleep()
+    return False
 
 
 def _sample_wall(ctx, n_wanted, timeout, tag):
