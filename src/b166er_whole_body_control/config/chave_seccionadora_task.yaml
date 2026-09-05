@@ -75,7 +75,9 @@
 # deriva_eixo_max_m (2026-09-04): o olhal não se move ao longo do eixo da
 # chave; se a ponta derivar mais que isso nesse eixo desde a captura, ela
 # deixou de carregar o anel e a fase falha (run8 da bateria de poses:
-# +20 mm de deriva, lâmina em 8,9°, "trajetória fechou"). Sucessos: ≤ 2,4 mm.
+# +20 mm de deriva, lâmina em 8,9°, "trajetória fechou"). Sucessos: ≤ 2,4 mm
+# no fecho das fases. 15 mm = folga geométrica: furo oval 40 x 30, dedo
+# ~10 mm (10 mm abortou uma execução que deslizou 10,7 dentro da folga).
 # soltura_recuo_min_m: indicador de soltura registrado no arco1 — recuo
 # desde a captura além do curso com gatilho preso (~31 mm), eixo estável.
 chave_seccionadora_task:
@@ -242,7 +244,7 @@ chave_seccionadora_task:
   # olhal andar 20. É movimento do BRAÇO (PHASES_SO_BRACO): 3 cm é
   # pouco para as rodas fazerem com precisão, e a base entra no arco.
   libera:
-    deriva_eixo_max_m: 0.010
+    deriva_eixo_max_m: 0.015
     modo: wb
     offset_xyz_m: [0.0, 0.0300, -0.0250]
     tol_xyz_m: [0.040, 0.008, 0.006]
@@ -263,7 +265,7 @@ chave_seccionadora_task:
   # captura mudou para −10 em 02/09 e os arcos não acompanharam; a
   # tolerância de 15 mm em altura escondeu a diferença.
   arco1:
-    deriva_eixo_max_m: 0.010
+    deriva_eixo_max_m: 0.015
     soltura_recuo_min_m: 0.040
     modo: wb
     # Já engatado: o arame repousa sobre o degrau e a folga em altura
@@ -272,7 +274,7 @@ chave_seccionadora_task:
     offset_xyz_m: [0.0, 0.0518, -0.0318]
     blade_angle_deg: 15
   arco2:
-    deriva_eixo_max_m: 0.010
+    deriva_eixo_max_m: 0.015
     modo: wb
     tol_xyz_m: [0.040, 0.010, 0.015]
     offset_xyz_m: [0.0, 0.1000, -0.0518]

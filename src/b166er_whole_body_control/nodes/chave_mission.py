@@ -2588,6 +2588,14 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         # ultrapassar: não há arco a executar sem o anel.
         cfg_deriva = cfg_fase.get('deriva_eixo_max_m')
         cfg_deriva = float(cfg_deriva) if cfg_deriva is not None else None
+        # A régua é GEOMÉTRICA, não estatística: o furo do olhal é oval,
+        # 40 x 30 mm, e o dedo tem ~10 mm, então a ponta pode deslizar
+        # ±15 mm no eixo SEM sair do anel. 10 mm (a primeira escolha, pela
+        # dispersão dos sucessos) abortou uma execução em que a ponta
+        # deslizou 10,7 mm dentro da folga logo depois de um destrava em
+        # que o punho cedeu (2026-09-04, bateria_soltura run2). Persistência
+        # de 5 amostras para não disparar num transitório.
+        deriva_fora = 0
         tol_fase = _tolerancia_da_fase(ctx, phase)[0]
         if tol_fase is None:
             tol_fase = np.array([ctx.tol_pos] * 3)
@@ -2624,7 +2632,8 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 pose_agora = _pose_na_parede(ctx, _tooltip_now(ctx))
                 deriva = float(pose_agora[0] - ctx.pose_captura[0])
                 ctx.status(deriva_eixo_mm=deriva * 1000)
-                if abs(deriva) > cfg_deriva:
+                deriva_fora = deriva_fora + 1 if abs(deriva) > cfg_deriva else 0
+                if deriva_fora >= 5:
                     rospy.logerr('[mission] fase "%s": ferramenta PERDEU O OLHAL '
                                  '— ponta derivou %+.1f mm ao longo do eixo da '
                                  'chave desde a captura (máx %.0f); o anel não '
