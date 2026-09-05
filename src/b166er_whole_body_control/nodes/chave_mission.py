@@ -545,6 +545,9 @@ class MissionContext(object):
         # fechou: é o zero do critério observável do destrava. Ver
         # _fase_fechou e a nota em chave_seccionadora_task.yaml.
         self.alt_captura = None
+        # Pose da ponta (eixo, prof, alt) no frame da parede ao fechar a
+        # captura — referência da deriva de eixo (ver deriva_eixo_max_m).
+        self.pose_captura = None
         self.offset_efetivo = None   # offset da fase corrente, já ajustado
         if self.use_wholebody and self.modo_fases == 'yaml':
             self.modo_fases = 'wb'
@@ -1785,11 +1788,14 @@ class Manipulate(smach.State):
             if phase == 'captura':
                 # Zero do critério observável do destrava: onde a ponta
                 # parou quando o degrau apoiou no arame.
-                ctx.alt_captura = _alt_na_parede(ctx, _tooltip_now(ctx))
-                ctx.status(alt_captura_mm=ctx.alt_captura * 1000)
-                rospy.loginfo('[mission] captura: altura da ponta registrada '
-                              'em %+.1f mm (zero da descida do destrava)',
-                              ctx.alt_captura * 1000)
+                ctx.pose_captura = _pose_na_parede(ctx, _tooltip_now(ctx))
+                ctx.alt_captura = float(ctx.pose_captura[2])
+                ctx.status(alt_captura_mm=ctx.alt_captura * 1000,
+                           eixo_captura_mm=ctx.pose_captura[0] * 1000)
+                rospy.loginfo('[mission] captura: ponta registrada em eixo=%+.1f '
+                              'prof=%+.1f alt=%+.1f mm (zero da descida do '
+                              'destrava e da deriva de eixo)',
+                              *(ctx.pose_captura * 1000))
             if phase == 'destrava':
                 desc = None
                 if ctx.alt_captura is not None:
@@ -1993,6 +1999,13 @@ def _modo_da_fase(ctx, phase):
                       phase, modo)
         return 'ik'
     return modo
+
+
+def _pose_na_parede(ctx, p_world):
+    """Ponto do mundo no frame da parede, relativo ao centro do olhal
+    estimado: (eixo, prof, alt) em m."""
+    olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)
+    return ctx.wall_R.T @ (np.asarray(p_world, dtype=float) - olhal)
 
 
 def _alt_na_parede(ctx, p_world):
@@ -2563,6 +2576,18 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         cfg_fase = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
         cfg_curso = cfg_fase.get('curso_min_m')
         cfg_estagna = float(cfg_fase.get('curso_estagna_m', 0.010))
+        # A FERRAMENTA AINDA CARREGA O OLHAL? (2026-09-04, run8 da bateria
+        # de poses). O olhal não se move ao longo do eixo da chave — está
+        # preso à dobradiça da lâmina. Se a PONTA se desloca nesse eixo
+        # depois da captura, ela deixou de carregar o anel: na run8 o eixo
+        # foi de +7,2 mm (captura) para +27,2 no fecho do libera e +29,6
+        # no arco1, a lâmina parou em 8,9° e a missão declarou "trajetória
+        # fechou" porque a tolerância de eixo (40 mm) não vê isso. Nos 27
+        # sucessos do mesmo dia a deriva máxima foi 2,4 mm. Medido pela
+        # T265, vale na bancada. Fase com deriva_eixo_max_m FALHA ao
+        # ultrapassar: não há arco a executar sem o anel.
+        cfg_deriva = cfg_fase.get('deriva_eixo_max_m')
+        cfg_deriva = float(cfg_deriva) if cfg_deriva is not None else None
         tol_fase = _tolerancia_da_fase(ctx, phase)[0]
         if tol_fase is None:
             tol_fase = np.array([ctx.tol_pos] * 3)
@@ -2595,6 +2620,18 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                            e_eixo_mm=e_parede[0] * 1000,
                            e_prof_mm=e_parede[1] * 1000,
                            e_alt_mm=e_parede[2] * 1000, erro_m=n_err)
+            if cfg_deriva is not None and ctx.pose_captura is not None:
+                pose_agora = _pose_na_parede(ctx, _tooltip_now(ctx))
+                deriva = float(pose_agora[0] - ctx.pose_captura[0])
+                ctx.status(deriva_eixo_mm=deriva * 1000)
+                if abs(deriva) > cfg_deriva:
+                    rospy.logerr('[mission] fase "%s": ferramenta PERDEU O OLHAL '
+                                 '— ponta derivou %+.1f mm ao longo do eixo da '
+                                 'chave desde a captura (máx %.0f); o anel não '
+                                 'anda nesse eixo', phase, deriva * 1000,
+                                 cfg_deriva * 1000)
+                    ctx.status(olhal_perdido=1)
+                    return False
             # ESTAGNAÇÃO = FIM DE CURSO (2026-09-03). A sonda da run62
             # mostrou o que acontece quando a fase de descida continua
             # empurrando depois que o anel bateu no fim de curso: J2/J3
@@ -2648,6 +2685,27 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                         rospy.loginfo('[mission] fase "%s" alcançada por '
                                       'whole-body em %.1fs (%.4f m)', phase,
                                       (rospy.Time.now() - t0).to_sec(), n_err)
+                    # SOLTURA OBSERVÁVEL (2026-09-04). Com o gatilho preso o
+                    # olhal só recua ~31 mm (aba encosta no laço, lâmina
+                    # ~9°) — o mesmo que o alvo do libera, que por isso
+                    # fecha com ou sem soltura. O que só acontece SOLTO é
+                    # o anel seguir além disso com a ponta ainda nele: recuo
+                    # desde a captura ≥ soltura_recuo_min_m com o eixo
+                    # estável. Registrado no arco1, medível pela T265.
+                    cfg_solt = cfg_fase.get('soltura_recuo_min_m')
+                    if cfg_solt is not None and ctx.pose_captura is not None:
+                        pose_agora = _pose_na_parede(ctx, _tooltip_now(ctx))
+                        recuo = float(pose_agora[1] - ctx.pose_captura[1])
+                        deriva = float(pose_agora[0] - ctx.pose_captura[0])
+                        soltou = (recuo >= float(cfg_solt)
+                                  and (cfg_deriva is None or abs(deriva) <= cfg_deriva))
+                        rospy.loginfo('[mission] %s: SOLTURA observável — recuo '
+                                      '%.1f mm desde a captura (mín %.0f) com '
+                                      'deriva de eixo %+.1f mm → %s', phase,
+                                      recuo * 1000, float(cfg_solt) * 1000,
+                                      deriva * 1000,
+                                      'SOLTA' if soltou else 'NÃO SOLTA')
+                        ctx.status(soltura=1 if soltou else 0, recuo_mm=recuo * 1000)
                     ok = True
                     return True
             else:
