@@ -1,0 +1,36 @@
+# Baterias de simulação da chave seccionadora — relatórios e ferramentas
+
+Relatórios, scripts de bateria, analisadores e dados pequenos (índices,
+tabelas, JSONL, CSV < 300 kB) das baterias de 02–08 Set 2026. Viviam na
+pasta da sessão do assistente; entraram no pacote em 08 Set 2026 por
+decisão do Marco ("pode mandar o /docs"). Logs de rosout, CSVs grandes de
+sonda e imagens de origem externa ficaram de fora.
+
+Todos os números citados no artigo (Seções IV-D, IV-E e V-A) saem daqui.
+
+| # | relatório | pasta | o que mede |
+|---|---|---|---|
+| 1 | `bateria_wb/RELATORIO.md` | bateria_wb | whole-body puro, critério esférico 20 mm: 5/5 (artefato do critério) |
+| 2 | `bateria_wb2/RELATORIO2.md` | bateria_wb2 | whole-body puro, régua por eixo: 1/5; destrava fecha sem soltar |
+| 3 | `bateria_hib/RELATORIO3.md` | bateria_hib | híbrido por fase (IK geometria, Fuzzy contato): 5/5 |
+| 4 | `bateria_pond/RELATORIO4.md` | bateria_pond | ponderação ciente de batente (Chan–Dubey): 4/5, base nunca sai do piso |
+| 5 | `bateria_obs18/RELATORIO5.md` | bateria_obs18 | critério observável do destrava (descida ≥ 18 mm): punho colapsa |
+| 6 | `RELATORIO6_item2_profundidade.md` | bateria_estagna* | profundidade no whole-body/keepout; estagnação curta 5/5 punho íntegro |
+| 7 | `bateria_fixos/RELATORIO7_linha_de_base.md` | bateria_fixos | ganhos fixos × Fuzzy nas fases de contato: 5/5 todos |
+| 8 | `aproximacao/RELATORIO8_aproximacao_de_longe.md` | aproximacao | aproximação de longe (1,9 m): ganho importa; chatter da manobra; piso 0,90 |
+| 9 | `poses/RELATORIO9_poses_de_partida.md` | poses | 8 poses × 3: 20/24; busca oblíqua + recuperação → 8/8 |
+| 10 | `soltura/RELATORIO10_indicador_de_soltura.md` | soltura | run8 explicada (deriva de eixo); guarda 15 mm; indicador de soltura 5/5 |
+| 11 | `punho/RELATORIO11_punho_limitado.md` | punho | J4 limitado a 4,2 N·m pela spec do RV-M2: 6/6; libera satura o punho (48 %), destrava não |
+
+## Como reproduzir uma bateria
+
+1. `scripts/sim_stack.sh preflight` (stack de pé, fixture presente, nada pendente).
+2. `poses/run_once_pose.sh N OUT X Y YAW "<args do launch>"` roda UMA missão a
+   partir da pose dada (reset com `--x/--y/--yaw`, confere a pose, lança
+   `chave_mission.launch`, espera `resultado: MISSION_*`).
+3. Os `bateria_*.sh` encadeiam execuções e gravam `indice.csv`; os
+   `analisa_*.py` tabulam a partir dos logs.
+
+Caminhos absolutos dentro dos scripts apontam para a pasta da sessão de
+origem (`~/.claude/jobs/…` e `~/.claude/projects/…/sessoes/…`); ajuste
+antes de reutilizar.
