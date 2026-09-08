@@ -121,7 +121,15 @@ que a simulação prevê (para saber se estamos no regime dela).
 - **Simulação prevê:** 8/8 nas poses que falhavam; erro do SEARCH
   0,1–3,4° de frente, até −24° deslocado; t até 50 mm ~20 s de 1,9 m.
 - **Teto de velocidade:** começar com **0,15 m/s** na base (metade do
-  simulado): a 0,3 m/s com o braço à frente o modelo tombou.
+  simulado): a 0,3 m/s com o braço à frente o modelo tombou. Desde
+  08 Set o controlador tem o teto por postura (RELATORIO13): calcula a
+  margem de tombamento pela postura medida e limita rampa e teto de
+  base+braço. Conferir na bancada que `/b166er/base_cap` acompanha a
+  postura (travel ≈ 0,30 m/s cheio, busca ≈ 0,17, deploy ≈ 0,09) e que a
+  parada ao trocar de alvo é em rampa (0,2–0,4 s), não seca. As massas
+  do modelo (base 13 kg concentrada a 0,15 m) são do URDF, não medidas:
+  se o robô real pesar diferente, ajustar `base_massa`/`base_cg_z` no
+  `b166er_wb.launch` antes de confiar na margem.
 
 ### E5 — Missão completa
 

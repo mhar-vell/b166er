@@ -295,6 +295,25 @@
       <param name="align_min_planar_dist" value="0.90"/>
       <param name="align_max_duration"    value="8.0"/>
       <param name="align_k"              value="1.5"/>
+      <!-- Teto de velocidade DEPENDENTE DA POSTURA (2026-09-08). O robô
+           tombou a 0,3 m/s com o braço na postura de busca e passou com
+           o braço recolhido: a margem quase-estática de tombamento
+           (aceleração que leva a resultante ao eixo dianteiro) é
+           1,42 m/s² em travel, 0,92 em search e 0,51 em deploy. O
+           controlador recalcula essa margem a cada ciclo pela postura
+           medida e (1) limita a variação de /cmd_vel a seguranca×margem,
+           (2) escala o teto de velocidade entre a_lo e a_hi (pertinência
+           linear, mínimo s_min). Relido a cada wb_enable: a bateria
+           desliga com rosparam set .../teto_postura/enable false. -->
+      <rosparam param="teto_postura">
+        enable: true
+        a_lo: 0.5
+        a_hi: 1.2
+        s_min: 0.3
+        seguranca: 0.5
+        base_massa: 13.0
+        base_cg_z: 0.15
+      </rosparam>
     </node>
 
   </group>

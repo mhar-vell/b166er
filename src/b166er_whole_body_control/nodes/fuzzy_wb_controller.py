@@ -40,6 +40,7 @@ from tf.transformations import quaternion_matrix
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, T_T265_TOOLTIP,
+    fk_arm_joint_frames, _LINK_MASSES,
     whole_body_jacobian, arm_jacobian_world,
     dls_pseudoinverse, null_space_projector,
     joint_limit_gradient,
@@ -97,6 +98,56 @@ K_NULL       = 0.3    # ganho do objetivo secundário (espaço nulo)
 # (10 mm/s ÷ 20 Hz = 0,5 mm).
 MIN_BASE_LIN = 0.010  # m/s
 
+# ---------------------------------------------------------------------------
+# Teto de velocidade DEPENDENTE DA POSTURA (2026-09-08)
+# ---------------------------------------------------------------------------
+# O robô tombou a 0,3 m/s / 0,5 rad/s com o braço na postura de busca
+# (2026-09-03, exp_aproximacao): a manobra girar-avançar trocava de
+# estado 5 vezes em 25 s e cada troca zerava a velocidade linear de uma
+# vez. Com o braço recolhido (travel) o mesmo teste passou. A diferença
+# não é a velocidade — é a MARGEM DE TOMBAMENTO, que depende de onde o
+# CG do conjunto está para cada postura do braço.
+#
+# Modelo quase-estático: a resultante (peso + pseudo-força da
+# aceleração) sai do polígono de apoio quando a·z_cg > g·(borda − x_cg).
+# Logo a aceleração horizontal admissível é a_max = g·(borda − x_cg)/z_cg,
+# calculada a cada ciclo para a postura medida. O que o teto faz:
+#   1. limita a VARIAÇÃO de cmd_vel a a_max·dt (rampa) — é a frenagem
+#      seca que tomba, não a velocidade de cruzeiro;
+#   2. reduz o teto de velocidade em proporção à margem (uma função de
+#      pertinência linear entre a_lo e a_hi), para que com o braço
+#      estendido o robô também ande mais devagar;
+#   3. limita v·ω (centrípeta) à mesma margem lateral.
+# Rodas do Pioneer 3-AT no URDF (pioneer.urdf): ±0,20 m em x, ±0,17 m em y.
+WHEEL_X = 0.20
+WHEEL_Y = 0.17
+G_ACC   = 9.81
+
+
+def margem_tombamento(q_arm, base_massa, base_cg_z):
+    """Aceleração horizontal admissível (m/s²) para a postura q_arm.
+
+    CG do braço = massas dos elos (_LINK_MASSES) no ponto médio entre
+    os quadros consecutivos das juntas (fk_arm_joint_frames), base
+    concentrada em (0, 0, base_cg_z) de base_link. Devolve
+    (a_frente, a_tras, a_lateral, x_cg, y_cg, z_cg): frear tomba sobre
+    o eixo dianteiro, acelerar sobre o traseiro, girar/curvar sobre o
+    lado.
+    """
+    frames, T_ee = fk_arm_joint_frames(np.asarray(q_arm, dtype=float))
+    origens = [(T_BASELINK_ARM @ np.asarray(T))[:3, 3] for T in list(frames) + [T_ee]]
+    cg = base_massa * np.array([0.0, 0.0, base_cg_z])
+    m_tot = base_massa
+    for j, mj in enumerate(_LINK_MASSES):
+        cg += mj * 0.5 * (origens[j] + origens[j + 1])
+        m_tot += mj
+    cg /= m_tot
+    z = max(cg[2], 0.05)
+    a_frente = G_ACC * (WHEEL_X - cg[0]) / z
+    a_tras   = G_ACC * (WHEEL_X + cg[0]) / z
+    a_lat    = G_ACC * (WHEEL_Y - abs(cg[1])) / z
+    return a_frente, a_tras, a_lat, cg[0], cg[1], cg[2]
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -116,12 +167,6 @@ def _pose_stamped_to_matrix(ps):
     T = quaternion_matrix([o.x, o.y, o.z, o.w])
     T[:3, 3] = [p.x, p.y, p.z]
     return T
-
-
-def _saturate_base(v_lin, v_ang):
-    v_lin = float(np.clip(v_lin, -MAX_BASE_LIN, MAX_BASE_LIN))
-    v_ang = float(np.clip(v_ang, -MAX_BASE_ANG, MAX_BASE_ANG))
-    return v_lin, v_ang
 
 
 def _lin_floor(v):
@@ -225,6 +270,19 @@ class FuzzyWBController:
         self._align_max_duration    = rospy.get_param('~align_max_duration', 8.0)  # s
         self._maneuver_state        = 'ADVANCE'   # ou 'ALIGN' — histerese entre os dois
         self._align_t_start         = None
+
+        # ---- Teto de velocidade dependente da postura (ver
+        # margem_tombamento). Relido a cada wb_enable, como fixed_gains,
+        # para a bateria ligar/desligar sem reiniciar o stack.
+        self._teto_cfg = self._le_teto_cfg()
+        self._v_cap  = MAX_BASE_LIN
+        self._w_cap  = MAX_BASE_ANG
+        self._a_cap  = float('inf')
+        self._teto_s = 1.0
+        self._cmd_prev   = (0.0, 0.0)   # último (v, ω) publicado, para a rampa
+        self._cmd_prev_t = None
+        self._pub_teto = rospy.Publisher('/b166er/base_cap',
+                                         Float64MultiArray, queue_size=1)
 
         # Estado
         self._robot_state = None
@@ -434,6 +492,12 @@ class FuzzyWBController:
             else:
                 self._fixed_gains = None
                 rospy.loginfo('[fuzzy_wb_ctrl] ganhos pelo escalonador Fuzzy')
+            self._teto_cfg = self._le_teto_cfg()
+            rospy.loginfo('[fuzzy_wb_ctrl] teto por postura: %s',
+                          'ligado a_lo=%.2f a_hi=%.2f s_min=%.2f seguranca=%.2f'
+                          % (self._teto_cfg['a_lo'], self._teto_cfg['a_hi'],
+                             self._teto_cfg['s_min'], self._teto_cfg['seguranca'])
+                          if self._teto_cfg['enable'] else 'DESLIGADO')
         if not msg.data:
             # Zera o braço ao sair: navegação acontece com o braço parado.
             self._publish_arm_vel(np.zeros(5), rospy.Time.now())
@@ -498,22 +562,138 @@ class FuzzyWBController:
         return v_fwd, omega
 
     # ------------------------------------------------------------------
+    # Teto de velocidade dependente da postura
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _le_teto_cfg():
+        c = rospy.get_param('~teto_postura', {}) or {}
+        return {
+            'enable':     bool(c.get('enable', True)),
+            # Margem (m/s²) abaixo da qual o teto cai ao mínimo, e acima
+            # da qual fica cheio; s_min é o mínimo do fator de escala.
+            # Régua medida com margem_tombamento (2026-09-08): frear com
+            # o braço em travel admite 1,42 m/s², stow 1,09, search 0,92
+            # (tombou a 0,3 m/s), deploy 0,51. Entre 0,5 e 1,2: travel
+            # anda com o teto cheio, search com 60% (0,18 m/s), deploy no
+            # mínimo.
+            'a_lo':       float(c.get('a_lo', 0.5)),
+            'a_hi':       float(c.get('a_hi', 1.2)),
+            's_min':      float(c.get('s_min', 0.3)),
+            # Fração da margem quase-estática usada como rampa (o modelo
+            # ignora suspensão, folga das rodas e o transiente do ODE).
+            'seguranca':  float(c.get('seguranca', 0.5)),
+            # Base concentrada: chassi + rodas + eixos do URDF (~13 kg)
+            # a ~0,15 m do chão (base_link está no piso).
+            'base_massa': float(c.get('base_massa', 13.0)),
+            'base_cg_z':  float(c.get('base_cg_z', 0.15)),
+        }
+
+    def _atualiza_teto(self, q_arm):
+        """Recalcula (v_cap, ω_cap, a_cap) para a postura medida."""
+        c = self._teto_cfg
+        if not c['enable']:
+            self._v_cap, self._w_cap, self._a_cap, self._teto_s = \
+                MAX_BASE_LIN, MAX_BASE_ANG, float('inf'), 1.0
+            return
+        a_f, a_t, a_l, x_cg, y_cg, z_cg = margem_tombamento(
+            q_arm, c['base_massa'], c['base_cg_z'])
+        a_min = max(min(a_f, a_t, a_l), 0.0)
+        s = (a_min - c['a_lo']) / max(c['a_hi'] - c['a_lo'], 1e-6)
+        s = float(np.clip(s, c['s_min'], 1.0))
+        self._teto_s = s
+        self._v_cap  = MAX_BASE_LIN * s
+        self._w_cap  = MAX_BASE_ANG * s
+        self._a_cap  = max(c['seguranca'] * a_min, 0.05)
+        msg = Float64MultiArray()
+        msg.data = [self._v_cap, self._w_cap, self._a_cap, a_f, a_l, x_cg, z_cg]
+        self._pub_teto.publish(msg)
+        if s < 1.0:
+            rospy.loginfo_throttle(5.0,
+                '[fuzzy_wb] teto por postura: margem %.2f m/s² (frente %.2f, '
+                'lado %.2f; CG x=%.3f z=%.3f) -> v<=%.2f m/s w<=%.2f rad/s '
+                'rampa %.2f m/s²', a_min, a_f, a_l, x_cg, z_cg,
+                self._v_cap, self._w_cap, self._a_cap)
+
+    def _limita_base(self, v, w):
+        """Teto por postura + rampa de aceleração + centrípeta.
+
+        Substitui _saturate_base nos caminhos que publicam /cmd_vel com
+        o robô sob controle. As paradas de segurança (inclinação
+        crítica, IK divergente, stand-down) NÃO passam por aqui: usam
+        _zera_base, que corta seco e reinicia a rampa.
+        """
+        v = float(np.clip(v, -self._v_cap, self._v_cap))
+        w = float(np.clip(w, -self._w_cap, self._w_cap))
+        now = rospy.get_time()
+        if self._cmd_prev_t is None or now - self._cmd_prev_t > 0.5:
+            # Primeiro comando depois de uma pausa: a base está parada.
+            self._cmd_prev = (0.0, 0.0)
+        elif np.isfinite(self._a_cap):
+            dt = max(now - self._cmd_prev_t, 1e-3)
+            v0, w0 = self._cmd_prev
+            dv = self._a_cap * dt
+            v = float(np.clip(v, v0 - dv, v0 + dv))
+            # Aceleração tangencial do CG num giro no eixo: ω̇·r, com r
+            # a distância do CG ao eixo; tomamos r ≈ 0,20 m (CG do
+            # conjunto fica dentro do chassi).
+            dw = (self._a_cap / 0.20) * dt
+            w = float(np.clip(w, w0 - dw, w0 + dw))
+        # Centrípeta v·ω dentro da margem lateral.
+        if abs(v * w) > self._a_cap:
+            w = float(np.sign(w) * self._a_cap / max(abs(v), 1e-3))
+        self._cmd_prev, self._cmd_prev_t = (v, w), now
+        return v, w
+
+    def _zera_base(self):
+        """Parada seca de segurança; reinicia a rampa."""
+        self._pub_cmdvel.publish(Twist())
+        self._cmd_prev, self._cmd_prev_t = (0.0, 0.0), rospy.get_time()
+
+    def _escala_wb(self, q_dot, theta):
+        """Escala o vetor whole-body INTEIRO para a base caber no teto.
+
+        Cortar só a base depois do DLS muda a solução: o erro que a base
+        deixa de corrigir continua no laço, o ganho Fuzzy sobe e o braço
+        passa a fazer o que a base não fez — mais rápido e mais
+        estendido (execução de 18:20 em 2026-09-08: base a 0,08 m/s e
+        J3 a 0,33 rad/s com a margem em 0,5 m/s²). Escalar os 8 DOF pelo
+        mesmo fator mantém a direção da solução e deixa a tarefa mais
+        lenta como um todo, que é o que se quer com o braço estendido.
+        A rampa e a centrípeta continuam em _limita_base.
+        """
+        if not self._teto_cfg['enable'] or not self._nonholo:
+            return q_dot
+        v_fwd, omega = self._project_nonholo(q_dot[:3], theta)
+        f = 1.0
+        if abs(v_fwd) > self._v_cap:
+            f = min(f, self._v_cap / abs(v_fwd))
+        if abs(omega) > self._w_cap:
+            f = min(f, self._w_cap / abs(omega))
+        return q_dot * f if f < 1.0 else q_dot
+
+    # ------------------------------------------------------------------
     def _publish_cmd_vel(self, q_dot_base, theta):
         msg = Twist()
         if self._nonholo:
             v, w = self._project_nonholo(q_dot_base, theta)
-            v, w = _saturate_base(v, w)
+            v, w = self._limita_base(v, w)
             msg.linear.x  = _lin_floor(v)
             msg.angular.z = w
         else:
-            msg.linear.x  = _lin_floor(float(np.clip(q_dot_base[0], -MAX_BASE_LIN, MAX_BASE_LIN)))
-            msg.linear.y  = _lin_floor(float(np.clip(q_dot_base[1], -MAX_BASE_LIN, MAX_BASE_LIN)))
-            msg.angular.z = float(np.clip(q_dot_base[2], -MAX_BASE_ANG, MAX_BASE_ANG))
+            msg.linear.x  = _lin_floor(float(np.clip(q_dot_base[0], -self._v_cap, self._v_cap)))
+            msg.linear.y  = _lin_floor(float(np.clip(q_dot_base[1], -self._v_cap, self._v_cap)))
+            msg.angular.z = float(np.clip(q_dot_base[2], -self._w_cap, self._w_cap))
         self._pub_cmdvel.publish(msg)
 
     def _publish_arm_vel(self, q_dot_arm, stamp):
         vmax = (MAX_ARM_VEL_LOCKED
                 if (self._base_locked or self._servo_tooltip) else MAX_ARM_VEL)
+        # Com a base livre o braço também entra no teto por postura: a
+        # pseudo-força que tomba o robô vem do CG do CONJUNTO, e o braço
+        # a 0,8 rad/s move esse CG tanto quanto a base. Nunca abaixo do
+        # teto de manipulação (0,25 rad/s), que já provou bastar.
+        if not (self._base_locked or self._servo_tooltip):
+            vmax = max(MAX_ARM_VEL * self._teto_s, MAX_ARM_VEL_LOCKED)
         # Satura preservando a DIREÇÃO do movimento: clipar junta a junta
         # distorce a trajetória Cartesiana justamente quando o limite
         # morde (várias juntas saturam juntas na largada).
@@ -592,7 +772,12 @@ class FuzzyWBController:
         """
         omega = float(np.clip(self._align_k * heading_error,
                               -MAX_BASE_ANG, MAX_BASE_ANG))
+        # A troca ADVANCE -> ALIGN zerava v de uma vez: com o braço
+        # estendido é exatamente a frenagem que tombou o robô. A rampa
+        # leva v a zero na aceleração admissível para a postura.
+        v, omega = self._limita_base(0.0, omega)
         twist = Twist()
+        twist.linear.x  = v
         twist.angular.z = omega
         self._pub_cmdvel.publish(twist)
         self._publish_arm_vel(np.zeros(5), stamp)
@@ -622,7 +807,7 @@ class FuzzyWBController:
                 # Corte duro: zera base e braço e não calcula mais nada.
                 # Um robô tombando não deve continuar recebendo comando,
                 # qualquer que seja o alvo.
-                self._pub_cmdvel.publish(Twist())
+                self._zera_base()
                 self._publish_arm_vel(np.zeros(5), now)
                 rospy.logerr_throttle(2.0,
                     '[fuzzy_wb] parado por inclinação crítica')
@@ -639,7 +824,7 @@ class FuzzyWBController:
                 continue
 
             if not self._enabled or self._robot_state is None:
-                self._pub_cmdvel.publish(Twist())
+                self._zera_base()
                 rate.sleep()
                 continue
 
@@ -679,7 +864,7 @@ class FuzzyWBController:
                 rospy.loginfo_throttle(2.0,
                     '[fuzzy_wb_ctrl] alvo alcançado — pos=%.4fm ori=%.4frad',
                     err_pos_norm, err_orient_norm)
-                self._pub_cmdvel.publish(Twist())
+                self._zera_base()
                 rate.sleep()
                 continue
 
@@ -700,6 +885,7 @@ class FuzzyWBController:
             T_world_base = _odom_to_matrix(state.base_odom)
             q_arm        = np.array(state.q_arm)
             theta        = float(np.arctan2(T_world_base[1, 0], T_world_base[0, 0]))
+            self._atualiza_teto(q_arm)
 
             # A manobra ALIGN só faz sentido com a base LIVRE — ela gira
             # o chassi e zera o braço. Com a base travada isso trava a
@@ -737,7 +923,7 @@ class FuzzyWBController:
                 # direção errada e passa a caçar o alvo.
                 if not state.ik_converged:
                     self._publish_arm_vel(np.zeros(5), now)
-                    self._pub_cmdvel.publish(Twist())
+                    self._zera_base()
                     rospy.logwarn_throttle(2.0,
                         '[fuzzy_wb] IK não convergiu (res=%.3fm) — parado até '
                         'a estimativa reassentar', state.ik_residual_pos)
@@ -830,9 +1016,10 @@ class FuzzyWBController:
 
                 self._q_dot_prev = q_dot.copy()
                 if self._base_locked:
-                    self._pub_cmdvel.publish(Twist())
+                    self._zera_base()
                     self._publish_arm_vel(q_dot, now)
                 else:
+                    q_dot = self._escala_wb(q_dot, theta)
                     q_dot_base = self._apply_keepout(q_dot[:3], T_world_base[:3, 3], theta)
                     self._publish_cmd_vel(q_dot_base, theta)
                     self._publish_arm_vel(q_dot[3:], now)
@@ -860,6 +1047,7 @@ class FuzzyWBController:
             ])
 
             q_dot_wb = q_dot_task + q_dot_null   # (8,)
+            q_dot_wb = self._escala_wb(q_dot_wb, theta)
 
             # ---- 5. Publica comandos ------------------------------------
             self._publish_cmd_vel(q_dot_wb[:3], theta)

@@ -8,7 +8,7 @@ aponta para +x e a chave está em +y. Uma execução; args: rótulo, ganhos
 menor erro, eventos ALIGN/ADVANCE, |cmd_vel| máx, tombamento."""
 import sys, math, time, json, rospy, numpy as np
 from geometry_msgs.msg import PoseStamped, Twist
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool, String, Float64
 from sensor_msgs.msg import JointState
 from rosgraph_msgs.msg import Log
 from tf.transformations import quaternion_matrix, quaternion_from_matrix
@@ -18,15 +18,16 @@ from b166er_whole_body_control import chave_task
 from b166er_whole_body_control.kinematics import T_T265_TOOLTIP
 
 rotulo, ganhos, saida = sys.argv[1], sys.argv[2], sys.argv[3]
-TOL, SUSTENTA, TIMEOUT = 0.030, 1.0, 120.0   # 30 mm / 0,1 rad: o teste com travel ficou em 23 mm (o tol interno do controlador é 2 mm e ele segue caçando)
+TOL, SUSTENTA, TIMEOUT = 0.030, 1.0, (float(sys.argv[5]) if len(sys.argv) > 5 else 120.0)   # 30 mm / 0,1 rad: o teste com travel ficou em 23 mm (o tol interno do controlador é 2 mm e ele segue caçando)
 WALL_POS = np.array([0.0, 3.0, 0.0]); WALL_R = np.array([[-1, 0, 0], [0, -1, 0], [0, 0, 1]], dtype=float)   # yaw = pi
 ORIENTA = [-0.090, 0.150, 0.0085]
 
 rospy.init_node("exp_aproximacao", anonymous=True)
 rospy.set_param("/fuzzy_wb_controller/fixed_gains", json.loads(ganhos))
-st = {"rs": None, "tilt": False, "align": 0, "advance": 0, "vmax": 0.0, "wmax": 0.0}
+st = {"rs": None, "tilt": False, "align": 0, "advance": 0, "vmax": 0.0, "wmax": 0.0, "tiltmax": 0.0}
 rospy.Subscriber("/b166er/robot_state", RobotState, lambda m: st.__setitem__("rs", m))
 rospy.Subscriber("/b166er/tilt_critical", Bool, lambda m: st.__setitem__("tilt", st["tilt"] or m.data))
+rospy.Subscriber("/b166er/tilt", Float64, lambda m: st.__setitem__("tiltmax", max(st["tiltmax"], m.data)))
 def cb_log(m):
     if "manobra: ADVANCE -> ALIGN" in m.msg: st["align"] += 1
     if "manobra: ALIGN -> ADVANCE" in m.msg or "ALIGN excedeu" in m.msg: st["advance"] += 1
@@ -71,7 +72,12 @@ pe = rs.ee_pose.pose.position; oe = rs.ee_pose.pose.orientation
 T_now = quaternion_matrix([oe.x, oe.y, oe.z, oe.w]); T_now[:3, 3] = [pe.x, pe.y, pe.z]
 dyaw = (math.pi / 2) - yaw0                     # virar para +y (a parede)
 Rz = np.array([[math.cos(dyaw), -math.sin(dyaw), 0], [math.sin(dyaw), math.cos(dyaw), 0], [0, 0, 1]])
-BASE_ALVO = np.array([0.0, 2.2, 0.0])
+# y do alvo da base por argv[6]. O 2,2 original põe a T265 a 0,8 m da
+# parede COM O BRAÇO EM TRAVEL; em search/deploy a ponta da ferramenta
+# fica 0,74 m à frente da base e cai DENTRO do mecanismo da chave
+# (y=2,94 contra 2,92) — as inclinações grandes de 18:20 eram contato
+# com a fixture. Para as posturas estendidas use 1,9 (ponta em 2,64).
+BASE_ALVO = np.array([0.0, float(sys.argv[6]) if len(sys.argv) > 6 else 2.2, 0.0])
 T_alvo = np.eye(4); T_alvo[:3, :3] = Rz @ T_now[:3, :3]; T_alvo[:3, 3] = BASE_ALVO + Rz @ (T_now[:3, 3] - pb)
 alvo = T_alvo[:3, 3].copy()
 qx, qy, qz, qw = quaternion_from_matrix(T_alvo)
@@ -108,8 +114,8 @@ while not rospy.is_shutdown():
     if st["tilt"] or now - t0 > TIMEOUT: break
     r.sleep()
 pub_wb.publish(Bool(False)); rospy.sleep(0.5)
-res = {"rotulo": rotulo, "ganhos": ganhos, "postura": POSTURA, "erro_inicial_m": erro0, "tempo_s": t_ok, "t_50mm_s": t_50, "melhor_m": melhor,
-       "align": st["align"], "advance": st["advance"], "vmax": st["vmax"], "wmax": st["wmax"], "tombou": st["tilt"], "timeout": t_ok is None and not st["tilt"]}
+res = {"rotulo": rotulo, "ganhos": ganhos, "postura": POSTURA, "y_alvo": float(BASE_ALVO[1]), "erro_inicial_m": erro0, "tempo_s": t_ok, "t_50mm_s": t_50, "melhor_m": melhor,
+       "align": st["align"], "advance": st["advance"], "vmax": st["vmax"], "wmax": st["wmax"], "tombou": st["tilt"], "tilt_max_rad": st["tiltmax"], "timeout": t_ok is None and not st["tilt"]}
 open(saida, "a").write(json.dumps(res) + "\n")
-print("[exp] %s: erro inicial %.3f m -> %s | melhor %.3f | ALIGN %d | vmax %.2f wmax %.2f | tombou %s" % (
-    rotulo, erro0 or -1, ("%.1f s" % t_ok) if t_ok is not None else "TIMEOUT", melhor, st["align"], st["vmax"], st["wmax"], st["tilt"]))
+print("[exp] %s: erro inicial %.3f m -> %s | melhor %.3f | ALIGN %d | vmax %.2f wmax %.2f | tilt_max %.3f | tombou %s" % (
+    rotulo, erro0 or -1, ("%.1f s" % t_ok) if t_ok is not None else "TIMEOUT", melhor, st["align"], st["vmax"], st["wmax"], st["tiltmax"], st["tilt"]))
