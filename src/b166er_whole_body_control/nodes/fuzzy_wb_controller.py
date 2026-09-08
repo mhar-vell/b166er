@@ -649,6 +649,28 @@ class FuzzyWBController:
         self._pub_cmdvel.publish(Twist())
         self._cmd_prev, self._cmd_prev_t = (0.0, 0.0), rospy.get_time()
 
+    def _escala_wb(self, q_dot, theta):
+        """Escala o vetor whole-body INTEIRO para a base caber no teto.
+
+        Cortar só a base depois do DLS muda a solução: o erro que a base
+        deixa de corrigir continua no laço, o ganho Fuzzy sobe e o braço
+        passa a fazer o que a base não fez — mais rápido e mais
+        estendido (execução de 18:20 em 2026-09-08: base a 0,08 m/s e
+        J3 a 0,33 rad/s com a margem em 0,5 m/s²). Escalar os 8 DOF pelo
+        mesmo fator mantém a direção da solução e deixa a tarefa mais
+        lenta como um todo, que é o que se quer com o braço estendido.
+        A rampa e a centrípeta continuam em _limita_base.
+        """
+        if not self._teto_cfg['enable'] or not self._nonholo:
+            return q_dot
+        v_fwd, omega = self._project_nonholo(q_dot[:3], theta)
+        f = 1.0
+        if abs(v_fwd) > self._v_cap:
+            f = min(f, self._v_cap / abs(v_fwd))
+        if abs(omega) > self._w_cap:
+            f = min(f, self._w_cap / abs(omega))
+        return q_dot * f if f < 1.0 else q_dot
+
     # ------------------------------------------------------------------
     def _publish_cmd_vel(self, q_dot_base, theta):
         msg = Twist()
@@ -666,6 +688,12 @@ class FuzzyWBController:
     def _publish_arm_vel(self, q_dot_arm, stamp):
         vmax = (MAX_ARM_VEL_LOCKED
                 if (self._base_locked or self._servo_tooltip) else MAX_ARM_VEL)
+        # Com a base livre o braço também entra no teto por postura: a
+        # pseudo-força que tomba o robô vem do CG do CONJUNTO, e o braço
+        # a 0,8 rad/s move esse CG tanto quanto a base. Nunca abaixo do
+        # teto de manipulação (0,25 rad/s), que já provou bastar.
+        if not (self._base_locked or self._servo_tooltip):
+            vmax = max(MAX_ARM_VEL * self._teto_s, MAX_ARM_VEL_LOCKED)
         # Satura preservando a DIREÇÃO do movimento: clipar junta a junta
         # distorce a trajetória Cartesiana justamente quando o limite
         # morde (várias juntas saturam juntas na largada).
@@ -991,6 +1019,7 @@ class FuzzyWBController:
                     self._zera_base()
                     self._publish_arm_vel(q_dot, now)
                 else:
+                    q_dot = self._escala_wb(q_dot, theta)
                     q_dot_base = self._apply_keepout(q_dot[:3], T_world_base[:3, 3], theta)
                     self._publish_cmd_vel(q_dot_base, theta)
                     self._publish_arm_vel(q_dot[3:], now)
@@ -1018,6 +1047,7 @@ class FuzzyWBController:
             ])
 
             q_dot_wb = q_dot_task + q_dot_null   # (8,)
+            q_dot_wb = self._escala_wb(q_dot_wb, theta)
 
             # ---- 5. Publica comandos ------------------------------------
             self._publish_cmd_vel(q_dot_wb[:3], theta)
