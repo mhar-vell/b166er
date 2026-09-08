@@ -173,7 +173,25 @@
       <parent link="L3"/>
       <child link="L4"/>
       <!-- Punho pitch (wrist pitch): ±110° no manual -->
-      <limit upper="1.91986" lower="-1.91986" effort="20" velocity="3.14" />
+      <!-- ESFORÇO LIMITADO PELA ESPECIFICAÇÃO (2026-09-08, decisão do
+           Marco: "limita o J4 e roda as baterias"). Os manuais do RV-M2
+           não dão torque de junta; dão carga nominal 1,0 kg (máx. 2,0) e
+           a estimativa estática do Marco: 12 N a 0,1 m = 1,2 N·m no
+           punho. Esse número é o que o punho suporta ALÉM do próprio
+           peso, então o limite do atuador simulado = peso próprio do
+           punho na pior postura (horizontal) + 2 × 1,2 N·m:
+             L5 1,7 kg a 0,08 m          1,33 N·m
+             ferramenta 0,16 kg a ~0,25 m 0,40 N·m
+             (L4 2,5 kg tem CG no eixo; câmera e suporte sem inércia)
+             margem 2 × 1,2               2,40 N·m
+             total                        4,2 N·m
+           Antes era 20 N·m: o destrava íntegro simulado exigia 2–3 N·m no
+           J4 (RELATORIO6), e ao ser retro-acionado pelo anel o J4 saturava
+           nos 20 e colapsava para 110°. Com 4,2 a pergunta que a bateria
+           responde é se o híbrido ainda abre a chave com um punho do
+           tamanho do real; se não abrir, o destrava tem que vir de J2/J3
+           com o punho travado. -->
+      <limit upper="1.91986" lower="-1.91986" effort="4.2" velocity="3.14" />
       <dynamics damping="0.3" friction="0.0"/>
     </joint>
 
