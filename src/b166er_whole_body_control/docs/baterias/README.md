@@ -21,6 +21,7 @@ Todos os números citados no artigo (Seções IV-D, IV-E e V-A) saem daqui.
 | 9 | `poses/RELATORIO9_poses_de_partida.md` | poses | 8 poses × 3: 20/24; busca oblíqua + recuperação → 8/8 |
 | 10 | `soltura/RELATORIO10_indicador_de_soltura.md` | soltura | run8 explicada (deriva de eixo); guarda 15 mm; indicador de soltura 5/5 |
 | 11 | `punho/RELATORIO11_punho_limitado.md` | punho | J4 limitado a 4,2 N·m pela spec do RV-M2: 6/6; libera satura o punho (48 %), destrava não |
+| 12 | `punho/RELATORIO12_punho_pior_caso.md` | punho/pior_caso | pior caso J4 2,9 N·m: 5/5; libera satura 57–65 % e cede 7–22° sem perder o anel |
 
 ## Como reproduzir uma bateria
 
