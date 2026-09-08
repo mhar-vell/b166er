@@ -1,7 +1,7 @@
 # Baterias de simulação da chave seccionadora — relatórios e ferramentas
 
 Relatórios, scripts de bateria, analisadores e dados pequenos (índices,
-tabelas, JSONL, CSV < 300 kB) das baterias de 02–05 Set 2026. Viviam na
+tabelas, JSONL, CSV < 300 kB) das baterias de 02–08 Set 2026. Viviam na
 pasta da sessão do assistente; entraram no pacote em 08 Set 2026 por
 decisão do Marco ("pode mandar o /docs"). Logs de rosout, CSVs grandes de
 sonda e imagens de origem externa ficaram de fora.
@@ -20,6 +20,7 @@ Todos os números citados no artigo (Seções IV-D, IV-E e V-A) saem daqui.
 | 8 | `aproximacao/RELATORIO8_aproximacao_de_longe.md` | aproximacao | aproximação de longe (1,9 m): ganho importa; chatter da manobra; piso 0,90 |
 | 9 | `poses/RELATORIO9_poses_de_partida.md` | poses | 8 poses × 3: 20/24; busca oblíqua + recuperação → 8/8 |
 | 10 | `soltura/RELATORIO10_indicador_de_soltura.md` | soltura | run8 explicada (deriva de eixo); guarda 15 mm; indicador de soltura 5/5 |
+| 11 | `punho/RELATORIO11_punho_limitado.md` | punho | J4 limitado a 4,2 N·m pela spec do RV-M2: 6/6; libera satura o punho (48 %), destrava não |
 
 ## Como reproduzir uma bateria
 
