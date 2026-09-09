@@ -69,7 +69,13 @@ source /home/marco/b166er/devel/setup.bash
 if [ "$SIM" = 1 ]; then CAM=/camera; ODOM=/pioneer3at/odom; SCAN=/pioneer3at/laser_hokuyo/scan
 else CAM=/t265; ODOM=/pioneer/pose; SCAN=/pioneer3at/laser_hokuyo/scan; fi
 T265ODOM=/t265/odom/sample
-TOPICOS_BAG="$CAM/fisheye1/image_raw $CAM/fisheye1/camera_info $T265ODOM \
+# Imagem da fisheye COMPRIMIDA e bag em lz4: com image_raw cru o ensaio
+# do E4 na simulação deu 2,3–3,4 GB por missão de ~2 min (2026-09-09).
+# Se o tópico /compressed não existir (image_transport sem o plugin),
+# cai para o cru e avisa.
+IMG="$CAM/fisheye1/image_raw/compressed"
+rostopic list 2>/dev/null | grep -q "^$IMG$" || { IMG="$CAM/fisheye1/image_raw"; echo "aviso: sem $CAM/fisheye1/image_raw/compressed — gravando a imagem crua (bags grandes)"; }
+TOPICOS_BAG="$IMG $CAM/fisheye1/camera_info $T265ODOM \
 /b166er/wall_pose /b166er/mission_status /b166er/tag_pixel /b166er/base_cap \
 /joint_states /estimated_joint_states /cmd_vel $ODOM $SCAN /imu/data \
 /b166er/tilt /b166er/tilt_critical /b166er/front_clearance /rosout"
@@ -98,7 +104,7 @@ hz() { # tópico mínimo_hz [segundos] → ok se a taxa média ≥ mínimo
 BAG=""
 grava_inicio() { # nome
     local f="$DIR/$1_$(date +%H%M%S).bag"
-    rosbag record -O "$f" $TOPICOS_BAG > "$DIR/rosbag_$1.log" 2>&1 &
+    rosbag record --lz4 -O "$f" $TOPICOS_BAG > "$DIR/rosbag_$1.log" 2>&1 &
     BAG=$!; sleep 2; nota "rosbag gravando → $f"; }
 grava_fim() { [ -n "$BAG" ] && { kill -INT "$BAG" 2>/dev/null; wait "$BAG" 2>/dev/null; nota "rosbag fechado"; BAG=""; }; }
 trap 'grava_fim' EXIT
@@ -107,6 +113,9 @@ missao() { # rótulo args…  → lança chave_mission.launch e espera o resulta
     local log="$DIR/missao_${rot}_$(date +%H%M%S).log"
     if [ "$SIM" = 1 ]; then python3 "$S/reset_sim.py" ${RESET_ARGS:-} > /dev/null 2>&1; sleep 2; fi
     nota "roslaunch b166er_whole_body_control chave_mission.launch $*  → $log"
+    # A manobra ALIGN/ADVANCE é logada pelo CONTROLADOR (rosout), não pelo
+    # stdout da missão: marca a linha do rosout no início para contar depois.
+    ROSOUT=$(ls -t ~/.ros/log/*/rosout.log 2>/dev/null | head -1); ROSOUT_N0=$(wc -l < "${ROSOUT:-/dev/null}")
     roslaunch b166er_whole_body_control chave_mission.launch "$@" > "$log" 2>&1 &
     local pid=$!
     for _ in $(seq 1 240); do grep -qE "resultado: MISSION|inválido" "$log" 2>/dev/null && break; sleep 4; done
@@ -293,7 +302,7 @@ if [ "$ENSAIO" = E4 ]; then
         missao "E4_$4" estado_final:=REFINE
         grava_fim
         grep -E "SEARCH: .*amostras|remedida|REFINE: .*amostras|manobra: |recupera|standoff" "$ULTIMO_LOG" | sed 's/.*\] /    /' | cut -c1-150 | tail -8 | tee -a "$REG"
-        NA=$(grep -c "manobra: ADVANCE -> ALIGN" "$ULTIMO_LOG"); criterio "ALIGN por execução = $NA (esperado 1)" $([ "$NA" -le 1 ] && echo 0 || echo 1)
+        NA=$(tail -n +"$ROSOUT_N0" "${ROSOUT:-/dev/null}" 2>/dev/null | grep -c "manobra: ADVANCE -> ALIGN"); criterio "ALIGN por execução = $NA (esperado 1)" $([ "$NA" -le 1 ] && echo 0 || echo 1)
         if [ "$SIM" = 0 ]; then
             pergunta "erro de estacionamento em Y pela trena (mm; ≤ 30)" EY
             pergunta "erro de yaw pelo esquadro (graus; ≤ 5)" EYAW
@@ -304,7 +313,7 @@ from nav_msgs.msg import Odometry
 rospy.init_node('bancada_e4', anonymous=True)
 m = rospy.wait_for_message('/pioneer3at/odom', Odometry, timeout=5); p = m.pose.pose.position; q = m.pose.pose.orientation
 yaw = math.degrees(math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z)))
-print("    base parou em x=%.3f y=%.3f yaw=%.1f° (sim: standoff esperado y≈2,25, yaw≈90°)" % (p.x, p.y, yaw))
+print("    base parou em x=%.3f y=%.3f yaw=%.1f° (sim: fim do APPROACH esperado y≈1,99 (deploy_distance 0,88), yaw≈90°)" % (p.x, p.y, yaw))
 PY
         fi
     done

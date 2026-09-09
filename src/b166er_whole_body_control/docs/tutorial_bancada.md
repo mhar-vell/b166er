@@ -226,9 +226,10 @@ padrão com a falha explicada.
 
 ## O que fica gravado em todo ensaio
 
-Rosbag (o roteiro grava e fecha sozinho):
+Rosbag (o roteiro grava e fecha sozinho, em lz4, com a imagem
+comprimida — a crua deu 2 a 3 GB por missão no ensaio da simulação):
 
-    /t265/fisheye1/image_raw  /t265/fisheye1/camera_info  /t265/odom/sample
+    /t265/fisheye1/image_raw/compressed  /t265/fisheye1/camera_info  /t265/odom/sample
     /b166er/wall_pose  /b166er/mission_status  /b166er/tag_pixel  /b166er/base_cap
     /joint_states  /estimated_joint_states  /cmd_vel  /pioneer/pose  /pioneer3at/laser_hokuyo/scan
     /imu/data  /b166er/tilt  /b166er/tilt_critical  /b166er/front_clearance  /rosout
