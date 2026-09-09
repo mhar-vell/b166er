@@ -534,6 +534,15 @@ class MissionContext(object):
         # bastante para o degrau passar POR CIMA do arame na volta (o
         # arame tem ~8 mm; 12 mm não bastou no ensaio forçado).
         self.reassenta_sobe_libera_m = float(rospy.get_param('~reassenta_sobe_libera_m', 0.025))
+        # DESLIGADO POR PADRÃO (2026-09-09): o reassentamento da libera
+        # presa foi exercitado com o gancho de ensaio e funcionou quando
+        # o anel ainda estava perto do lugar (1/2), mas quando o anel já
+        # tinha recuado 24 mm com o dedo o ponto do atravessa relativo ao
+        # olhal ORIGINAL cai dentro do mecanismo e a IK não fecha. Os
+        # pontos da volta precisam ser relativos à posição ATUAL do anel;
+        # até isso ser feito e validado, a libera presa segue abortando
+        # pela guarda (RELATORIO16).
+        self.reassenta_libera = bool(rospy.get_param('~reassenta_libera', False))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
         # reassentamento sem depender de a ponta escorregar de verdade.
@@ -1878,7 +1887,8 @@ class Manipulate(smach.State):
             tentativas = 0
             while (not ok_fase
                    and ((phase == 'destrava' and ctx.falha_fase == 'estagnou_curto')
-                        or (phase == 'libera' and ctx.falha_fase == 'preso'))
+                        or (phase == 'libera' and ctx.falha_fase == 'preso'
+                            and ctx.reassenta_libera))
                    and tentativas < ctx.reassenta_max):
                 tentativas += 1
                 rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
