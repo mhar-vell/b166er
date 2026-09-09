@@ -329,3 +329,7 @@ antigo. No hardware o equivalente é o homing antes de reposicionar.
 movimento, e recolher pela ponte antes resolve. Custo: ~7 s por reset
 quando o braço está fora do stow, nada quando já está.
 
+Repetido do zero a pedido do Marco ("mata tudo e faz de novo"): stack
+derrubado e subido limpo, mesmos seis ciclos em sequência
+(`teste_reset_ab.sh`) — com recolhimento 3/3 OK, sem 3/3 FALHOU
+(tilt 1,474 rad). Mesmo resultado.
