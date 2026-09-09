@@ -437,6 +437,10 @@ class MissionContext(object):
         # "engatada"; curso: quanto recuar ao longo do eixo.
         self.saida_raio  = rospy.get_param('~saida_raio', 0.25)
         self.saida_curso = rospy.get_param('~saida_curso', 0.12)
+        # SAÍDA DE EMERGÊNCIA EM DEGRAUS (2026-09-09, "segue com o retorno
+        # do ABORT após timeout no destrava"). Ver _sai_pelo_eixo.
+        self.saida_sobe_m = rospy.get_param('~saida_sobe_m', 0.030)
+        self.saida_fora_m = rospy.get_param('~saida_fora_m', 0.100)
 
         # Âncora da base — contenção da deriva do modelo (ver os métodos
         # ancora_*). Tolerância de 2 mm: acima da amplitude do contato em
@@ -2219,17 +2223,43 @@ def _sai_pelo_eixo(ctx, tag):
             return False
 
         eixo_mundo = ctx.wall_R @ np.array([1.0, 0.0, 0.0])
+        prof_mundo = ctx.wall_R @ np.array([0.0, 1.0, 0.0])   # +y = para o lado do robô
+        cima = np.array([0.0, 0.0, 1.0])
         # Sentido: o que AFASTA do olhal a partir de onde a ponta está.
         proj = float((p_now - olhal) @ eixo_mundo)
         sentido = 1.0 if proj >= 0.0 else -1.0
-        alvo = p_now + sentido * ctx.saida_curso * eixo_mundo
-
-        rospy.logwarn('[mission] %s: ponta a %.3f m do olhal — saindo '
-                      '%.0f mm pelo eixo do furo antes de recolher',
-                      tag, dist, ctx.saida_curso * 1000)
+        # EM DEGRAUS, NA ORDEM INVERSA DA ENTRADA (2026-09-09). Um alvo
+        # único a 120 mm pelo eixo, na MESMA altura, saía do ramo da IK:
+        # no timeout do destrava do E5 a primeira iteração jogou a ponta
+        # 20 cm para baixo e para dentro do plano da parede (J3 0°, J4
+        # 95°), e cinco iterações não fecharam (98 mm) — e o degrau ainda
+        # estava sob o arame, então "pelo eixo" arrastava o anel. A
+        # entrada é orienta → aproxima_lateral → atravessa → captura;
+        # a saída faz o caminho de volta a partir de onde a ponta está:
+        #   1. SOBE saida_sobe_m: descarrega o arame (inverso da captura);
+        #   2. EIXO saida_curso: sai do anel pela direção em que entrou;
+        #   3. FORA saida_fora_m em profundidade: afasta da placa antes
+        #      de o stow varrer o punho perto dela.
+        # Cada degrau é pequeno (a IK fica no ramo) e melhor esforço: se
+        # um falhar, os seguintes ainda tentam, e o recuo da base vem
+        # depois de qualquer jeito.
+        p1 = p_now + ctx.saida_sobe_m * cima
+        p2 = p1 + sentido * ctx.saida_curso * eixo_mundo
+        p3 = p2 + ctx.saida_fora_m * prof_mundo
+        rospy.logwarn('[mission] %s: ponta a %.3f m do olhal — saindo em degraus: '
+                      'sobe %.0f mm, %.0f mm pelo eixo do furo, %.0f mm para fora, '
+                      'antes de recolher', tag, dist, ctx.saida_sobe_m * 1000,
+                      ctx.saida_curso * 1000, ctx.saida_fora_m * 1000)
         ctx.status(estado=tag, saida_mm=ctx.saida_curso * 1000,
                    dist_olhal_m=dist)
-        return _reach_by_iterative_ik(ctx, alvo, 'saida_eixo')
+        ok_todos = True
+        for nome, alvo in (('saida_sobe', p1), ('saida_eixo', p2), ('saida_fora', p3)):
+            ok = _reach_by_iterative_ik(ctx, alvo, nome)
+            if not ok:
+                ok_todos = False
+                rospy.logwarn('[mission] %s: degrau "%s" não fechou — seguindo para o '
+                              'próximo', tag, nome)
+        return ok_todos
     except Exception as exc:            # noqa: BLE001
         rospy.logwarn('[mission] %s: saída pelo eixo falhou (%s) — '
                       'recolhendo mesmo assim', tag, exc)
