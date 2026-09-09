@@ -254,3 +254,46 @@ search a 0,35 rad/s no próprio eixo — margem lateral alta (3,0 m/s²),
 sem risco — mas a recuperação da tag e o retorno andam sem o teto.
 Propagar `/b166er/base_cap` para o `drive` da missão fica como
 pendência.
+
+### 7. Adendo (noite de 08 Set): o teto no drive da missão
+
+Marco: "segue com o base_cap no drive da missão". Duas mudanças no
+controlador e uma na missão (`aplica_base_cap` em `chave_mission.py`):
+
+- **`/b166er/base_cap` sai a cada ciclo, inclusive em stand-down** —
+  a missão precisa do teto justamente quando o controlador está calado.
+  Desligado, publica o teto cheio (a missão distingue "cheio" de
+  "sumiu").
+- **Teto linear pela margem frente/trás, angular pela lateral.** Girar
+  no eixo com o braço à frente não tomba para a frente: a pseudo-força
+  tangencial (ω̇·r) e a centrípeta (ω²·r) são laterais, e a margem
+  lateral é 3,0 m/s² em qualquer postura à frente. Com um fator só, a
+  busca (0,35 rad/s em postura search) ficava presa a 0,29 rad/s sem
+  motivo físico. A rampa e a centrípeta de ω passam a usar a lateral.
+- **A missão aplica o mesmo trio** (teto, rampa, centrípeta) em
+  `drive()` quando a mensagem tem menos de 1 s; sem mensagem fresca
+  navega com os limites próprios (0,15 m/s, 0,4 rad/s) e avisa a cada
+  10 s. `stop_base` reinicia a rampa. `~usa_base_cap` desliga.
+
+Frenagem seca revalidada com o teto angular novo (`frenagem2.jsonl`,
+regra ligada, 2× search/deploy, 1× travel):
+
+| postura | v no salto | tilt máx depois | degrau de v | degrau de ω | v→0 |
+|---|---|---|---|---|---|
+| search | 0,17 / 0,19 | 0,017 / 0,015 | 0,022 / 0,030 | 0,42 / 0,49 | 0,20 / 0,15 s |
+| deploy | 0,12 / 0,09 | 0,018 / 0,021 | 0,024 / 0,017 | 0,50 / 0,43 | 0,13 / 0,18 s |
+| travel | 0,30 | 0,015 | 0,048 | 0,29 | 0,41 s |
+
+Liberar ω até 0,5 rad/s com o braço estendido não custou inclinação
+(0,015–0,021 rad, a faixa do braço recolhido): a frenagem linear em
+rampa é o que importa.
+
+Missão completa com o teto no drive (`missao_drive_resumo.md`, pose de
+referência, híbrido): **2/2 OK**, lâmina 30,7° e 29,4°, soltura 50,9 e
+53,1 mm, 146 s e ~150 s. O log da missão registra o teto atuando na
+navegação própria (7–8 avisos throttled por execução, em SEARCH e
+APPROACH com o braço em busca: v ≤ 0,17 m/s, ω ≤ 0,50, rampa 0,45 m/s²)
+e nenhum aviso de tópico ausente. Como a missão navega a 0,15 m/s e
+gira a 0,35 rad/s, o que atua na prática é a rampa; o teto de v só
+morderia com o braço mais estendido que a busca.
+
