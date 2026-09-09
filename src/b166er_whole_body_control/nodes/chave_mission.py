@@ -530,6 +530,10 @@ class MissionContext(object):
         self.falha_fase        = None
         self.reassenta_max     = int(rospy.get_param('~reassenta_max', 1))
         self.reassenta_sobe_m  = float(rospy.get_param('~reassenta_sobe_m', 0.012))
+        # Na libera presa a ponta está ~20 mm para fora: precisa subir o
+        # bastante para o degrau passar POR CIMA do arame na volta (o
+        # arame tem ~8 mm; 12 mm não bastou no ensaio forçado).
+        self.reassenta_sobe_libera_m = float(rospy.get_param('~reassenta_sobe_libera_m', 0.025))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
         # reassentamento sem depender de a ponta escorregar de verdade.
@@ -1879,7 +1883,8 @@ class Manipulate(smach.State):
                 tentativas += 1
                 rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
                               'recaptura, destrava de novo%s', phase, tentativas,
-                              ctx.reassenta_max, ctx.reassenta_sobe_m * 1000,
+                              ctx.reassenta_max,
+                              (ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m) * 1000,
                               ' e puxa de novo' if phase == 'libera' else '')
                 ctx.status(reassenta=tentativas)
                 off_cap = list(ctx.phases['captura']['offset_xyz_m'])
@@ -1888,11 +1893,26 @@ class Manipulate(smach.State):
                 # altura da captura na profundidade da captura fazia a IK
                 # subir e entrar ao mesmo tempo, contra o arame (ensaio
                 # forçado de 09 Set: "não conseguiu subir").
-                p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, ctx.reassenta_sobe_m])
+                sobe = ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m
+                p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, sobe])
                 ctx.offset_efetivo = None
                 if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
                     rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
                     break
+                if phase == 'libera':
+                    # VOLTA PELO CAMINHO DA ENTRADA: depois de subir, o
+                    # ponto da fase 'atravessa' (dentro do furo, na altura
+                    # em que o degrau passa) e só então a captura desce e
+                    # engancha. Em diagonal direto para a captura o degrau
+                    # esbarrava no arame; e mirar o centro do olhal na
+                    # altura elevada batia na barra de cima do anel (os
+                    # dois vistos no ensaio forçado de 09 Set).
+                    off_atr = list(ctx.phases['atravessa']['offset_xyz_m'])
+                    ctx.offset_efetivo = off_atr
+                    p_atr = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_atr)
+                    if not _reach_by_iterative_ik(ctx, p_atr, 'atravessa'):
+                        rospy.logerr('[mission] %s/reassenta: não conseguiu voltar ao ponto do atravessa', phase)
+                        break
                 ctx.offset_efetivo = off_cap
                 p_cap = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_cap)
                 if not _reach_by_iterative_ik(ctx, p_cap, 'captura'):
