@@ -323,7 +323,7 @@ fi
 # ---------------------------------------------------------------- E5
 if [ "$ENSAIO" = E5 ]; then
     titulo "E5 — missão completa"
-    NR="${N:-5}"; nota "Critério: ≥ 4/$NR na pose padrão com a falha explicada. ABORT_SAFE recua 0,25 m: parede atrás LIVRE."
+    NR="${N:-5}"; nota "Critério: ≥ 80 % (4/5) na pose padrão com a falha explicada. ABORT_SAFE recua 0,25 m: parede atrás LIVRE."
     OK=0
     for i in $(seq 1 "$NR"); do
         passo "Execução $i/$NR (pose padrão 0, 1, 0°)"
