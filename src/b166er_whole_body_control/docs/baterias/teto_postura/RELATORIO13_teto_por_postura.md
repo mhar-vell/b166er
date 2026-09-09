@@ -297,3 +297,35 @@ e nenhum aviso de tópico ausente. Como a missão navega a 0,15 m/s e
 gira a 0,35 rad/s, o que atua na prática é a rampa; o teto de v só
 morderia com o braço mais estendido que a busca.
 
+### 8. Adendo: o reset com o braço estendido (`teste_reset.sh`)
+
+Marco: "segue com o reset_sim do braço estendido". A ponte já reancora
+e publica os setpoints com a física pausada (`_cb_resync`), então o
+salto não vinha dali. O padrão dos dados: o reset só falhava depois de
+execuções que terminavam com o braço **estendido e em movimento**
+(aproximação whole-body em search/deploy cortada por timeout — 4 de 4
+caíam na primeira tentativa e o retry passava porque o braço já estava
+em stow); depois de missões, que recolhem o braço antes de terminar,
+nunca falhou. `set_model_configuration` muda posição, não velocidade: o
+braço chegava ao stow com a velocidade residual e o PID tinha que
+segurar isso no primeiro passo de física, com o chassi ainda caindo do
+z = 0,25 do `set_model_state`.
+
+Correção em `reset_sim.py`: zera `/cmd_vel`, comanda `stow_home` pela
+ponte, espera `arm_posture_reached` fresco (≤ 12 s, +0,5 s de assentamento)
+e só então pausa e teleporta. `--sem-recolher` mantém o comportamento
+antigo. No hardware o equivalente é o homing antes de reposicionar.
+
+| ciclo (search 40 s → reset) | recolhe antes | resultado na 1ª tentativa |
+|---|---|---|
+| 1 | sim | OK (braço 117,5° fora, recolhido em 7,2 s) |
+| 2 | sim | OK (recolhido em 7,0 s) |
+| 3 | sim | OK (117,5° → 3,3°, 7,2 s) |
+| 1 | não (`--sem-recolher`) | **FALHOU** (tilt 1,474 rad) |
+| 2 | não | **FALHOU** (1,475) |
+| 3 | não | **FALHOU** (1,475) |
+
+3/3 contra 0/3: a causa é o teleporte com o braço estendido e em
+movimento, e recolher pela ponte antes resolve. Custo: ~7 s por reset
+quando o braço está fora do stow, nada quando já está.
+
