@@ -107,6 +107,15 @@ por padrão (ou passe `~scan_topic` a ele). O roteiro confere esse tópico.
   do **J3** cinco vezes (2 s solto / 2 s travado). O `Lost sync` durante
   os ciclos do 9 é esperado. O 30 s do J3 (código 50) é inalcançável no
   firmware gravado;
+- **faixa real do J4** contra o modelo (±110°, manual pág. 1-7; zero =
+  ferramenta alinhada com o antebraço): a missão pede até 104° na
+  captura, a 5° do batente, e o punho real cede 12–22° sob carga (E2).
+  Com o braço apoiado e sem energia nos motores, leve o punho à mão a
+  cada batente e leia o inclinômetro em relação ao antebraço; confira o
+  zero. Se a faixa for menor ou o zero estiver deslocado: ajustar o
+  limite do J4 em `kinematics.py` e no `movemaster.urdf.xacro`, e afastar
+  a postura de captura (`chave_seccionadora_task.yaml`) para ≥ 10° do
+  batente real;
 - **trava de inclinação:** incline o IMU à mão além de 26°;
   `/b166er/tilt_critical` vai a True e o braço congela;
 - **laser × trena:** `/b166er/front_clearance` contra a trena, ±3 cm.
