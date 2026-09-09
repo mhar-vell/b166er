@@ -217,7 +217,12 @@ class Hud(object):
     def desenha(self):
         st = self.st
         if self.tty:
-            os.system('clear')
+            # SEM PISCAR (2026-09-09): `clear` apaga a tela inteira e o
+            # quadro só reaparece depois de ~20 ms de prints — num vídeo a
+            # 15 fps isso vira quadros em branco (vistos no vídeo da missão
+            # com o RViz seguindo a base). Cursor no canto e sobrescreve;
+            # o que sobrar abaixo do quadro é apagado no fim (\x1b[J).
+            sys.stdout.write('\x1b[H')
         else:
             ch = (st.get('estado'), st.get('fase'), st.get('it'),
                   st.get('pausado'))
@@ -322,6 +327,9 @@ class Hud(object):
         for t, ev in self.eventos:
             self._lin('%s%7.1fs  %s%s' % (C, t, ev, F))
         print('└' + '─' * (LARG + 2) + '┘')
+        if self.tty:
+            sys.stdout.write('\x1b[J')
+            sys.stdout.flush()
 
     def _le_gatilho(self):
         if self._gj is None:

@@ -75,11 +75,19 @@ if [ "$LAYOUT" = 1 ]; then
     sleep 2
 fi
 
+# ---- stack e reset ----------------------------------------------------
+"$S/sim_stack.sh" preflight || { echo "[grava] PREFLIGHT REPROVADO"; exit 1; }
+source /home/marco/miniforge3/etc/profile.d/conda.sh
+conda activate ros_env
+source /home/marco/b166er/devel/setup.bash
+
 # ---- painel desenhando? ------------------------------------------------
 # Em 2026-09-09 uma gravação saiu com o quadrante do painel em branco
 # (o HUD tinha subido 1,5 min antes, junto com o restart do stack) e não
 # reproduziu depois. Conferir antes de gastar 4 min de missão: fotografa
-# o quadrante e conta pixels claros; em branco fica < 1 %.
+# o quadrante e mede o desvio-padrão dos pixels: texto cinza sobre azul
+# dá > 10; em branco fica < 3. (Pixels "claros" não servem: o texto do
+# painel é cinza, e por isso um vídeo bom foi lido como vazio em 09 Set.)
 if [ "$LAYOUT" = 1 ] && command -v python3 >/dev/null; then
     sleep 3
     env -i DISPLAY="$DISPLAY" HOME="$HOME" PATH=/usr/bin:/bin /usr/bin/gst-launch-1.0 \
@@ -89,21 +97,16 @@ if [ "$LAYOUT" = 1 ] && command -v python3 >/dev/null; then
 import sys
 try:
     import cv2, numpy as np
-    g = cv2.cvtColor(cv2.imread('/tmp/grava_painel_$$.png'), cv2.COLOR_BGR2GRAY); print('%.1f' % (100*np.mean(g > 150)))
+    g = cv2.cvtColor(cv2.imread('/tmp/grava_painel_$$.png'), cv2.COLOR_BGR2GRAY); print('%.1f' % g.std())
 except Exception: print('?')" 2>/dev/null)
     rm -f /tmp/grava_painel_$$.png
-    if [ "$CLAROS" != "?" ] && awk -v c="$CLAROS" 'BEGIN{exit !(c < 1.0)}'; then
-        echo "[grava] AVISO: o painel da missão parece EM BRANCO (${CLAROS} % de pixels claros) — reinicie o painel (scripts/sim_stack.sh watch) antes de gravar"
+    if [ "$CLAROS" != "?" ] && awk -v c="$CLAROS" 'BEGIN{exit !(c < 3.0)}'; then
+        echo "[grava] AVISO: o painel da missão parece EM BRANCO (desvio ${CLAROS}) — reinicie o painel (scripts/sim_stack.sh watch) antes de gravar"
     else
-        echo "[grava] painel da missão desenhando (${CLAROS} % claros)"
+        echo "[grava] painel da missão desenhando (desvio ${CLAROS})"
     fi
 fi
 
-# ---- stack e reset ----------------------------------------------------
-"$S/sim_stack.sh" preflight || { echo "[grava] PREFLIGHT REPROVADO"; exit 1; }
-source /home/marco/miniforge3/etc/profile.d/conda.sh
-conda activate ros_env
-source /home/marco/b166er/devel/setup.bash
 for tent in 1 2 3; do
     python3 "$S/reset_sim.py" --x "$X" --y "$Y" --yaw "$YAW" | grep -q -- "-> OK" && break
     echo "[grava] reset falhou (tentativa $tent)"; sleep 3
