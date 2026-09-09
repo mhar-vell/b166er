@@ -38,8 +38,12 @@
        doc="Velocidade angular (rad/s) da busca girando no próprio eixo"/>
   <arg name="tag_id" default="0"/>
 
-  <rosparam file="$(find b166er_whole_body_control)/config/chave_seccionadora_task.yaml"
-            command="load"/>
+  <!-- YAML da tarefa por argumento (2026-09-09): ensaios com a captura
+       deslocada de propósito, ou a chave real medida na bancada, sem
+       editar o arquivo do pacote. Ex.: task_yaml:=/tmp/chave_desloc.yaml -->
+  <arg name="task_yaml"
+       default="$(find b166er_whole_body_control)/config/chave_seccionadora_task.yaml"/>
+  <rosparam file="$(arg task_yaml)" command="load"/>
 
   <!-- Percepção: detecta a tag e publica a pose da parede. Sem este nó
        a missão não tem como descobrir onde está a chave (SEARCH falha
