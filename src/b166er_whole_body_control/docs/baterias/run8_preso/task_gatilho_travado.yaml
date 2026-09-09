@@ -201,7 +201,7 @@ chave_seccionadora_task:
   # Tolerância em Z apertada de propósito: se não desceu, não destravou.
   destrava:
     modo: wb
-    offset_xyz_m: [0.0, 0.0, -0.0250]
+    offset_xyz_m: [0.0, 0.0, -0.0200]   # ENSAIO run8: desce menos (lingueta ~8 mm, gatilho travado)
     tol_xyz_m: [0.040, 0.006, 0.004]
     # CRITÉRIO OBSERVÁVEL (2026-09-03). A fase NÃO fecha por atingir a
     # altura-alvo acima; fecha quando a ponta, medida pela T265, DESCEU
@@ -222,7 +222,7 @@ chave_seccionadora_task:
     # dá o gatilho com margem sem chegar ao fim de curso de 20 mm do
     # modelo (18 − 4 ≈ 14 no anel). Medido, não deduzido: conferir a
     # lingueta no log das próximas missões.
-    curso_min_m: 0.018
+    curso_min_m: 0.009
     # ESTAGNAÇÃO (2026-09-03): se a descida parou de crescer (< 0,5 mm
     # em 1,5 s) depois de pelo menos curso_estagna_m, a fase fecha — o
     # anel chegou ao fim de curso. Sem isto o braço continua empurrando
@@ -233,7 +233,7 @@ chave_seccionadora_task:
     # fim de curso a ponta continua descendo pelo colapso do J4, a
     # estagnação nunca aparece. 10 mm protege o punho (5/5 na bateria
     # 63-67) ao custo de a libera terminar a soltura. Ver chave_mission.
-    curso_estagna_m: 0.010
+    curso_estagna_m: 0.0060
     curso_margem_m: 0.002
 
   # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
@@ -246,7 +246,7 @@ chave_seccionadora_task:
   libera:
     deriva_eixo_max_m: 0.015
     modo: wb
-    offset_xyz_m: [0.0, 0.0300, -0.0250]
+    offset_xyz_m: [0.0, 0.0300, -0.0200]   # ENSAIO run8: não desce mais na libera — puxa com o gatilho travado
     tol_xyz_m: [0.040, 0.008, 0.006]
 
   # ── 4. acompanha o arco ──
@@ -299,9 +299,3 @@ chave_seccionadora_task:
     tol_xyz_m: [0.020, 0.020, 0.015]
   saida_fora:
     tol_xyz_m: [0.030, 0.020, 0.020]
-  # Subida do REASSENTAMENTO (destrava estagnado curto / libera presa):
-  # vertical, a partir de onde a ponta está; a tolerância de altura é
-  # apertada de propósito para a subida acontecer de verdade.
-  reassenta_sobe:
-    tol_xyz_m: [0.030, 0.020, 0.005]
-

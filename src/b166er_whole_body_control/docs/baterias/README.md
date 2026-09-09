@@ -25,6 +25,7 @@ Todos os números citados no artigo (Seções IV-D, IV-E e V-A) saem daqui.
 | 13 | `teto_postura/RELATORIO13_teto_por_postura.md` | teto_postura | teto de velocidade pela margem de tombamento da postura medida: frenagem seca 0,05–0,07 → 0,02 rad; escala conjunta base+braço; queda pós-execução é do reset; adendo: teto também no drive da missão, angular pela margem lateral |
 | 14 | `destrava_reassenta/RELATORIO14_destrava_reassenta.md` | destrava_reassenta | destrava que estagna curto (ponta sai do arame): captura descentrada não reproduz (8/8); estagnação curta em 4 s + reassentar (sobe, recaptura, desce) 2/2 |
 | 15 | `abort_saida/RELATORIO15_abort_saida_em_degraus.md` | abort_saida | saída do anel no ABORT/RETRACT em degraus (sobe, eixo, fora): a saída ruim do E5 vinha da postura colapsada por 40 s de empurrão; degraus fecham em 1 iteração 2/2 |
+| 16 | `run8_preso/RELATORIO16_run8_libera_presa.md` | run8_preso | por que a run8 escorregou: libera puxando com o gatilho travado (destrava fechou com lingueta 8 mm); reprodução 0/2 deslizes; reassentamento da libera exercitado (v4 1/2) e desligado por padrão |
 
 ## Como reproduzir uma bateria
 
