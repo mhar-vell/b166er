@@ -516,6 +516,21 @@ class MissionContext(object):
         # nas que falham, que são as que mais interessam olhar) e espera
         # /b166er/mission_continue. O braço fica exatamente onde parou.
         self.pausa_por_fase = rospy.get_param('~pausa_por_fase', False)
+        # REASSENTAMENTO do destrava (2026-09-09, "segue com o destrava da
+        # captura descentrada"): quando a descida estagna ABAIXO do mínimo
+        # aceitável, a ponta parou de empurrar (escorregou do arame), não
+        # chegou ao fim de curso — o modelo da lingueta tem 20 mm. Em vez
+        # de empurrar 40 s até o timeout (o que colapsa o punho), a fase
+        # devolve 'estagnou_curto' e o MANIPULATE sobe, recaptura e tenta
+        # de novo, até reassenta_max vezes.
+        self.falha_fase        = None
+        self.reassenta_max     = int(rospy.get_param('~reassenta_max', 1))
+        self.reassenta_sobe_m  = float(rospy.get_param('~reassenta_sobe_m', 0.012))
+        # SÓ PARA ENSAIO: força o primeiro destrava a devolver
+        # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
+        # reassentamento sem depender de a ponta escorregar de verdade.
+        self.ensaio_forca_reassenta = bool(rospy.get_param('~ensaio_forca_reassenta', False))
+        self._reassenta_forcado_usado = False
         self._continuar = False
         rospy.Subscriber('/b166er/mission_continue', Empty,
                          lambda _m: setattr(self, '_continuar', True))
@@ -1844,6 +1859,40 @@ class Manipulate(smach.State):
                           'forçado' if ctx.modo_fases != 'yaml' else 'YAML')
             ctx.status(modo=modo)
             ok_fase = alcancar(ctx, p_tip, phase)
+            # REASSENTAR (2026-09-09): destrava estagnou curto — a ponta
+            # escorregou do arame. Sobe reassenta_sobe_m acima da captura,
+            # refaz a captura por IK (registra o novo zero) e tenta o
+            # destrava de novo, até reassenta_max vezes.
+            tentativas = 0
+            while (not ok_fase and phase == 'destrava'
+                   and ctx.falha_fase == 'estagnou_curto'
+                   and tentativas < ctx.reassenta_max):
+                tentativas += 1
+                rospy.logwarn('[mission] destrava: REASSENTANDO (%d/%d) — sobe %.0f mm, '
+                              'recaptura e desce de novo', tentativas, ctx.reassenta_max,
+                              ctx.reassenta_sobe_m * 1000)
+                ctx.status(reassenta=tentativas)
+                off_cap = list(ctx.phases['captura']['offset_xyz_m'])
+                off_sobe = [off_cap[0], off_cap[1], off_cap[2] + ctx.reassenta_sobe_m]
+                ctx.offset_efetivo = off_sobe
+                p_sobe = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_sobe)
+                if not _reach_by_iterative_ik(ctx, p_sobe, 'captura'):
+                    rospy.logerr('[mission] destrava/reassenta: não conseguiu subir')
+                    break
+                ctx.offset_efetivo = off_cap
+                p_cap = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_cap)
+                if not _reach_by_iterative_ik(ctx, p_cap, 'captura'):
+                    rospy.logerr('[mission] destrava/reassenta: recaptura não fechou')
+                    break
+                ctx.pose_captura = _pose_na_parede(ctx, _tooltip_now(ctx))
+                ctx.alt_captura = float(ctx.pose_captura[2])
+                rospy.loginfo('[mission] destrava/reassenta: captura registrada em eixo=%+.1f '
+                              'prof=%+.1f alt=%+.1f mm', *(ctx.pose_captura * 1000))
+                margem = float(cfg.get('curso_margem_m', 0.002))
+                offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
+                ctx.offset_efetivo = offset
+                p_tip = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
+                ok_fase = alcancar(ctx, p_tip, phase)
             # Pausa TAMBÉM quando a fase falha: é justamente a postura de
             # falha que precisa ser olhada.
             ctx.espera_etapa('fase %s' % phase, ok_fase,
@@ -2675,6 +2724,8 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         if tol_fase is None:
             tol_fase = np.array([ctx.tol_pos] * 3)
         hist = []
+        hist_curto = None
+        ctx.falha_fase = None
         while not rospy.is_shutdown():
             if ctx.tilt_critical:
                 rospy.logerr('[mission] fase "%s": abortada por inclinação '
@@ -2740,6 +2791,36 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 # de 20 N·m, é este o compromisso honesto.
                 while hist and hist[-1][0] - hist[0][0] > 1.5:
                     hist.pop(0)
+                # ESTAGNAÇÃO CURTA (2026-09-09): parou de descer antes do
+                # mínimo, ou com a profundidade fora da régua — a ponta
+                # escorregou do arame (E5 de 09 Set: 8,2 mm em 2 s, depois
+                # 40 s parada com prof indo de +0,8 a −10 mm). Desistir
+                # depois de 4 s parada, com a flag para o MANIPULATE
+                # reassentar; ficar empurrando só colapsa o punho.
+                if (ctx.ensaio_forca_reassenta and not ctx._reassenta_forcado_usado
+                        and phase == 'destrava' and desc >= 0.003):
+                    ctx._reassenta_forcado_usado = True
+                    rospy.logwarn('[mission] fase "%s": ENSAIO — estagnação curta FORÇADA '
+                                  'em %.1f mm para exercitar o reassentamento', phase, desc * 1000)
+                    ctx.status(descida_mm=desc * 1000, estagnou_curto=1)
+                    ctx.falha_fase = 'estagnou_curto'
+                    return False
+                if hist_curto is None and desc >= 0.003:
+                    hist_curto = []
+                if hist_curto is not None:
+                    hist_curto.append(((rospy.Time.now() - t0).to_sec(), desc))
+                    while hist_curto and hist_curto[-1][0] - hist_curto[0][0] > 4.0:
+                        hist_curto.pop(0)
+                    if (hist_curto[-1][0] - hist_curto[0][0] >= 3.9
+                            and max(h[1] for h in hist_curto) - min(h[1] for h in hist_curto) < 0.0005
+                            and (desc < cfg_estagna or abs(e_parede[1]) >= tol_fase[1])):
+                        rospy.logwarn('[mission] fase "%s": descida estagnou CURTA em %.1f mm '
+                                      '(mín %.0f; prof %+.1f mm, tol %.0f) — a ponta parou de '
+                                      'empurrar; devolvendo para reassentar', phase, desc * 1000,
+                                      cfg_estagna * 1000, e_parede[1] * 1000, tol_fase[1] * 1000)
+                        ctx.status(descida_mm=desc * 1000, estagnou_curto=1)
+                        ctx.falha_fase = 'estagnou_curto'
+                        return False
                 if (len(hist) >= 10 and desc >= cfg_estagna
                         and hist[-1][1] - hist[0][1] < 0.0005
                         and abs(e_parede[0]) < tol_fase[0]
