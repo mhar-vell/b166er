@@ -3103,6 +3103,41 @@ def _wait_ee_convergence(ctx, T_target, phase):
     return False
 
 
+def _preparo_ensaio(ctx, estado_inicial):
+    """Faz o que STOW_INIT e SEARCH fariam antes de um estado adiante.
+
+    Começar em REFINE (E2/E3 da bancada: base estacionada à mão no
+    standoff) sem isto quebra na primeira linha: REFINE remede a parede a
+    partir de ctx.wall_pos, que só o SEARCH preenche, e RETURN/ABORT
+    precisam de ctx.start_pose, que só o STOW_INIT registra. Então:
+    registra a partida, põe o braço na postura de busca (a T265 está no
+    punho; em stow ela não vê a tag), espera a tag aparecer e amostra a
+    parede parado, como o SEARCH faz ao avistar.
+    """
+    if not ctx.wait_for_state():
+        rospy.logerr('[mission] sem /b166er/robot_state — stack whole-body está rodando?')
+        return False
+    ctx.take_base()
+    ctx.start_pose = ctx.base_pose()
+    rospy.loginfo('[mission] ENSAIO: pose de partida registrada: (%.2f, %.2f, %.2f rad)',
+                  *ctx.start_pose)
+    if estado_inicial == 'SEARCH':
+        return True
+    ctx.send_posture('search')
+    if not _wait_posture(ctx):
+        return False
+    ctx.wall_pose = None
+    t0 = rospy.Time.now()
+    while ctx.wall_pose is None and (rospy.Time.now() - t0).to_sec() < 15.0 \
+            and not rospy.is_shutdown():
+        rospy.sleep(0.1)
+    if ctx.wall_pose is None:
+        rospy.logerr('[mission] ENSAIO: tag não visível da postura de busca em 15 s — '
+                     'estacione o robô de frente para a tag')
+        return False
+    return _sample_wall(ctx, ctx.search_samples, ctx.search_sample_timeout, 'ENSAIO')
+
+
 # ═══════════════════════════════════════════════════════════════════════
 def main():
     rospy.init_node('chave_mission')
@@ -3154,6 +3189,9 @@ def main():
         sm.set_initial_state([estado_inicial])
         rospy.logwarn('[mission] ENSAIO: começa em %s%s', estado_inicial,
                       (' e termina depois de %s' % estado_final) if estado_final else '')
+    if estado_inicial != 'STOW_INIT' and not _preparo_ensaio(ctx, estado_inicial):
+        rospy.logerr('[mission] resultado: MISSION_ABORTED (preparo do ensaio falhou)')
+        return
 
     sis = smach_ros.IntrospectionServer('chave_mission', sm, '/CHAVE_MISSION')
     sis.start()

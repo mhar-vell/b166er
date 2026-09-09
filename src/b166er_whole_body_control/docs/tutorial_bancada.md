@@ -139,8 +139,11 @@ cedeu 12–22° entre 4,2 e 2,9 N·m sem perder o anel. É o número que a
 bancada precisa medir primeiro.
 
 **Montagem:** firmware operacional; lâmina e terminal medidos; base
-estacionada à mão a 0,62 m do olhal, de frente para a tag; braço em
-stow; você ao lado da parada.
+estacionada à mão a **0,88 m do olhal** (a `deploy_distance`, onde o
+APPROACH pararia), de frente para a tag; braço em stow; você ao lado da
+parada. Não a 0,62 m: essa é a pose de manipulação, aonde o DEPLOY leva
+a base sozinho — e a 0,62 m com o braço em busca a ferramenta encosta
+na parede (na simulação o J4 ficou preso 22° antes do alvo).
 
 **Como:** a missão começa em `REFINE` e anda fase a fase:
 
@@ -148,6 +151,13 @@ stow; você ao lado da parada.
         estado_inicial:=REFINE pausa_por_fase:=true      # o roteiro faz isso
 
     scripts/continua.sh        # em outro terminal, libera cada fase
+
+Ao começar adiante, a missão faz sozinha o que STOW_INIT e SEARCH
+fariam: registra a pose de partida (para o RETURN/ABORT), põe o braço na
+postura de busca (a T265 está no punho e em stow não vê a tag), espera a
+tag aparecer por até 15 s e amostra a parede parada. Se a tag não
+aparecer, aborta antes de mover qualquer coisa: estacione de frente
+para ela.
 
 Sequência: REFINE → DEPLOY → orienta → aproxima_lateral → atravessa →
 captura → **destrava** (−25 mm; o real pede ~8 N) → **libera** (+30 mm

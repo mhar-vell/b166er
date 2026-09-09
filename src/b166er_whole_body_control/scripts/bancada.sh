@@ -258,8 +258,9 @@ if [ "$ENSAIO" = E2 ] || [ "$ENSAIO" = E3 ]; then
         passo "Lâmina e terminal fixo medidos e no chave_seccionadora_task.yaml"
         pergunta "confirmado? (s/n)" _
     fi
-    passo "Base estacionada à mão a 0,62 m do olhal, de frente para a tag (lateral 0)"
-    if [ "$SIM" = 1 ]; then RESET_ARGS="--x 0.19 --y 2.25 --yaw 90"; nota "simulação: reset_sim.py $RESET_ARGS (pose de manipulação das baterias)"; fi
+    passo "Base estacionada à mão a 0,88 m do olhal (deploy_distance), de frente para a tag, braço em stow"
+    nota "É a pose em que a missão chega do APPROACH: o REFINE remede daí e o DEPLOY avança sozinho até os 0,62 m. A 0,62 m com o braço em busca a ferramenta encosta na parede (J4 preso a 22° do alvo; visto na simulação em 2026-09-09)."
+    if [ "$SIM" = 1 ]; then RESET_ARGS="--x 0.19 --y 1.99 --yaw 90"; nota "simulação: reset_sim.py $RESET_ARGS (0,88 m do olhal; parede em y=3, olhal a 0,13 da parede)"; fi
     pausa "estacionado; Marco ao lado da parada de emergência"
     for i in $(seq 1 "$NR"); do
         passo "Execução $i/$NR: missão a partir de REFINE, fase a fase (scripts/continua.sh libera cada fase)"
