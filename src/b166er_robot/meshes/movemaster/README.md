@@ -57,3 +57,22 @@ mudarem, a malha tem que ser regerada — ela não lê as propriedades.
 
 Só o visual usa a malha; a colisão é uma caixa 10 × 10, porque a rampa
 nunca encosta em nada e caixa é mais estável no ODE que trimesh.
+
+## `dedo_fixo.stl` — a ferramenta de manobra, para IMPRIMIR
+
+Gerado por `scripts/gera_dedo.py` (numpy; sem FreeCAD no shiroi), em
+**mm**, origem no topo do garfo e Z para baixo como no URDF. Geometria do
+bloco `dedo_*` do `movemaster.urdf.xacro` (revisada com o Marco em
+2026-09-02): garfo em U 20 × 30,4 × 25 (duas abas de 10 e vão de 10,4 que
+abraça a aba original de 10 mm da castanha da HM-01), rampa 20 × 30,4 →
+10 × 10, haste 10 × 10 × 80, degrau 30 × 10 × 10 (20 de projeção em −X);
+125 de altura total, 25,5 cm³.
+
+O que o STL **não** traz: os 4 furos M3 (⌀3,5) por aba em grade 2×2 — o
+espaçamento da grade da castanha não foi medido (padrão 10 × 10 no
+desenho, a conferir). Passe o medido a `gera_dedo.py --furo-dx --furo-dz`
+e regenere. Desenho cotado em `docs/dedo_fixo_desenho.pdf`.
+
+Nota: o URDF desenha o garfo como caixa de 20 × 25; a peça real é o U de
+30,4. A caixa é aproximação visual; a colisão que importa é a da haste e
+do degrau.
