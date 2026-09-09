@@ -201,6 +201,14 @@ if [ "$ENSAIO" = E0 ]; then
             nota "o 'Lost sync' DURANTE os ciclos do 9 é esperado (delay sem spinOnce); a placa reseta e trava o freio."
         else nota "freios: pulado (firmware operacional) — soltar/travar pelo procedimento do firmware operacional, à mão."; fi
     fi
+    passo "Faixa real do J4 (punho) contra o modelo (±110°, zero = ferramenta alinhada com o antebraço)"
+    nota "A missão trabalha a 5° do batente (IK pede até 104° na captura) e o punho real cede 12–22° sob carga. Com o braço apoiado e SEM energia nos motores, leve o punho à mão até cada batente e leia o inclinômetro/transferidor em relação ao antebraço."
+    if [ "$SIM" = 1 ]; then nota "simulação: ±110° por construção — pulado"; else
+        pergunta "batente POSITIVO do J4 (graus, ferramenta para cima)" J4P
+        pergunta "batente NEGATIVO do J4 (graus, ferramenta para baixo)" J4N
+        pergunta "com o punho no zero mecânico (alinhado ao antebraço) o modelo diz 0°? (s/n, e o desvio se souber)" J4Z
+        nota "→ se a faixa for menor que ±110° ou o zero estiver deslocado: ajustar JOINT_LOWER/JOINT_UPPER do J4 em kinematics.py e o limit do J4 no movemaster.urdf.xacro, e reduzir a postura de captura (chave_seccionadora_task.yaml) para ficar a ≥ 10° do batente real."
+    fi
     passo "Trava de inclinação"
     nota "incline o IMU à mão (>26°): /b166er/tilt_critical deve ir a True e o braço congelar; ao nivelar, limpa."
     if [ "$AUTO" = 1 ]; then nota "auto: sem inclinação manual — critério pulado"; else
