@@ -65,7 +65,7 @@ import smach_ros
 from geometry_msgs.msg import PoseStamped, Twist, Point
 from visualization_msgs.msg import Marker, MarkerArray
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool, Empty, Float64, String
+from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, String
 from tf.transformations import (quaternion_matrix, euler_from_quaternion,
                                 quaternion_from_matrix)
 
@@ -128,6 +128,33 @@ PHASES_SO_BRACO = {'orienta', 'aproxima_lateral', 'atravessa', 'libera',
 
 def _yaw_of(quat):
     return euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[2]
+
+
+def aplica_base_cap(v, w, cap, prev, dt, r_cg=0.20):
+    """Teto por postura no comando de base da MISSÃO (função pura).
+
+    cap = (v_cap, w_cap, a_lin, a_ang) publicado pelo controlador em
+    /b166er/base_cap a partir da postura MEDIDA do braço; prev = (v, w)
+    do último comando (None = base parada); dt em s. Aplica teto, rampa
+    (a_lin em v, a_ang/r_cg em ω) e centrípeta |v·ω| ≤ a_ang — o mesmo
+    trio de fuzzy_wb_controller._limita_base, para a navegação da missão
+    (SEARCH, APPROACH, RETURN, ABORT) ter a mesma proteção que os trechos
+    whole-body. Devolve (v, w, limitou).
+    """
+    v_cap, w_cap, a_lin, a_ang = cap
+    v_in, w_in = v, w
+    v = float(np.clip(v, -v_cap, v_cap))
+    w = float(np.clip(w, -w_cap, w_cap))
+    if prev is not None and dt is not None and dt > 0.0:
+        v0, w0 = prev
+        dv = a_lin * dt
+        dw = (a_ang / r_cg) * dt
+        v = float(np.clip(v, v0 - dv, v0 + dv))
+        w = float(np.clip(w, w0 - dw, w0 + dw))
+    if abs(v * w) > a_ang:
+        w = float(np.sign(w) * a_ang / max(abs(v), 1e-3))
+    limitou = abs(v - v_in) > 1e-3 or abs(w - w_in) > 1e-3
+    return v, w, limitou
 
 
 def _ang_diff(a, b):
@@ -366,6 +393,16 @@ class MissionContext(object):
         # Navegação (girar-avançar-girar)
         self.nav_v         = rospy.get_param('~nav_linear_vel', 0.15)
         self.nav_w         = rospy.get_param('~nav_angular_vel', 0.4)
+        # Teto por postura na navegação da missão (2026-09-08): o
+        # controlador publica /b166er/base_cap pela postura medida do
+        # braço (ver aplica_base_cap). Sem mensagem fresca (> 1 s) a
+        # missão navega com os limites próprios e avisa — o teto é
+        # segunda barreira, não pré-requisito.
+        self.usa_base_cap  = rospy.get_param('~usa_base_cap', True)
+        self.base_cap      = None      # (v_cap, w_cap, a_lin, a_ang)
+        self.base_cap_t    = None      # rospy.Time da última mensagem
+        self._drive_prev   = None      # (v, w) do último drive()
+        self._drive_prev_t = None
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
         # ── Alinhamento do degrau com o eixo do furo ──
@@ -678,6 +715,7 @@ class MissionContext(object):
         # seguia tentando, alheia — a IMU existia e não era usada.
         self.tilt_critical = False
         rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
+        rospy.Subscriber('/b166er/base_cap', Float64MultiArray, self._cb_base_cap)
         # Distância livre medida pelo Hokuyo — usada na navegação para
         # parar antes de encostar, sem depender da estimativa da tag.
         self.front_clearance = None
@@ -1025,7 +1063,9 @@ class MissionContext(object):
         return p.position.x, p.position.y, _yaw_of(p.orientation)
 
     def stop_base(self):
+        # Parada seca (segurança/fim de etapa); reinicia a rampa do drive.
         self.pub_cmdvel.publish(Twist())
+        self._drive_prev, self._drive_prev_t = (0.0, 0.0), rospy.Time.now()
 
     def espera_etapa(self, etapa, ok, detalhe=''):
         """Congela ao fim de uma etapa até receber /b166er/mission_continue.
@@ -1144,10 +1184,45 @@ class MissionContext(object):
         self.pub_posture.publish(msg)
         rospy.loginfo('[mission] postura "%s" comandada: %s', name, q)
 
+    def _cb_base_cap(self, msg):
+        d = list(msg.data)
+        if len(d) >= 8:
+            self.base_cap = (float(d[0]), float(d[1]), float(d[2]), float(d[7]))
+        elif len(d) >= 3:
+            self.base_cap = (float(d[0]), float(d[1]), float(d[2]), float(d[2]))
+        else:
+            return
+        self.base_cap_t = rospy.Time.now()
+
     def drive(self, v, w):
+        v = float(np.clip(v, -self.nav_v, self.nav_v))
+        w = float(np.clip(w, -self.nav_w, self.nav_w))
+        if self.usa_base_cap:
+            now = rospy.Time.now()
+            fresco = (self.base_cap is not None and self.base_cap_t is not None
+                      and (now - self.base_cap_t).to_sec() < 1.0)
+            if fresco:
+                dt = None
+                if self._drive_prev_t is not None:
+                    dt = (now - self._drive_prev_t).to_sec()
+                    if dt > 0.5:
+                        # Pausa longa desde o último comando: base parada.
+                        self._drive_prev = (0.0, 0.0)
+                v, w, limitou = aplica_base_cap(v, w, self.base_cap,
+                                                self._drive_prev, dt)
+                if limitou:
+                    rospy.loginfo_throttle(5.0,
+                        '[mission] teto por postura ativo no drive: v<=%.2f '
+                        'w<=%.2f rampa %.2f/%.2f', *self.base_cap)
+            else:
+                rospy.logwarn_throttle(10.0,
+                    '[mission] sem /b166er/base_cap fresco — navegando só '
+                    'com os limites da missão (%.2f m/s, %.2f rad/s)',
+                    self.nav_v, self.nav_w)
+            self._drive_prev, self._drive_prev_t = (v, w), now
         t = Twist()
-        t.linear.x  = float(np.clip(v, -self.nav_v, self.nav_v))
-        t.angular.z = float(np.clip(w, -self.nav_w, self.nav_w))
+        t.linear.x  = v
+        t.angular.z = w
         self.pub_cmdvel.publish(t)
 
     def update_wall_from(self, pose_msg):

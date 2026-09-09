@@ -278,6 +278,7 @@ class FuzzyWBController:
         self._v_cap  = MAX_BASE_LIN
         self._w_cap  = MAX_BASE_ANG
         self._a_cap  = float('inf')
+        self._a_cap_ang = float('inf')
         self._teto_s = 1.0
         self._cmd_prev   = (0.0, 0.0)   # último (v, ω) publicado, para a rampa
         self._cmd_prev_t = None
@@ -594,25 +595,42 @@ class FuzzyWBController:
         if not c['enable']:
             self._v_cap, self._w_cap, self._a_cap, self._teto_s = \
                 MAX_BASE_LIN, MAX_BASE_ANG, float('inf'), 1.0
+            self._a_cap_ang = float('inf')
+            # Publica mesmo desligado: a missão assina este tópico e
+            # precisa saber que o teto está cheio, não que sumiu.
+            msg = Float64MultiArray()
+            msg.data = [MAX_BASE_LIN, MAX_BASE_ANG, 1e9, 0.0, 0.0, 0.0, 0.0, 1e9]
+            self._pub_teto.publish(msg)
             return
         a_f, a_t, a_l, x_cg, y_cg, z_cg = margem_tombamento(
             q_arm, c['base_massa'], c['base_cg_z'])
-        a_min = max(min(a_f, a_t, a_l), 0.0)
-        s = (a_min - c['a_lo']) / max(c['a_hi'] - c['a_lo'], 1e-6)
-        s = float(np.clip(s, c['s_min'], 1.0))
-        self._teto_s = s
-        self._v_cap  = MAX_BASE_LIN * s
-        self._w_cap  = MAX_BASE_ANG * s
-        self._a_cap  = max(c['seguranca'] * a_min, 0.05)
+        # Linear pela margem frente/trás (frear e arrancar); angular pela
+        # LATERAL: girar no eixo com o braço à frente não tomba para a
+        # frente — a pseudo-força tangencial do CG (ω̇·r) e a centrípeta
+        # (ω²·r) são laterais. Com um só fator, a busca (0,35 rad/s em
+        # postura search) ficava presa a 0,29 rad/s sem motivo físico.
+        a_lin = max(min(a_f, a_t), 0.0)
+        a_ang = max(a_l, 0.0)
+        def pert(a):
+            return float(np.clip((a - c['a_lo']) / max(c['a_hi'] - c['a_lo'], 1e-6),
+                                 c['s_min'], 1.0))
+        s_lin, s_ang = pert(a_lin), pert(a_ang)
+        self._teto_s = s_lin
+        self._v_cap  = MAX_BASE_LIN * s_lin
+        self._w_cap  = MAX_BASE_ANG * s_ang
+        self._a_cap  = max(c['seguranca'] * a_lin, 0.05)
+        self._a_cap_ang = max(c['seguranca'] * a_ang, 0.05)
         msg = Float64MultiArray()
-        msg.data = [self._v_cap, self._w_cap, self._a_cap, a_f, a_l, x_cg, z_cg]
+        # [v_cap, w_cap, a_cap_lin, a_frente, a_lat, x_cg, z_cg, a_cap_ang]
+        msg.data = [self._v_cap, self._w_cap, self._a_cap, a_f, a_l, x_cg, z_cg,
+                    self._a_cap_ang]
         self._pub_teto.publish(msg)
-        if s < 1.0:
+        if s_lin < 1.0 or s_ang < 1.0:
             rospy.loginfo_throttle(5.0,
                 '[fuzzy_wb] teto por postura: margem %.2f m/s² (frente %.2f, '
                 'lado %.2f; CG x=%.3f z=%.3f) -> v<=%.2f m/s w<=%.2f rad/s '
-                'rampa %.2f m/s²', a_min, a_f, a_l, x_cg, z_cg,
-                self._v_cap, self._w_cap, self._a_cap)
+                'rampa %.2f / %.2f m/s²', a_lin, a_f, a_l, x_cg, z_cg,
+                self._v_cap, self._w_cap, self._a_cap, self._a_cap_ang)
 
     def _limita_base(self, v, w):
         """Teto por postura + rampa de aceleração + centrípeta.
@@ -636,11 +654,11 @@ class FuzzyWBController:
             # Aceleração tangencial do CG num giro no eixo: ω̇·r, com r
             # a distância do CG ao eixo; tomamos r ≈ 0,20 m (CG do
             # conjunto fica dentro do chassi).
-            dw = (self._a_cap / 0.20) * dt
+            dw = (self._a_cap_ang / 0.20) * dt
             w = float(np.clip(w, w0 - dw, w0 + dw))
         # Centrípeta v·ω dentro da margem lateral.
-        if abs(v * w) > self._a_cap:
-            w = float(np.sign(w) * self._a_cap / max(abs(v), 1e-3))
+        if abs(v * w) > self._a_cap_ang:
+            w = float(np.sign(w) * self._a_cap_ang / max(abs(v), 1e-3))
         self._cmd_prev, self._cmd_prev_t = (v, w), now
         return v, w
 
@@ -814,6 +832,12 @@ class FuzzyWBController:
                 rate.sleep()
                 continue
 
+            # Teto por postura a cada ciclo, INCLUSIVE em stand-down: a
+            # missão navega a base por conta própria (ctx.drive) e assina
+            # /b166er/base_cap para respeitar o mesmo teto.
+            if self._robot_state is not None:
+                self._atualiza_teto(np.array(self._robot_state.q_arm))
+
             if not self._wb_enabled:
                 # Stand-down: outro nó é o dono de /cmd_vel agora (ex.:
                 # chave_mission navegando a base). Publicar nem que seja
@@ -885,7 +909,6 @@ class FuzzyWBController:
             T_world_base = _odom_to_matrix(state.base_odom)
             q_arm        = np.array(state.q_arm)
             theta        = float(np.arctan2(T_world_base[1, 0], T_world_base[0, 0]))
-            self._atualiza_teto(q_arm)
 
             # A manobra ALIGN só faz sentido com a base LIVRE — ela gira
             # o chassi e zera o braço. Com a base travada isso trava a
