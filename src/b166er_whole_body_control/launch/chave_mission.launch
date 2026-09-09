@@ -70,6 +70,13 @@
        parâmetro sempre que assume o laço, então vale sem reiniciar o
        stack. Ex.: fixed_gains:="[0.8,0.8,0.08]" -->
   <arg name="fixed_gains" default="[]"/>
+  <!-- ENSAIOS DE BANCADA (plano_de_bancada.md, 2026-09-09): começar num
+       estado adiante e/ou terminar depois de um estado. Ex.:
+         E3: estado_inicial:=REFINE  (base estacionada à mão no standoff)
+         E4: estado_final:=REFINE    (só SEARCH + APPROACH + REFINE)
+       Estados: STOW_INIT SEARCH APPROACH REFINE DEPLOY MANIPULATE RETRACT RETURN -->
+  <arg name="estado_inicial" default="STOW_INIT"/>
+  <arg name="estado_final"   default=""/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
@@ -90,5 +97,7 @@
     <param name="search_omega"      value="$(arg search_omega)"/>
     <param name="pausa_por_fase"    value="$(arg pausa_por_fase)"/>
     <param name="use_wholebody"     value="$(arg use_wholebody)"/>
+    <param name="estado_inicial"    value="$(arg estado_inicial)"/>
+    <param name="estado_final"      value="$(arg estado_final)"/>
   </node>
 </launch>
