@@ -145,6 +145,14 @@ parada. Não a 0,62 m: essa é a pose de manipulação, aonde o DEPLOY leva
 a base sozinho — e a 0,62 m com o braço em busca a ferramenta encosta
 na parede (na simulação o J4 ficou preso 22° antes do alvo).
 
+**Yaw da base importa mais que a distância.** Na missão normal o
+APPROACH alinha a base à parede (REFINE ≤ 2°); começando em REFINE, o
+alinhamento é o seu esquadro. Na simulação, com a base 3° torta
+(1,62 rad em vez de 1,57), REFINE, DEPLOY e as fases até a captura
+fecharam, mas no arco1 a ferramenta escorregou 32 mm ao longo do eixo
+da chave e a guarda de 15 mm abortou — o mesmo modo de falha da run8
+do RELATORIO10. Estacione com o esquadro, dentro de 2°.
+
 **Como:** a missão começa em `REFINE` e anda fase a fase:
 
     roslaunch b166er_whole_body_control chave_mission.launch \
