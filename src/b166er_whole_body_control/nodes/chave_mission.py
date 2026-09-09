@@ -1883,11 +1883,15 @@ class Manipulate(smach.State):
                               ' e puxa de novo' if phase == 'libera' else '')
                 ctx.status(reassenta=tentativas)
                 off_cap = list(ctx.phases['captura']['offset_xyz_m'])
-                off_sobe = [off_cap[0], off_cap[1], off_cap[2] + ctx.reassenta_sobe_m]
-                ctx.offset_efetivo = off_sobe
-                p_sobe = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_sobe)
-                if not _reach_by_iterative_ik(ctx, p_sobe, 'captura'):
-                    rospy.logerr('[mission] destrava/reassenta: não conseguiu subir')
+                # SOBE NA VERTICAL a partir de onde a ponta ESTÁ. Na libera
+                # presa a ponta está ~20 mm para fora da captura: mirar a
+                # altura da captura na profundidade da captura fazia a IK
+                # subir e entrar ao mesmo tempo, contra o arame (ensaio
+                # forçado de 09 Set: "não conseguiu subir").
+                p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, ctx.reassenta_sobe_m])
+                ctx.offset_efetivo = None
+                if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
+                    rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
                     break
                 ctx.offset_efetivo = off_cap
                 p_cap = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_cap)
