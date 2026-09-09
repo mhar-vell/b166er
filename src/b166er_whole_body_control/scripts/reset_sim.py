@@ -24,6 +24,7 @@ import time
 
 import rospy
 from gazebo_msgs.msg import ModelState
+from geometry_msgs.msg import Twist
 from gazebo_msgs.srv import GetModelState, SetModelConfiguration, SetModelState
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool
@@ -34,6 +35,7 @@ STOW = [0.0, 1.13, -1.04, -1.8, 0.0]
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar
 SETTLE_S = 12.0       # tempo máximo esperando estabilizar
+RECOLHE_S = 12.0      # tempo máximo esperando a ponte recolher o braço
 
 # Pose de partida — TEM QUE CASAR com os args x/y/yaw de
 # b166er_gazebo.launch. Ficam duplicados porque o reset roda fora do
@@ -92,6 +94,8 @@ def _args():
     ap.add_argument('--x', type=float, default=START_X, help='m (padrão %(default)s)')
     ap.add_argument('--y', type=float, default=START_Y, help='m (padrão %(default)s)')
     ap.add_argument('--yaw', type=float, default=0.0, help='graus (padrão 0)')
+    ap.add_argument('--sem-recolher', action='store_true',
+                    help='pula o recolhimento do braço pela ponte antes do teleporte')
     return ap.parse_args(rospy.myargv(sys.argv)[1:])
 
 
@@ -123,6 +127,49 @@ def main():
     pub_resync = rospy.Publisher('/b166er/arm_resync', JointState,
                                  queue_size=1, latch=True)
     time.sleep(1.0)   # deixa a conexão assentar antes do primeiro publish
+
+    # RECOLHER O BRAÇO PELA PONTE ANTES DE TELEPORTAR (2026-09-08).
+    #
+    # Ficou claro nas baterias do teto por postura: o reset só falhava
+    # depois de execuções que terminavam com o braço ESTENDIDO E EM
+    # MOVIMENTO (aproximação whole-body em search/deploy, cortada por
+    # timeout) — 4 de 4 caíam na primeira tentativa, e o retry passava
+    # porque então o braço já estava em stow. Depois de missões, que
+    # recolhem o braço antes de terminar, nunca falhou. O teleporte de
+    # juntas (set_model_configuration) muda posição, não velocidade: o
+    # braço chega ao stow com a velocidade residual da execução e o PID
+    # tem que segurar isso no primeiro passo de física, com o chassi
+    # ainda caindo do z=0,25 do set_model_state. Recolher antes, com a
+    # física correndo, deixa o braço parado e no lugar; o teleporte vira
+    # só um ajuste fino. No hardware o equivalente é o homing antes de
+    # reposicionar o robô.
+    pub_stop = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+    pub_post = rospy.Publisher('/b166er/arm_posture_cmd', JointState,
+                               queue_size=1, latch=True)
+    chegou = {'t': None}
+    rospy.Subscriber('/b166er/arm_posture_reached', Bool,
+                     lambda m: chegou.update(t=time.time()) if m.data else None)
+    time.sleep(0.5)
+    pub_stop.publish(Twist())
+    if not args.sem_recolher:
+        erro_antes = _erro_postura()
+        js = JointState()
+        js.header.stamp = rospy.Time.now()
+        js.name = JOINTS
+        js.position = STOW
+        t_cmd = time.time()
+        pub_post.publish(js)
+        # arm_posture_reached é latched: só vale um True DEPOIS do comando.
+        while time.time() - t_cmd < RECOLHE_S:
+            time.sleep(0.2)
+            if chegou['t'] is not None and chegou['t'] > t_cmd + 0.3:
+                break
+        e = _erro_postura()
+        print('reset: braço recolhido pela ponte em %.1f s (erro %s -> %s)'
+              % (time.time() - t_cmd,
+                 ('%.1f°' % math.degrees(erro_antes)) if erro_antes is not None else '?',
+                 ('%.1f°' % math.degrees(e)) if e is not None else '?'))
+        time.sleep(0.5)   # velocidades residuais assentam
 
     pause()
     set_cfg('b166er', 'robot_description', JOINTS, STOW)
