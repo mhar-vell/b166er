@@ -286,3 +286,16 @@ chave_seccionadora_task:
   desengata:
     modo: ik
     offset_xyz_m: [-0.090, 0.1000, -0.0518]
+
+  # ── SAÍDA DE EMERGÊNCIA (ABORT_SAFE, 2026-09-09) ──
+  # Não são fases da trilha: são as tolerâncias dos três degraus com que
+  # o ABORT tira a ponta do anel (sobe / pelo eixo / para fora), em
+  # ordem inversa à entrada. Sem elas a régua era esférica de 20 mm e o
+  # degrau de subir 30 mm "fechava" sem sair do lugar. Alvos relativos à
+  # PONTA no instante do aborto (não ao olhal): ver _sai_pelo_eixo.
+  saida_sobe:
+    tol_xyz_m: [0.030, 0.020, 0.010]
+  saida_eixo:
+    tol_xyz_m: [0.020, 0.020, 0.015]
+  saida_fora:
+    tol_xyz_m: [0.030, 0.020, 0.020]
