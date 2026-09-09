@@ -535,6 +535,10 @@ class MissionContext(object):
         # reassentamento sem depender de a ponta escorregar de verdade.
         self.ensaio_forca_reassenta = bool(rospy.get_param('~ensaio_forca_reassenta', False))
         self._reassenta_forcado_usado = False
+        # SÓ PARA ENSAIO: força a primeira libera a devolver 'preso' depois
+        # de 10 mm de recuo, para exercitar o reassentamento da libera.
+        self.ensaio_forca_preso = bool(rospy.get_param('~ensaio_forca_preso', False))
+        self._preso_forcado_usado = False
         self._continuar = False
         rospy.Subscriber('/b166er/mission_continue', Empty,
                          lambda _m: setattr(self, '_continuar', True))
@@ -1868,13 +1872,15 @@ class Manipulate(smach.State):
             # refaz a captura por IK (registra o novo zero) e tenta o
             # destrava de novo, até reassenta_max vezes.
             tentativas = 0
-            while (not ok_fase and phase == 'destrava'
-                   and ctx.falha_fase == 'estagnou_curto'
+            while (not ok_fase
+                   and ((phase == 'destrava' and ctx.falha_fase == 'estagnou_curto')
+                        or (phase == 'libera' and ctx.falha_fase == 'preso'))
                    and tentativas < ctx.reassenta_max):
                 tentativas += 1
-                rospy.logwarn('[mission] destrava: REASSENTANDO (%d/%d) — sobe %.0f mm, '
-                              'recaptura e desce de novo', tentativas, ctx.reassenta_max,
-                              ctx.reassenta_sobe_m * 1000)
+                rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
+                              'recaptura, destrava de novo%s', phase, tentativas,
+                              ctx.reassenta_max, ctx.reassenta_sobe_m * 1000,
+                              ' e puxa de novo' if phase == 'libera' else '')
                 ctx.status(reassenta=tentativas)
                 off_cap = list(ctx.phases['captura']['offset_xyz_m'])
                 off_sobe = [off_cap[0], off_cap[1], off_cap[2] + ctx.reassenta_sobe_m]
@@ -1892,10 +1898,21 @@ class Manipulate(smach.State):
                 ctx.alt_captura = float(ctx.pose_captura[2])
                 rospy.loginfo('[mission] destrava/reassenta: captura registrada em eixo=%+.1f '
                               'prof=%+.1f alt=%+.1f mm', *(ctx.pose_captura * 1000))
-                margem = float(cfg.get('curso_margem_m', 0.002))
-                offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
+                # Destrava de novo, com o alvo relativo à captura nova.
+                cfg_d = ctx.phases['destrava']
+                off_d = list(cfg_d['offset_xyz_m'])
+                off_d[2] = ctx.alt_captura - float(cfg_d['curso_min_m']) - float(cfg_d.get('curso_margem_m', 0.002))
+                ctx.offset_efetivo = off_d
+                p_d = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_d)
+                if not _reach_by_wholebody(ctx, p_d, 'destrava'):
+                    rospy.logerr('[mission] %s/reassenta: destrava não fechou de novo', phase)
+                    ok_fase = False
+                    break
+                if phase == 'destrava':
+                    ok_fase = True
+                    break
+                # libera: puxa de novo com o alvo original da fase.
                 ctx.offset_efetivo = offset
-                p_tip = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
                 ok_fase = alcancar(ctx, p_tip, phase)
             # Pausa TAMBÉM quando a fase falha: é justamente a postura de
             # falha que precisa ser olhada.
@@ -2787,6 +2804,16 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             if cfg_deriva is not None and ctx.pose_captura is not None:
                 pose_agora = _pose_na_parede(ctx, _tooltip_now(ctx))
                 deriva = float(pose_agora[0] - ctx.pose_captura[0])
+                if (ctx.ensaio_forca_preso and not ctx._preso_forcado_usado
+                        and phase == 'libera'
+                        and pose_agora[1] - ctx.pose_captura[1] > 0.010):
+                    ctx._preso_forcado_usado = True
+                    rospy.logwarn('[mission] fase "%s": ENSAIO — "preso" FORÇADO com %.0f mm '
+                                  'de recuo para exercitar o reassentamento', phase,
+                                  (pose_agora[1] - ctx.pose_captura[1]) * 1000)
+                    ctx.status(olhal_perdido=1)
+                    ctx.falha_fase = 'preso'
+                    return False
                 ctx.status(deriva_eixo_mm=deriva * 1000)
                 deriva_fora = deriva_fora + 1 if abs(deriva) > cfg_deriva else 0
                 if deriva_fora >= 5:
@@ -2796,6 +2823,12 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                                  'anda nesse eixo', phase, deriva * 1000,
                                  cfg_deriva * 1000)
                     ctx.status(olhal_perdido=1)
+                    # PRESO (2026-09-09, run8): a deriva no eixo é a
+                    # assinatura de puxar com o gatilho travado — o olhal
+                    # para no fim de curso e o dedo patina pelo arame.
+                    # A libera devolve a flag e o MANIPULATE reassenta
+                    # (sobe, recaptura, destrava de novo, puxa de novo).
+                    ctx.falha_fase = 'preso'
                     return False
             # ESTAGNAÇÃO = FIM DE CURSO (2026-09-03). A sonda da run62
             # mostrou o que acontece quando a fase de descida continua
