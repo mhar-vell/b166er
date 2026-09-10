@@ -174,7 +174,7 @@ if [ "$ENSAIO" = E0 ]; then
         nota "Terminal A:  roslaunch b166er_whole_body_control b166er_wb.launch mode:=hardware"
         nota "Terminais B1..B3 (um por placa):  cd src/movemaster_control/src && python3 Arduino_N.py /dev/arduino_N"
         nota "ATENÇÃO: movemaster_hardware.launch sobe UM rosserial em /dev/ttyArduino — se essa porta não existir o nó morre (inofensivo); não deixe dois rosserial na mesma placa."
-        nota "Hokuyo: não há launch no repo — subir o driver do UST-05LX à parte (urg_node, ethernet) publicando em $SCAN, que é o que o laser_safety lê."
+        nota "Hokuyo: sobe com o stack (hardware/hokuyo_hardware.launch → $SCAN). Ethernet, IP fixo 192.168.0.10 — cabo ligado e porta cabeada do NUC em 192.168.0.15/16; se o tópico não aparecer, ping 192.168.0.10."
     fi
     pausa "stack e ponte(s) no ar"
     passo "Tópicos vivos (taxa mínima)"
