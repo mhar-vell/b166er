@@ -1,6 +1,10 @@
 <launch>
-  <!-- Sparton AHRS-8 — porta fixada por udev em /dev/ttyAHRS -->
-  <arg name="port"         default="/dev/ttyAHRS"/>
+  <!-- Sparton AHRS-8 — porta fixada por udev em /dev/sparton/ahrs8, que
+       é o symlink que a regra do próprio driver cria
+       (sparton_ahrs8_driver/udev/51-sparton-ahrs8.rules, por serial do
+       FTDI, MODE 0666). Dizia /dev/ttyAHRS, que nenhuma regra criava
+       (2026-09-10). Instalar a regra: copiar para /etc/udev/rules.d/. -->
+  <arg name="port"         default="/dev/sparton/ahrs8"/>
   <arg name="baud"         default="115200"/>
   <arg name="frame_id"     default="ahrs8"/>
   <arg name="polling_rate" default="10"/>

@@ -47,7 +47,9 @@ O que o roteiro confere e o que ele pede a você:
 
    Os `Arduino_*.py` do `movemaster_control` têm porta fixa e trocada;
    não editar — passar a porta por argumento (ver E0).
-3. **`/dev/ttyPioneer` e `/dev/ttyAHRS`** existem (RosAria e IMU Sparton).
+3. **`/dev/ttyPioneer` e `/dev/sparton/ahrs8`** existem (RosAria e IMU Sparton;
+   o da IMU vem da regra `sparton_ahrs8_driver/udev/51-sparton-ahrs8.rules`,
+   o do Pioneer ainda não tem regra no repo).
 4. **T265 enumerada:** `rs-enumerate-devices` mostra nome, série e
    firmware. No `lsusb` ela aparece como *Movidius* e isso é normal —
    não é bootloader. As duas fisheyes ficam habilitadas (a câmera recusa
