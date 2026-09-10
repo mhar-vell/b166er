@@ -1,0 +1,54 @@
+<launch>
+  <!-- Hokuyo UST-05LX via urg_node (ethernet).
+
+       Publica no MESMO tópico e frame do laser simulado
+       (b166er.urdf.xacro → custom_laser "hokuyo"): tópico
+       /pioneer3at/laser_hokuyo/scan, frame laser_hokuyo_link. É o
+       ~scan_topic padrão do laser_safety e o que bancada.sh confere —
+       nada precisa de remap entre simulação e hardware.
+
+       REDE: o UST-05LX fala IP fixo 192.168.0.10:10940 na porta
+       ethernet. No NUC a "Conexão cabeada 1" (enp0s25) tem IP manual
+       192.168.0.15/16 por isso — NÃO trocar essa conexão para DHCP; a
+       do Wi-Fi é que é DHCP (2026-09-10: era o Wi-Fi que estava com IP
+       fixo dessa faixa, e por isso o NUC ficou "inacessível" de julho a
+       setembro). Cabo solto = o urg_node fica tentando reconectar e
+       o tópico não aparece; conferir com `ping 192.168.0.10`.
+
+       FOV: ±135° como no URDF (270°, 1081 amostras de 0,25°). O launch
+       antigo fora do repo limitava a ±90°; o laser_safety só usa o
+       setor frontal, então o FOV cheio não atrapalha e serve ao
+       mapeamento. Alcance 0,06–5 m é do próprio sensor.
+
+       urg_node é do RoboStack (ros-noetic-urg-node, instalado no ros_env
+       do NUC em 2026-09-10). -->
+
+  <arg name="ip_address" default="192.168.0.10"/>
+  <arg name="ip_port"    default="10940"/>
+  <arg name="frame_id"   default="laser_hokuyo_link"/>
+  <arg name="scan_topic" default="/pioneer3at/laser_hokuyo/scan"/>
+  <arg name="angle_min"  default="-2.3561945"/>   <!-- -3π/4 -->
+  <arg name="angle_max"  default="2.3561945"/>    <!-- +3π/4 -->
+  <!-- cluster: amostras agrupadas por feixe (1 = 0,25°); skip: varreduras
+       puladas (0 = 40 Hz). Subir se a rede ou o laser_safety engasgar. -->
+  <arg name="cluster"    default="1"/>
+  <arg name="skip"       default="0"/>
+
+  <node name="urg_node" pkg="urg_node" type="urg_node" output="screen"
+        respawn="true" respawn_delay="5">
+    <param name="ip_address"        value="$(arg ip_address)"/>
+    <param name="ip_port"           value="$(arg ip_port)"/>
+    <param name="frame_id"          value="$(arg frame_id)"/>
+    <param name="angle_min"         value="$(arg angle_min)"/>
+    <param name="angle_max"         value="$(arg angle_max)"/>
+    <param name="cluster"           value="$(arg cluster)"/>
+    <param name="skip"              value="$(arg skip)"/>
+    <!-- calibrate_time mede a latência sensor→host na partida e corrige
+         o stamp; sem isso o scan chega com ~20 ms de atraso não
+         declarado, que o laser_safety trataria como scan fresco. -->
+    <param name="calibrate_time"    value="true"/>
+    <param name="publish_intensity" value="false"/>
+    <param name="publish_multiecho" value="false"/>
+    <remap from="scan" to="$(arg scan_topic)"/>
+  </node>
+</launch>

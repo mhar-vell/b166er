@@ -90,6 +90,11 @@
     <include
       file="$(find b166er_robot)/launch/hardware/imu_hardware.launch"/>
 
+    <!-- Hokuyo UST-05LX (ethernet, 192.168.0.10) → /pioneer3at/laser_hokuyo/scan,
+         o mesmo tópico do laser simulado; é o que o laser_safety lê. -->
+    <include
+      file="$(find b166er_robot)/launch/hardware/hokuyo_hardware.launch"/>
+
     <node if="$(arg rviz)"
           name="rviz" pkg="rviz" type="rviz"
           args="-d $(arg rviz_config)" output="screen"/>

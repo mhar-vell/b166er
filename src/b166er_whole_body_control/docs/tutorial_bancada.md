@@ -85,14 +85,19 @@ controlador, monitor de inclinação, laser de segurança, painel):
     python3 Arduino_2.py /dev/arduino_2     # B2
     python3 Arduino_3.py /dev/arduino_3     # B3
 
-Duas coisas a acertar na bancada, que o repo ainda não resolve:
+Uma coisa a acertar na bancada, que o repo ainda não resolve:
 `movemaster_hardware.launch` (incluído pelo stack) sobe UM rosserial em
 `/dev/ttyArduino`; se a porta não existir o nó morre e não faz mal, mas
-nunca deixe dois rosserial na mesma placa. E não há launch do Hokuyo no
-repo: o driver do UST-05LX (ethernet, `urg_node`, que também não está
-instalado no `ros_env`) sobe à parte e precisa publicar em
-`/pioneer3at/laser_hokuyo/scan`, que é o tópico que o `laser_safety` lê
-por padrão (ou passe `~scan_topic` a ele). O roteiro confere esse tópico.
+nunca deixe dois rosserial na mesma placa.
+
+O Hokuyo sobe junto com o stack em modo hardware
+(`hardware/hokuyo_hardware.launch`, `urg_node` do RoboStack, instalado no
+`ros_env` do NUC em 2026-09-10) e publica em `/pioneer3at/laser_hokuyo/scan`,
+o mesmo tópico do laser simulado e o que o `laser_safety` lê por padrão.
+O UST-05LX é ethernet com IP fixo 192.168.0.10: a porta cabeada do NUC
+precisa continuar em 192.168.0.15/16 (é a "Conexão cabeada 1"; o Wi-Fi é
+que é DHCP). Cabo solto = tópico não aparece; `ping 192.168.0.10` diz.
+O roteiro confere esse tópico.
 
 **O que o roteiro mede** (Terminal C):
 
