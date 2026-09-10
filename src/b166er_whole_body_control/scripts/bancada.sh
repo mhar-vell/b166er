@@ -143,7 +143,7 @@ if [ "$ENSAIO" = pre ]; then
     for n in 1 2 3; do checa "/dev/arduino_$n" test -e "/dev/arduino_$n"; done
     nota "placa 1 = J1,J2 · placa 2 = J3,J4 · placa 3 = J5,garra;  lançar:  python3 Arduino_N.py /dev/arduino_N"
     passo "Pioneer e IMU nas portas do launch"
-    checa "/dev/ttyPioneer" test -e /dev/ttyPioneer; checa "/dev/ttyAHRS" test -e /dev/ttyAHRS
+    checa "/dev/ttyPioneer" test -e /dev/ttyPioneer; checa "/dev/sparton/ahrs8" test -e /dev/sparton/ahrs8
     passo "T265 enumerada (o lsusb mostra Movidius e isso é normal)"
     if rs-enumerate-devices 2>/dev/null | grep -q "T265"; then checa "rs-enumerate-devices vê a T265" true
         rs-enumerate-devices 2>/dev/null | grep -E "Name|Serial|Firmware" | head -3 | sed 's/^/    /' | tee -a "$REG"
