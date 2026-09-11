@@ -13,6 +13,7 @@ can reason about the full 8-DOF chain (3 base + 5 arm) as a single entity.
 import rospy
 import numpy as np
 from collections import deque
+import threading
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
@@ -71,6 +72,7 @@ class StateEstimator:
         # robô real (RosAria a 10 Hz × T265 a 200 Hz).
         self._base_sync_max_dt = rospy.get_param('~base_sync_max_dt', 0.2)  # s
         self._base_buf = deque(maxlen=400)   # (stamp_secs, Odometry)
+        self._base_lock = threading.Lock()   # callback (thread do rospy) × spin
 
         self._base_odom  = None
         self._t265_odom  = None
@@ -120,15 +122,26 @@ class StateEstimator:
 
     def _cb_pioneer(self, msg):
         self._base_odom = msg
-        self._base_buf.append((msg.header.stamp.to_sec(), msg))
+        with self._base_lock:
+            self._base_buf.append((msg.header.stamp.to_sec(), msg))
 
     def _base_odom_sync(self):
         """base_odom de stamp mais próximo do T265 (ou o mais recente,
-        se não houver nenhum a menos de base_sync_max_dt)."""
-        if not self._base_buf or self._t265_odom is None:
+        se não houver nenhum a menos de base_sync_max_dt).
+
+        Cópia sob lock: o callback roda em outra thread e um deque
+        alterado durante a iteração levanta RuntimeError — foi assim que
+        o estimador morreu no NUC (exit 1) na primeira execução desta
+        sincronização, 2026-09-11.
+        """
+        if self._t265_odom is None:
+            return self._base_odom
+        with self._base_lock:
+            buf = list(self._base_buf)
+        if not buf:
             return self._base_odom
         t = self._t265_odom.header.stamp.to_sec()
-        st, msg = min(self._base_buf, key=lambda x: abs(x[0] - t))
+        st, msg = min(buf, key=lambda x: abs(x[0] - t))
         return msg if abs(st - t) <= self._base_sync_max_dt else self._base_odom
     def _cb_t265(self, msg):    self._t265_odom = msg
 
