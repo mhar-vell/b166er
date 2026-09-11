@@ -36,8 +36,12 @@
 
 set -uo pipefail
 
-WS="${B166ER_WS:-/home/marco/b166er}"
-CONDA_SH="${CONDA_SH:-/home/marco/miniforge3/etc/profile.d/conda.sh}"
+# Sem caminho fixo (2026-09-11): o mesmo script roda no shiroi (marco) e no
+# NUC (robo). O workspace é deduzido da posição do script
+# (src/b166er_whole_body_control/scripts → 3 níveis acima); as variáveis
+# B166ER_WS / CONDA_SH continuam valendo para apontar outro lugar.
+WS="${B166ER_WS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}"
+CONDA_SH="${CONDA_SH:-$HOME/miniforge3/etc/profile.d/conda.sh}"
 CONDA_ENV="${CONDA_ENV:-ros_env}"
 
 # Nós que compõem o stack. Usados só para relatório — o desligamento
