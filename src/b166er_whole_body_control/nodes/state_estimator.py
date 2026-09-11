@@ -57,6 +57,7 @@ class StateEstimator:
         # único seed condizente com o hardware real. Ligar só para demos de
         # tracking puro em Gazebo que não dizem respeito ao tuning do Fuzzy.
         self._use_joint_states_seed = rospy.get_param('~use_joint_states_seed', False)
+        self._ik_retry_min_res = rospy.get_param('~ik_retry_min_residual', 0.02)  # m
 
         self._base_odom  = None
         self._t265_odom  = None
@@ -142,6 +143,14 @@ class StateEstimator:
         """
         q, conv, rp, ro = ik_arm(T_target, q_init=q_seed)
         if conv or self._posture_target_q is None:
+            return q, conv, rp, ro
+        # O retry existe para o MÍNIMO LOCAL (resíduo de centímetros, ver
+        # docstring). Um resíduo de milímetros que só não fechou a
+        # tolerância não é isso: o segundo seed devolve a mesma solução
+        # e custa outra solve inteira — no NUC, com a IK do stow parando
+        # em 3–5 mm, isso dobrava o buraco de publicação do estado
+        # (RELATORIO17, RETURN cego). Abaixo do limiar fica a primeira.
+        if rp < self._ik_retry_min_res:
             return q, conv, rp, ro
 
         q2, conv2, rp2, ro2 = ik_arm(T_target,

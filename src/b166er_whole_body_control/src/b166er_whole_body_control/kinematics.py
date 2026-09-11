@@ -28,6 +28,14 @@ IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
 IK_DQ_STEP    = 1e-6
 IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
+# Parada por ESTAGNAÇÃO (2026-09-11): um DLS que não melhora o resíduo em
+# IK_STALL_ITERS iterações seguidas está num ponto fixo (mínimo local ou
+# limite de junta) e não vai sair dele nas iterações restantes. Sem isso,
+# toda solve que não converge custa as 300 iterações × 11 FKs — no NUC
+# (RELATORIO17) isso virou buracos de 1,5–1,8 s de simulação na
+# publicação do estado durante o RETURN, e a missão passou pelo alvo cega.
+IK_STALL_ITERS = 20
+IK_STALL_EPS   = 1e-6  # m — melhora mínima do resíduo de posição para contar
 
 # Compensação de gravidade
 _G           = 9.81                                # m/s²
@@ -427,6 +435,7 @@ def ik_arm(T_target, q_init=None):
     Retorna (q, converged, res_pos, res_orient).
     """
     q = np.zeros(5) if q_init is None else np.array(q_init, dtype=float)
+    melhor_rp, sem_melhora = np.inf, 0
 
     for _ in range(IK_MAX_ITER):
         T_cur  = fk_arm(q)
@@ -435,6 +444,12 @@ def ik_arm(T_target, q_init=None):
 
         if rp < IK_TOL_POS and ro < IK_TOL_ORIENT:
             return q, True, rp, ro
+        if rp < melhor_rp - IK_STALL_EPS:
+            melhor_rp, sem_melhora = rp, 0
+        else:
+            sem_melhora += 1
+            if sem_melhora >= IK_STALL_ITERS:
+                return q, False, rp, ro   # estagnou: devolve onde parou
 
         # Jacobiano do ERRO (diferenças centrais de pose_error).
         #

@@ -405,6 +405,20 @@ class MissionContext(object):
         self._drive_prev_t = None
         self.nav_pos_tol   = rospy.get_param('~nav_pos_tol', 0.06)
         self.nav_yaw_tol   = rospy.get_param('~nav_yaw_tol', 0.09)
+        # Robustez do avanço (2026-09-11, RELATORIO17): no NUC a pose da
+        # base chegava com buracos de 1,5–1,8 s (estimador preso na IK),
+        # a missão atravessou o alvo cega e, com o rumo invertido e ω
+        # saturado, orbitou o alvo a 0,8 m de raio até o timeout.
+        # (1) pose mais velha que nav_pose_stale → parar e esperar, não
+        #     navegar às cegas; (2) erro de rumo > 90° no avanço = passou
+        #     do alvo → parar e realinhar, em vez de curvar; (3) v cai
+        #     linearmente a partir de nav_slow_dist até nav_v_min_frac,
+        #     alargando a janela de chegada (tol 6 cm a 0,15 m/s dura
+        #     0,8 s; a 0,045 m/s dura 2,7 s).
+        self.nav_pose_stale = rospy.get_param('~nav_pose_stale', 0.4)   # s
+        self.nav_slow_dist  = rospy.get_param('~nav_slow_dist', 0.30)   # m
+        self.nav_v_min_frac = rospy.get_param('~nav_v_min_frac', 0.3)
+        self.robot_state_t  = None     # rospy.Time da última pose recebida
         # ── Alinhamento do degrau com o eixo do furo ──
         #
         # Com False, a manipulação volta à IK de posição pura, em que a
@@ -761,6 +775,7 @@ class MissionContext(object):
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
         self.robot_state = msg
+        self.robot_state_t = rospy.Time.now()
 
     def _cb_wall(self, msg):
         self.wall_pose = msg
@@ -2574,6 +2589,16 @@ def _navigate_to(ctx, goal, timeout, tag):
             ctx.publish_markers(goal)
             t_gimbal = rospy.Time.now()
 
+        # Pose velha = navegar às cegas. Parar é a única ação segura.
+        if (ctx.robot_state_t is not None
+                and (rospy.Time.now() - ctx.robot_state_t).to_sec() > ctx.nav_pose_stale):
+            ctx.stop_base()
+            rospy.logwarn_throttle(2.0, '[mission] %s: pose da base com %.1f s — '
+                                   'parado esperando o estimador', tag,
+                                   (rospy.Time.now() - ctx.robot_state_t).to_sec())
+            rate.sleep()
+            continue
+
         x, y, yaw = ctx.base_pose()
         dx, dy = gx - x, gy - y
         dist    = math.hypot(dx, dy)
@@ -2604,10 +2629,22 @@ def _navigate_to(ctx, goal, timeout, tag):
                 ctx.stop_base()
                 phase = 'TURN_FINAL'
                 rospy.loginfo('[mission] %s: chegou, ajustando heading final', tag)
+            elif abs(_ang_diff(bearing, yaw)) > math.pi / 2:
+                # Alvo ficou para trás: curvar a 0,15 m/s com ω saturado
+                # é orbitar. Parar e realinhar.
+                ctx.stop_base()
+                phase = 'TURN_TO'
+                rospy.logwarn('[mission] %s: passou do alvo (%.2f m, rumo %.0f°) — '
+                              'realinhando', tag, dist,
+                              math.degrees(_ang_diff(bearing, yaw)))
             else:
-                # Correção proporcional de rumo enquanto avança.
+                # Correção proporcional de rumo enquanto avança; desacelera
+                # perto do alvo para a janela de chegada não depender de
+                # um único ciclo.
                 err = _ang_diff(bearing, yaw)
-                ctx.drive(ctx.nav_v, 1.2 * err)
+                frac = max(ctx.nav_v_min_frac,
+                           min(1.0, dist / max(ctx.nav_slow_dist, 1e-3)))
+                ctx.drive(ctx.nav_v * frac, 1.2 * err)
 
         else:  # TURN_FINAL
             err = _ang_diff(gyaw, yaw)
