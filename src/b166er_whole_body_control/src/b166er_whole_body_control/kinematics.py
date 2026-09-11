@@ -427,17 +427,23 @@ def pose_error(T_current, T_target):
     return np.concatenate([dp, so3_log(R_err)])
 
 
-def ik_arm(T_target, q_init=None):
+def ik_arm(T_target, q_init=None, max_iter=None):
     """
     IK numérica para o braço RV-M2 (Base → t265_link).
     DLS com Jacobiano central de diferenças finitas e clamp de passo.
 
     Retorna (q, converged, res_pos, res_orient).
+
+    max_iter: teto de iterações desta chamada (padrão IK_MAX_ITER). Um
+    laço de tempo real que parte da solução anterior (state_estimator)
+    converge em poucas iterações quando converge; o que não converge em
+    algumas dezenas é mínimo local e não vai convergir em 300 — e cada
+    iteração são 11 FKs. Ver RELATORIO17.
     """
     q = np.zeros(5) if q_init is None else np.array(q_init, dtype=float)
     melhor_rp, sem_melhora = np.inf, 0
 
-    for _ in range(IK_MAX_ITER):
+    for _ in range(IK_MAX_ITER if max_iter is None else int(max_iter)):
         T_cur  = fk_arm(q)
         err    = pose_error(T_cur, T_target)
         rp, ro = np.linalg.norm(err[:3]), np.linalg.norm(err[3:])

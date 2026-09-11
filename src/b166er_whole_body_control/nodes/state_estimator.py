@@ -13,6 +13,7 @@ can reason about the full 8-DOF chain (3 base + 5 arm) as a single entity.
 import rospy
 import numpy as np
 from collections import deque
+import threading
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
@@ -58,6 +59,20 @@ class StateEstimator:
         # tracking puro em Gazebo que não dizem respeito ao tuning do Fuzzy.
         self._use_joint_states_seed = rospy.get_param('~use_joint_states_seed', False)
         self._ik_retry_min_res = rospy.get_param('~ik_retry_min_residual', 0.02)  # m
+        # Teto de iterações por solve (2026-09-11, RELATORIO17 adendo 2): o
+        # laço é de tempo real e parte da estimativa anterior; quando
+        # converge, converge em poucas iterações. Sem teto, um ciclo que
+        # não converge custava 300 it × 11 FKs (1,6 s de simulação no NUC)
+        # e a pose da BASE — que nem depende da IK — saía junto no atraso.
+        self._ik_max_iter = rospy.get_param('~ik_max_iter', 40)
+        # Sincronização base ↔ T265 pelo stamp: com a base andando, o
+        # base_odom mais RECENTE e o T265 são de instantes diferentes e o
+        # alvo da IK do braço sai inconsistente (medido: até 6 mm a
+        # 0,15 m/s; com o stamp mais próximo, 0,1 mm). Vale também no
+        # robô real (RosAria a 10 Hz × T265 a 200 Hz).
+        self._base_sync_max_dt = rospy.get_param('~base_sync_max_dt', 0.2)  # s
+        self._base_buf = deque(maxlen=400)   # (stamp_secs, Odometry)
+        self._base_lock = threading.Lock()   # callback (thread do rospy) × spin
 
         self._base_odom  = None
         self._t265_odom  = None
@@ -105,7 +120,29 @@ class StateEstimator:
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)
         rospy.loginfo('  t265:    %s', self._t265_topic)
 
-    def _cb_pioneer(self, msg): self._base_odom = msg
+    def _cb_pioneer(self, msg):
+        self._base_odom = msg
+        with self._base_lock:
+            self._base_buf.append((msg.header.stamp.to_sec(), msg))
+
+    def _base_odom_sync(self):
+        """base_odom de stamp mais próximo do T265 (ou o mais recente,
+        se não houver nenhum a menos de base_sync_max_dt).
+
+        Cópia sob lock: o callback roda em outra thread e um deque
+        alterado durante a iteração levanta RuntimeError — foi assim que
+        o estimador morreu no NUC (exit 1) na primeira execução desta
+        sincronização, 2026-09-11.
+        """
+        if self._t265_odom is None:
+            return self._base_odom
+        with self._base_lock:
+            buf = list(self._base_buf)
+        if not buf:
+            return self._base_odom
+        t = self._t265_odom.header.stamp.to_sec()
+        st, msg = min(buf, key=lambda x: abs(x[0] - t))
+        return msg if abs(st - t) <= self._base_sync_max_dt else self._base_odom
     def _cb_t265(self, msg):    self._t265_odom = msg
 
     def _cb_posture_target(self, msg):
@@ -141,7 +178,7 @@ class StateEstimator:
         simulador), então serve de segunda tentativa. Fica com a melhor
         das duas soluções pelo resíduo de posição.
         """
-        q, conv, rp, ro = ik_arm(T_target, q_init=q_seed)
+        q, conv, rp, ro = ik_arm(T_target, q_init=q_seed, max_iter=self._ik_max_iter)
         if conv or self._posture_target_q is None:
             return q, conv, rp, ro
         # O retry existe para o MÍNIMO LOCAL (resíduo de centímetros, ver
@@ -154,7 +191,8 @@ class StateEstimator:
             return q, conv, rp, ro
 
         q2, conv2, rp2, ro2 = ik_arm(T_target,
-                                     q_init=self._posture_target_q.copy())
+                                     q_init=self._posture_target_q.copy(),
+                                     max_iter=self._ik_max_iter)
         if conv2 or rp2 < rp:
             rospy.loginfo_throttle(
                 5.0, '[state_estimator] IK recuperada via seed de postura '
@@ -173,7 +211,7 @@ class StateEstimator:
         """
         T_ArmBase_t265 = (T_world_base × T_BASELINK_ARM)^{-1} × T_world_t265
         """
-        T_world_base     = _odom_to_matrix(self._base_odom)
+        T_world_base     = _odom_to_matrix(self._base_odom_sync())
         T_world_t265     = _odom_to_matrix(self._t265_odom)
         T_world_arm_base = T_world_base @ T_BASELINK_ARM
         return np.linalg.inv(T_world_arm_base) @ T_world_t265

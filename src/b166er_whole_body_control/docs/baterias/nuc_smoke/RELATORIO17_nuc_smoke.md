@@ -144,6 +144,43 @@ do alvo. Os dois buracos que restam no NUC são solves que ainda
 convergem devagar sem estagnar; a guarda de pose velha os cobre, e é ela
 que interessa no robô real, onde o estimador roda no NUC.
 
+## Adendo 2 — os buracos que restavam: IK do estimador limitada e base sincronizada
+
+Os dois buracos de 1,6 s que a guarda de pose velha cobria (run 4) eram
+solves que convergiam devagar sem estagnar. Para entender o porquê,
+gravamos as ENTRADAS do estimador no shiroi (`captura_ik.sh`: 12 s reto
+a 0,15 m/s + 6 s em curva, braço em stow) e reproduzimos o laço offline.
+
+- `replay_ik.py` (seed = juntas verdadeiras): tudo converge; a
+  inconsistência do alvo com o base_odom mais RECENTE chega a 6 mm e
+  0,007 rad; com o de stamp mais próximo do T265, 0,1 mm.
+- Mas a missão roda com `ik_seed_ground_truth=false` (modo fiel ao
+  robô): o seed é a estimativa anterior. `conv_por_fase.py` nos bags das
+  missões: não-convergência só no RETURN, em < 0,5 % dos ciclos, com
+  3,7–4,3 mm e 0,7–0,8° — uma componente de orientação que o braço de
+  5 DOF não absorve, e o DLS troca posição por orientação.
+- `replay_ik2.py` (laço real, seed anterior, 20 Hz): base mais recente →
+  1 não-convergência em 522 ciclos, erro máximo da estimativa 1,82°;
+  **base de stamp mais próximo → 0, erro máximo 0,40°**. Um teto de 40
+  iterações não muda nada nos ciclos que convergem (p99 0,3 ms) e limita
+  os que não convergem.
+
+Correção (branch `fix/estimador-ik-limitada`): `ik_arm(max_iter=)`;
+estimador com `~ik_max_iter` 40 e alvo da IK composto com o base_odom
+de stamp mais próximo do T265 (`~base_sync_max_dt` 0,2 s), publicando
+como antes o base_odom mais recente. Buffer sob lock: a primeira
+execução no NUC derrubou o estimador (exit 1) por iterar o deque
+enquanto o callback de 1000 Hz o alterava.
+
+| RETURN 1,16 m | dt sim | maior buraco | não-conv. (MANIP/RETRACT/RETURN) | resultado |
+|---|---|---|---|---|
+| NUC run 4 (adendo 1) | 10,7 s | 1,6 s (×2) | 0 / 0 / 2 | OK |
+| NUC run 5 (`run5_estimador/`) | 8,6 s | 0,07 s | 0 / 0 / 0 | `MISSION_OK`, 29,3° |
+| shiroi (`shiroi_estimador/`) | 8,8 s | 0,06 s | 0 / 0 / 0 | `MISSION_OK`, 30,1° |
+
+O NUC voltou a fazer o RETURN no mesmo tempo que o shiroi. A guarda de
+pose velha continua lá e não disparou nenhuma vez.
+
 ## O que o teste responde
 
 - **O NUC carrega o stack inteiro**, com o Gazebo e a renderização da
@@ -185,3 +222,5 @@ que interessa no robô real, onde o estimador roda no NUC.
 - `analisa_return_bag.py` … `bag6.py` — os cortes do bag, na ordem da
   investigação: quem publica em cmd_vel; velocidade por trecho; atitude
   da base; estimador × Gazebo; trajetória fina; buracos do robot_state.
+- `captura_ik.sh`, `replay_ik.py`, `replay_ik2.py`, `conv_por_fase.py` —
+  adendo 2: entradas do estimador gravadas e o laço reproduzido offline.
