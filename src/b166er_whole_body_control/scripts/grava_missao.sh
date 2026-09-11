@@ -77,9 +77,9 @@ fi
 
 # ---- stack e reset ----------------------------------------------------
 "$S/sim_stack.sh" preflight || { echo "[grava] PREFLIGHT REPROVADO"; exit 1; }
-source /home/marco/miniforge3/etc/profile.d/conda.sh
-conda activate ros_env
-source /home/marco/b166er/devel/setup.bash
+source "${CONDA_SH:-$HOME/miniforge3/etc/profile.d/conda.sh}"
+conda activate "${CONDA_ENV:-ros_env}"
+source "${B166ER_WS:-$(cd "$S/../../.." && pwd)}/devel/setup.bash"
 
 # ---- painel desenhando? ------------------------------------------------
 # Em 2026-09-09 uma gravação saiu com o quadrante do painel em branco

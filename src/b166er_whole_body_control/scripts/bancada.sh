@@ -56,9 +56,9 @@ case "$ENSAIO" in pre|E0|E1|E2|E3|E4|E5) ;; *) sed -n 2,30p "$0"; exit 2 ;; esac
 mkdir -p "$DIR"
 REG="$DIR/bancada.md"
 S="$(cd "$(dirname "$0")" && pwd)"
-source /home/marco/miniforge3/etc/profile.d/conda.sh
-conda activate ros_env
-source /home/marco/b166er/devel/setup.bash
+source "${CONDA_SH:-$HOME/miniforge3/etc/profile.d/conda.sh}"
+conda activate "${CONDA_ENV:-ros_env}"
+source "${B166ER_WS:-$(cd "$S/../../.." && pwd)}/devel/setup.bash"
 # Nomes que mudam entre simulação e hardware (conferidos em 2026-09-09):
 #   fisheye  sim /camera/fisheye1/*      hw /t265/fisheye1/*
 #   odom     sim /pioneer3at/odom        hw /pioneer/pose (RosAria remapeado)

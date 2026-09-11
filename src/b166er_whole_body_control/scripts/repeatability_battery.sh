@@ -31,10 +31,10 @@ echo "[bateria] $N execuções -> $OUT"
 # outras) e sob `set -u` isso aborta a bateria inteira antes da primeira
 # execução. Mesmo tropeço já corrigido no sim_stack.sh.
 set +u
-source /home/marco/miniforge3/etc/profile.d/conda.sh
+source "${CONDA_SH:-$HOME/miniforge3/etc/profile.d/conda.sh}"
 conda activate ros_env
 # shellcheck disable=SC1091
-source /home/marco/b166er/devel/setup.bash
+source "${B166ER_WS:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)}/devel/setup.bash"
 set -u
 
 for i in $(seq 1 "$N"); do
