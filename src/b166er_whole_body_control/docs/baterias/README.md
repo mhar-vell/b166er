@@ -26,6 +26,7 @@ Todos os números citados no artigo (Seções IV-D, IV-E e V-A) saem daqui.
 | 14 | `destrava_reassenta/RELATORIO14_destrava_reassenta.md` | destrava_reassenta | destrava que estagna curto (ponta sai do arame): captura descentrada não reproduz (8/8); estagnação curta em 4 s + reassentar (sobe, recaptura, desce) 2/2 |
 | 15 | `abort_saida/RELATORIO15_abort_saida_em_degraus.md` | abort_saida | saída do anel no ABORT/RETRACT em degraus (sobe, eixo, fora): a saída ruim do E5 vinha da postura colapsada por 40 s de empurrão; degraus fecham em 1 iteração 2/2 |
 | 16 | `run8_preso/RELATORIO16_run8_libera_presa.md` | run8_preso | por que a run8 escorregou: libera puxando com o gatilho travado (destrava fechou com lingueta 8 mm); reprodução 0/2 deslizes; reassentamento da libera exercitado (v4 1/2) e desligado por padrão |
+| 17 | `nuc_smoke/RELATORIO17_nuc_smoke.md` | nuc_smoke | stack inteiro no NUC (py3.12 reprovisionado): 1 missão headless, chave aberta 31°, RETURN estourou timeout (causa aberta); CPU 94 %, RTF 0,40; câmera exige DISPLAY |
 
 ## Como reproduzir uma bateria
 
