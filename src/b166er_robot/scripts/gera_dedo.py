@@ -17,20 +17,23 @@ Marco em 2026-09-02), em mm, ao longo de -Z a partir da montagem:
   afunil. 10: tronco de pirâmide de 20 x 25 para 10 x 10 (rampa contínua)
   haste   80, seção 10 x 10
   degrau  10 de altura, seção 10 x 10, 20 de projeção além da haste
-          (o L: 30 de comprimento total). VERSÃO 2 (2026-09-29, pedido do
+          (o L: 30 de comprimento total). VERSÃO 3 (2026-09-29, pedido do
           Marco: "o degrau tem que rotacionar 90 graus", opção B): a
           projeção é em +Y, no sentido das ABAS do garfo em U. Na
           versão 1 (09 Set) era em -X, no eixo do lado de 20 do garfo.
-          --versao 1 reproduz a v1 (arquivos com sufixo _v1).
+          A numeração é a do Marco: v1 = peça de 09 Set deste script,
+          v2 = a "rev B" impressa (75 mm, gerada fora do repo — a
+          incorporar), v3 = degrau girado. --versao 1 reproduz a v1.
+          Saídas com sufixo _v1 / _v3.
   total   125
 
 O QUE NÃO ESTÁ MEDIDO (2026-09-09): o ESPAÇAMENTO da grade 2x2 dos M3
 (diâmetro 3,5 passante é o do URDF). Passe o medido por argumento:
 
-  gera_dedo.py --versao 2 --furo-dx 10 --furo-dz 10 --furo-d 3.5 --rasgo 10.4 --aba 10 --saida DIR
+  gera_dedo.py --versao 3 --furo-dx 10 --furo-dz 10 --furo-d 3.5 --rasgo 10.4 --aba 10 --saida DIR
 
-Saída: dedo_fixo.stl (binário, mm, origem no topo do garfo, Z para
-baixo como no URDF) e dedo_fixo_desenho.pdf/.png (3 vistas + isométrica,
+Saída: dedo_fixo_vN.stl (binário, mm, origem no topo do garfo, Z para
+baixo como no URDF) e dedo_fixo_vN_desenho.pdf/.png (3 vistas + isométrica,
 cotas em mm). Só numpy e matplotlib — sem FreeCAD no shiroi.
 """
 import argparse
@@ -45,7 +48,7 @@ GARFO_Y = 30.4   # recalculado em main(): 2*aba + rasgo
 AFUN_H = 10.0
 HASTE_L, HASTE_X, HASTE_Y = 80.0, 10.0, 10.0
 DEGRAU_L, DEGRAU_Z = 20.0, 10.0
-VERSAO = 2       # 1: degrau em -X (09 Set); 2: degrau em +Y (29 Set). Ver main().
+VERSAO = 3       # 1: degrau em -X (09 Set); 3: degrau em +Y (29 Set). Ver main().
 TOTAL = GARFO_H + AFUN_H + HASTE_L          # 115 até o topo do degrau
 ALTURA_TOTAL = TOTAL + DEGRAU_Z             # 125
 
@@ -138,7 +141,7 @@ def solido(furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
     #   v2: de y=-5 (face -Y da haste) a y=+25 — sentido das abas do garfo
     if VERSAO == 1:
         tris += caixa(-HASTE_X / 2 - DEGRAU_L, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - DEGRAU_Z, zh0)
-    else:
+    else:   # v3
         tris += caixa(-HASTE_X / 2, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2 + DEGRAU_L, zh0 - DEGRAU_Z, zh0)
     return tris
 
@@ -151,9 +154,9 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
 
     fig = plt.figure(figsize=(16.5, 11.7))     # A3 paisagem
     fig.suptitle('DEDO FIXO v%d — ferramenta de manobra do RV-M2 (b166er)   ·   cotas em mm   ·   '
-                 '%s' % (VERSAO, 'degrau em +Y, sentido das abas (2026-09-29)' if VERSAO == 2
+                 '%s' % (VERSAO, 'degrau em +Y, sentido das abas (2026-09-29)' if VERSAO == 3
                          else 'degrau em −X, eixo do lado de 20 (2026-09-02)'), fontsize=13, y=0.98)
-    v2 = VERSAO == 2
+    v2 = VERSAO == 3     # nome histórico da flag: "degrau girado"
 
     def cota(ax, p0, p1, txt, off=(0, 0), rot=0):
         (x0, y0), (x1, y1) = p0, p1
@@ -286,14 +289,15 @@ def main():
     ap.add_argument('--rasgo', type=float, default=10.4, help='vão do garfo em Y (aba da castanha de 10 mm + folga)')
     ap.add_argument('--rasgo-prof', type=float, default=20.0, help='profundidade do vão (mm)')
     ap.add_argument('--aba', type=float, default=10.0, help='espessura de cada aba do garfo em Y (mm)')
-    ap.add_argument('--versao', type=int, choices=(1, 2), default=2,
-                    help='1: degrau em -X (09 Set 2026); 2: degrau em +Y, sentido das abas (29 Set 2026, padrão)')
+    ap.add_argument('--versao', type=int, choices=(1, 3), default=3,
+                    help='1: degrau em -X (09 Set 2026); 3: degrau em +Y, sentido das abas (29 Set 2026, padrão). '
+                         'A v2 é a rev B impressa, gerada fora deste script.')
     ap.add_argument('--saida', default='.', help='pasta de saída')
     a = ap.parse_args()
     global GARFO_Y, VERSAO
     GARFO_Y = 2 * a.aba + a.rasgo
     VERSAO = a.versao
-    suf = '' if VERSAO == 2 else '_v1'
+    suf = '_v%d' % VERSAO
     os.makedirs(a.saida, exist_ok=True)
     tris = solido(a.furo_dx, a.furo_dz, a.furo_d, a.rasgo, a.rasgo_prof, a.aba)
     stl = os.path.join(a.saida, 'dedo_fixo%s.stl' % suf)

@@ -58,27 +58,31 @@ mudarem, a malha tem que ser regerada — ela não lê as propriedades.
 Só o visual usa a malha; a colisão é uma caixa 10 × 10, porque a rampa
 nunca encosta em nada e caixa é mais estável no ODE que trimesh.
 
-## `dedo_fixo.stl` — a ferramenta de manobra, para IMPRIMIR
+## `dedo_fixo_v1.stl`, `dedo_fixo_v3.stl` — a ferramenta de manobra, para IMPRIMIR
 
-Gerado por `scripts/gera_dedo.py` (numpy; sem FreeCAD no shiroi), em
-**mm**, origem no topo do garfo e Z para baixo como no URDF. Geometria do
-bloco `dedo_*` do `movemaster.urdf.xacro` (revisada com o Marco em
-2026-09-02): garfo em U 20 × 30,4 × 25 (duas abas de 10 e vão de 10,4 que
-abraça a aba original de 10 mm da castanha da HM-01), rampa 20 × 30,4 →
-10 × 10, haste 10 × 10 × 80, degrau 30 × 10 × 10 (20 de projeção);
-125 de altura total, 25,5 cm³.
+Gerados por `scripts/gera_dedo.py --versao N` (numpy; sem FreeCAD no
+shiroi), em **mm**, origem no topo do garfo e Z para baixo como no URDF.
+Numeração do Marco:
 
-**Dedo v2 (2026-09-29)** — pedido do Marco: "o degrau tem que rotacionar
-90 graus". O degrau sai em **+Y**, no sentido das abas do garfo em U (na
-v1 saía em −X, no eixo do lado de 20 do garfo). `dedo_fixo.stl` e
-`docs/dedo_fixo_desenho.*` são a v2; a v1 fica em `dedo_fixo_v1.stl` e
-`docs/dedo_fixo_v1_desenho.*` (`gera_dedo.py --versao 1`). O URDF
-(`tool_tip`) e `kinematics.DEGRAU_DIR_TIP` acompanham a v2.
+- **v1** (09 Set 2026): geometria do bloco `dedo_*` do URDF revisada em
+  02 Set — garfo em U 20 × 30,4 × 25 (abas de 10, vão de 10,4 que abraça a
+  aba original de 10 mm da castanha da HM-01), rampa 20 × 30,4 → 10 × 10,
+  haste 10 × 10 × 80, degrau 30 × 10 × 10 com 20 de projeção em −X; 125 de
+  altura. Desenho em `docs/dedo_fixo_v1_desenho.*`.
+- **v2** ("rev B", 10 Set 2026): a peça efetivamente impressa — 75 mm de
+  altura (haste de 30), garfo de 30, duas fileiras de furos. Gerada FORA
+  deste repositório (só existe em `~/Downloads/dedo_fixo_v2.stl` e
+  `dedo_fixo_desenho_v2.*`); a incorporar.
+- **v3** (29 Set 2026): pedido do Marco, "o degrau tem que rotacionar 90
+  graus" — degrau em **+Y**, no sentido das abas do U. Derivada da v1 (a
+  base da v2 ainda não estava no repositório); desenho em
+  `docs/dedo_fixo_v3_desenho.*`. O URDF (`tool_tip`) e
+  `kinematics.DEGRAU_DIR_TIP` acompanham a v3.
 
-O que o STL **não** traz: os 4 furos M3 (⌀3,5) por aba em grade 2×2 — o
-espaçamento da grade da castanha não foi medido (padrão 10 × 10 no
+O que os STL **não** trazem: os 4 furos M3 (⌀3,5) por aba em grade 2×2 —
+o espaçamento da grade da castanha não foi medido (padrão 10 × 10 no
 desenho, a conferir). Passe o medido a `gera_dedo.py --furo-dx --furo-dz`
-e regenere. Desenho cotado em `docs/dedo_fixo_desenho.pdf`.
+e regenere.
 
 Nota: o URDF desenha o garfo como caixa de 20 × 25; a peça real é o U de
 30,4. A caixa é aproximação visual; a colisão que importa é a da haste e
