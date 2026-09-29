@@ -69,20 +69,22 @@ Numeração do Marco:
   aba original de 10 mm da castanha da HM-01), rampa 20 × 30,4 → 10 × 10,
   haste 10 × 10 × 80, degrau 30 × 10 × 10 com 20 de projeção em −X; 125 de
   altura. Desenho em `docs/dedo_fixo_v1_desenho.*`.
-- **v2** ("rev B", 10 Set 2026): a peça efetivamente impressa — 75 mm de
-  altura (haste de 30), garfo de 30, duas fileiras de furos. Gerada FORA
-  deste repositório (só existe em `~/Downloads/dedo_fixo_v2.stl` e
-  `dedo_fixo_desenho_v2.*`); a incorporar.
-- **v3** (29 Set 2026): pedido do Marco, "o degrau tem que rotacionar 90
-  graus" — degrau em **+Y**, no sentido das abas do U. Derivada da v1 (a
-  base da v2 ainda não estava no repositório); desenho em
+- **v2** ("REV. B", 10 Set 2026): a peça efetivamente impressa — 75 mm
+  de altura (haste de 30), garfo 20 × 30 × 25 com rasgo passante de 10,
+  4 furos M3 ⌀3,5 por aba (grade 10 × 15, a 5 mm das bordas) abertos no
+  STL, degrau 20 em −X. Gerada fora deste repositório; o original
+  (`dedo_fixo_v2.stl`, `docs/dedo_fixo_v2_desenho.*`) foi trazido dos
+  Downloads do Marco em 29 Set. `gera_dedo.py --versao 2` a REPRODUZ a
+  partir das cotas da prancha (mesmos 1236 triângulos e 18,4 cm³).
+- **v3** ("REV. C", 29 Set 2026): pedido do Marco, "o degrau tem que
+  rotacionar 90 graus" — a v2 com o degrau em **+Y**, no sentido das abas
+  do U. Prancha no mesmo formato padrão da REV. B em
   `docs/dedo_fixo_v3_desenho.*`. O URDF (`tool_tip`) e
   `kinematics.DEGRAU_DIR_TIP` acompanham a v3.
 
-O que os STL **não** trazem: os 4 furos M3 (⌀3,5) por aba em grade 2×2 —
-o espaçamento da grade da castanha não foi medido (padrão 10 × 10 no
-desenho, a conferir). Passe o medido a `gera_dedo.py --furo-dx --furo-dz`
-e regenere.
+A v1 não traz os furos no STL; v2 e v3 trazem (grade 10 × 15, a
+conferir contra a castanha — passe o medido a `gera_dedo.py --furo-dx
+--furo-dz` e regenere).
 
 Nota: o URDF desenha o garfo como caixa de 20 × 25; a peça real é o U de
 30,4. A caixa é aproximação visual; a colisão que importa é a da haste e
