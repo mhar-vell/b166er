@@ -65,8 +65,15 @@ Gerado por `scripts/gera_dedo.py` (numpy; sem FreeCAD no shiroi), em
 bloco `dedo_*` do `movemaster.urdf.xacro` (revisada com o Marco em
 2026-09-02): garfo em U 20 × 30,4 × 25 (duas abas de 10 e vão de 10,4 que
 abraça a aba original de 10 mm da castanha da HM-01), rampa 20 × 30,4 →
-10 × 10, haste 10 × 10 × 80, degrau 30 × 10 × 10 (20 de projeção em −X);
+10 × 10, haste 10 × 10 × 80, degrau 30 × 10 × 10 (20 de projeção);
 125 de altura total, 25,5 cm³.
+
+**Dedo v2 (2026-09-29)** — pedido do Marco: "o degrau tem que rotacionar
+90 graus". O degrau sai em **+Y**, no sentido das abas do garfo em U (na
+v1 saía em −X, no eixo do lado de 20 do garfo). `dedo_fixo.stl` e
+`docs/dedo_fixo_desenho.*` são a v2; a v1 fica em `dedo_fixo_v1.stl` e
+`docs/dedo_fixo_v1_desenho.*` (`gera_dedo.py --versao 1`). O URDF
+(`tool_tip`) e `kinematics.DEGRAU_DIR_TIP` acompanham a v2.
 
 O que o STL **não** traz: os 4 furos M3 (⌀3,5) por aba em grade 2×2 — o
 espaçamento da grade da castanha não foi medido (padrão 10 × 10 no

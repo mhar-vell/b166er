@@ -16,14 +16,18 @@ Marco em 2026-09-02), em mm, ao longo de -Z a partir da montagem:
           aproximação visual; a peça real é o U de 30,4.
   afunil. 10: tronco de pirâmide de 20 x 25 para 10 x 10 (rampa contínua)
   haste   80, seção 10 x 10
-  degrau  10 de altura, 10 de largura (Y), 20 de projeção em -X
-          (o L: 30 de comprimento total em X, alinhado com a haste em +X)
+  degrau  10 de altura, seção 10 x 10, 20 de projeção além da haste
+          (o L: 30 de comprimento total). VERSÃO 2 (2026-09-29, pedido do
+          Marco: "o degrau tem que rotacionar 90 graus", opção B): a
+          projeção é em +Y, no sentido das ABAS do garfo em U. Na
+          versão 1 (09 Set) era em -X, no eixo do lado de 20 do garfo.
+          --versao 1 reproduz a v1 (arquivos com sufixo _v1).
   total   125
 
 O QUE NÃO ESTÁ MEDIDO (2026-09-09): o ESPAÇAMENTO da grade 2x2 dos M3
 (diâmetro 3,5 passante é o do URDF). Passe o medido por argumento:
 
-  gera_dedo.py --furo-dx 10 --furo-dz 10 --furo-d 3.5 --rasgo 10.4 --aba 10 --saida DIR
+  gera_dedo.py --versao 2 --furo-dx 10 --furo-dz 10 --furo-d 3.5 --rasgo 10.4 --aba 10 --saida DIR
 
 Saída: dedo_fixo.stl (binário, mm, origem no topo do garfo, Z para
 baixo como no URDF) e dedo_fixo_desenho.pdf/.png (3 vistas + isométrica,
@@ -41,6 +45,7 @@ GARFO_Y = 30.4   # recalculado em main(): 2*aba + rasgo
 AFUN_H = 10.0
 HASTE_L, HASTE_X, HASTE_Y = 80.0, 10.0, 10.0
 DEGRAU_L, DEGRAU_Z = 20.0, 10.0
+VERSAO = 2       # 1: degrau em -X (09 Set); 2: degrau em +Y (29 Set). Ver main().
 TOTAL = GARFO_H + AFUN_H + HASTE_L          # 115 até o topo do degrau
 ALTURA_TOTAL = TOTAL + DEGRAU_Z             # 125
 
@@ -128,8 +133,13 @@ def solido(furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
     # Haste
     zh0 = -GARFO_H - AFUN_H - HASTE_L
     tris += caixa(-HASTE_X / 2, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - e, -GARFO_H - AFUN_H + e)
-    # Degrau (L): de x=+5 (face +X da haste) a x=-25, 10 de altura abaixo da haste
-    tris += caixa(-HASTE_X / 2 - DEGRAU_L, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - DEGRAU_Z, zh0)
+    # Degrau (L), 10 de altura abaixo da haste:
+    #   v1: de x=+5 (face +X da haste) a x=-25
+    #   v2: de y=-5 (face -Y da haste) a y=+25 — sentido das abas do garfo
+    if VERSAO == 1:
+        tris += caixa(-HASTE_X / 2 - DEGRAU_L, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - DEGRAU_Z, zh0)
+    else:
+        tris += caixa(-HASTE_X / 2, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2 + DEGRAU_L, zh0 - DEGRAU_Z, zh0)
     return tris
 
 
@@ -140,8 +150,10 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
     from matplotlib.patches import Rectangle, Polygon, Circle
 
     fig = plt.figure(figsize=(16.5, 11.7))     # A3 paisagem
-    fig.suptitle('DEDO FIXO — ferramenta de manobra do RV-M2 (b166er)   ·   cotas em mm   ·   '
-                 'geometria do movemaster.urdf.xacro (2026-09-02)', fontsize=13, y=0.98)
+    fig.suptitle('DEDO FIXO v%d — ferramenta de manobra do RV-M2 (b166er)   ·   cotas em mm   ·   '
+                 '%s' % (VERSAO, 'degrau em +Y, sentido das abas (2026-09-29)' if VERSAO == 2
+                         else 'degrau em −X, eixo do lado de 20 (2026-09-02)'), fontsize=13, y=0.98)
+    v2 = VERSAO == 2
 
     def cota(ax, p0, p1, txt, off=(0, 0), rot=0):
         (x0, y0), (x1, y1) = p0, p1
@@ -153,14 +165,17 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
 
     zh0 = -GARFO_H - AFUN_H - HASTE_L
     # ---------------- Vista de FRENTE (plano X–Z): o L aparece
-    ax = fig.add_subplot(2, 2, 1); ax.set_title('Vista de frente (X–Z) — o L do degrau')
+    ax = fig.add_subplot(2, 2, 1); ax.set_title('Vista de frente (X–Z) — ' + ('o degrau visto de ponta' if v2 else 'o L do degrau'))
     ax.add_patch(Rectangle((-GARFO_X / 2, -GARFO_H), GARFO_X, GARFO_H, fill=False, lw=1.2))
     ax.add_patch(Polygon([(-GARFO_X / 2, -GARFO_H), (GARFO_X / 2, -GARFO_H),
                           (HASTE_X / 2, -GARFO_H - AFUN_H), (-HASTE_X / 2, -GARFO_H - AFUN_H)],
                          closed=True, fill=False, lw=1.2))
     ax.add_patch(Rectangle((-HASTE_X / 2, zh0), HASTE_X, HASTE_L, fill=False, lw=1.2))
-    ax.add_patch(Rectangle((-HASTE_X / 2 - DEGRAU_L, zh0 - DEGRAU_Z), DEGRAU_L + HASTE_X, DEGRAU_Z,
-                           fill=False, lw=1.2))
+    if v2:
+        ax.add_patch(Rectangle((-HASTE_X / 2, zh0 - DEGRAU_Z), HASTE_X, DEGRAU_Z, fill=False, lw=1.2))
+    else:
+        ax.add_patch(Rectangle((-HASTE_X / 2 - DEGRAU_L, zh0 - DEGRAU_Z), DEGRAU_L + HASTE_X, DEGRAU_Z,
+                               fill=False, lw=1.2))
     for cx in (-furo_dx / 2, furo_dx / 2):
         for cz in (-GARFO_H / 2 - furo_dz / 2, -GARFO_H / 2 + furo_dz / 2):
             ax.add_patch(Circle((cx, cz), furo_d / 2, fill=False, lw=0.8, ls='--'))
@@ -171,21 +186,29 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
     cota(ax, (40, 0), (40, zh0 - DEGRAU_Z), '125', off=(5, 0), rot=90)
     cota(ax, (-GARFO_X / 2, 6), (GARFO_X / 2, 6), '20', off=(0, 3))
     cota(ax, (-HASTE_X / 2, -60), (HASTE_X / 2, -60), '10', off=(0, 3))
-    cota(ax, (-HASTE_X / 2 - DEGRAU_L, zh0 - DEGRAU_Z - 6), (HASTE_X / 2, zh0 - DEGRAU_Z - 6),
-         '30 (20 de projeção além da haste)', off=(0, -3))
+    if not v2:
+        cota(ax, (-HASTE_X / 2 - DEGRAU_L, zh0 - DEGRAU_Z - 6), (HASTE_X / 2, zh0 - DEGRAU_Z - 6),
+             '30 (20 de projeção além da haste)', off=(0, -3))
     cota(ax, (-furo_dx / 2, -GARFO_H - 4), (furo_dx / 2, -GARFO_H - 4), 'furos %g' % furo_dx, off=(0, -3))
     ax.text(-38, -GARFO_H / 2, '4 furos M3 (Ø%g)\nem grade 2×2, por aba\n(espaçamento\nA CONFERIR)' % furo_d,
             fontsize=8, ha='center', va='center')
     ax.set_xlim(-50, 50); ax.set_ylim(-135, 12); ax.set_aspect('equal'); ax.axis('off')
 
     # ---------------- Vista LATERAL (plano Y–Z): o rasgo do garfo
-    ax = fig.add_subplot(2, 2, 2); ax.set_title('Vista lateral (Y–Z) — o U do garfo e a seção 10 × 10')
+    ax = fig.add_subplot(2, 2, 2); ax.set_title('Vista lateral (Y–Z) — o U do garfo' + (' e o L do degrau' if v2 else ' e a seção 10 × 10'))
     ax.add_patch(Rectangle((-GARFO_Y / 2, -GARFO_H), GARFO_Y, GARFO_H, fill=False, lw=1.2))
     ax.add_patch(Rectangle((-rasgo / 2, -rasgo_prof), rasgo, rasgo_prof, fill=False, lw=1.2, hatch='//'))
     ax.add_patch(Polygon([(-GARFO_Y / 2, -GARFO_H), (GARFO_Y / 2, -GARFO_H),
                           (HASTE_Y / 2, -GARFO_H - AFUN_H), (-HASTE_Y / 2, -GARFO_H - AFUN_H)],
                          closed=True, fill=False, lw=1.2))
-    ax.add_patch(Rectangle((-HASTE_Y / 2, zh0 - DEGRAU_Z), HASTE_Y, HASTE_L + DEGRAU_Z, fill=False, lw=1.2))
+    if v2:
+        ax.add_patch(Rectangle((-HASTE_Y / 2, zh0), HASTE_Y, HASTE_L, fill=False, lw=1.2))
+        ax.add_patch(Rectangle((-HASTE_Y / 2, zh0 - DEGRAU_Z), DEGRAU_L + HASTE_Y, DEGRAU_Z, fill=False, lw=1.2))
+        cota(ax, (-HASTE_Y / 2, zh0 - DEGRAU_Z - 6), (HASTE_Y / 2 + DEGRAU_L, zh0 - DEGRAU_Z - 6),
+             '30 (20 de projeção além da haste, em +Y)', off=(0, -3))
+        cota(ax, (GARFO_Y / 2 + 6, zh0), (GARFO_Y / 2 + 6, zh0 - DEGRAU_Z), '10', off=(4, 0), rot=90)
+    else:
+        ax.add_patch(Rectangle((-HASTE_Y / 2, zh0 - DEGRAU_Z), HASTE_Y, HASTE_L + DEGRAU_Z, fill=False, lw=1.2))
     for cz in (-GARFO_H / 2 - furo_dz / 2, -GARFO_H / 2 + furo_dz / 2):
         ax.plot([-GARFO_Y / 2, GARFO_Y / 2], [cz, cz], 'k--', lw=0.6)
     cota(ax, (-GARFO_Y / 2, 6), (GARFO_Y / 2, 6), '%g' % GARFO_Y, off=(0, 3))
@@ -199,13 +222,22 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
     # ---------------- Vista SUPERIOR (plano X–Y): o degrau visto de cima
     ax = fig.add_subplot(2, 2, 3); ax.set_title('Vista de baixo (X–Y) — o degrau visto pela ponta')
     ax.add_patch(Rectangle((-GARFO_X / 2, -GARFO_Y / 2), GARFO_X, GARFO_Y, fill=False, lw=0.8, ls=':'))
-    ax.add_patch(Rectangle((-HASTE_X / 2 - DEGRAU_L, -HASTE_Y / 2), DEGRAU_L + HASTE_X, HASTE_Y, fill=False, lw=1.2))
-    ax.add_patch(Rectangle((-HASTE_X / 2, -HASTE_Y / 2), HASTE_X, HASTE_Y, fill=False, lw=1.2))
-    cota(ax, (-HASTE_X / 2 - DEGRAU_L, -14), (HASTE_X / 2, -14), '30', off=(0, -3))
-    cota(ax, (-HASTE_X / 2 - DEGRAU_L, 12), (-HASTE_X / 2, 12), '20', off=(0, 3))
-    cota(ax, (12, -HASTE_Y / 2), (12, HASTE_Y / 2), '10', off=(4, 0), rot=90)
-    ax.text(0, -22, 'garfo 20 × %g (pontilhado) — o degrau sai em −X, no eixo da haste' % GARFO_Y, fontsize=8, ha='center')
-    ax.set_xlim(-50, 50); ax.set_ylim(-30, 30); ax.set_aspect('equal'); ax.axis('off')
+    if v2:
+        ax.add_patch(Rectangle((-HASTE_X / 2, -HASTE_Y / 2), HASTE_X, DEGRAU_L + HASTE_Y, fill=False, lw=1.2))
+        ax.add_patch(Rectangle((-HASTE_X / 2, -HASTE_Y / 2), HASTE_X, HASTE_Y, fill=False, lw=1.2))
+        cota(ax, (14, -HASTE_Y / 2), (14, HASTE_Y / 2 + DEGRAU_L), '30', off=(4, 0), rot=90)
+        cota(ax, (-12, HASTE_Y / 2), (-12, HASTE_Y / 2 + DEGRAU_L), '20', off=(-4, 0), rot=90)
+        cota(ax, (-HASTE_X / 2, -12), (HASTE_X / 2, -12), '10', off=(0, -3))
+        ax.text(0, -22, 'garfo 20 × %g (pontilhado) — o degrau sai em +Y, no sentido das abas do U' % GARFO_Y, fontsize=8, ha='center')
+        ax.set_xlim(-50, 50); ax.set_ylim(-30, 34); ax.set_aspect('equal'); ax.axis('off')
+    else:
+        ax.add_patch(Rectangle((-HASTE_X / 2 - DEGRAU_L, -HASTE_Y / 2), DEGRAU_L + HASTE_X, HASTE_Y, fill=False, lw=1.2))
+        ax.add_patch(Rectangle((-HASTE_X / 2, -HASTE_Y / 2), HASTE_X, HASTE_Y, fill=False, lw=1.2))
+        cota(ax, (-HASTE_X / 2 - DEGRAU_L, -14), (HASTE_X / 2, -14), '30', off=(0, -3))
+        cota(ax, (-HASTE_X / 2 - DEGRAU_L, 12), (-HASTE_X / 2, 12), '20', off=(0, 3))
+        cota(ax, (12, -HASTE_Y / 2), (12, HASTE_Y / 2), '10', off=(4, 0), rot=90)
+        ax.text(0, -22, 'garfo 20 × %g (pontilhado) — o degrau sai em −X, no eixo da haste' % GARFO_Y, fontsize=8, ha='center')
+        ax.set_xlim(-50, 50); ax.set_ylim(-30, 30); ax.set_aspect('equal'); ax.axis('off')
 
     # ---------------- Isométrica simples
     ax = fig.add_subplot(2, 2, 4); ax.set_title('Isométrica (só orientação) e notas de impressão')
@@ -218,7 +250,10 @@ def desenho(caminho_base, furo_dx, furo_dz, furo_d, rasgo, rasgo_prof, aba):
         poly([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], fill=True, fc='#f4dd7a', ec='k', lw=0.8)
         poly([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], fill=True, fc='#d9c25f', ec='k', lw=0.8)
         poly([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], fill=True, fc='#b89f3a', ec='k', lw=0.8)
-    caixa_iso(-HASTE_X / 2 - DEGRAU_L, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - DEGRAU_Z, zh0)
+    if v2:
+        caixa_iso(-HASTE_X / 2, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2 + DEGRAU_L, zh0 - DEGRAU_Z, zh0)
+    else:
+        caixa_iso(-HASTE_X / 2 - DEGRAU_L, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0 - DEGRAU_Z, zh0)
     caixa_iso(-HASTE_X / 2, HASTE_X / 2, -HASTE_Y / 2, HASTE_Y / 2, zh0, -GARFO_H - AFUN_H)
     caixa_iso(-GARFO_X / 2, GARFO_X / 2, -GARFO_Y / 2, GARFO_Y / 2, -GARFO_H - AFUN_H, -GARFO_H)
     # garfo em U: fundo e duas abas
@@ -251,20 +286,24 @@ def main():
     ap.add_argument('--rasgo', type=float, default=10.4, help='vão do garfo em Y (aba da castanha de 10 mm + folga)')
     ap.add_argument('--rasgo-prof', type=float, default=20.0, help='profundidade do vão (mm)')
     ap.add_argument('--aba', type=float, default=10.0, help='espessura de cada aba do garfo em Y (mm)')
+    ap.add_argument('--versao', type=int, choices=(1, 2), default=2,
+                    help='1: degrau em -X (09 Set 2026); 2: degrau em +Y, sentido das abas (29 Set 2026, padrão)')
     ap.add_argument('--saida', default='.', help='pasta de saída')
     a = ap.parse_args()
-    global GARFO_Y
+    global GARFO_Y, VERSAO
     GARFO_Y = 2 * a.aba + a.rasgo
+    VERSAO = a.versao
+    suf = '' if VERSAO == 2 else '_v1'
     os.makedirs(a.saida, exist_ok=True)
     tris = solido(a.furo_dx, a.furo_dz, a.furo_d, a.rasgo, a.rasgo_prof, a.aba)
-    stl = os.path.join(a.saida, 'dedo_fixo.stl')
+    stl = os.path.join(a.saida, 'dedo_fixo%s.stl' % suf)
     escreve_stl(stl, tris)
-    desenho(os.path.join(a.saida, 'dedo_fixo_desenho'), a.furo_dx, a.furo_dz, a.furo_d, a.rasgo, a.rasgo_prof, a.aba)
+    desenho(os.path.join(a.saida, 'dedo_fixo%s_desenho' % suf), a.furo_dx, a.furo_dz, a.furo_d, a.rasgo, a.rasgo_prof, a.aba)
     pts = np.vstack(tris)
     print('%s: %d triângulos, bbox X %.1f..%.1f  Y %.1f..%.1f  Z %.1f..%.1f mm' % (
         stl, len(tris), pts[:, 0].min(), pts[:, 0].max(), pts[:, 1].min(), pts[:, 1].max(),
         pts[:, 2].min(), pts[:, 2].max()))
-    print('desenho: %s.pdf / .png' % os.path.join(a.saida, 'dedo_fixo_desenho'))
+    print('desenho: %s.pdf / .png' % os.path.join(a.saida, 'dedo_fixo%s_desenho' % suf))
 
 
 if __name__ == '__main__':
