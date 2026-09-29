@@ -77,10 +77,14 @@ Numeração do Marco:
   Downloads do Marco em 29 Set. `gera_dedo.py --versao 2` a REPRODUZ a
   partir das cotas da prancha (mesmos 1236 triângulos e 18,4 cm³).
 - **v3** ("REV. C", 29 Set 2026): pedido do Marco, "o degrau tem que
-  rotacionar 90 graus" — a v2 com o degrau em **+Y**, no sentido das abas
-  do U. Prancha no mesmo formato padrão da REV. B em
+  rotacionar 90 graus" e "na versão 3 a haste tem 50 mm" — a v2 com
+  **haste de 50 (total 95)** e o degrau em **+Y**, no sentido das abas do
+  U; 20,4 cm³. Prancha no mesmo formato padrão da REV. B em
   `docs/dedo_fixo_v3_desenho.*`. O URDF (`tool_tip`) e
-  `kinematics.DEGRAU_DIR_TIP` acompanham a v3.
+  `kinematics.DEGRAU_DIR_TIP` acompanham a DIREÇÃO do degrau; o
+  COMPRIMENTO da haste no modelo (`dedo_haste_l` = 0,080 e o −0,115 de
+  `kinematics._T_L5_TOOLTIP`) ainda é o da v1 — a simulação de 24 Set
+  rodou com 80, não com 50. Alinhar o modelo à v3 é uma PR própria.
 
 A v1 não traz os furos no STL; v2 e v3 trazem (grade 10 × 15, a
 conferir contra a castanha — passe o medido a `gera_dedo.py --furo-dx

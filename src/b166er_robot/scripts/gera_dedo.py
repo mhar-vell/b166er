@@ -21,9 +21,11 @@ dedo_fixo_vN_desenho.pdf/.png):
       x 15 (Z) a 5 mm das bordas, ABERTOS no STL; rampa 10; HASTE 30;
       degrau 20 em -X; total 75.
   v3  REV. C, 29 Set 2026 — pedido do Marco: "o degrau tem que rotacionar
-      90 graus" (opção B do desenho de alternativas). Mesma geometria da
-      v2 com o degrau em +Y, no sentido das ABAS. kinematics.DEGRAU_DIR_TIP
-      e o tool_tip do URDF acompanham.
+      90 graus" (opção B do desenho de alternativas) e "na versão 3 a
+      haste tem 50 mm". Geometria da v2 com HASTE 50 (total 95) e o
+      degrau em +Y, no sentido das ABAS. kinematics.DEGRAU_DIR_TIP e o
+      tool_tip do URDF acompanham a direção; o comprimento no modelo
+      (dedo_haste_l) ainda é o da v1 — ver README das malhas.
 
 A prancha das v2/v3 segue o formato padrão da REV. B: A3 paisagem com
 moldura, VISTA DE BAIXO / DE FRENTE / LATERAL cotadas em 1:1, DETALHE DA
@@ -54,10 +56,10 @@ GEO = {
             degrau_eixo='-x', rev='B', data='2026-09-09',
             substitui='REV. A de 2026-09-02 (haste 80, total 125)'),
     3: dict(garfo_h=25.0, garfo_x=20.0, aba=10.0, rasgo=10.0, rasgo_prof=25.0,
-            afun_h=10.0, haste_l=30.0, haste=10.0, degrau_l=20.0, degrau_z=10.0,
+            afun_h=10.0, haste_l=50.0, haste=10.0, degrau_l=20.0, degrau_z=10.0,
             furo_dx=10.0, furo_dz=15.0, furo_d=3.5, furos_no_stl=True,
             degrau_eixo='+y', rev='C', data='2026-09-29',
-            substitui='REV. B de 2026-09-09 (degrau em −X)'),
+            substitui='REV. B de 2026-09-09 (haste 30, degrau em −X)'),
 }
 DENS_PLA = 1.24   # g/cm³
 
@@ -408,30 +410,38 @@ def prancha(caminho_base, d):
     titulo(ox, oy - d.garfo_h * s - 15, 'DETALHE DA FURAÇÃO', 'escala 2:1 — aba vista por fora (face Y = −%g)' % gy)
 
     # ================= PERSPECTIVA ISOMÉTRICA — direita, meio
+    # Projeção: +X vai para a direita e para cima, +Y para a esquerda e
+    # para cima; o observador está no lado −X, −Y, +Z. Faces visíveis de
+    # uma caixa: −X, −Y e topo. Pintura de trás para a frente: peças de
+    # baixo antes das de cima e, no mesmo nível, maior (x + y) primeiro.
     ox, oy, si = 352.0, 196.0, 0.6      # escala reduzida: é só orientação
     def iso(p):
         x, y, zz = p
         return ox + si * (x - y) * np.cos(np.radians(30)), oy + si * (zz + (x + y) * np.sin(np.radians(30)))
     def poly(pts, fc):
         ax.add_patch(Polygon([iso(p) for p in pts], closed=True, fill=True, fc=fc, ec='k', lw=0.6))
+    TOPO, FY, FX = '#f4dd7a', '#d9c25f', '#b89f3a'
     def caixa_iso(x0, x1, y0, y1, z0, z1):
-        poly([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], '#f4dd7a')
-        poly([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], '#d9c25f')
-        poly([(x1, y0, z0), (x1, y1, z0), (x1, y1, z1), (x1, y0, z1)], '#b89f3a')
-    caixa_iso(dx0, dx1, dy0, dy1, dz0, dz1)
-    caixa_iso(-h, h, -h, h, d.zh0, d.z_afun)
-    poly([(-gx, -gy, d.z_garfo), (gx, -gy, d.z_garfo), (h, -h, d.z_afun), (-h, -h, d.z_afun)], '#d9c25f')
-    poly([(gx, -gy, d.z_garfo), (gx, gy, d.z_garfo), (h, h, d.z_afun), (h, -h, d.z_afun)], '#b89f3a')
-    poly([(-gx, -gy, d.z_garfo), (gx, -gy, d.z_garfo), (gx, gy, d.z_garfo), (-gx, gy, d.z_garfo)], '#f4dd7a')
+        poly([(x0, y0, z0), (x0, y1, z0), (x0, y1, z1), (x0, y0, z1)], FX)     # face −X
+        poly([(x0, y0, z0), (x1, y0, z0), (x1, y0, z1), (x0, y0, z1)], FY)     # face −Y
+        poly([(x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)], TOPO)   # topo
+    caixa_iso(dx0, dx1, dy0, dy1, dz0, dz1)                                    # degrau
+    caixa_iso(-h, h, -h, h, d.zh0, d.z_afun)                                   # haste
+    poly([(-gx, -gy, d.z_garfo), (-gx, gy, d.z_garfo), (-h, h, d.z_afun), (-h, -h, d.z_afun)], FX)   # rampa −X
+    poly([(-gx, -gy, d.z_garfo), (gx, -gy, d.z_garfo), (h, -h, d.z_afun), (-h, -h, d.z_afun)], FY)   # rampa −Y
+    poly([(-gx, -gy, d.z_garfo), (gx, -gy, d.z_garfo), (gx, gy, d.z_garfo), (-gx, gy, d.z_garfo)], TOPO)  # topo da rampa
     if d.rasgo_prof < d.garfo_h:
-        caixa_iso(-gx, gx, -gy + d.aba, gy - d.aba, d.z_garfo, -d.rasgo_prof)
-    caixa_iso(-gx, gx, gy - d.aba, gy, d.z_garfo, 0)
-    caixa_iso(-gx, gx, -gy, -gy + d.aba, d.z_garfo, 0)
-    if d.furos_no_stl:
+        caixa_iso(-gx, gx, -gy + d.aba, gy - d.aba, d.z_garfo, -d.rasgo_prof)  # fundo do U (v1)
+    def furos_iso(yface):
+        if not d.furos_no_stl:
+            return
         for fx in d.furos_x:
             for fz in d.furos_z:
-                pts = [iso((fx + d.furo_d / 2 * np.cos(t), -gy, fz + d.furo_d / 2 * np.sin(t))) for t in np.linspace(0, 2 * np.pi, 20)]
-                ax.add_patch(Polygon(pts, closed=True, fill=False, lw=0.5, ec='k'))
+                pts = [iso((fx + d.furo_d / 2 * np.cos(t), yface, fz + d.furo_d / 2 * np.sin(t)))
+                       for t in np.linspace(0, 2 * np.pi, 24)]
+                ax.add_patch(Polygon(pts, closed=True, fill=True, fc='white', lw=0.5, ec='k'))
+    caixa_iso(-gx, gx, gy - d.aba, gy, d.z_garfo, 0); furos_iso(gy - d.aba)   # aba de trás (+Y)
+    caixa_iso(-gx, gx, -gy, -gy + d.aba, d.z_garfo, 0); furos_iso(-gy)        # aba da frente (−Y)
     titulo(ox + 2, oy - si * d.total - 16, 'PERSPECTIVA ISOMÉTRICA', 'somente orientação — sem cotas')
 
     # ================= NOTAS
