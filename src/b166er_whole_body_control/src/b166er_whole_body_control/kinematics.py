@@ -94,8 +94,17 @@ _T_L5_TOOLTIP = (_trans(0, 0, -0.08)     # JCam:      L5 → CameraSupport
                 @ _trans(0, 0, -0.115))  # JToolTip:  garfo + afunilamento + haste = 115 mm
 # A origem de tool_tip é a base do DEGRAU — o ponto onde o arame do olhal
 # repousa depois da descida de 5 mm. É esse ponto, e não a extremidade da
-# peça, que a missão persegue: o degrau se estende 20 mm em −X a partir
-# daqui, e o anel pode ficar em qualquer lugar ao longo dele.
+# peça, que a missão persegue: o degrau se estende 20 mm a partir daqui
+# na direção DEGRAU_DIR_TIP, e o anel pode ficar em qualquer lugar ao
+# longo dele.
+#
+# DEDO v2 (2026-09-29, pedido do Marco: "o degrau tem que rotacionar 90
+# graus", opção B do desenho): o degrau sai em +Y do tool_tip — no sentido
+# das ABAS do garfo em U — e não mais em −X (v1). É a única constante que
+# diz para que lado o degrau aponta; degrau_dir(), ik_tooltip_com_degrau
+# e ik_tooltip_nivelado leem daqui. Tem que casar com as caixas do link
+# tool_tip em movemaster.urdf.xacro e com gera_dedo.py --versao 2.
+DEGRAU_DIR_TIP = np.array([0.0, 1.0, 0.0])
 
 # Offset FIXO e conhecido de t265_link até a ponta da ferramenta —
 # ambos pendurados rigidamente no mesmo CameraSupport, então essa
@@ -622,12 +631,12 @@ def ik_tooltip_position(p_target_arm, q_seeds=None, max_iter=400, max_step=0.08,
 def degrau_dir(q):
     """Direção do DEGRAU (o dedo horizontal) no frame da base do braço.
 
-    O degrau se projeta em −X do frame `tool_tip` (ver o bloco DEDO FIXO
-    em movemaster.urdf.xacro). Conferido contra a TF publicada pelo
-    robot_state_publisher em 2026-08-27.
+    O degrau se projeta em DEGRAU_DIR_TIP do frame `tool_tip` (+Y desde o
+    dedo v2; era −X na v1, conferida contra a TF do robot_state_publisher
+    em 2026-08-27). Ver o bloco DEDO FIXO em movemaster.urdf.xacro.
     """
     T = fk_arm(q) @ T_T265_TOOLTIP
-    return -T[:3, 0]
+    return T[:3, :3] @ DEGRAU_DIR_TIP
 
 
 def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
@@ -709,7 +718,17 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
     def _alvo_R(R_atual):
         """Atitude desejada do tool_tip.
 
-        O degrau aponta em −X do tool_tip; a LARGURA (20 mm) é Y e a
+        DEDO v2: o degrau aponta em +Y do tool_tip (DEGRAU_DIR_TIP); a
+        haste segue em Z e o outro lado da seção 10 x 10 é X. A atitude
+        pedida põe X na VERTICAL (é o mesmo que a v1 fazia com Y: o
+        eixo do furo vira o do degrau, a vertical vira o eixo
+        transversal, e a haste — Z — fica horizontal, normal à parede).
+        Com a seção quadrada de 10 x 10 a escolha de qual lado fica em
+        pé é indiferente para a folga; o que muda com a v2 é só que o
+        punho roda 90° em torno da haste para apresentar o degrau. A
+        nota histórica da v1 fica abaixo pelo raciocínio das folgas:
+
+        (v1) O degrau aponta em −X do tool_tip; a LARGURA (20 mm) é Y e a
         ALTURA (17 mm) é −Z. A atitude pedida põe a LARGURA na VERTICAL,
         e não a altura.
 
@@ -734,18 +753,18 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
         if sentido_fixo:
             s = 1.0
         else:
-            s = 1.0 if float((-R_atual[:, 0]) @ a) >= 0.0 else -1.0
-        x = -s * a                       # degrau aponta em -X do tool_tip
-        v = up - float(up @ x) * x       # vertical, ortogonalizada ao eixo
+            s = 1.0 if float((R_atual[:, :3] @ DEGRAU_DIR_TIP) @ a) >= 0.0 else -1.0
+        y = s * a                        # degrau aponta em +Y do tool_tip (v2)
+        v = up - float(up @ y) * y       # vertical, ortogonalizada ao eixo
         n = np.linalg.norm(v)
         if n < 1e-6:                     # furo vertical: qualquer roll serve
             base = np.array([0.0, 0.0, 1.0])
-            v = base - float(base @ x) * x
+            v = base - float(base @ y) * y
             n = np.linalg.norm(v)
         v = v / n
-        t = 1.0 if float(R_atual[:, 1] @ v) >= 0.0 else -1.0
-        y = t * v                        # LARGURA na vertical
-        z = np.cross(x, y)
+        t = 1.0 if float(R_atual[:, 0] @ v) >= 0.0 else -1.0
+        x = t * v                        # lado transversal da seção na vertical
+        z = np.cross(x, y)               # haste: horizontal, normal à parede
         return np.column_stack([x, y, z])
 
     if q_seeds is None:
@@ -917,7 +936,7 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
 
     def _feat(q):
         T = fk_arm(q) @ T_T265_TOOLTIP
-        return T[:3, 3], -T[:3, 0]
+        return T[:3, 3], T[:3, :3] @ DEGRAU_DIR_TIP
 
     def _erro(q):
         p, d = _feat(q)
