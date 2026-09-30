@@ -75,7 +75,8 @@ from gazebo_msgs.srv import (GetJointProperties, GetModelState,
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, pose_error, T_T265_TOOLTIP, T_BASELINK_ARM, fk_arm,
-    ik_tooltip_position, ik_tooltip_com_degrau, ik_tooltip_nivelado)
+    ik_tooltip_position, ik_tooltip_com_degrau, ik_tooltip_nivelado,
+    GARRA_DX, checa_garra_dx)
 from b166er_whole_body_control import chave_task
 
 # pre_engage primeiro: aproxima por um ponto afastado da parede e só
@@ -3356,6 +3357,21 @@ def _preparo_ensaio(ctx, estado_inicial):
 # ═══════════════════════════════════════════════════════════════════════
 def main():
     rospy.init_node('chave_mission')
+
+    # Garra aberta/fechada (2026-09-30): a posição da castanha entra no
+    # xacro (b166er_wb.launch garra_dx) e na cinemática (B166ER_GARRA_DX,
+    # exportado pelos dois launches). Se um subiu com um valor e o outro
+    # com outro, a ponta calculada fica 30 mm fora da ponta simulada e a
+    # missão erra o olhal sem outro sintoma — melhor parar aqui.
+    ok, dx_urdf = checa_garra_dx(rospy.get_param('/robot_description', ''))
+    if not ok:
+        rospy.logfatal('garra_dx da cinemática (%.3f, B166ER_GARRA_DX) não casa '
+                       'com o JTool do robot_description (%s): suba '
+                       'b166er_wb.launch e chave_mission.launch com o mesmo '
+                       'garra_dx:=', GARRA_DX, dx_urdf)
+        return
+    rospy.loginfo('garra_dx = %.3f m (%s)', GARRA_DX,
+                  'aberta' if GARRA_DX > 0.015 else 'fechada')
     ctx = MissionContext()
 
     # ENSAIOS DE BANCADA (2026-09-09, plano_de_bancada.md E3/E4): a missão

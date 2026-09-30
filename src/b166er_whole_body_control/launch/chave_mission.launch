@@ -79,6 +79,11 @@
          E3: estado_inicial:=REFINE  (base estacionada à mão no standoff)
          E4: estado_final:=REFINE    (só SEARCH + APPROACH + REFINE)
        Estados: STOW_INIT SEARCH APPROACH REFINE DEPLOY MANIPULATE RETRACT RETURN -->
+  <!-- Mesmo valor passado a b166er_wb.launch (garra aberta 0.03 /
+       fechada 0.0); a missão confere contra o robot_description e
+       aborta se os dois não casarem. -->
+  <arg name="garra_dx" default="0.03"/>
+  <env name="B166ER_GARRA_DX" value="$(arg garra_dx)"/>
   <arg name="estado_inicial" default="STOW_INIT"/>
   <arg name="estado_final"   default=""/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>

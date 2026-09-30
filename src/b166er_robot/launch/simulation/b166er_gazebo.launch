@@ -25,8 +25,14 @@
   <arg name="y"   default="1.0"/>
   <arg name="yaw" default="0.0"/>
 
+  <!-- garra_dx: posição da castanha do dedo fixo (0.03 aberta, 0.0
+       fechada), ver movemaster.urdf.xacro. Este launch é incluído pelo
+       b166er_wb.launch DEPOIS do robot_description dele e sobrescreve o
+       parâmetro — por isso recebe o mesmo argumento (2026-09-30). -->
+  <arg name="garra_dx" default="0.03"/>
   <param name="robot_description"
-         command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
+         command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro
+                  garra_dx:=$(arg garra_dx)"/>
 
   <!-- Inicia pausado: garante que o braço não cai antes dos controladores
        carregarem. O arm_controller_loader despausa após carregar tudo. -->

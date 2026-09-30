@@ -5,6 +5,22 @@
        Mantém os mesmos nomes de junta (J1..J5, JGrip1/2) usados pelo
        movemaster_state_publisher real, para que o mesmo /joint_states
        sirva tanto a simulação quanto o hardware. -->
+  <!-- POSIÇÃO DA CASTANHA onde o dedo fixo monta (2026-09-30). A mão DC
+       do RV-M2 (folheto Mitsubishi, "DC motor hand") tem curso de 0 a
+       60 mm entre as faces internas das castanhas: cada castanha anda
+       30 mm no eixo transversal (x do GripCube). A garra NÃO tem junta
+       neste modelo — ela não abre nem fecha na tarefa — então a posição
+       em que ela fica travada entra como argumento:
+         garra_dx = 0.03  → garra ABERTA (valor histórico do modelo;
+                            dedo 30 mm fora do eixo do J5)
+         garra_dx = 0.0   → garra FECHADA (dedo no eixo do J5; o rolamento
+                            do punho deixa de mover a ponta)
+       Tem que casar com B166ER_GARRA_DX lido por kinematics.py
+       (_T_L5_TOOLTIP): b166er_wb.launch passa os dois a partir do mesmo
+       arg garra_dx, e chave_mission.py confere no robot_description. -->
+  <xacro:arg name="garra_dx" default="0.03"/>
+  <xacro:property name="garra_dx" value="$(arg garra_dx)"/>
+
   <xacro:macro name="movemaster_rv_m2" params="parent xyz:='0 0 0' rpy:='0 0 0'">
 
     <joint name="movemaster_mount_joint" type="fixed">
@@ -575,12 +591,12 @@
          garra não abre nem fecha na tarefa (ver o bloco do DEDO FIXO
          abaixo), esse dedo é massa e geometria fantasma: some daqui.
 
-         Grip1 (em +0.03, mesma origem do JTool) fica: é a lingueta que o
+         Grip1 (em +garra_dx, mesma origem do JTool) fica: é a lingueta que o
          garfo do dedo fixo abraça. -->
 
     <link name="Grip1">
       <visual>
-        <origin xyz="0.03 0 -0.08" rpy="0 1.57 -1.57" />
+        <origin xyz="${garra_dx} 0 -0.08" rpy="0 1.57 -1.57" />
         <geometry>
           <mesh filename="package://movemaster_control/3D_Models/Grip1.stl" scale="0.001 0.001 0.001"/>
         </geometry>
@@ -694,7 +710,7 @@
                     value="${dedo_garfo_h + dedo_afun_h + dedo_haste_l}"/>
 
     <joint name="JTool" type="fixed">
-      <origin xyz="0.03 0 -0.08" rpy="0 0 0"/>
+      <origin xyz="${garra_dx} 0 -0.08" rpy="0 0 0"/>
       <parent link="GripCube"/>
       <child link="tool_rod"/>
     </joint>
