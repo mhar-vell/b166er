@@ -402,6 +402,13 @@ class MissionContext(object):
         self.ik_recuo_dq1_min_deg   = rospy.get_param('~ik_recuo_dq1_min_deg', 0.5)
         self.ik_recuo_eixo_m        = rospy.get_param('~ik_recuo_eixo_m', 0.020)
         self.ik_recuo_desce_m       = rospy.get_param('~ik_recuo_desce_m', 0.005)
+        # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
+        # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
+        # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
+        # ali é o contrário do que a saída quer. Fora desta lista a IK
+        # iterativa se comporta como antes.
+        self.ik_recuo_fases = rospy.get_param('~ik_recuo_fases',
+                                              ['aproxima_lateral', 'atravessa'])
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
@@ -3298,7 +3305,8 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         travou = (prev_n_err is not None and prev_dq1 is not None
                   and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
                   and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
-        if travou and recuos < ctx.ik_recuos_max and ctx.wall_R is not None:
+        if (travou and recuos < ctx.ik_recuos_max and ctx.wall_R is not None
+                and phase in ctx.ik_recuo_fases):
             recuos += 1
             eixo = ctx.wall_R[:, 0]
             up = ctx.wall_R[:, 2]
