@@ -105,8 +105,17 @@ chave_seccionadora_task:
   # uma nova tentativa, não uma colisão.
   aproxima_lateral:
     modo: ik
+    # PROFUNDIDADE +8 mm (para o lado do robô), 2026-09-30. Dois abortos
+    # no atravessa com o degrau preso na ABA da lingueta (gatilho: 24 a
+    # 40 mm para o lado da parede, 6 a 11 mm acima do centro do furo,
+    # ±18 mm ao longo do eixo) e no arame superior do anel. A ferramenta
+    # chegava 2 a 5 mm para a parede e a REFINE estima a parede 4 a 17 mm
+    # mais funda que a real, então o alvo em y = 0 caía em cima da aba.
+    # O furo tem 30 mm de largura e o degrau 10: com +8 sobram 2 mm de
+    # folga do lado do robô e 10 mm a mais até a aba. Mesmo valor no
+    # atravessa; as fases dentro do anel (captura em diante) ficam em 0.
     # ALTURA COM MARGEM PARA A LÂMINA — ver a nota em "atravessa".
-    offset_xyz_m: [-0.090, 0.0, 0.010]
+    offset_xyz_m: [-0.090, 0.008, 0.010]
     tol_xyz_m: [0.040, 0.008, 0.005]
 
   # ── 2. avança em X: o degrau atravessa o furo ──
@@ -158,7 +167,8 @@ chave_seccionadora_task:
     # "haste que nunca entrou" (+30 mm) continua valendo, e a captura
     # desce com 12 mm de degrau sob o arame (20 de projeção − 8).
     # Sinal: +eixo entra no furo (o desengata SAI com −0,090).
-    offset_xyz_m: [-0.008, 0.0, 0.010]
+    # y = +0.008: ver a nota em aproxima_lateral (aba da lingueta).
+    offset_xyz_m: [-0.008, 0.008, 0.010]
     tol_xyz_m: [0.008, 0.006, 0.005]
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
