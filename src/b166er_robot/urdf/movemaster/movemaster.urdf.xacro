@@ -716,38 +716,40 @@
     </joint>
 
     <link name="tool_rod">
+      <!-- VISUAL = a peça impressa (dedo v3, REV. C, 2026-09-30, pedido
+           do Marco: "usa o STL da v3 no visual"). meshes/movemaster/
+           dedo_fixo_v3.stl é gerado por scripts/gera_dedo.py (versao 3)
+           em mm, já no frame deste link: z=0 no topo do garfo, z=-125 na
+           face de baixo do degrau, degrau em +Y (y de -5 a +25), garfo
+           20 x 30 com rasgo e furos. Cobre também o tool_tip, que por
+           isso não tem visual próprio. As COLISÕES continuam em caixas
+           (garfo, rampa, haste aqui; degrau no tool_tip): caixa é mais
+           barata e estável no ODE que trimesh, e é o que o contato com
+           o olhal e o gatilho usa. As caixas ficaram EXATAMENTE como
+           antes (garfo 20 x 25, a peça tem 20 x 30; o garfo fica 90 mm
+           acima de qualquer contato), para a bateria aberta x fechada
+           comparar só a garra. Se a v3 mudar, regenerar o STL e
+           conferir que as caixas ainda batem com ele. -->
       <visual>
-        <origin xyz="0 0 ${-dedo_garfo_h/2}"/>
-        <geometry><box size="0.020 0.025 ${dedo_garfo_h}"/></geometry>
+        <origin xyz="0 0 0"/>
+        <geometry><mesh filename="package://b166er_robot/meshes/movemaster/dedo_fixo_v3.stl" scale="0.001 0.001 0.001"/></geometry>
         <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
       </visual>
       <collision>
         <origin xyz="0 0 ${-dedo_garfo_h/2}"/>
         <geometry><box size="0.020 0.025 ${dedo_garfo_h}"/></geometry>
       </collision>
-      <!-- AFUNILAMENTO INCLINADO. Tronco de pirâmide gerado em código
-           (meshes/movemaster/dedo_afunilamento.stl, em METROS, já no
-           frame deste link: topo 20 x 25 em z = -0,025, base 10 x 10 em
-           z = -0,035). Se dedo_garfo_h ou dedo_afun_h mudarem, a malha
-           tem que ser regerada — ela não lê as propriedades.
+      <!-- AFUNILAMENTO INCLINADO (rampa). O visual em malha própria
+           (meshes/movemaster/dedo_afunilamento.stl) saiu em 2026-09-30:
+           a rampa agora é desenhada pela malha da peça inteira acima.
 
            A colisão fica como CAIXA 10 x 10, a seção menor: a rampa
            nunca encosta em nada (fica 90 mm acima do degrau), e caixa é
            mais barata e mais estável no ODE que trimesh. -->
-      <visual>
-        <origin xyz="0 0 0"/>
-        <geometry><mesh filename="package://b166er_robot/meshes/movemaster/dedo_afunilamento.stl"/></geometry>
-        <material name="ToolColor"/>
-      </visual>
       <collision>
         <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h/2}"/>
         <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_afun_h}"/></geometry>
       </collision>
-      <visual>
-        <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h - dedo_haste_l/2}"/>
-        <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_haste_l}"/></geometry>
-        <material name="ToolColor"/>
-      </visual>
       <collision>
         <origin xyz="0 0 ${-dedo_garfo_h - dedo_afun_h - dedo_haste_l/2}"/>
         <geometry><box size="${dedo_haste_x} ${dedo_haste_y} ${dedo_haste_l}"/></geometry>
@@ -776,14 +778,11 @@
          A ORIGEM DESTE LINK é a referência da tarefa: é aqui que o
          arame do anel repousa depois da descida de 5 mm. -->
     <link name="tool_tip">
-      <visual>
-        <origin xyz="0 ${dedo_degrau_l/2} ${-dedo_degrau_z/2}"/>
-        <geometry><box size="${dedo_haste_x} ${dedo_degrau_l + dedo_haste_y} ${dedo_degrau_z}"/></geometry>
-        <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
-      </visual>
-      <!-- COLISÃO SÓ DA PARTE QUE SE PROJETA, não da largura visual.
-           A caixa visual acima vai de y=-5 mm a y=+25 mm (v2; na v1
-           era x=+5,2 a x=-25,2) para desenhar o L inteiro — mas isso faz ela compartilhar uma FACE
+      <!-- Sem visual próprio: a malha dedo_fixo_v3.stl do tool_rod já
+           desenha o degrau (2026-09-30). -->
+      <!-- COLISÃO SÓ DA PARTE QUE SE PROJETA, não da largura do degrau.
+           O degrau inteiro vai de y=-5 mm a y=+25 mm (v2/v3; na v1
+           era x=+5,2 a x=-25,2) — mas uma caixa assim compartilharia uma FACE
            inteira (z=0, de x=-5,2 a +5,2) com a haste do tool_rod. Duas
            faces coincidentes no mesmo corpo rígido geram contato
            permanentemente: a captura de 2026-08-27 registrou 1,1 MILHÃO
