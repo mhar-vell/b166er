@@ -36,6 +36,14 @@
        doc="Taxa de controle do stack WB (Hz)"/>
   <arg name="rviz_config"
        default="$(find b166er_robot)/config/b166er.rviz"/>
+  <arg name="garra_dx" default="0.03"
+       doc="Posição da castanha onde o dedo fixo monta, em m no eixo
+            transversal do GripCube: 0.03 = garra ABERTA (histórico),
+            0.0 = garra FECHADA. A garra não tem junta na simulação; o
+            mesmo valor vai ao xacro (JTool) e, via B166ER_GARRA_DX, à
+            kinematics.py de todos os nós deste launch. Passar o MESMO
+            valor a chave_mission.launch."/>
+  <env name="B166ER_GARRA_DX" value="$(arg garra_dx)"/>
   <arg name="ik_seed_ground_truth" default="false"
        doc="Usa /joint_states real como seed do IK do state_estimator — atalho
             só de conveniência p/ Gazebo (convergência em 0 iter), NÃO fiel ao
@@ -49,7 +57,8 @@
          value="$(eval 'true' if arg('mode') == 'gazebo' else 'false')"/>
   <param name="robot_description"
          command="$(find xacro)/xacro
-                  $(find b166er_robot)/urdf/b166er.urdf.xacro"/>
+                  $(find b166er_robot)/urdf/b166er.urdf.xacro
+                  garra_dx:=$(arg garra_dx)"/>
 
   <!-- Posturas nomeadas do braço (home recolhido, deploy) — usadas
        pelo gazebo_arm_bridge (rampa pós-warm-start e comandos de
@@ -133,6 +142,7 @@
       file="$(find b166er_robot)/launch/simulation/b166er_gazebo.launch">
       <arg name="gui"             value="$(arg gui)"/>
       <arg name="robot_state_pub" value="false"/>
+      <arg name="garra_dx"        value="$(arg garra_dx)"/>
     </include>
 
     <!-- Controladores ros_control das juntas do braço -->
