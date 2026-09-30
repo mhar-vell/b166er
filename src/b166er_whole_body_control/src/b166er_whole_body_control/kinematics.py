@@ -10,6 +10,7 @@ Cadeia completa:
 """
 
 import math
+import os
 
 import numpy as np
 
@@ -88,10 +89,38 @@ _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([-0.0011, 0.0860, -0.0194],
 #     agora o rolamento do punho move a ponta.
 #   · o comprimento caiu de 200 mm para 135 mm (25 garfo + 10 afunilamento
 #     + 80 haste + 20 ponta alargada), então a ponta subiu 65 mm.
+#
+# GARRA_DX — posição da castanha em que o dedo monta, no eixo transversal
+# do GripCube (2026-09-30). A mão DC do RV-M2 tem curso de 0 a 60 mm entre
+# as faces internas das castanhas (cada uma anda 30 mm); a garra não tem
+# junta no modelo, então a posição em que ela fica TRAVADA é um parâmetro:
+# 0.03 = aberta (valor histórico), 0.0 = fechada (dedo no eixo do J5).
+# Vem do ambiente porque estas constantes são calculadas na importação e
+# consumidas por nome (from kinematics import T_T265_TOOLTIP) por vários
+# nós; b166er_wb.launch e chave_mission.launch exportam B166ER_GARRA_DX a
+# partir do arg garra_dx, o mesmo que vai ao xacro. checa_garra_dx()
+# confere contra o robot_description para pegar os dois desencontrados.
+GARRA_DX = float(os.environ.get('B166ER_GARRA_DX', '0.03'))
+
 _T_L5_TOOLTIP = (_trans(0, 0, -0.08)     # JCam:      L5 → CameraSupport
                 @ _trans(0, 0, -0.005)   # JGripCube: CameraSupport → GripCube
-                @ _trans(0.03, 0, -0.08)  # JTool:     GripCube → dedo fixo (posição do dedo)
+                @ _trans(GARRA_DX, 0, -0.08)  # JTool: GripCube → dedo fixo (castanha)
                 @ _trans(0, 0, -0.115))  # JToolTip:  garfo + afunilamento + haste = 115 mm
+
+
+def checa_garra_dx(robot_description, tol=1e-4):
+    """Confere que o JTool do URDF carregado usa o mesmo GARRA_DX desta
+    cinemática. Devolve (ok, valor_no_urdf). Quem chama decide se aborta:
+    a missão com 30 mm de desencontro entre modelo e cinemática erra o
+    olhal sem nenhum outro sintoma."""
+    import re
+    # O xacro expandido reordena os atributos (rpy antes de xyz).
+    m = re.search(r'<joint name="JTool"[^>]*>\s*<origin[^>]*\bxyz="([^"]+)"',
+                  robot_description)
+    if not m:
+        return False, None
+    dx = float(m.group(1).split()[0])
+    return abs(dx - GARRA_DX) <= tol, dx
 # A origem de tool_tip é a base do DEGRAU — o ponto onde o arame do olhal
 # repousa depois da descida de 5 mm. É esse ponto, e não a extremidade da
 # peça, que a missão persegue: o degrau se estende 20 mm a partir daqui
