@@ -21,11 +21,11 @@ dedo_fixo_vN_desenho.pdf/.png):
       x 15 (Z) a 5 mm das bordas, ABERTOS no STL; rampa 10; HASTE 30;
       degrau 20 em -X; total 75.
   v3  REV. C, 29 Set 2026 — pedido do Marco: "o degrau tem que rotacionar
-      90 graus" (opção B do desenho de alternativas) e "na versão 3 a
-      haste tem 50 mm". Geometria da v2 com HASTE 50 (total 95) e o
-      degrau em +Y, no sentido das ABAS. kinematics.DEGRAU_DIR_TIP e o
-      tool_tip do URDF acompanham a direção; o comprimento no modelo
-      (dedo_haste_l) ainda é o da v1 — ver README das malhas.
+      90 graus" (opção B do desenho de alternativas) e "altere para 80
+      também na versão 3". Geometria da v2 (garfo com rasgo passante e
+      furos abertos) com HASTE 80 (total 125, como no modelo da simulação)
+      e o degrau em +Y, no sentido das ABAS. kinematics.DEGRAU_DIR_TIP e o
+      tool_tip do URDF acompanham; o comprimento já era o do modelo.
 
 A prancha das v2/v3 segue o formato padrão da REV. B: A3 paisagem com
 moldura, VISTA DE BAIXO / DE FRENTE / LATERAL cotadas em 1:1, DETALHE DA
@@ -56,7 +56,7 @@ GEO = {
             degrau_eixo='-x', rev='B', data='2026-09-09',
             substitui='REV. A de 2026-09-02 (haste 80, total 125)'),
     3: dict(garfo_h=25.0, garfo_x=20.0, aba=10.0, rasgo=10.0, rasgo_prof=25.0,
-            afun_h=10.0, haste_l=50.0, haste=10.0, degrau_l=20.0, degrau_z=10.0,
+            afun_h=10.0, haste_l=80.0, haste=10.0, degrau_l=20.0, degrau_z=10.0,
             furo_dx=10.0, furo_dz=15.0, furo_d=3.5, furos_no_stl=True,
             degrau_eixo='+y', rev='C', data='2026-09-29',
             substitui='REV. B de 2026-09-09 (haste 30, degrau em −X)'),
