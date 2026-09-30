@@ -414,7 +414,7 @@ def prancha(caminho_base, d):
     # para cima; o observador está no lado −X, −Y, +Z. Faces visíveis de
     # uma caixa: −X, −Y e topo. Pintura de trás para a frente: peças de
     # baixo antes das de cima e, no mesmo nível, maior (x + y) primeiro.
-    ox, oy, si = 352.0, 196.0, 0.6      # escala reduzida: é só orientação
+    ox, oy, si = 352.0, 204.0, 0.42     # escala reduzida: é só orientação (cabe até 125 mm de peça)
     def iso(p):
         x, y, zz = p
         return ox + si * (x - y) * np.cos(np.radians(30)), oy + si * (zz + (x + y) * np.sin(np.radians(30)))
