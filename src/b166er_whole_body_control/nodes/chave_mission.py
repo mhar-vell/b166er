@@ -389,6 +389,26 @@ class MissionContext(object):
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
+        # IK a ponta não avança e o J1 fica cada vez mais aquém do
+        # pedido, o braço está empurrando algo (degrau na aba da
+        # lingueta ou no arame superior do anel, medido com a captura de
+        # contatos do Gazebo: J1 a 30 N·m, ponta parada 20 mm antes do
+        # alvo). Insistir só aumenta a força; recua 20 mm pelo eixo do
+        # furo, desce 5 mm e tenta de novo, no máximo ik_recuos_max vezes
+        # por fase. Os recuos não contam como iteração.
+        self.ik_recuos_max          = rospy.get_param('~ik_recuos_max', 2)
+        self.ik_recuo_progresso_min = rospy.get_param('~ik_recuo_progresso_min', 0.003)
+        self.ik_recuo_dq1_min_deg   = rospy.get_param('~ik_recuo_dq1_min_deg', 0.5)
+        self.ik_recuo_eixo_m        = rospy.get_param('~ik_recuo_eixo_m', 0.020)
+        self.ik_recuo_desce_m       = rospy.get_param('~ik_recuo_desce_m', 0.005)
+        # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
+        # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
+        # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
+        # ali é o contrário do que a saída quer. Fora desta lista a IK
+        # iterativa se comporta como antes.
+        self.ik_recuo_fases = rospy.get_param('~ik_recuo_fases',
+                                              ['aproxima_lateral', 'atravessa'])
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
 
         # Navegação (girar-avançar-girar)
@@ -3164,7 +3184,11 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         return ik_tooltip_com_degrau(p_local, eixo_arm, q_seeds=seeds,
                                      q_current=q_atual, sentido_fixo=True)
 
-    for it in range(ctx.ik_max_iters):
+    it = 0
+    recuos = 0
+    prev_n_err = None
+    prev_dq1 = None
+    while it < ctx.ik_max_iters:
         if ctx.tilt_critical:
             ctx.ancora_solta()
             rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
@@ -3264,10 +3288,66 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         if fechou:
             n_corr = ctx.ancora_solta()
             rospy.loginfo('[mission] fase "%s" alcançada em %d iteração(ões) '
-                          '(%.4f m)%s', phase, it + 1, n_err,
+                          '(%.4f m)%s%s', phase, it + 1, n_err,
                           (' — âncora corrigiu %d vez(es)' % n_corr)
-                          if n_corr else '')
+                          if n_corr else '',
+                          (' — %d recuo(s) por contato' % recuos)
+                          if recuos else '')
             return True
+
+        # RECUO POR CONTATO (2026-09-30, ver MissionContext.ik_recuos_max).
+        # "Não avança" = o erro caiu menos que ik_recuo_progresso_min
+        # desde a iteração anterior; "J1 cada vez mais aquém" = |faltou|
+        # do J1 cresceu mais que ik_recuo_dq1_min_deg. Os dois juntos
+        # são a assinatura do bloqueio por contato (RELATORIO19, seção
+        # do aborto): sem contato o J1 obedece com erro nulo e a
+        # iteração seguinte fecha.
+        travou = (prev_n_err is not None and prev_dq1 is not None
+                  and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
+                  and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
+        if (travou and recuos < ctx.ik_recuos_max and ctx.wall_R is not None
+                and phase in ctx.ik_recuo_fases):
+            recuos += 1
+            eixo = ctx.wall_R[:, 0]
+            up = ctx.wall_R[:, 2]
+            sgn = 1.0 if (e_parede is None or e_parede[0] >= 0.0) else -1.0
+            p_recuo = p_now - sgn * ctx.ik_recuo_eixo_m * eixo \
+                - ctx.ik_recuo_desce_m * up
+            rospy.logwarn('[mission] fase "%s" it%d: ponta não avança (erro '
+                          '%.1f → %.1f mm) e o J1 fica mais aquém (%.1f → '
+                          '%.1f°) — contato provável; recuo %d/%d: %.0f mm '
+                          'pelo eixo, %.0f mm para baixo, e o alvo desce '
+                          '%.0f mm', phase, it, prev_n_err * 1000,
+                          n_err * 1000, prev_dq1, dq[0], recuos,
+                          ctx.ik_recuos_max, ctx.ik_recuo_eixo_m * 1000,
+                          ctx.ik_recuo_desce_m * 1000,
+                          ctx.ik_recuo_desce_m * 1000)
+            ctx.status(fase=phase, recuo=recuos, **est)
+            p_local = (T_arm_world @ np.append(p_recuo, 1))[:3]
+            q_r, err_r, _ = _resolve_ik(p_local, T_arm_world[:3, :3])
+            if err_r <= ctx.deploy_ik_tol:
+                msg = JointState()
+                msg.header.stamp = rospy.Time.now()
+                msg.name     = JOINT_NAMES
+                msg.position = q_r.tolist()
+                ctx.posture_done = False
+                ctx.pub_posture.publish(msg)
+                if not _wait_posture(ctx):
+                    return False
+                rospy.sleep(ctx.ik_settle_time)
+            else:
+                rospy.logwarn('[mission] fase "%s": ponto de recuo fora de '
+                              'alcance (%.3f m) — sigo só com o alvo mais '
+                              'baixo', phase, err_r)
+            # Daqui em diante mira o alvo 5 mm mais baixo (acumula nos
+            # recuos seguintes) e recomeça a medir o progresso.
+            p_goal = p_goal - ctx.ik_recuo_desce_m * up
+            p_aim = p_goal.copy()
+            prev_n_err = None
+            prev_dq1 = None
+            continue          # o recuo não consome iteração
+        prev_n_err = n_err
+        prev_dq1 = float(dq[0])
 
         # Mira além, na medida do que faltou — AMORTECIDA. Corrigir o
         # erro inteiro de uma vez extrapola demais quando o primeiro
@@ -3275,6 +3355,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # workspace. Com 0,8 converge em praticamente o mesmo número de
         # iterações e fica dentro do alcance.
         p_aim = p_aim + ctx.ik_correction_gain * err
+        it += 1
 
     ctx.ancora_solta()
     rospy.logerr('[mission] fase "%s": %d iterações sem fechar (%.4f m, '
