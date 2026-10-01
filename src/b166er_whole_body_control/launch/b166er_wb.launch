@@ -44,6 +44,30 @@
             kinematics.py de todos os nós deste launch. Passar o MESMO
             valor a chave_mission.launch."/>
   <env name="B166ER_GARRA_DX" value="$(arg garra_dx)"/>
+  <!-- MASSA E CG DA BASE para o teto de tombamento (fuzzy_wb_controller,
+       margem_tombamento). "Base" = tudo o que não são os cinco elos
+       móveis do braço (19,7 kg no URDF): Pioneer, baterias, NUC, placas,
+       sensores e a base fixa do RV-M2. Por modo, porque o robô simulado
+       e o real não têm a mesma massa:
+       · gazebo: 13 kg a 0,15 m, sem deslocamento em x — valores
+         ajustados em 2026-09-08 contra o tombamento OBSERVADO na
+         simulação (RELATORIO13); não mexer sem repetir aquela bateria.
+       · hardware: medida do orientador no laboratório (2026-10-01, "a
+         olho", braço recolhido com as juntas a 90°): conjunto de 60 a
+         65 kg, CG a 210 mm da borda traseira da plataforma e 330 mm do
+         chão. No frame do base_link (que fica 26 mm ABAIXO do chão neste
+         URDF; plataforma de −0,251 a +0,257 m em x): CG total em
+         x = −0,041, z = 0,356. Descontando o braço a 90° pelo modelo
+         (19,7 kg em x +0,171, z +0,828), com 62,5 kg: base de 42,8 kg
+         em x = −0,139, z = +0,139. Entre 60 e 65 kg a base varia de
+         40,3 a 45,3 kg e o CG de 0,125 a 0,151 m — diferença de margem
+         < 5 %. Com isso a margem real fica em ~6 m/s² em todas as
+         posturas (a_hi 1,2 não limita): é a estimativa do orientador,
+         não uma pesagem; conferir na bancada com o teste de inclinação
+         antes de confiar. -->
+  <arg name="base_massa" default="$(eval 42.8 if arg('mode') == 'hardware' else 13.0)"/>
+  <arg name="base_cg_z"  default="$(eval 0.139 if arg('mode') == 'hardware' else 0.15)"/>
+  <arg name="base_cg_x"  default="$(eval -0.139 if arg('mode') == 'hardware' else 0.0)"/>
   <arg name="ik_seed_ground_truth" default="false"
        doc="Usa /joint_states real como seed do IK do state_estimator — atalho
             só de conveniência p/ Gazebo (convergência em 0 iter), NÃO fiel ao
@@ -320,14 +344,15 @@
            (2) escala o teto de velocidade entre a_lo e a_hi (pertinência
            linear, mínimo s_min). Relido a cada wb_enable: a bateria
            desliga com rosparam set .../teto_postura/enable false. -->
-      <rosparam param="teto_postura">
+      <rosparam param="teto_postura" subst_value="true">
         enable: true
         a_lo: 0.5
         a_hi: 1.2
         s_min: 0.3
         seguranca: 0.5
-        base_massa: 13.0
-        base_cg_z: 0.15
+        base_massa: $(arg base_massa)
+        base_cg_z: $(arg base_cg_z)
+        base_cg_x: $(arg base_cg_x)
       </rosparam>
     </node>
 

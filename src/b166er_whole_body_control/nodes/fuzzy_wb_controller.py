@@ -124,19 +124,25 @@ WHEEL_Y = 0.17
 G_ACC   = 9.81
 
 
-def margem_tombamento(q_arm, base_massa, base_cg_z):
+def margem_tombamento(q_arm, base_massa, base_cg_z, base_cg_x=0.0):
     """Aceleração horizontal admissível (m/s²) para a postura q_arm.
 
     CG do braço = massas dos elos (_LINK_MASSES) no ponto médio entre
     os quadros consecutivos das juntas (fk_arm_joint_frames), base
-    concentrada em (0, 0, base_cg_z) de base_link. Devolve
+    concentrada em (base_cg_x, 0, base_cg_z) de base_link. Devolve
     (a_frente, a_tras, a_lateral, x_cg, y_cg, z_cg): frear tomba sobre
     o eixo dianteiro, acelerar sobre o traseiro, girar/curvar sobre o
     lado.
+
+    base_cg_x entrou em 2026-10-01 com a medida do orientador no
+    laboratório (CG do conjunto a 210 mm da borda traseira da
+    plataforma, isto é, 41 mm atrás do base_link): a base real tem o
+    CG atrás do centro (baterias), o que dá mais margem à frente e
+    menos atrás. Padrão 0 mantém o comportamento anterior (simulação).
     """
     frames, T_ee = fk_arm_joint_frames(np.asarray(q_arm, dtype=float))
     origens = [(T_BASELINK_ARM @ np.asarray(T))[:3, 3] for T in list(frames) + [T_ee]]
-    cg = base_massa * np.array([0.0, 0.0, base_cg_z])
+    cg = base_massa * np.array([base_cg_x, 0.0, base_cg_z])
     m_tot = base_massa
     for j, mj in enumerate(_LINK_MASSES):
         cg += mj * 0.5 * (origens[j] + origens[j + 1])
@@ -587,6 +593,7 @@ class FuzzyWBController:
             # a ~0,15 m do chão (base_link está no piso).
             'base_massa': float(c.get('base_massa', 13.0)),
             'base_cg_z':  float(c.get('base_cg_z', 0.15)),
+            'base_cg_x':  float(c.get('base_cg_x', 0.0)),
         }
 
     def _atualiza_teto(self, q_arm):
@@ -603,7 +610,7 @@ class FuzzyWBController:
             self._pub_teto.publish(msg)
             return
         a_f, a_t, a_l, x_cg, y_cg, z_cg = margem_tombamento(
-            q_arm, c['base_massa'], c['base_cg_z'])
+            q_arm, c['base_massa'], c['base_cg_z'], c['base_cg_x'])
         # Linear pela margem frente/trás (frear e arrancar); angular pela
         # LATERAL: girar no eixo com o braço à frente não tomba para a
         # frente — a pseudo-força tangencial do CG (ω̇·r) e a centrípeta
