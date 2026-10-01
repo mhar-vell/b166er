@@ -2540,6 +2540,11 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
 
     if len(positions) < 3:
         rospy.logerr('[mission] %s: só %d amostras da tag', tag, len(positions))
+        # Sem tag (acontece no REFINE: a tag de 220 mm sai do campo de
+        # visão no standoff), o laser ainda corrige profundidade e yaw
+        # da estimativa anterior — é o caso em que ele mais vale.
+        if ctx.wall_pos is not None:
+            _parede_pelo_laser(ctx, tag + ' (sem tag)')
         return False
 
     # REJEIÇÃO DE OUTLIERS (2026-08-24). Média pura assume ruído
@@ -2585,11 +2590,9 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
     ctx.wall_R   = np.array([[c, -s_, 0.0], [s_, c, 0.0], [0.0, 0.0, 1.0]])
     rospy.loginfo('[mission] %s: %d amostras — parede (%.3f, %.3f, %.3f) yaw=%.3f',
                   tag, len(positions), *pos_mean, yaw_mean)
-    # Com a base parada (REFINE e remedida do APPROACH; no SEARCH a base
-    # gira com o dither e o scan não casa com a odometria) o laser
-    # corrige profundidade e yaw. Ver _parede_pelo_laser.
-    if dither <= 0:
-        _parede_pelo_laser(ctx, tag)
+    # Base já parada (stop_base acima): o laser corrige profundidade e
+    # yaw com um scan novo. Ver _parede_pelo_laser.
+    _parede_pelo_laser(ctx, tag)
     return True
 
 
@@ -2609,6 +2612,13 @@ def _parede_pelo_laser(ctx, tag):
     if not ctx.parede_laser or ctx.scan is None or ctx.robot_state is None \
             or ctx.wall_pos is None or ctx.wall_R is None:
         return False
+    # Scan NOVO, com a base já parada: a coleta gira a base com o dither
+    # (±0,05 rad/s) e o último scan pode ser de antes do stop_base.
+    t_chamada = rospy.Time.now()
+    t_lim = t_chamada + rospy.Duration(1.5)
+    while (ctx.scan.header.stamp <= t_chamada and rospy.Time.now() < t_lim
+           and not rospy.is_shutdown()):
+        rospy.sleep(0.05)
     scan = ctx.scan
     idade = (rospy.Time.now() - scan.header.stamp).to_sec()
     if idade > 1.0:
