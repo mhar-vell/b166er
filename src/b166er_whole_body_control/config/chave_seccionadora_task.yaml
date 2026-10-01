@@ -245,6 +245,18 @@ chave_seccionadora_task:
     # 63-67) ao custo de a libera terminar a soltura. Ver chave_mission.
     curso_estagna_m: 0.010
     curso_margem_m: 0.002
+    # TETO DE DESCIDA (2026-09-30, RELATORIO22): a fase fechava por
+    # curso_min_m só com eixo E profundidade dentro da tolerância. Com a
+    # profundidade fora (o whole-body puxa em prof enquanto empurra em
+    # alt), a ponta seguia descendo: 29,5 mm para um alvo de 20, lingueta
+    # no fim de curso (19,1 de 20), J4 saturado 88 % do tempo e a ponta
+    # escorregando 16,5 mm pelo eixo — a libera abriu com "perdeu o
+    # olhal". Ao passar deste teto a fase fecha como cumprida, com o
+    # eixo/prof que tiver: mais descida só colapsa o punho e desliza o
+    # degrau. 22 = alvo (18 + 2) + 2 mm; a ponta desce 3–5 mm a mais que
+    # o anel, então o anel está em ~17–19 mm, bem além dos 13 em que a
+    # aba passa sob o laço. Medido pela ponta (T265): vale na bancada.
+    curso_teto_m: 0.022
 
   # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
   # Com o olhal pressionado, puxar para fora faz a aba passar POR BAIXO

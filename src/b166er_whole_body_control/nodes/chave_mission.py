@@ -2839,6 +2839,8 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         cfg_fase = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
         cfg_curso = cfg_fase.get('curso_min_m')
         cfg_estagna = float(cfg_fase.get('curso_estagna_m', 0.010))
+        cfg_teto = cfg_fase.get('curso_teto_m')
+        cfg_teto = float(cfg_teto) if cfg_teto is not None else None
         # A FERRAMENTA AINDA CARREGA O OLHAL? (2026-09-04, run8 da bateria
         # de poses). O olhal não se move ao longo do eixo da chave — está
         # preso à dobradiça da lâmina. Se a PONTA se desloca nesse eixo
@@ -2934,6 +2936,20 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             # (a T265 vê a ponta parar com o comando ainda descendo).
             desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
             if desc is not None and cfg_curso is not None:
+                # TETO DE DESCIDA (2026-09-30, ver curso_teto_m no YAML):
+                # descida cumprida com folga — parar de empurrar, com o
+                # eixo/prof que tiver. O critério é a ponta (T265), o
+                # mesmo da bancada.
+                if cfg_teto is not None and desc >= cfg_teto:
+                    rospy.logwarn('[mission] fase "%s": TETO de descida — ponta '
+                                  'desceu %.1f mm desde a captura (teto %.0f, '
+                                  'curso mín %.0f): parando de empurrar com '
+                                  'eixo %+.1f prof %+.1f mm', phase, desc * 1000,
+                                  cfg_teto * 1000, cfg_curso * 1000,
+                                  e_parede[0] * 1000, e_parede[1] * 1000)
+                    ctx.status(descida_mm=desc * 1000, teto=1)
+                    ok = True
+                    return True
                 hist.append(((rospy.Time.now() - t0).to_sec(), desc))
                 # JANELA: 1,5 s / 0,5 mm. A versão 3 s / 0,3 mm com mínimo de
                 # 15 mm (run68) não protegeu o punho: quando o anel bate no
