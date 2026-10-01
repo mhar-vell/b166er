@@ -64,7 +64,7 @@ import smach
 import smach_ros
 from geometry_msgs.msg import PoseStamped, Twist, Point
 from visualization_msgs.msg import Marker, MarkerArray
-from sensor_msgs.msg import JointState
+from sensor_msgs.msg import JointState, LaserScan
 from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, String
 from tf.transformations import (quaternion_matrix, euler_from_quaternion,
                                 quaternion_from_matrix)
@@ -781,6 +781,27 @@ class MissionContext(object):
         rospy.Subscriber('/b166er/wall_pose', PoseStamped, self._cb_wall)
         rospy.Subscriber('/b166er/arm_posture_reached', Bool, self._cb_posture)
         rospy.Subscriber('/b166er/tag_pixel', Point, self._cb_tag_pixel)
+        # PROFUNDIDADE DA PAREDE PELO LASER (2026-09-30, RELATORIO23). A
+        # tag dá lateral e yaw bem, mas a profundidade saiu de +2 a +19 mm
+        # para dentro da parede nas execuções do dia, e foi isso que
+        # separou os abortos do atravessa (degrau na aba da lingueta) dos
+        # sucessos. O Hokuyo mede o plano da parede a milímetros
+        # (verificado: −0,8 a −2,2 mm em duas poses, resíduo 5 mm por
+        # feixe, inclinação < 0,15°). Depois de cada coleta parada
+        # (APPROACH/remedida e REFINE) a reta da parede ajustada ao scan
+        # corrige a profundidade e o yaw da estimativa; a posição lateral
+        # continua vindo da tag. Mesmo tópico, frame e montagem na
+        # bancada (hokuyo_hardware.launch).
+        self.parede_laser   = rospy.get_param('~parede_laser', True)
+        self.laser_xyz      = rospy.get_param('~laser_xyz', [0.3189, 0.0, 0.308])
+        self.laser_faixa_m  = rospy.get_param('~laser_faixa_m', 0.15)
+        self.laser_exclui_chave_m = rospy.get_param('~laser_exclui_chave_m', 0.45)
+        self.laser_min_pontos = rospy.get_param('~laser_min_pontos', 30)
+        self.laser_max_correcao_m = rospy.get_param('~laser_max_correcao_m', 0.10)
+        self.laser_max_dyaw_rad = rospy.get_param('~laser_max_dyaw_rad', 0.10)
+        self.scan = None
+        rospy.Subscriber(rospy.get_param('~laser_scan_topic', '/pioneer3at/laser_hokuyo/scan'),
+                         LaserScan, self._cb_scan)
         # Segurança: tombamento detectado pela IMU aborta a missão.
         # Antes disso o robô tombou várias vezes e a máquina de estados
         # seguia tentando, alheia — a IMU existia e não era usada.
@@ -800,6 +821,9 @@ class MissionContext(object):
 
     def _cb_wall(self, msg):
         self.wall_pose = msg
+
+    def _cb_scan(self, msg):
+        self.scan = msg
 
     def _cb_posture(self, msg):
         if msg.data:
@@ -2516,6 +2540,11 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
 
     if len(positions) < 3:
         rospy.logerr('[mission] %s: só %d amostras da tag', tag, len(positions))
+        # Sem tag (acontece no REFINE: a tag de 220 mm sai do campo de
+        # visão no standoff), o laser ainda corrige profundidade e yaw
+        # da estimativa anterior — é o caso em que ele mais vale.
+        if ctx.wall_pos is not None:
+            _parede_pelo_laser(ctx, tag + ' (sem tag)')
         return False
 
     # REJEIÇÃO DE OUTLIERS (2026-08-24). Média pura assume ruído
@@ -2561,6 +2590,100 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
     ctx.wall_R   = np.array([[c, -s_, 0.0], [s_, c, 0.0], [0.0, 0.0, 1.0]])
     rospy.loginfo('[mission] %s: %d amostras — parede (%.3f, %.3f, %.3f) yaw=%.3f',
                   tag, len(positions), *pos_mean, yaw_mean)
+    # Base já parada (stop_base acima): o laser corrige profundidade e
+    # yaw com um scan novo. Ver _parede_pelo_laser.
+    _parede_pelo_laser(ctx, tag)
+    return True
+
+
+def _parede_pelo_laser(ctx, tag):
+    """Ajusta a reta da parede ao scan do Hokuyo e corrige a PROFUNDIDADE
+    e o YAW de ctx.wall_pos/ctx.wall_R; a posição lateral fica da tag.
+
+    Projeta os feixes no mundo com a odometria da base (a mesma que a
+    estimativa da tag usa) e a montagem fixa do laser; seleciona os
+    pontos a menos de laser_faixa_m do plano estimado pela tag e fora da
+    região da chave (|lateral − olhal| > laser_exclui_chave_m, onde
+    estão a placa, a lâmina e o laço, 13 cm à frente da parede); ajusta a
+    reta por PCA em duas passadas (inliers a 10 mm). Recusa a correção
+    se houver poucos pontos, resíduo alto, ou deslocamento/yaw fora do
+    plausível — nesses casos a estimativa da tag fica como está.
+    """
+    if not ctx.parede_laser or ctx.scan is None or ctx.robot_state is None \
+            or ctx.wall_pos is None or ctx.wall_R is None:
+        return False
+    # Scan NOVO, com a base já parada: a coleta gira a base com o dither
+    # (±0,05 rad/s) e o último scan pode ser de antes do stop_base.
+    t_chamada = rospy.Time.now()
+    t_lim = t_chamada + rospy.Duration(1.5)
+    while (ctx.scan.header.stamp <= t_chamada and rospy.Time.now() < t_lim
+           and not rospy.is_shutdown()):
+        rospy.sleep(0.05)
+    scan = ctx.scan
+    idade = (rospy.Time.now() - scan.header.stamp).to_sec()
+    if idade > 1.0:
+        rospy.logwarn('[mission] %s: scan do laser com %.1f s — parede fica pela tag',
+                      tag, idade)
+        return False
+    b = ctx.robot_state.base_odom.pose.pose
+    yaw_b = euler_from_quaternion([b.orientation.x, b.orientation.y,
+                                   b.orientation.z, b.orientation.w])[2]
+    r = np.asarray(scan.ranges, dtype=float)
+    ang = scan.angle_min + np.arange(len(r)) * scan.angle_increment
+    ok = np.isfinite(r) & (r > scan.range_min) & (r < scan.range_max)
+    bx = ctx.laser_xyz[0] + r[ok] * np.cos(ang[ok])
+    by = ctx.laser_xyz[1] + r[ok] * np.sin(ang[ok])
+    cb, sb = math.cos(yaw_b), math.sin(yaw_b)
+    P = np.c_[b.position.x + bx * cb - by * sb, b.position.y + bx * sb + by * cb]
+    pos = np.asarray(ctx.wall_pos[:2], dtype=float)
+    n = (ctx.wall_R @ np.array([0.0, 1.0, 0.0]))[:2]      # normal, para o robô
+    u = (ctx.wall_R @ np.array([1.0, 0.0, 0.0]))[:2]      # ao longo da parede
+    olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)[:2]
+    sel = (np.abs((P - pos) @ n) < ctx.laser_faixa_m) \
+        & (np.abs((P - olhal) @ u) > ctx.laser_exclui_chave_m)
+    if sel.sum() < ctx.laser_min_pontos:
+        rospy.logwarn('[mission] %s: laser com só %d pontos de parede (mín %d) — '
+                      'parede fica pela tag', tag, int(sel.sum()), ctx.laser_min_pontos)
+        return False
+    Q = P[sel]
+    for _ in range(2):
+        c = Q.mean(axis=0)
+        _, _, Vt = np.linalg.svd(Q - c, full_matrices=False)
+        d = Vt[0]
+        nl = np.array([-d[1], d[0]])
+        if nl @ n < 0:
+            nl = -nl
+        res = (Q - c) @ nl
+        ins = np.abs(res) < 0.010
+        if ins.sum() < ctx.laser_min_pontos:
+            break
+        Q = Q[ins]
+    sigma = float(np.std((Q - c) @ nl))
+    if sigma > 0.015:
+        rospy.logwarn('[mission] %s: reta do laser com resíduo %.1f mm — parede fica '
+                      'pela tag', tag, sigma * 1000)
+        return False
+    desloc = float((c - pos) @ nl)       # > 0: parede do laser mais perto do robô
+    if d @ u < 0:
+        d = -d
+    yaw_l = math.atan2(d[1], d[0])
+    yaw_t = math.atan2(u[1], u[0])
+    dyaw = math.atan2(math.sin(yaw_l - yaw_t), math.cos(yaw_l - yaw_t))
+    if abs(desloc) > ctx.laser_max_correcao_m or abs(dyaw) > ctx.laser_max_dyaw_rad:
+        rospy.logwarn('[mission] %s: laser discorda demais da tag (profundidade '
+                      '%+.0f mm, yaw %+.1f°) — parede fica pela tag', tag,
+                      desloc * 1000, math.degrees(dyaw))
+        return False
+    pos_novo = np.array(ctx.wall_pos, dtype=float)
+    pos_novo[:2] = pos + desloc * nl
+    cl, sl = math.cos(yaw_l), math.sin(yaw_l)
+    ctx.wall_pos = pos_novo
+    ctx.wall_R = np.array([[cl, -sl, 0.0], [sl, cl, 0.0], [0.0, 0.0, 1.0]])
+    rospy.loginfo('[mission] %s: parede pelo LASER — %d pontos, resíduo %.1f mm: '
+                  'profundidade %+.1f mm e yaw %+.2f° em relação à tag → parede '
+                  '(%.3f, %.3f, %.3f) yaw=%.3f', tag, len(Q), sigma * 1000,
+                  desloc * 1000, math.degrees(dyaw), *ctx.wall_pos, yaw_l)
+    ctx.status(parede_laser_mm=desloc * 1000, parede_laser_dyaw_deg=math.degrees(dyaw))
     return True
 
 
