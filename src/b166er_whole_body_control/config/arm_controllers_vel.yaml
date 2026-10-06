@@ -1,0 +1,41 @@
+# Controladores de VELOCIDADE das juntas do braço — modo braco:=malha_aberta
+# (2026-10-06). Emula o que o braço real tem: motor + redutor acionados por
+# sentido e PWM, SEM encoder, SEM controle de posição na junta. O
+# "firmware emulado" (arm_openloop_sim.py) manda velocidade por junta a
+# partir de /setpoints, como o firmware de velocidade manda PWM; a malha
+# de posição só existe no espaço da tarefa, pela T265 (estimador + Fuzzy)
+# e pelo arm_joint_servo.py, que converte posturas em velocidade usando a
+# ESTIMATIVA de junta, nunca /joint_states.
+#
+# Ganhos do PID de velocidade do gazebo_ros_control: P dá a resposta, I
+# faz a junta SEGURAR com velocidade zero contra a gravidade (o redutor
+# harmônico do RV-M2 praticamente não retro-aciona; J2/J3 ainda têm
+# freio). Sem o I a junta cederia devagar com v=0, o que o braço real
+# não faz. Limites de esforço vêm do URDF (J4 4,2 N·m).
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50
+
+J1_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J1
+J2_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J2
+J3_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J3
+J4_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J4
+J5_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: J5
+
+gazebo_ros_control:
+  pid_gains:
+    J1: {p: 30.0,  i: 20.0, d: 0.0, i_clamp: 30.0}
+    J2: {p: 80.0,  i: 60.0, d: 0.0, i_clamp: 80.0}
+    J3: {p: 50.0,  i: 40.0, d: 0.0, i_clamp: 50.0}
+    J4: {p: 4.0,   i: 4.0,  d: 0.0, i_clamp: 4.2}
+    J5: {p: 3.0,   i: 2.0,  d: 0.0, i_clamp: 10.0}
