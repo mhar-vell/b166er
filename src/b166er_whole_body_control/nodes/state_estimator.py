@@ -22,9 +22,10 @@ from tf.transformations import quaternion_matrix
 
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, T_BASELINK_ARM,
+    JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM,
     ik_arm,
 )
+from movemaster_msg.msg import setpoint as SetpointMsg
 
 # Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
 _HOME_Q = np.array([0.0, -0.5, 0.8, 0.0, 0.0])
@@ -79,6 +80,26 @@ class StateEstimator:
         self._q_arm      = _HOME_Q.copy()   # evita singularidade q=0 no primeiro ciclo
         self._q_arm_prev = _HOME_Q.copy()
         self._dq_arm     = np.zeros(5)
+        # DEAD RECKONING DOS COMANDOS (2026-10-06, modo braco:=malha_aberta).
+        # A pose da T265 (posição + orientação do punho) NÃO distingue o
+        # cotovelo para cima do cotovelo para baixo: J2, J3 e J4 têm eixos
+        # paralelos, e as duas configurações dão o mesmo punho. Observado na
+        # primeira subida em malha aberta: a IK convergiu (resíduo < 1 mm)
+        # no ramo espelhado, o executor acreditou e levou o J4 ao lugar
+        # errado. O que o robô real sabe e a T265 não diz é o que ele
+        # COMANDOU: integrar as velocidades enviadas ao firmware (/setpoints,
+        # graus/s) dá uma estimativa grosseira mas no ramo certo. Ela serve
+        # só para escolher o ramo: quando a solução da IK se afasta dela
+        # mais que ~dr_desacordo_rad, resolve-se de novo a partir dela e
+        # fica a solução mais próxima do que foi comandado. Depois a
+        # própria estimativa reancora o dead reckoning (sem acumular deriva).
+        self._dr_seed      = bool(rospy.get_param('~dr_seed', True))
+        self._dr_desacordo = float(rospy.get_param('~dr_desacordo_rad', 0.35))
+        self._q_dr         = np.array(rospy.get_param('~q_inicial', [0.0, 0.0, 0.0, 0.0, 0.0]),
+                                      dtype=float)
+        self._v_cmd        = np.zeros(5)
+        self._t_v_cmd      = None
+        self._t_dr         = None
         self._t_prev     = None
         self._q_joints     = None    # ground truth mais recente (None em hardware)
         # Buffer (stamp_secs, q) para sincronizar seed do IK com o stamp do T265.
@@ -111,6 +132,7 @@ class StateEstimator:
         # encoders também tem, não ground truth de simulador. Usamos esse
         # setpoint como seed one-shot do próximo ciclo do IK.
         self._posture_target_q = None
+        rospy.Subscriber('/setpoints', SetpointMsg, self._cb_setpoints, queue_size=1)
         rospy.Subscriber('/b166er/arm_posture_target', JointState,
                          self._cb_posture_target, queue_size=1)
         rospy.Subscriber('/b166er/arm_posture_reached', Bool,
@@ -149,8 +171,14 @@ class StateEstimator:
         if len(msg.position) == 5:
             self._posture_target_q = np.array(msg.position, dtype=float)
 
+    def _cb_setpoints(self, m):
+        # Velocidades comandadas ao firmware (graus/s) — dead reckoning.
+        self._v_cmd = np.radians([m.set_1, m.set_2, m.set_3, m.set_4, m.set_5])
+        self._t_v_cmd = rospy.Time.now()
+
     def _cb_posture_reached(self, msg):
         if msg.data and self._posture_target_q is not None:
+            self._q_dr = self._posture_target_q.copy()
             # Seed imediato ao concluir a rampa. NÃO basta sozinho: a
             # rampa se declara concluída quando o q integrado do dono do
             # estado chega ao alvo, mas o braço FÍSICO ainda está
@@ -270,6 +298,29 @@ class StateEstimator:
                 q_seed = self._q_arm   # hardware mode: sem ground truth
 
             q, conv, res_p, res_o = self._solve_ik(T_target, q_seed)
+            if self._dr_seed:
+                # integra os comandos (só com mensagem fresca)
+                if self._t_v_cmd is not None and (now - self._t_v_cmd).to_sec() < 0.5:
+                    dt_dr = (now - self._t_dr).to_sec() if self._t_dr else 0.0
+                    if 0.0 < dt_dr < 0.5:
+                        self._q_dr = np.clip(self._q_dr + self._v_cmd * dt_dr,
+                                             JOINT_LOWER, JOINT_UPPER)
+                self._t_dr = now
+                desacordo = float(np.max(np.abs(q - self._q_dr)))
+                if desacordo > self._dr_desacordo:
+                    q2, conv2, rp2, ro2 = ik_arm(T_target, q_init=self._q_dr.copy(),
+                                                 max_iter=self._ik_max_iter)
+                    d2 = float(np.max(np.abs(q2 - self._q_dr)))
+                    if conv2 and d2 < desacordo:
+                        rospy.logwarn_throttle(
+                            2.0, '[state_estimator] IK trocou de ramo pelo dead reckoning '
+                                 'dos comandos: desacordo %.1f° → %.1f° (resíduo %.4f m)',
+                            np.degrees(desacordo), np.degrees(d2), rp2)
+                        q, conv, res_p, res_o = q2, conv2, rp2, ro2
+                        desacordo = d2
+                # reancora o dead reckoning na estimativa quando concordam
+                if desacordo <= self._dr_desacordo:
+                    self._q_dr = q.copy()
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
             if dt and dt > 0:
