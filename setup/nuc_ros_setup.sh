@@ -58,6 +58,15 @@ conda activate ros_env
 BASHRC
 fi
 
+# Shim do módulo `imp` (removido no Python 3.12) para o rosserial_python —
+# sem ele os nós Arduino_N.py morrem com ModuleNotFoundError (2026-10-06).
+if ! grep -q "py312_compat" "$HOME/.bashrc"; then
+  cat >> "$HOME/.bashrc" << 'BASHRC'
+# b166er: shim do modulo imp (Python 3.12) para o rosserial
+export PYTHONPATH="$HOME/b166er/setup/py312_compat:$PYTHONPATH"
+BASHRC
+fi
+
 # --- 6. Instala pacotes de hardware ---
 # T265: NÃO usar ros-noetic-realsense2-camera do RoboStack (librealsense
 # 2.56, sem suporte à T265 — 2026-10-06). A pilha vem do fonte, pinada em
