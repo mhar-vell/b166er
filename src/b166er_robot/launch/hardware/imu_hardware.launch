@@ -9,6 +9,11 @@
   <arg name="frame_id"     default="ahrs8"/>
   <arg name="polling_rate" default="10"/>
 
+  <!-- O driver publica em /imu (sensor_msgs/Imu) e /imu/euler; a simulação
+       e o tilt_monitor usam /imu/data. Sem este remap o monitor de
+       inclinação fica cego no robô real — visto na bancada em 2026-10-06
+       (IMU a 10 Hz em /imu e nada em /imu/data). -->
+  <remap from="imu" to="imu/data"/>
   <include file="$(find sparton_ahrs8_driver)/launch/ahrs-8.launch">
     <arg name="port"         value="$(arg port)"/>
     <arg name="baud"         value="$(arg baud)"/>
