@@ -92,10 +92,11 @@
   <!-- ── Robot description ───────────────────────────────────────── -->
   <param name="use_sim_time"
          value="$(eval 'true' if arg('mode') == 'gazebo' else 'false')"/>
+  <arg name="arm_iface" default="$(eval 'velocity' if arg('braco') == 'malha_aberta' else 'position')"/>
   <param name="robot_description"
          command="$(find xacro)/xacro
                   $(find b166er_robot)/urdf/b166er.urdf.xacro
-                  garra_dx:=$(arg garra_dx)"/>
+                  garra_dx:=$(arg garra_dx) arm_iface:=$(arg arm_iface)"/>
 
   <!-- Posturas nomeadas do braço (home recolhido, deploy) — usadas
        pelo gazebo_arm_bridge (rampa pós-warm-start e comandos de
@@ -193,6 +194,7 @@
       <arg name="gui"             value="$(arg gui)"/>
       <arg name="robot_state_pub" value="false"/>
       <arg name="garra_dx"        value="$(arg garra_dx)"/>
+      <arg name="arm_iface"       value="$(arg arm_iface)"/>
     </include>
 
     <!-- Controladores ros_control das juntas do braço: posição (histórico)

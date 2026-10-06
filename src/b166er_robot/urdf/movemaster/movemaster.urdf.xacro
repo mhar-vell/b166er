@@ -819,14 +819,22 @@
          justamente câmera x ferramenta. -->
     <gazebo reference="t265_link"><material>Gazebo/Green</material></gazebo>
 
+    <!-- INTERFACE DAS JUNTAS no gazebo_ros_control (2026-10-06): position
+         (histórico, controladores de posição) ou velocity (braco:=malha_aberta
+         — o braço real não tem encoder; a placa só aplica velocidade/PWM, e
+         a simulação passa a executar igual). Vem do arg arm_iface, que o
+         b166er_wb.launch e o b166er_gazebo.launch passam ao xacro. -->
+    <xacro:arg name="arm_iface" default="position"/>
+    <xacro:property name="arm_hw_iface"
+                    value="${'hardware_interface/VelocityJointInterface' if '$(arg arm_iface)' == 'velocity' else 'hardware_interface/PositionJointInterface'}"/>
     <xacro:macro name="arm_transmission" params="joint_name">
       <transmission name="${joint_name}_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="${joint_name}">
-          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+          <hardwareInterface>${arm_hw_iface}</hardwareInterface>
         </joint>
         <actuator name="${joint_name}_motor">
-          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+          <hardwareInterface>${arm_hw_iface}</hardwareInterface>
           <mechanicalReduction>1</mechanicalReduction>
         </actuator>
       </transmission>
