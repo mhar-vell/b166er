@@ -25,11 +25,23 @@ O que é emulado de propósito, por ser o que o hardware faz:
   · watchdog (~watchdog_s): sem mensagem nova a placa para os motores;
   · inclinação crítica: para tudo (a placa real recebe emergency_stop).
 
-Nada aqui lê /joint_states. A única realimentação do braço continua sendo
-a T265, no estimador e no Fuzzy.
+FREIO / AUTOTRAVAMENTO (2026-10-06, primeira subida): com velocidade zero
+os controladores de velocidade do Gazebo NÃO seguram a junta — o braço caiu
+de J2 = +65° para −65° em segundos depois de "chegar" à postura recolhida.
+O RV-M2 real não faz isso: J2 e J3 têm freio eletromagnético e os redutores
+harmônicos (110:1 a 161:1) praticamente não retro-acionam. Este nó emula
+essa MECÂNICA: quando o comando de uma junta é zero, ela é segurada na
+posição em que parou. Para isso lê /joint_states (verdade do Gazebo) —
+e SÓ para isso. Não é realimentação para o controle: nenhum comando de
+movimento usa essa leitura; é o equivalente do freio físico, que também
+"sabe" onde a junta está porque a trava mecanicamente.
+
+Fora o freio, nada aqui lê /joint_states. A única realimentação do braço
+para o controle continua sendo a T265, no estimador e no Fuzzy.
 """
 import numpy as np
 import rospy
+from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64, Bool
 from movemaster_msg.msg import setpoint as SetpointMsg
 
@@ -44,7 +56,12 @@ class FirmwareEmulado:
         self._v_min     = float(rospy.get_param('~v_min_deg', 1.5))
         self._ganho     = np.array(rospy.get_param('~ganho', [1.0] * 5), dtype=float)
         self._watchdog  = float(rospy.get_param('~watchdog_s', 0.5))
+        self._freio_kp  = float(rospy.get_param('~freio_kp', 6.0))      # 1/s
+        self._freio_vmax = float(rospy.get_param('~freio_vmax_deg', 40.0))
         topico          = rospy.get_param('~topic_setpoints', '/setpoints')
+        self._q_true = None
+        self._q_hold = [None] * 5
+        rospy.Subscriber('/joint_states', JointState, self._cb_js, queue_size=1)
 
         self._v_cmd   = np.zeros(5)      # graus/s pedidos
         self._t_cmd   = None
@@ -67,6 +84,21 @@ class FirmwareEmulado:
         self._parado = False
         self._v_cmd = np.array([m.set_1, m.set_2, m.set_3, m.set_4, m.set_5], dtype=float)
         self._t_cmd = rospy.Time.now()
+
+    def _cb_js(self, m):
+        # Verdade do Gazebo, usada SÓ pelo freio emulado (ver docstring).
+        if 'J1' in m.name:
+            q = dict(zip(m.name, m.position))
+            self._q_true = np.array([q[j] for j in JOINTS], dtype=float)
+
+    def _freio(self, i, v_i):
+        """Junta i com comando zero: segura onde parou (freio/autotravamento)."""
+        if self._q_true is None:
+            return 0.0
+        if self._q_hold[i] is None:
+            self._q_hold[i] = float(self._q_true[i])
+        e = self._q_hold[i] - float(self._q_true[i])
+        return float(np.clip(np.degrees(self._freio_kp * e), -self._freio_vmax, self._freio_vmax))
 
     def _cb_tilt(self, m):
         if m.data and not self._parado:
@@ -92,6 +124,12 @@ class FirmwareEmulado:
             # zona morta, saturação, ganho de execução
             v = np.where(np.abs(v) < self._v_min, 0.0, v)
             v = np.clip(v, -self._v_max, self._v_max) * self._ganho
+            # freio: junta sem comando segura onde parou; com comando, solta
+            for i in range(5):
+                if v[i] == 0.0:
+                    v[i] = self._freio(i, v[i])
+                else:
+                    self._q_hold[i] = None
             for i, pub in enumerate(self._pubs):
                 pub.publish(Float64(data=float(np.radians(v[i]))))
             rate.sleep()
