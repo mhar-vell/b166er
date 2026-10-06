@@ -59,10 +59,11 @@ BASHRC
 fi
 
 # --- 6. Instala pacotes de hardware ---
-echo "==> Instalando ros-noetic-realsense2-camera (T265)..."
-"${MINIFORGE_DIR}/bin/mamba" install -n ros_env \
-  -c robostack-noetic \
-  ros-noetic-realsense2-camera -y
+# T265: NÃO usar ros-noetic-realsense2-camera do RoboStack (librealsense
+# 2.56, sem suporte à T265 — 2026-10-06). A pilha vem do fonte, pinada em
+# librealsense 2.53.1; ver setup/t265_src.sh.
+echo "==> Pilha da T265 (librealsense 2.53.1 + realsense-ros 2.3.2 do fonte)..."
+bash "$(dirname "$0")/t265_src.sh"
 
 echo ""
 echo "======================================"
