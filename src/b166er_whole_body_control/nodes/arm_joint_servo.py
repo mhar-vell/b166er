@@ -113,7 +113,7 @@ class ArmJointServo:
         # por ~bloqueio_s (contato — o firmware aplica PWM e nada se move),
         # a postura fecha com ok=False em vez de esperar o timeout; a
         # missão já trata "ponta não avança" com recuo por contato.
-        self._bloqueio_s   = float(rospy.get_param('~bloqueio_s', 2.0))
+        self._bloqueio_s   = float(rospy.get_param('~bloqueio_s', 3.0))
         self._bloqueio_dmin = float(rospy.get_param('~bloqueio_progresso_m', 0.001))
         self._hist_dp = []   # (t, ‖Δp‖) da postura ativa
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
@@ -231,9 +231,15 @@ class ArmJointServo:
         v = np.clip(v, -self._v_max, self._v_max)
         # consciente da placa: junta com pedido miúdo descansa (o freio
         # segura); as outras andam a pelo menos v_piso (zona morta do PWM)
-        v = np.where(np.abs(v) < self._v_fina, 0.0,
-                     np.sign(v) * np.maximum(np.abs(v), self._v_piso))
-        return v
+        v_fino = np.where(np.abs(v) < self._v_fina, 0.0,
+                          np.sign(v) * np.maximum(np.abs(v), self._v_piso))
+        # Se a zona morta fina deixou TODAS as juntas em repouso com a ponta
+        # ainda fora da tolerância (bateria 3: posturas fechadas "BLOQUEADA"
+        # a 7–9 mm sem ninguém se mexer), a junta que mais ajuda anda no piso.
+        if not np.any(v_fino) and np.any(v):
+            i = int(np.argmax(np.abs(v)))
+            v_fino[i] = np.sign(v[i]) * self._v_piso
+        return v_fino
 
     def _passo_postura(self):
         """Devolve v (rad/s) para a postura ativa, ou None se não há postura."""
