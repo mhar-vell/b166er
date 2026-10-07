@@ -11,6 +11,7 @@ can reason about the full 8-DOF chain (3 base + 5 arm) as a single entity.
 """
 
 import rospy
+import math
 import numpy as np
 from collections import deque
 import threading
@@ -100,6 +101,29 @@ class StateEstimator:
         self._v_cmd        = np.zeros(5)
         self._t_v_cmd      = None
         self._t_dr         = None
+        # O dead reckoning integra o que o FIRMWARE EXECUTA, não o que foi
+        # pedido (2026-10-07, run1 montagem_90_servo): o servo mandava 0,5–
+        # 1,4 °/s em J1/J4, abaixo da zona morta da placa (V_DEAD 1,5 °/s em
+        # arm_openloop_sim e nos Joints*_vel.ino) — o motor não se mexia, mas
+        # q_dr integrava e derivou +20° em J4 e +20° em J1 em um minuto; a
+        # escolha do ramo passou a ser feita a partir de lixo e oscilou a
+        # cada ciclo. Mesma zona morta e saturação da placa, por junta.
+        self._dr_v_dead    = math.radians(float(rospy.get_param('~dr_v_dead_deg', 1.5)))
+        self._dr_v_max     = math.radians(float(rospy.get_param('~dr_v_max_deg', 60.0)))
+        # Reancoragem SUAVE dentro do ramo (2026-10-07, bateria montagem_90_
+        # servo): com a ponta em contato (atravessa/captura) o firmware aplica
+        # PWM e a junta não anda — q_dr integrava +3 °/s em J1 por um minuto
+        # (J1 −19° → +70°) e a escolha do ramo virou lixo. Enquanto a IK
+        # concorda com q_dr (desacordo ≤ ~dr_desacordo_rad), q_dr é puxado
+        # para a estimativa com constante ~dr_tau_s; um salto de ramo (> gate)
+        # continua NÃO sendo seguido — que era o defeito da 1ª versão.
+        self._dr_tau       = float(rospy.get_param('~dr_tau_s', 2.0))
+        # Reancorar no alvo SÓ quando a postura foi de fato alcançada: o
+        # arm_joint_servo também publica reached=True ao fechar por TIMEOUT,
+        # e aí o alvo não é onde o braço está. /b166er/arm_posture_ok
+        # (latched) diz qual foi o caso; as pontes antigas não o publicam e
+        # ficam no comportamento anterior (sempre reancora).
+        self._posture_ok   = True
         self._t_prev     = None
         self._q_joints     = None    # ground truth mais recente (None em hardware)
         # Buffer (stamp_secs, q) para sincronizar seed do IK com o stamp do T265.
@@ -137,6 +161,7 @@ class StateEstimator:
                          self._cb_posture_target, queue_size=1)
         rospy.Subscriber('/b166er/arm_posture_reached', Bool,
                          self._cb_posture_reached, queue_size=1)
+        rospy.Subscriber('/b166er/arm_posture_ok', Bool, self._cb_posture_ok, queue_size=1)
 
         rospy.loginfo('[state_estimator] pronto')
         rospy.loginfo('  pioneer: %s', self._pioneer_topic)
@@ -173,11 +198,16 @@ class StateEstimator:
 
     def _cb_setpoints(self, m):
         # Velocidades comandadas ao firmware (graus/s) — dead reckoning.
-        self._v_cmd = np.radians([m.set_1, m.set_2, m.set_3, m.set_4, m.set_5])
+        v = np.radians([m.set_1, m.set_2, m.set_3, m.set_4, m.set_5])
+        v = np.where(np.abs(v) < self._dr_v_dead, 0.0, v)          # zona morta da placa
+        self._v_cmd = np.clip(v, -self._dr_v_max, self._dr_v_max)   # saturação da placa
         self._t_v_cmd = rospy.Time.now()
 
+    def _cb_posture_ok(self, msg):
+        self._posture_ok = bool(msg.data)
+
     def _cb_posture_reached(self, msg):
-        if msg.data and self._posture_target_q is not None:
+        if msg.data and self._posture_target_q is not None and self._posture_ok:
             self._q_dr = self._posture_target_q.copy()
             # Seed imediato ao concluir a rampa. NÃO basta sozinho: a
             # rampa se declara concluída quando o q integrado do dono do
@@ -305,6 +335,7 @@ class StateEstimator:
                     if 0.0 < dt_dr < 0.5:
                         self._q_dr = np.clip(self._q_dr + self._v_cmd * dt_dr,
                                              JOINT_LOWER, JOINT_UPPER)
+                dt_anc = (now - self._t_dr).to_sec() if self._t_dr else 0.0
                 self._t_dr = now
                 desacordo = float(np.max(np.abs(q - self._q_dr)))
                 if desacordo > self._dr_desacordo:
@@ -320,6 +351,8 @@ class StateEstimator:
                     if conv2 and d2 + 1e-6 < desacordo:
                         q, conv, res_p, res_o = q2, conv2, rp2, ro2
                         desacordo = d2
+                if desacordo <= self._dr_desacordo and 0.0 < dt_anc < 0.5 and self._dr_tau > 0:
+                    self._q_dr = self._q_dr + (dt_anc / self._dr_tau) * (q - self._q_dr)
                 # NÃO reancorar na estimativa a cada ciclo: foi o erro da
                 # primeira versão (q_dr virava cópia de q_est e seguia o ramo
                 # errado junto). O dead reckoning só reancora em eventos em
