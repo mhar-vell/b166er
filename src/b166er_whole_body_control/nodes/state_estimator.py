@@ -311,16 +311,26 @@ class StateEstimator:
                     q2, conv2, rp2, ro2 = ik_arm(T_target, q_init=self._q_dr.copy(),
                                                  max_iter=self._ik_max_iter)
                     d2 = float(np.max(np.abs(q2 - self._q_dr)))
-                    if conv2 and d2 < desacordo:
-                        rospy.logwarn_throttle(
-                            2.0, '[state_estimator] IK trocou de ramo pelo dead reckoning '
-                                 'dos comandos: desacordo %.1f° → %.1f° (resíduo %.4f m)',
-                            np.degrees(desacordo), np.degrees(d2), rp2)
+                    rospy.logwarn_throttle(
+                        2.0, '[state_estimator] ramo: IK %s | dead reck. %s | re-IK %s '
+                             '(conv %s, desacordos %.1f° / %.1f°)',
+                        np.degrees(q).round(1).tolist(), np.degrees(self._q_dr).round(1).tolist(),
+                        np.degrees(q2).round(1).tolist(), conv2,
+                        np.degrees(desacordo), np.degrees(d2))
+                    if conv2 and d2 + 1e-6 < desacordo:
                         q, conv, res_p, res_o = q2, conv2, rp2, ro2
                         desacordo = d2
-                # reancora o dead reckoning na estimativa quando concordam
-                if desacordo <= self._dr_desacordo:
-                    self._q_dr = q.copy()
+                # NÃO reancorar na estimativa a cada ciclo: foi o erro da
+                # primeira versão (q_dr virava cópia de q_est e seguia o ramo
+                # errado junto). O dead reckoning só reancora em eventos em
+                # que a postura é conhecida: postura concluída (alvo) e
+                # reset/resync. A deriva por ganho de execução entre esses
+                # eventos (segundos) é pequena diante dos 50–70° que separam
+                # os ramos.
+                rospy.loginfo_throttle(
+                    10.0, '[state_estimator] dr: q_est %s | q_dr %s | v_cmd %s°/s',
+                    np.degrees(q).round(1).tolist(), np.degrees(self._q_dr).round(1).tolist(),
+                    np.degrees(self._v_cmd).round(1).tolist())
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
             if dt and dt > 0:
