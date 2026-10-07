@@ -25,7 +25,7 @@ from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM,
     ik_arm,
-)
+    arm_jacobian_world)
 from movemaster_msg.msg import setpoint as SetpointMsg
 
 # Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
@@ -94,7 +94,49 @@ class StateEstimator:
         # mais que ~dr_desacordo_rad, resolve-se de novo a partir dela e
         # fica a solução mais próxima do que foi comandado. Depois a
         # própria estimativa reancora o dead reckoning (sem acumular deriva).
-        self._dr_seed      = bool(rospy.get_param('~dr_seed', True))
+        # dr_seed DESLIGADO por padrão (2026-10-07, bateria 5): o dead
+        # reckoning nunca ficou confiável (piso, histerese, contato — ver
+        # RELATORIO25) e a re-IK a partir dele é o que TROCAVA um ramo certo
+        # por um errado (bateria 5 run4: braço levado ao batente de J3 e
+        # estimativa presa no espelho). O ramo passa a ser seguido por
+        # CONTINUIDADE da estimativa desde o stow conhecido.
+        self._dr_seed      = bool(rospy.get_param('~dr_seed', False))
+        self._seed_gt      = bool(rospy.get_param('~seed_ground_truth', False))
+        # RAMO PELA VELOCIDADE MEDIDA (2026-10-07). A pose do T265 não separa
+        # cotovelo para cima de cotovelo para baixo (mesma ponta, mesmo
+        # punho), e seguir só por continuidade prende a estimativa no
+        # espelho na primeira passagem pelo cotovelo reto (teste 13:20:
+        # J3 estimado −60° com a verdade em +60°). O que separa os ramos é
+        # a DIREÇÃO em que a ponta anda para o mesmo comando de junta:
+        # J(q_a)·v ≠ J(q_b)·v. A cada ciclo com comando e movimento, os dois
+        # candidatos (atual e espelhado) preveem a velocidade da ponta; a
+        # medida (diferença finita da posição do T265 em ~rv_janela_s) é
+        # comparada com as duas e o erro acumula com esquecimento ~rv_tau_s.
+        # Troca-se de ramo quando o espelho explica a medida com menos de
+        # ~rv_fator do erro do atual, com ~rv_nmin amostras.
+        self._ramo_vel     = bool(rospy.get_param('~ramo_vel', False))
+        # RAMO PELO SINAL DE J3 NA PASSAGEM PELO COTOVELO RETO (2026-10-07,
+        # 13:30). O teste pela velocidade escolheu o espelho (as duas
+        # soluções da IK estavam no batente). Regra mais simples e que o
+        # robô real sabe: o ramo só muda quando o cotovelo passa por zero, e
+        # nesse instante o sinal de J3 depois da passagem é o sinal da
+        # VELOCIDADE COMANDADA em J3. Perto de zero (|J3| < ~j3_zona) guarda-
+        # se sign(v_cmd J3) como sinal esperado; fora da zona, se a estimativa
+        # tem o sinal contrário, a IK é resolvida do espelho e, se ele tem o
+        # sinal certo com resíduo igual ou melhor, substitui. Postura
+        # alcançada reancora o sinal esperado no alvo.
+        self._ramo_sinal   = bool(rospy.get_param('~ramo_sinal', True))
+        self._j3_zona      = math.radians(float(rospy.get_param('~j3_zona_deg', 8.0)))
+        self._j3_sinal     = float(np.sign(_HOME_Q[2])) if abs(_HOME_Q[2]) > 1e-3 else None
+        self._rv_j3_min    = math.radians(float(rospy.get_param('~rv_j3_min_deg', 8.0)))
+        self._rv_vmin      = float(rospy.get_param('~rv_vmin', 0.005))     # m/s
+        self._rv_janela    = float(rospy.get_param('~rv_janela_s', 0.25))
+        self._rv_tau       = float(rospy.get_param('~rv_tau_s', 1.0))
+        self._rv_nmin      = float(rospy.get_param('~rv_nmin', 4.0))
+        self._rv_fator     = float(rospy.get_param('~rv_fator', 0.5))
+        self._rv_hist      = deque(maxlen=40)   # (t, p_T265 no frame do braço)
+        self._rv_Ea = self._rv_Eb = self._rv_n = 0.0
+        self._rv_t_prev    = None
         self._dr_desacordo = float(rospy.get_param('~dr_desacordo_rad', 0.35))
         self._q_dr         = np.array(rospy.get_param('~q_inicial', [0.0, 0.0, 0.0, 0.0, 0.0]),
                                       dtype=float)
@@ -217,6 +259,8 @@ class StateEstimator:
             # cair numa bacia ruim mesmo assim. O retry em _solve_ik é
             # que garante a recuperação depois que tudo assenta.
             self._q_arm = self._posture_target_q.copy()
+            if abs(self._posture_target_q[2]) > self._j3_zona:
+                self._j3_sinal = float(np.sign(self._posture_target_q[2]))
             rospy.loginfo('[state_estimator] re-seed por postura concluída: %s rad',
                           np.round(self._q_arm, 3))
 
@@ -255,6 +299,62 @@ class StateEstimator:
             rospy.loginfo_throttle(
                 5.0, '[state_estimator] IK recuperada via seed de postura '
                      '(resíduo %.4f → %.4f m)', rp, rp2)
+            return q2, conv2, rp2, ro2
+        return q, conv, rp, ro
+
+    def _ramo_por_sinal(self, now, T_target, q, conv, rp, ro):
+        """Ramo pelo sinal de J3 esperado desde a última passagem pelo
+        cotovelo reto; ver o comentário em __init__."""
+        fresh = self._t_v_cmd is not None and (now - self._t_v_cmd).to_sec() < 0.5
+        if abs(q[2]) < self._j3_zona:
+            if fresh and abs(self._v_cmd[2]) > 1e-6:
+                self._j3_sinal = float(np.sign(self._v_cmd[2]))
+            return q, conv, rp, ro
+        if self._j3_sinal is None or np.sign(q[2]) == self._j3_sinal:
+            return q, conv, rp, ro
+        seed = np.array([q[0], q[1] + q[2], -q[2], q[3] + q[2], q[4]])
+        q2, conv2, rp2, ro2 = ik_arm(T_target, q_init=np.clip(seed, JOINT_LOWER, JOINT_UPPER),
+                                     max_iter=self._ik_max_iter)
+        if conv2 and abs(q2[2]) >= self._j3_zona and np.sign(q2[2]) == self._j3_sinal and rp2 <= rp + 0.003:
+            rospy.logwarn_throttle(2.0, '[state_estimator] ramo pelo sinal de J3 (%+d): %s -> %s (resíduo %.4f -> %.4f)',
+                                   int(self._j3_sinal), np.degrees(q).round(1).tolist(),
+                                   np.degrees(q2).round(1).tolist(), rp, rp2)
+            return q2, conv2, rp2, ro2
+        return q, conv, rp, ro
+
+    def _ramo_por_velocidade(self, now, T_target, q, conv, rp, ro):
+        """Escolhe entre a solução atual e a espelhada (cotovelo) pela
+        velocidade MEDIDA da ponta; ver o comentário em __init__."""
+        t = now.to_sec()
+        p = T_target[:3, 3].copy()
+        self._rv_hist.append((t, p))
+        dt = t - self._rv_t_prev if self._rv_t_prev else 0.0
+        self._rv_t_prev = t
+        antigo = next((h for h in self._rv_hist if t - h[0] <= self._rv_janela), None)
+        if antigo is None or t - antigo[0] < 0.5 * self._rv_janela or not (0.0 < dt < 0.5):
+            return q, conv, rp, ro
+        fresh = self._t_v_cmd is not None and (now - self._t_v_cmd).to_sec() < 0.5
+        if not fresh or not np.any(self._v_cmd) or abs(q[2]) < self._rv_j3_min:
+            return q, conv, rp, ro
+        seed = np.array([q[0], q[1] + q[2], -q[2], q[3] + q[2], q[4]])
+        q2, conv2, rp2, ro2 = ik_arm(T_target, q_init=np.clip(seed, JOINT_LOWER, JOINT_UPPER),
+                                     max_iter=self._ik_max_iter)
+        if not conv2 or abs(q2[2] - q[2]) < self._rv_j3_min or rp2 > rp + 0.003:
+            return q, conv, rp, ro
+        v_meas = (p - antigo[1]) / (t - antigo[0])
+        va = arm_jacobian_world(q.tolist(), np.eye(4))[:3] @ self._v_cmd
+        vb = arm_jacobian_world(q2.tolist(), np.eye(4))[:3] @ self._v_cmd
+        if max(np.linalg.norm(va), np.linalg.norm(vb)) < self._rv_vmin:
+            return q, conv, rp, ro
+        lam = math.exp(-dt / self._rv_tau)
+        self._rv_Ea = lam * self._rv_Ea + float(np.sum((v_meas - va) ** 2))
+        self._rv_Eb = lam * self._rv_Eb + float(np.sum((v_meas - vb) ** 2))
+        self._rv_n  = lam * self._rv_n + 1.0
+        if self._rv_n >= self._rv_nmin and self._rv_Eb < self._rv_fator * self._rv_Ea:
+            rospy.logwarn('[state_estimator] ramo pela velocidade: %s -> %s (erro atual %.4f, espelho %.4f, %.0f amostras)',
+                          np.degrees(q).round(1).tolist(), np.degrees(q2).round(1).tolist(),
+                          self._rv_Ea, self._rv_Eb, self._rv_n)
+            self._rv_Ea = self._rv_Eb = self._rv_n = 0.0
             return q2, conv2, rp2, ro2
         return q, conv, rp, ro
 
@@ -318,16 +418,25 @@ class StateEstimator:
             # Seed sincronizado com o stamp do T265: o sensor_sim publica T265
             # com stamp = stamp do /joint_states que usou para o FK, portanto o q
             # com timestamp mais próximo é exatamente a solução → IK converge em 0 iter.
-            if self._q_joints_buf:
+            # SEMENTE = ESTIMATIVA ANTERIOR por padrão (2026-10-07): é o que
+            # o robô real tem (sem encoders) — continuidade desde o stow
+            # conhecido (_HOME_Q / resync). Semear com a verdade do Gazebo
+            # (~seed_ground_truth) escondia o problema do ramo na simulação
+            # e só serve para diagnóstico.
+            if self._seed_gt and self._q_joints_buf:
                 t265_t = self._t265_odom.header.stamp.to_sec()
                 q_seed = min(self._q_joints_buf,
                              key=lambda x: abs(x[0] - t265_t))[1]
-            elif self._q_joints is not None:
+            elif self._seed_gt and self._q_joints is not None:
                 q_seed = self._q_joints
             else:
-                q_seed = self._q_arm   # hardware mode: sem ground truth
+                q_seed = self._q_arm   # continuidade (hardware e simulação honesta)
 
             q, conv, res_p, res_o = self._solve_ik(T_target, q_seed)
+            if self._ramo_vel:
+                q, conv, res_p, res_o = self._ramo_por_velocidade(now, T_target, q, conv, res_p, res_o)
+            if self._ramo_sinal:
+                q, conv, res_p, res_o = self._ramo_por_sinal(now, T_target, q, conv, res_p, res_o)
             if self._dr_seed:
                 # integra os comandos (só com mensagem fresca)
                 if self._t_v_cmd is not None and (now - self._t_v_cmd).to_sec() < 0.5:
