@@ -128,6 +128,15 @@ class StateEstimator:
         self._ramo_sinal   = bool(rospy.get_param('~ramo_sinal', True))
         self._j3_zona      = math.radians(float(rospy.get_param('~j3_zona_deg', 8.0)))
         self._j3_sinal     = float(np.sign(_HOME_Q[2])) if abs(_HOME_Q[2]) > 1e-3 else None
+        # FINS DE CURSO como referência absoluta (2026-10-07, bateria 6):
+        # /b166er/arm_limit_switch (−1/0/+1 por junta) vem das placas (pinos
+        # LS; emulado em arm_openloop_sim). Junta no switch está num ângulo
+        # CONHECIDO: a semente da IK recebe o limite, e J3 no switch fixa o
+        # sinal do ramo — é a única medida absoluta de junta que o braço
+        # tem, e foi o que faltou quando a estimativa ficou presa no espelho
+        # com o braço de verdade no batente.
+        self._ls = np.zeros(5)
+        rospy.Subscriber('/b166er/arm_limit_switch', JointState, self._cb_ls, queue_size=1)
         self._rv_j3_min    = math.radians(float(rospy.get_param('~rv_j3_min_deg', 8.0)))
         self._rv_vmin      = float(rospy.get_param('~rv_vmin', 0.005))     # m/s
         self._rv_janela    = float(rospy.get_param('~rv_janela_s', 0.25))
@@ -302,6 +311,19 @@ class StateEstimator:
             return q2, conv2, rp2, ro2
         return q, conv, rp, ro
 
+    def _cb_ls(self, m):
+        if len(m.position) == 5:
+            self._ls = np.array(m.position, dtype=float)
+            if self._ls[2] != 0.0:
+                self._j3_sinal = float(self._ls[2])
+
+    def _semente_com_fins_de_curso(self, q_seed):
+        q_seed = np.array(q_seed, dtype=float).copy()
+        for j in range(5):
+            if self._ls[j] > 0:   q_seed[j] = JOINT_UPPER[j]
+            elif self._ls[j] < 0: q_seed[j] = JOINT_LOWER[j]
+        return q_seed
+
     def _ramo_por_sinal(self, now, T_target, q, conv, rp, ro):
         """Ramo pelo sinal de J3 esperado desde a última passagem pelo
         cotovelo reto; ver o comentário em __init__."""
@@ -432,6 +454,8 @@ class StateEstimator:
             else:
                 q_seed = self._q_arm   # continuidade (hardware e simulação honesta)
 
+            if np.any(self._ls != 0.0):
+                q_seed = self._semente_com_fins_de_curso(q_seed)
             q, conv, res_p, res_o = self._solve_ik(T_target, q_seed)
             if self._ramo_vel:
                 q, conv, res_p, res_o = self._ramo_por_velocidade(now, T_target, q, conv, res_p, res_o)

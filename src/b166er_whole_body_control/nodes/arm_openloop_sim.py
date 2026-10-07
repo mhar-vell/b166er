@@ -44,6 +44,7 @@ import rospy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64, Bool
 from movemaster_msg.msg import setpoint as SetpointMsg
+from b166er_whole_body_control.kinematics import JOINT_LOWER, JOINT_UPPER
 
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 
@@ -58,6 +59,18 @@ class FirmwareEmulado:
         self._watchdog  = float(rospy.get_param('~watchdog_s', 0.5))
         self._freio_kp  = float(rospy.get_param('~freio_kp', 6.0))      # 1/s
         self._freio_vmax = float(rospy.get_param('~freio_vmax_deg', 40.0))
+        # FINS DE CURSO (2026-10-07, bateria 6). As placas reais leem os
+        # switches LS_xA/LS_xB (ativos em HIGH) e cortam o sentido que
+        # encosta neles (driveJx nos Joints*_vel.ino). Sem isso aqui, uma
+        # estimativa presa no espelho fez o servo empurrar J2/J3 até o
+        # batente e GIRAR o J4 por 681° (o batente do ODE cede). Emulado:
+        # switch ativo a < ~ls_margem_deg do limite; corta o sentido que
+        # empurra contra ele e PUBLICA o estado em /b166er/arm_limit_switch
+        # (JointState, position = −1/0/+1 por junta) — é um sensor que o
+        # robô real TEM (as placas devem publicar o mesmo a partir dos pinos
+        # LS) e que o estimador usa como referência absoluta da junta.
+        self._ls_margem  = np.radians(float(rospy.get_param('~ls_margem_deg', 0.2)))
+        self._pub_ls = rospy.Publisher('/b166er/arm_limit_switch', JointState, queue_size=1)
         topico          = rospy.get_param('~topic_setpoints', '/setpoints')
         self._q_true = None
         self._q_hold = [None] * 5
@@ -124,6 +137,16 @@ class FirmwareEmulado:
             # zona morta, saturação, ganho de execução
             v = np.where(np.abs(v) < self._v_min, 0.0, v)
             v = np.clip(v, -self._v_max, self._v_max) * self._ganho
+            # fins de curso: corta o sentido que empurra contra o switch
+            ls = np.zeros(5)
+            if self._q_true is not None:
+                ls = np.where(self._q_true > JOINT_UPPER - self._ls_margem, 1.0,
+                              np.where(self._q_true < JOINT_LOWER + self._ls_margem, -1.0, 0.0))
+                v = np.where((ls > 0) & (v > 0), 0.0, v)
+                v = np.where((ls < 0) & (v < 0), 0.0, v)
+                m_ls = JointState(); m_ls.header.stamp = rospy.Time.now()
+                m_ls.name = JOINTS; m_ls.position = ls.tolist()
+                self._pub_ls.publish(m_ls)
             # freio: junta sem comando segura onde parou; com comando, solta
             for i in range(5):
                 if v[i] == 0.0:
