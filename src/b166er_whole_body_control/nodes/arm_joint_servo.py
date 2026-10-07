@@ -158,6 +158,12 @@ class ArmJointServo:
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
         self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
         self._ls = np.zeros(5)
+        # J2 só para trás (Marco, 07/10): limite de curso por software a
+        # partir do switch de trás — ver arm_switches.yaml (j2_curso_deg).
+        j2_sup = float(rospy.get_param('/arm_switches/upper_deg', [150, 65, 60, 110, 180])[1])
+        self._j2_min = math.radians(j2_sup - float(rospy.get_param('/arm_switches/j2_curso_deg', 115.0)))
+        rospy.loginfo('[arm_joint_servo] J2 limitado por software a >= %.1f° (switch de trás %.1f° − curso)',
+                      math.degrees(self._j2_min), j2_sup)
         self._homing = []          # fila de índices de junta ainda por fazer
         self._homing_t0 = None
         self._homing_resultado = {}
@@ -229,6 +235,9 @@ class ArmJointServo:
 
     # ------------------------------------------------------------ homing
     def _iniciar_homing(self, why):
+        if self._home_side[1] < 0:
+            rospy.logerr('[arm_joint_servo] homing: J2 para BAIXO é proibido (risco; Marco 07/10) — J2 fica fora do homing')
+            self._home_side[1] = 0.0
         fila = [j for j in self._home_ordem if 0 <= j < 5 and self._home_side[j] != 0]
         if not fila:
             rospy.logwarn('[arm_joint_servo] homing (%s): nenhuma junta configurada em /arm_switches', why)
@@ -279,6 +288,10 @@ class ArmJointServo:
 
     # ------------------------------------------------------------ postura
     def _iniciar_postura(self, q, why):
+        if q[1] < self._j2_min:
+            rospy.logwarn('[arm_joint_servo] postura (%s): J2 %.1f° abaixo do limite de software %.1f° — cortada',
+                          why, math.degrees(q[1]), math.degrees(self._j2_min))
+            q = q.copy(); q[1] = self._j2_min
         self._q_alvo = q
         self._t_alvo = rospy.Time.now()
         self._t_ok = None
@@ -413,6 +426,10 @@ class ArmJointServo:
                     v = np.zeros(5)
             if self._tilt:
                 v = np.zeros(5)
+            # limite de software do J2 (vale para posturas, homing e Fuzzy):
+            # abaixo de j2_min nunca se comanda para baixo
+            if self._q_est is not None and self._q_est[1] <= self._j2_min and v[1] < 0.0:
+                v[1] = 0.0
             m = SetpointMsg()
             vd = np.degrees(v)
             m.set_1, m.set_2, m.set_3, m.set_4, m.set_5 = (float(x) for x in vd)
