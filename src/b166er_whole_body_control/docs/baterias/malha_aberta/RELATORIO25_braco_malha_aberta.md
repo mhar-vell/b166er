@@ -58,6 +58,7 @@ IK compensa no J5 (−11° em vez de +79°). Missão e YAML não mudam.
 | 6 `montagem_90_servo_tent5` | idem + histerese 3× nas zonas mortas; ramo só troca para solução fora do batente e sem piorar o resíduo | 3/5 (+1 reset falhado) | 30,7 · 34,4 · 34,4 | run4: captura a 46 mm — o braço foi levado ao batente de J3 (−60°) e a estimativa ficou presa no espelho (+60°, que a regra do batente agora se recusava a trocar); o reset da run5 não conseguiu recolher o braço. 16 TIMEOUT, 369 avisos de ramo |
 | 7 `montagem_90_servo_tent6` | estimador SEM verdade do Gazebo: semente = estimativa anterior, dead reckoning desligado, ramo pelo sinal de J3 na passagem pelo cotovelo reto | 2/5 (+2 resets falhados) | 27,6 · 31,1 | run3: libera perdeu o olhal (deriva −15,2 mm, no limite da guarda). Depois do aborto a estimativa ficou presa no espelho (sinal de J3 esperado +1 enquanto o contato levou o J3 real a −60°); o servo empurrou J2/J3 ao batente e GIROU o J4 por 681° (batente do ODE cede); os dois resets não recolheram o braço |
 | 8 `montagem_90_servo` | idem + FINS DE CURSO emulados na placa (cortam o sentido e publicam /b166er/arm_limit_switch) e usados pelo estimador como referência absoluta | **3/5** | 34,4 · 32,1 · 31,7 | **0 TIMEOUT** (primeira vez), 28 BLOQUEADA (ponta a 6–26 mm, mediana 13: contato real), resets 5/5. Abortos de TAREFA: run3 captura com prof +12,6 mm (tol 6) em 5 iterações; run5 atravessa a 9 mm sem fechar por eixo |
+| 9 `homing_switches` | idem + HOMING por switch ao ligar (J4, J3, J2), switches por junta em `arm_switches.yaml`, firmware emulado com saída em POSIÇÃO integrada, integral em J2/J3 | 3/5 | 31,2 · 29,8 · 31,7 | homing 3/3 (22/12/13 s); 1 TIMEOUT, 22 BLOQUEADA. Abortos de tarefa: run2 libera perdeu o olhal (deriva −35 mm), run4 atravessa em 5 iterações (11 mm) |
 
 Posturas do servo: 22/22 "alcançadas" mas grossas (b1); 55 alcançadas /
 21 TIMEOUT (b3); 53 / 1 / 35 BLOQUEADA (b4); 38 / 30 / 32 (b5); 36 / 16 /
@@ -109,6 +110,38 @@ trocas pelo sinal de J3: 12 (b7), 16 (b8).
    de problema dos RELATORIOS 14 e 16, agora com a captura menos precisa
    (eixo −6..−8 mm, alt −11..−16 mm) do que no braço de posição.
 
+## Homing por fins de curso (pedido do orientador, 07/10 à tarde)
+
+"Vc não acha interessante simular os switchs de cada junta?" — sim: os
+switches são a única medida ABSOLUTA de junta do braço, e até aqui só
+eram usados quando a junta esbarrava neles. Entrou `config/arm_switches.yaml`
+(ângulo dos dois switches por junta, margem em que fecham, lado e ordem do
+homing), lido por três nós: o firmware emulado (fecha, corta o sentido,
+publica `/b166er/arm_limit_switch`), o estimador (junta no switch ancorada
+no ângulo em que ele fecha) e o servo (ao ligar, J4, J3 e J2 vão aos
+switches do lado do stow — a cadeia de arfagem, onde o ramo é ambíguo;
+J1/J5 são observáveis pelo T265 — e só então o braço recolhe;
+`/b166er/arm_home_cmd` refaz, `/b166er/arm_homed` informa). Os ângulos do
+yaml são os do manual e têm de ser MEDIDOS na bancada.
+
+Dois defeitos da emulação apareceram no caminho:
+
+1. A velocidade de junta que o Gazebo/ODE reporta sob carga não é
+   Δposição/Δt: J2 subia a 1,5 °/s com o controlador de velocidade
+   "vendo" 5 °/s (e descia a 8 "vendo" 4). O firmware emulado passou a
+   integrar a velocidade executada num setpoint dos controladores de
+   POSIÇÃO, com anti-windup por junta (folga [4, 10, 6, 3, 3]°: tem de
+   cobrir a queda estática do P puro) — é como o motor real com redutor
+   harmônico se comporta. `velocity_controllers` só com `arm_iface:=velocity`.
+2. O P puro de J2 cedia 3,5° sob gravidade e o `JointPositionController`
+   limita o comando ao URDF: o teto real do J2 era 61,5° e o switch
+   superior (63,5°) nunca fechava. Termo integral com `i_clamp` pequeno em
+   J2/J3; stow do J2 de 1,13 para 1,10 rad (1,13 ficava dentro da zona do
+   switch).
+
+Teste: homing 3/3; sete posturas com a estimativa a ≤ 1,3° da verdade.
+Bateria 9: 3/5, mesma classe de abortos de tarefa.
+
 ## Onde ficou
 
 O braço sem encoder, na simulação honesta (sem verdade do Gazebo em
@@ -125,7 +158,8 @@ profundidade pelo laser como na REFINE), não de servo.
   mais iterações ou tolerância de profundidade de 6 → 10 mm (o alvo já tem
   +8 mm de folga à aba, RELATORIO20).
 - Placas: publicar os fins de curso (pinos LS) em `/b166er/arm_limit_switch`
-  como o firmware emulado faz — é a única referência absoluta de junta.
+  como o firmware emulado faz — é a única referência absoluta de junta; e
+  medir na bancada o ângulo real de cada switch (`arm_switches.yaml`).
 - Avisos de ramo ainda ocorrem (153 por bateria): investigar com log por
   ciclo durante o atravessa/captura.
 - Destrava/libera com captura menos precisa: rever `curso_min_m`/reassenta
