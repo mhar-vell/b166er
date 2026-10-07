@@ -4,9 +4,11 @@
 #                           corta o sentido e publica /b166er/arm_limit_switch)
 #   · state_estimator.py   (junta no switch -> estimativa ancorada no ângulo)
 #   · arm_joint_servo.py   (HOMING: leva cada junta até o seu switch ao ligar)
-# As placas reais leem os pinos LS_xA/LS_xB; o ângulo em que cada switch
-# está montado tem de ser MEDIDO na bancada, junta a junta, lado a lado —
-# os valores abaixo são os limites do manual (= URDF) e valem só até lá.
+# As placas reais leem os pinos LS_xA/LS_xB. Os ângulos abaixo são os
+# DECLARADOS NO MANUAL do RV-M2 (BFP-A5296: cintura 300°, ombro 130°,
+# cotovelo 120°, punho ±110° e ±180°, repartidos simetricamente — os
+# mesmos do URDF). Decisão do Marco (07 Out 2026): "vamos usar os ângulos
+# declarados pelo manual", sem medir na bancada.
 # Convenção: lower = switch do lado negativo da junta (B nas placas),
 # upper = lado positivo (A).
 lower_deg: [-150.0, -65.0, -60.0, -110.0, -180.0]

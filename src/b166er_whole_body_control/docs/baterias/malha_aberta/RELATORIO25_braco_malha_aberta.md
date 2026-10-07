@@ -122,7 +122,8 @@ no ângulo em que ele fecha) e o servo (ao ligar, J4, J3 e J2 vão aos
 switches do lado do stow — a cadeia de arfagem, onde o ramo é ambíguo;
 J1/J5 são observáveis pelo T265 — e só então o braço recolhe;
 `/b166er/arm_home_cmd` refaz, `/b166er/arm_homed` informa). Os ângulos do
-yaml são os do manual e têm de ser MEDIDOS na bancada.
+yaml são os declarados no manual do RV-M2 (repartidos simetricamente, como
+no URDF) — decisão do orientador: não medir na bancada.
 
 Dois defeitos da emulação apareceram no caminho:
 
@@ -158,8 +159,8 @@ profundidade pelo laser como na REFINE), não de servo.
   mais iterações ou tolerância de profundidade de 6 → 10 mm (o alvo já tem
   +8 mm de folga à aba, RELATORIO20).
 - Placas: publicar os fins de curso (pinos LS) em `/b166er/arm_limit_switch`
-  como o firmware emulado faz — é a única referência absoluta de junta; e
-  medir na bancada o ângulo real de cada switch (`arm_switches.yaml`).
+  como o firmware emulado faz — é a única referência absoluta de junta
+  (ângulos: os do manual, `arm_switches.yaml`, decisão do orientador).
 - Avisos de ramo ainda ocorrem (153 por bateria): investigar com log por
   ciclo durante o atravessa/captura.
 - Destrava/libera com captura menos precisa: rever `curso_min_m`/reassenta
