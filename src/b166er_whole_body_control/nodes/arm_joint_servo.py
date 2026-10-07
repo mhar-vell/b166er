@@ -55,6 +55,16 @@ class ArmJointServo:
         self._estavel_s = float(rospy.get_param('~estavel_s', 0.5))
         self._timeout   = float(rospy.get_param('~timeout', 30.0))
         self._vel_to    = float(rospy.get_param('~vel_timeout', 0.5))
+        # PISO DE VELOCIDADE (2026-10-07, 1ª missão em malha aberta). Na fase
+        # destrava o Fuzzy pedia 1–2 °/s por junta: abaixo da zona morta do
+        # firmware (PWM mínimo que vence o atrito do redutor) nada se move, e
+        # a fase morreu por timeout a 12 mm do alvo. O braço de posição
+        # integrava essas velocidades miúdas; um motor real não. Quando o
+        # vetor de velocidades do Fuzzy é não nulo mas pequeno, ele é
+        # ESCALADO para que a maior componente chegue a ~v_piso_deg
+        # (mantém a direção; a T265 fecha o resto). Tem de ser > V_DEAD do
+        # firmware (1,5 °/s).
+        self._v_piso    = math.radians(float(rospy.get_param('~v_piso_deg', 3.0)))
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.13, -1.04, -1.8, 0.0])
         self._q_home = np.array(home, dtype=float)
@@ -190,7 +200,10 @@ class ArmJointServo:
                 # sem postura: velocidades do Fuzzy, com watchdog
                 if (self._t_fuzzy is not None
                         and (rospy.Time.now() - self._t_fuzzy).to_sec() <= self._vel_to):
-                    v = self._v_fuzzy
+                    v = self._v_fuzzy.copy()
+                    vmax = float(np.max(np.abs(v)))
+                    if 1e-6 < vmax < self._v_piso:
+                        v = v * (self._v_piso / vmax)
                 else:
                     v = np.zeros(5)
             if self._tilt:
