@@ -143,6 +143,10 @@ Dois defeitos da emulação apareceram no caminho:
 Teste: homing 3/3; sete posturas com a estimativa a ≤ 1,3° da verdade.
 Bateria 9: 3/5, mesma classe de abortos de tarefa.
 
+Resumo gráfico por junta (faixas, switches, homing, limite de software do
+J2, observabilidade): `juntas_switches_homing.png`, gerado por
+`scripts/desenho_juntas_switches.py` a partir do `arm_switches.yaml` e da FK.
+
 ## Onde ficou
 
 O braço sem encoder, na simulação honesta (sem verdade do Gazebo em
