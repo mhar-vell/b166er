@@ -18,11 +18,14 @@ Entradas
 Saídas
   /setpoints                   (movemaster_msg/setpoint) set_1..5 em GRAUS/S
   /b166er/arm_posture_reached  (Bool, latched)
+  /b166er/arm_posture_ok       (Bool, latched) — True alcançada, False TIMEOUT/BLOQUEADA
   /b166er/arm_posture_target   (JointState, latched) — semente do estimador
 
-Como uma postura é executada sem encoder: v = kp·(q_alvo − q_estimado),
-saturada em ~ramp_velocity. A estimativa vem da T265 pelo estimador, logo
-a malha fecha no sensor que o robô tem. "Chegou" é julgado pela medida
+Como uma postura é executada sem encoder: resolved-rate sobre a pose
+MEDIDA pelo T265, v = J⁺(q_est)·[kp_pos·Δp; kp_ori·Δθ] (DLS), saturada
+em ~ramp_velocity — a malha fecha no sensor que o robô tem, e perto do
+cotovelo reto (onde a IK alterna de ramo) a lei não depende do ramo. Sem
+medida da ponta, reserva: v = kp·(q_alvo − q_estimado). "Chegou" é julgado pela medida
 que o robô tem: a posição do efetuador medida pela T265 a menos de
 ~tol_ee da FK(q_alvo), sustentada por ~estavel_s; o erro de junta
 ESTIMADO abaixo de ~tol_q só decide quando não há medida da ponta. Passado ~timeout
@@ -41,7 +44,8 @@ from tf.transformations import quaternion_matrix
 from movemaster_msg.msg import setpoint as SetpointMsg
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
-    JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, fk_arm)
+    JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, fk_arm,
+    arm_jacobian_world, dls_pseudoinverse, pose_error)
 
 
 class ArmJointServo:
@@ -53,7 +57,7 @@ class ArmJointServo:
         self._tol_q     = float(rospy.get_param('~tol_q', 0.03))      # rad
         self._tol_ee    = float(rospy.get_param('~tol_ee', 0.006))    # m (era 0,03; ver abaixo)
         self._estavel_s = float(rospy.get_param('~estavel_s', 0.5))
-        self._timeout   = float(rospy.get_param('~timeout', 30.0))
+        self._timeout   = float(rospy.get_param('~timeout', 20.0))   # era 30; stow<->deploy leva 11-14 s
         self._vel_to    = float(rospy.get_param('~vel_timeout', 0.5))
         # PISO DE VELOCIDADE (2026-10-07, 1ª missão em malha aberta). Na fase
         # destrava o Fuzzy pedia 1–2 °/s por junta: abaixo da zona morta do
@@ -79,6 +83,39 @@ class ArmJointServo:
         # o firmware não move) e uma zona morta FINA por junta (~tol_q_fina)
         # para não bater em torno do alvo.
         self._tol_q_fina = float(rospy.get_param('~tol_q_fina', 0.005))  # rad (0,3°)
+        # LEI NO ESPAÇO DA TAREFA (2026-10-07, bateria montagem_90_servo
+        # 2/5, 21 posturas por TIMEOUT). A lei de junta v = kp·(q_alvo −
+        # q_est) depende de q_est estar no ramo certo — e nas posturas da
+        # tarefa o cotovelo fica quase reto (J3 ≈ 0), onde os dois ramos da
+        # IK são vizinhos (J3 ±13°) e a estimativa alterna entre eles a cada
+        # ciclo; a lei de junta então empurrava J2/J3/J4 em direções que não
+        # reduziam o erro da ponta e a postura morria por timeout. O que o
+        # robô MEDE é a pose do T265: a lei passa a ser resolved-rate sobre
+        # o erro de pose medido, v = J⁺(q_est)·[kp_p·Δp; kp_o·Δθ], com DLS
+        # — perto do cotovelo reto a coluna de J3 é pequena e o ramo deixa
+        # de importar. A lei de junta fica como reserva sem medida da ponta.
+        self._kp_p      = float(rospy.get_param('~kp_pos', 2.0))      # 1/s
+        self._kp_o      = float(rospy.get_param('~kp_ori', 1.5))      # 1/s
+        self._tol_ang   = float(rospy.get_param('~tol_ang', 0.05))    # rad (~3°)
+        self._v_fina    = math.radians(float(rospy.get_param('~v_fina_deg', 0.5)))
+        self._dls_lam   = float(rospy.get_param('~dls_lambda', 0.05))
+        # Duas etapas (teste de 11:42: resolved-rate direto do stow para o
+        # deploy fechou "BLOQUEADA" — com 1,6 rad de erro angular as linhas
+        # angulares, em rad, dominam as de posição, em m, e a DLS leva a
+        # ponta para longe). LONGE do alvo vale a lei de junta (robusta para
+        # movimentos grandes; o ramo só confunde perto do cotovelo reto e
+        # com erro pequeno); PERTO (~d_tarefa_m / ~ang_tarefa) entra a lei
+        # da tarefa, com as linhas angulares pesadas por ~w_ang (m por rad).
+        self._d_tarefa  = float(rospy.get_param('~d_tarefa_m', 0.04))
+        self._ang_tarefa = float(rospy.get_param('~ang_tarefa', 0.35))
+        self._w_ang     = float(rospy.get_param('~w_ang', 0.1))
+        # JUNTA BLOQUEADA: se há comando e a ponta não se aproxima do alvo
+        # por ~bloqueio_s (contato — o firmware aplica PWM e nada se move),
+        # a postura fecha com ok=False em vez de esperar o timeout; a
+        # missão já trata "ponta não avança" com recuo por contato.
+        self._bloqueio_s   = float(rospy.get_param('~bloqueio_s', 2.0))
+        self._bloqueio_dmin = float(rospy.get_param('~bloqueio_progresso_m', 0.001))
+        self._hist_dp = []   # (t, ‖Δp‖) da postura ativa
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.13, -1.04, -1.8, 0.0])
         self._q_home = np.array(home, dtype=float)
@@ -86,6 +123,7 @@ class ArmJointServo:
         self._state = None
         self._q_est = None
         self._p_ee  = None
+        self._T_ee  = None
         self._T_wb  = None
         self._v_fuzzy = np.zeros(5)
         self._t_fuzzy = None
@@ -98,6 +136,10 @@ class ArmJointServo:
         self._pub_sp = rospy.Publisher('/setpoints', SetpointMsg, queue_size=1)
         self._pub_reached = rospy.Publisher('/b166er/arm_posture_reached', Bool,
                                             queue_size=1, latch=True)
+        # True = alcançada de verdade, False = fechou por TIMEOUT. O estimador
+        # só reancora o dead reckoning no alvo quando é True.
+        self._pub_ok = rospy.Publisher('/b166er/arm_posture_ok', Bool,
+                                       queue_size=1, latch=True)
         self._pub_target = rospy.Publisher('/b166er/arm_posture_target', JointState,
                                            queue_size=1, latch=True)
         rospy.Subscriber('/b166er/robot_state', RobotState, self._cb_state, queue_size=1)
@@ -116,6 +158,10 @@ class ArmJointServo:
             self._q_est = np.array(m.q_arm, dtype=float)
         p = m.ee_pose.pose.position
         self._p_ee = np.array([p.x, p.y, p.z])
+        o = m.ee_pose.pose.orientation
+        Te = quaternion_matrix([o.x, o.y, o.z, o.w])
+        Te[:3, 3] = self._p_ee
+        self._T_ee = Te
         b = m.base_odom.pose.pose
         T = quaternion_matrix([b.orientation.x, b.orientation.y, b.orientation.z, b.orientation.w])
         T[:3, 3] = [b.position.x, b.position.y, b.position.z]
@@ -152,6 +198,7 @@ class ArmJointServo:
         self._q_alvo = q
         self._t_alvo = rospy.Time.now()
         self._t_ok = None
+        self._hist_dp = []
         self._pub_reached.publish(Bool(data=False))
         tgt = JointState()
         tgt.header.stamp = rospy.Time.now()
@@ -160,12 +207,33 @@ class ArmJointServo:
         self._pub_target.publish(tgt)
         rospy.loginfo('[arm_joint_servo] postura (%s): %s rad', why, np.round(q, 3))
 
-    def _erro_ee(self):
-        """Distância entre a FK da postura-alvo e a posição medida pela T265."""
-        if self._q_alvo is None or self._p_ee is None or self._T_wb is None:
+    def _erro_pose(self):
+        """Erro 6-vetor [Δp, Δθ] (mundo) entre a pose MEDIDA do T265 e a FK
+        da postura-alvo, ou None sem medida."""
+        if self._q_alvo is None or self._T_ee is None or self._T_wb is None:
             return None
-        T = self._T_wb @ T_BASELINK_ARM @ fk_arm(self._q_alvo.tolist())
-        return float(np.linalg.norm(T[:3, 3] - self._p_ee))
+        T_alvo = self._T_wb @ T_BASELINK_ARM @ fk_arm(self._q_alvo.tolist())
+        return pose_error(self._T_ee, T_alvo)
+
+    def _lei_junta(self, e):
+        """Reserva: lei de junta por junta, consciente da placa."""
+        v = self._kp * e
+        v = np.sign(v) * np.maximum(np.abs(v), self._v_piso)
+        v = np.where(np.abs(e) < self._tol_q_fina, 0.0, v)
+        return np.clip(v, -self._v_max, self._v_max)
+
+    def _lei_tarefa(self, e6):
+        """Resolved-rate sobre o erro de pose medido, com DLS."""
+        J = arm_jacobian_world(self._q_est.tolist(), self._T_wb @ T_BASELINK_ARM)
+        J = np.vstack([J[:3], self._w_ang * J[3:]])          # rad -> m-equivalente
+        ref = np.concatenate([self._kp_p * e6[:3], self._kp_o * self._w_ang * e6[3:]])
+        v = dls_pseudoinverse(J, self._dls_lam) @ ref
+        v = np.clip(v, -self._v_max, self._v_max)
+        # consciente da placa: junta com pedido miúdo descansa (o freio
+        # segura); as outras andam a pelo menos v_piso (zona morta do PWM)
+        v = np.where(np.abs(v) < self._v_fina, 0.0,
+                     np.sign(v) * np.maximum(np.abs(v), self._v_piso))
+        return v
 
     def _passo_postura(self):
         """Devolve v (rad/s) para a postura ativa, ou None se não há postura."""
@@ -174,27 +242,39 @@ class ArmJointServo:
         if self._q_est is None:
             return np.zeros(5)
         e = self._q_alvo - self._q_est
-        v = np.clip(self._kp * e, -self._v_max, self._v_max)
-        v = np.where(np.abs(e) < self._tol_q_fina, 0.0, v)   # zona morta fina por junta
-        vmax = float(np.max(np.abs(v)))
-        if 1e-6 < vmax < self._v_piso:                         # piso: vence a zona morta do firmware
-            v = v * (self._v_piso / vmax)
-        e_ee = self._erro_ee()
-        if e_ee is not None:
-            chegou = e_ee < self._tol_ee
-        else:
-            chegou = bool(np.all(np.abs(e) < self._tol_q))
+        e6 = self._erro_pose()
         agora = rospy.Time.now()
+        if e6 is not None:
+            dp, dth = float(np.linalg.norm(e6[:3])), float(np.linalg.norm(e6[3:]))
+            perto = dp < self._d_tarefa and dth < self._ang_tarefa
+            v = self._lei_tarefa(e6) if perto else self._lei_junta(e)
+            chegou = dp < self._tol_ee and dth < self._tol_ang
+            # bloqueio (só perto, onde há contato): comando não nulo e a
+            # ponta não se aproxima
+            if perto:
+                self._hist_dp.append((agora.to_sec(), dp))
+            else:
+                self._hist_dp = []
+            self._hist_dp = [h for h in self._hist_dp if agora.to_sec() - h[0] <= self._bloqueio_s + 0.05]
+            if (perto and not chegou and np.any(v != 0.0) and len(self._hist_dp) > 3
+                    and agora.to_sec() - self._hist_dp[0][0] >= self._bloqueio_s
+                    and self._hist_dp[0][1] - min(h[1] for h in self._hist_dp[1:]) < self._bloqueio_dmin):
+                self._fechar_postura(e, dp, 'BLOQUEADA')
+                return np.zeros(5)
+        else:
+            v = self._lei_junta(e)
+            dp = None
+            chegou = bool(np.all(np.abs(e) < self._tol_q))
         if chegou:
             if self._t_ok is None:
                 self._t_ok = agora
             if (agora - self._t_ok).to_sec() >= self._estavel_s:
-                self._fechar_postura(e, e_ee, 'alcançada')
+                self._fechar_postura(e, dp, 'alcançada')
                 return np.zeros(5)
         else:
             self._t_ok = None
         if (agora - self._t_alvo).to_sec() > self._timeout:
-            self._fechar_postura(e, e_ee, 'TIMEOUT')
+            self._fechar_postura(e, dp, 'TIMEOUT')
             return np.zeros(5)
         return v
 
@@ -202,8 +282,9 @@ class ArmJointServo:
         msg = ('[arm_joint_servo] postura %s: erro estimado %s°, ponta a %s da FK do alvo'
                % (como, np.degrees(e).round(1).tolist(),
                   ('%.3f m' % e_ee) if e_ee is not None else 'n/d'))
-        (rospy.logwarn if como == 'TIMEOUT' else rospy.loginfo)(msg)
+        (rospy.loginfo if como == 'alcançada' else rospy.logwarn)(msg)
         self._q_alvo = None
+        self._pub_ok.publish(Bool(data=(como == 'alcançada')))   # antes do reached (latched)
         self._pub_reached.publish(Bool(data=True))
 
     # ------------------------------------------------------------ laço
