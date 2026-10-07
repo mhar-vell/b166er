@@ -116,6 +116,14 @@ class ArmJointServo:
         self._bloqueio_s   = float(rospy.get_param('~bloqueio_s', 3.0))
         self._bloqueio_dmin = float(rospy.get_param('~bloqueio_progresso_m', 0.001))
         self._hist_dp = []   # (t, ‖Δp‖) da postura ativa
+        # HISTERESE das zonas mortas finas (bateria 4): uma junta na borda
+        # da zona morta alternava 0 / ±piso a cada ciclo; o freio emulado
+        # (e o atrito estático real) engole os pulsos, a junta quase não
+        # anda, mas o dead reckoning integra o piso — foi assim que q_dr de
+        # J1 derivou −25° → −75°. Em repouso a junta só volta a andar quando
+        # o erro passa de ~hist× a zona morta.
+        self._hist_fator = float(rospy.get_param('~histerese', 3.0))
+        self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.13, -1.04, -1.8, 0.0])
         self._q_home = np.array(home, dtype=float)
@@ -199,6 +207,7 @@ class ArmJointServo:
         self._t_alvo = rospy.Time.now()
         self._t_ok = None
         self._hist_dp = []
+        self._repouso[:] = False
         self._pub_reached.publish(Bool(data=False))
         tgt = JointState()
         tgt.header.stamp = rospy.Time.now()
@@ -215,11 +224,18 @@ class ArmJointServo:
         T_alvo = self._T_wb @ T_BASELINK_ARM @ fk_arm(self._q_alvo.tolist())
         return pose_error(self._T_ee, T_alvo)
 
+    def _zona_morta(self, x, limiar):
+        """Zona morta fina com histerese por junta: entra em repouso abaixo
+        de `limiar`, sai só acima de histerese×limiar."""
+        self._repouso = np.where(self._repouso, np.abs(x) < self._hist_fator * limiar,
+                                 np.abs(x) < limiar)
+        return ~self._repouso
+
     def _lei_junta(self, e):
-        """Reserva: lei de junta por junta, consciente da placa."""
+        """Longe do alvo: lei de junta por junta, consciente da placa."""
         v = self._kp * e
         v = np.sign(v) * np.maximum(np.abs(v), self._v_piso)
-        v = np.where(np.abs(e) < self._tol_q_fina, 0.0, v)
+        v = np.where(self._zona_morta(e, self._tol_q_fina), v, 0.0)
         return np.clip(v, -self._v_max, self._v_max)
 
     def _lei_tarefa(self, e6):
@@ -231,8 +247,8 @@ class ArmJointServo:
         v = np.clip(v, -self._v_max, self._v_max)
         # consciente da placa: junta com pedido miúdo descansa (o freio
         # segura); as outras andam a pelo menos v_piso (zona morta do PWM)
-        v_fino = np.where(np.abs(v) < self._v_fina, 0.0,
-                          np.sign(v) * np.maximum(np.abs(v), self._v_piso))
+        v_fino = np.where(self._zona_morta(v, self._v_fina),
+                          np.sign(v) * np.maximum(np.abs(v), self._v_piso), 0.0)
         # Se a zona morta fina deixou TODAS as juntas em repouso com a ponta
         # ainda fora da tolerância (bateria 3: posturas fechadas "BLOQUEADA"
         # a 7–9 mm sem ninguém se mexer), a junta que mais ajuda anda no piso.

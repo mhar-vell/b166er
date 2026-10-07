@@ -348,7 +348,15 @@ class StateEstimator:
                         np.degrees(q).round(1).tolist(), np.degrees(self._q_dr).round(1).tolist(),
                         np.degrees(q2).round(1).tolist(), conv2,
                         np.degrees(desacordo), np.degrees(d2))
-                    if conv2 and d2 + 1e-6 < desacordo:
+                    # Bateria 4 (07/10): q_dr corrompido levava a re-IK a
+                    # soluções ENCOSTADAS no batente (J3 ±60°, J4 110°) e o
+                    # estimador alternava entre elas e a verdadeira a cada
+                    # ciclo — a lei de postura invertia o sinal do comando
+                    # a cada ciclo e o braço não saía do lugar. A solução do
+                    # ramo só substitui a atual se não está no batente e
+                    # não piora o resíduo de posição.
+                    no_batente = bool(np.any(np.minimum(q2 - JOINT_LOWER, JOINT_UPPER - q2) < 0.035))
+                    if conv2 and d2 + 1e-6 < desacordo and not no_batente and rp2 <= res_p + 0.002:
                         q, conv, res_p, res_o = q2, conv2, rp2, ro2
                         desacordo = d2
                 if desacordo <= self._dr_desacordo and 0.0 < dt_anc < 0.5 and self._dr_tau > 0:
