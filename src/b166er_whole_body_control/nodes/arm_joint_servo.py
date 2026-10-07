@@ -22,10 +22,10 @@ Saídas
 
 Como uma postura é executada sem encoder: v = kp·(q_alvo − q_estimado),
 saturada em ~ramp_velocity. A estimativa vem da T265 pelo estimador, logo
-a malha fecha no sensor que o robô tem. "Chegou" é julgado por duas
-medidas observáveis: o erro de junta ESTIMADO abaixo de ~tol_q em todas
-as juntas, ou a posição do efetuador medida pela T265 a menos de ~tol_ee
-da FK(q_alvo); qualquer uma, sustentada por ~estavel_s. Passado ~timeout
+a malha fecha no sensor que o robô tem. "Chegou" é julgado pela medida
+que o robô tem: a posição do efetuador medida pela T265 a menos de
+~tol_ee da FK(q_alvo), sustentada por ~estavel_s; o erro de junta
+ESTIMADO abaixo de ~tol_q só decide quando não há medida da ponta. Passado ~timeout
 a postura fecha com aviso e resíduo no log — a missão compensa medindo a
 ponta, como sempre fez (ver _reach_by_iterative_ik).
 
@@ -51,7 +51,7 @@ class ArmJointServo:
         self._kp        = float(rospy.get_param('~kp', 1.5))          # 1/s
         self._v_max     = float(rospy.get_param('/arm_postures/ramp_velocity', 0.3))
         self._tol_q     = float(rospy.get_param('~tol_q', 0.03))      # rad
-        self._tol_ee    = float(rospy.get_param('~tol_ee', 0.03))     # m
+        self._tol_ee    = float(rospy.get_param('~tol_ee', 0.006))    # m (era 0,03; ver abaixo)
         self._estavel_s = float(rospy.get_param('~estavel_s', 0.5))
         self._timeout   = float(rospy.get_param('~timeout', 30.0))
         self._vel_to    = float(rospy.get_param('~vel_timeout', 0.5))
@@ -65,6 +65,20 @@ class ArmJointServo:
         # (mantém a direção; a T265 fecha o resto). Tem de ser > V_DEAD do
         # firmware (1,5 °/s).
         self._v_piso    = math.radians(float(rospy.get_param('~v_piso_deg', 3.0)))
+        # CRITÉRIO DE CHEGADA PELA PONTA (2026-10-07, bateria malha_aberta
+        # 3/5). As 22 posturas da bateria fecharam todas por "alcançada",
+        # mas com a ponta a 7–21 mm da FK do alvo e resíduos de junta de
+        # até 10° (J3/J4 se compensando): tol_ee de 30 mm é mais grosso que
+        # as tolerâncias das fases no frame da parede (5–8 mm em altura e
+        # profundidade), e as runs 3 e 5 morreram em "5 iterações sem
+        # fechar" com alt +12/+14 mm. Agora, quando a T265 está disponível,
+        # a postura só fecha com a ponta a menos de ~tol_ee (6 mm) da FK do
+        # alvo; o critério de junta (~tol_q) fica como reserva para quando
+        # não há medida da ponta. Para a ponta chegar lá sem encoder, o laço
+        # de postura também recebe o PISO de velocidade (abaixo de V_DEAD
+        # o firmware não move) e uma zona morta FINA por junta (~tol_q_fina)
+        # para não bater em torno do alvo.
+        self._tol_q_fina = float(rospy.get_param('~tol_q_fina', 0.005))  # rad (0,3°)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.13, -1.04, -1.8, 0.0])
         self._q_home = np.array(home, dtype=float)
@@ -161,8 +175,15 @@ class ArmJointServo:
             return np.zeros(5)
         e = self._q_alvo - self._q_est
         v = np.clip(self._kp * e, -self._v_max, self._v_max)
+        v = np.where(np.abs(e) < self._tol_q_fina, 0.0, v)   # zona morta fina por junta
+        vmax = float(np.max(np.abs(v)))
+        if 1e-6 < vmax < self._v_piso:                         # piso: vence a zona morta do firmware
+            v = v * (self._v_piso / vmax)
         e_ee = self._erro_ee()
-        chegou = bool(np.all(np.abs(e) < self._tol_q)) or (e_ee is not None and e_ee < self._tol_ee)
+        if e_ee is not None:
+            chegou = e_ee < self._tol_ee
+        else:
+            chegou = bool(np.all(np.abs(e) < self._tol_q))
         agora = rospy.Time.now()
         if chegou:
             if self._t_ok is None:
