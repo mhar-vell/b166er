@@ -136,6 +136,11 @@ class StateEstimator:
         # tem, e foi o que faltou quando a estimativa ficou presa no espelho
         # com o braço de verdade no batente.
         self._ls = np.zeros(5)
+        self._ls_lower = np.radians(np.array(rospy.get_param('/arm_switches/lower_deg',
+                                                             np.degrees(JOINT_LOWER).tolist()), dtype=float))
+        self._ls_upper = np.radians(np.array(rospy.get_param('/arm_switches/upper_deg',
+                                                             np.degrees(JOINT_UPPER).tolist()), dtype=float))
+        self._ls_margem = math.radians(float(rospy.get_param('/arm_switches/margem_deg', 1.5)))
         rospy.Subscriber('/b166er/arm_limit_switch', JointState, self._cb_ls, queue_size=1)
         self._rv_j3_min    = math.radians(float(rospy.get_param('~rv_j3_min_deg', 8.0)))
         self._rv_vmin      = float(rospy.get_param('~rv_vmin', 0.005))     # m/s
@@ -318,10 +323,15 @@ class StateEstimator:
                 self._j3_sinal = float(self._ls[2])
 
     def _semente_com_fins_de_curso(self, q_seed):
+        """Junta no switch está num ângulo conhecido (config/arm_switches.yaml):
+        a semente da IK recebe esse ângulo. Chamada também DEPOIS da IK para
+        ancorar a estimativa nele (homing: é assim que a junta é zerada)."""
         q_seed = np.array(q_seed, dtype=float).copy()
         for j in range(5):
-            if self._ls[j] > 0:   q_seed[j] = JOINT_UPPER[j]
-            elif self._ls[j] < 0: q_seed[j] = JOINT_LOWER[j]
+            # âncora no ângulo em que o switch FECHA (nominal ∓ margem), não
+            # no nominal: anotar 65° com a junta em 63,5° punha 1,5° de viés
+            if self._ls[j] > 0:   q_seed[j] = self._ls_upper[j] - self._ls_margem
+            elif self._ls[j] < 0: q_seed[j] = self._ls_lower[j] + self._ls_margem
         return q_seed
 
     def _ramo_por_sinal(self, now, T_target, q, conv, rp, ro):
@@ -457,6 +467,8 @@ class StateEstimator:
             if np.any(self._ls != 0.0):
                 q_seed = self._semente_com_fins_de_curso(q_seed)
             q, conv, res_p, res_o = self._solve_ik(T_target, q_seed)
+            if np.any(self._ls != 0.0):
+                q = self._semente_com_fins_de_curso(q)   # âncora: a junta ESTÁ no switch
             if self._ramo_vel:
                 q, conv, res_p, res_o = self._ramo_por_velocidade(now, T_target, q, conv, res_p, res_o)
             if self._ramo_sinal:

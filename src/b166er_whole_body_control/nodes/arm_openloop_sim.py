@@ -64,12 +64,24 @@ class FirmwareEmulado:
         # encosta neles (driveJx nos Joints*_vel.ino). Sem isso aqui, uma
         # estimativa presa no espelho fez o servo empurrar J2/J3 até o
         # batente e GIRAR o J4 por 681° (o batente do ODE cede). Emulado:
-        # switch ativo a < ~ls_margem_deg do limite; corta o sentido que
+        # switch ativo a < ~ls_margem_deg do limite (1,5°: sob carga o batente
+        # do ODE assenta 0,3–0,9° antes do limite nominal — J2 em 64,7°, J4 em
+        # −109,1° — e um switch mecânico real também fecha antes do batente);
+        # corta o sentido que
         # empurra contra ele e PUBLICA o estado em /b166er/arm_limit_switch
         # (JointState, position = −1/0/+1 por junta) — é um sensor que o
         # robô real TEM (as placas devem publicar o mesmo a partir dos pinos
         # LS) e que o estimador usa como referência absoluta da junta.
-        self._ls_margem  = np.radians(float(rospy.get_param('~ls_margem_deg', 0.2)))
+        self._ls_margem  = np.radians(float(rospy.get_param('/arm_switches/margem_deg',
+                                                              rospy.get_param('~ls_margem_deg', 1.5))))
+        # posições dos switches (config/arm_switches.yaml em /arm_switches);
+        # sem o yaml, os limites do URDF
+        self._ls_lower = np.radians(np.array(rospy.get_param('/arm_switches/lower_deg',
+                                                             np.degrees(JOINT_LOWER).tolist()), dtype=float))
+        self._ls_upper = np.radians(np.array(rospy.get_param('/arm_switches/upper_deg',
+                                                             np.degrees(JOINT_UPPER).tolist()), dtype=float))
+        rospy.loginfo('[arm_openloop_sim] fins de curso em %s / %s graus',
+                      np.degrees(self._ls_lower).round(1).tolist(), np.degrees(self._ls_upper).round(1).tolist())
         self._pub_ls = rospy.Publisher('/b166er/arm_limit_switch', JointState, queue_size=1)
         topico          = rospy.get_param('~topic_setpoints', '/setpoints')
         self._q_true = None
@@ -79,14 +91,39 @@ class FirmwareEmulado:
         self._v_cmd   = np.zeros(5)      # graus/s pedidos
         self._t_cmd   = None
         self._parado  = False            # emergency_stop / tilt
-        self._pubs = [rospy.Publisher('/%s_velocity_controller/command' % j,
-                                      Float64, queue_size=1) for j in JOINTS]
+        # SAÍDA (2026-10-07): 'posicao' (padrão) integra a velocidade
+        # executada num setpoint dos controladores de POSIÇÃO do Gazebo;
+        # 'velocidade' manda a velocidade aos controladores de velocidade.
+        # Motivo: a velocidade de junta que o Gazebo/ODE reporta sob carga
+        # não bate com Δposição/Δt (J2 subindo a 1,5 °/s com o controlador
+        # "vendo" 5 °/s; descendo a 8 °/s "vendo" 4), e os controladores de
+        # velocidade executavam mal. O motor real com redutor harmônico
+        # anda perto da velocidade de vazio em qualquer carga — integrar e
+        # deixar o PID de posição seguir é a emulação mais fiel disso. A
+        # junta BLOQUEADA (contato, batente) não acumula: o setpoint fica
+        # preso a ~folga_deg da posição verdadeira (anti-windup), como um
+        # motor que patina no PWM.
+        self._saida   = rospy.get_param('~saida', 'posicao')
+        # folga por junta = quanto o setpoint pode correr à frente da posição
+        # verdadeira. Tem de cobrir a QUEDA ESTÁTICA do PID de posição (P
+        # puro, arm_controllers.yaml): gravidade/p — J2 até 28 N·m / 300 =
+        # 5,4°, J3 8 N·m / 200 = 2,4° — senão a junta não sobe (medido:
+        # J2 parado a 3° do setpoint com 15,7 N·m = exatamente 300 × 3°).
+        self._folga   = np.radians(np.array(rospy.get_param('~folga_deg', [4.0, 10.0, 6.0, 3.0, 3.0]), dtype=float))
+        self._q_cmd   = None
+        self._t_prev  = None
+        if self._saida == 'velocidade':
+            self._pubs = [rospy.Publisher('/%s_velocity_controller/command' % j,
+                                          Float64, queue_size=1) for j in JOINTS]
+        else:
+            self._pubs = [rospy.Publisher('/%s_position_controller/command' % j,
+                                          Float64, queue_size=1) for j in JOINTS]
         rospy.Subscriber(topico, SetpointMsg, self._cb_setpoint, queue_size=1)
         rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
         rospy.loginfo('[arm_openloop_sim] firmware emulado: %s em graus/s, zona morta '
-                      '%.1f, máx %.0f, ganho %s, watchdog %.2f s', topico,
+                      '%.1f, máx %.0f, ganho %s, watchdog %.2f s, saída %s', topico,
                       self._v_min, self._v_max, self._ganho.round(2).tolist(),
-                      self._watchdog)
+                      self._watchdog, self._saida)
 
     def _cb_setpoint(self, m):
         if m.emergency_stop:
@@ -140,21 +177,41 @@ class FirmwareEmulado:
             # fins de curso: corta o sentido que empurra contra o switch
             ls = np.zeros(5)
             if self._q_true is not None:
-                ls = np.where(self._q_true > JOINT_UPPER - self._ls_margem, 1.0,
-                              np.where(self._q_true < JOINT_LOWER + self._ls_margem, -1.0, 0.0))
+                ls = np.where(self._q_true > self._ls_upper - self._ls_margem, 1.0,
+                              np.where(self._q_true < self._ls_lower + self._ls_margem, -1.0, 0.0))
                 v = np.where((ls > 0) & (v > 0), 0.0, v)
                 v = np.where((ls < 0) & (v < 0), 0.0, v)
                 m_ls = JointState(); m_ls.header.stamp = rospy.Time.now()
                 m_ls.name = JOINTS; m_ls.position = ls.tolist()
                 self._pub_ls.publish(m_ls)
-            # freio: junta sem comando segura onde parou; com comando, solta
-            for i in range(5):
-                if v[i] == 0.0:
-                    v[i] = self._freio(i, v[i])
-                else:
-                    self._q_hold[i] = None
-            for i, pub in enumerate(self._pubs):
-                pub.publish(Float64(data=float(np.radians(v[i]))))
+            if self._saida == 'velocidade':
+                # freio: junta sem comando segura onde parou; com comando, solta
+                for i in range(5):
+                    if v[i] == 0.0:
+                        v[i] = self._freio(i, v[i])
+                    else:
+                        self._q_hold[i] = None
+                for i, pub in enumerate(self._pubs):
+                    pub.publish(Float64(data=float(np.radians(v[i]))))
+            else:
+                # saída em posição: integra a velocidade executada; o PID de
+                # posição segura (freio) e segue; anti-windup na junta presa
+                agora = rospy.Time.now()
+                if self._q_true is not None:
+                    if self._q_cmd is None:
+                        self._q_cmd = self._q_true.copy()
+                    dt = (agora - self._t_prev).to_sec() if self._t_prev else 0.0
+                    if 0.0 < dt < 0.5:
+                        self._q_cmd = self._q_cmd + np.radians(v) * dt
+                    self._q_cmd = np.clip(self._q_cmd, self._q_true - self._folga, self._q_true + self._folga)
+                    # o setpoint pode passar do limite nominal (até a folga): é o
+                    # batente físico que para a junta, como no motor real —
+                    # com o setpoint preso em 65° o P puro do J2 cedia 3,5°
+                    # sob gravidade e nunca encostava no fim de curso (61,5°)
+                    self._q_cmd = np.clip(self._q_cmd, JOINT_LOWER - self._folga, JOINT_UPPER + self._folga)
+                    for i, pub in enumerate(self._pubs):
+                        pub.publish(Float64(data=float(self._q_cmd[i])))
+                self._t_prev = agora
             rate.sleep()
 
 

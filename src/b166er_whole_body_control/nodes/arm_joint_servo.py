@@ -15,10 +15,13 @@ Entradas
                           do efetuador medida pela T265; nunca /joint_states
   /b166er/tilt_critical   (Bool) — para tudo
   /b166er/arm_resync      (JointState) — cancela postura ativa (reset)
+  /b166er/arm_limit_switch (JointState, −1/0/+1 por junta) — da placa
+  /b166er/arm_home_cmd    (Bool) — refaz o homing por switch
 Saídas
   /setpoints                   (movemaster_msg/setpoint) set_1..5 em GRAUS/S
   /b166er/arm_posture_reached  (Bool, latched)
   /b166er/arm_posture_ok       (Bool, latched) — True alcançada, False TIMEOUT/BLOQUEADA
+  /b166er/arm_homed            (Bool, latched) — homing concluído sem timeout
   /b166er/arm_posture_target   (JointState, latched) — semente do estimador
 
 Como uma postura é executada sem encoder: resolved-rate sobre a pose
@@ -125,7 +128,7 @@ class ArmJointServo:
         self._hist_fator = float(rospy.get_param('~histerese', 3.0))
         self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
-        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.13, -1.04, -1.8, 0.0])
+        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.8, 0.0])
         self._q_home = np.array(home, dtype=float)
 
         self._state = None
@@ -140,6 +143,27 @@ class ArmJointServo:
         self._t_alvo = None
         self._t_ok = None
         self._home_feito = False
+        # HOMING POR SWITCH (2026-10-07, pedido do Marco: "simular os switchs
+        # de cada junta"). Como o controlador original do RV-M2: ao ligar,
+        # cada junta de ~/arm_switches/home_ordem anda devagar para o lado
+        # home_side até o seu switch fechar (/b166er/arm_limit_switch, que
+        # vem da placa); o estimador ancora a junta no ângulo do switch. É a
+        # única referência ABSOLUTA de junta do braço sem encoder — sem ela
+        # a estimativa depende de o braço ter partido do stow. Depois do
+        # último switch, a postura recolhida como sempre. Enquanto o homing
+        # está ativo, posturas e Fuzzy são ignorados.
+        self._homing_on_start = bool(rospy.get_param('~homing_on_start', False))
+        self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
+        self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
+        self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
+        self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
+        self._ls = np.zeros(5)
+        self._homing = []          # fila de índices de junta ainda por fazer
+        self._homing_t0 = None
+        self._homing_resultado = {}
+        self._pub_homed = rospy.Publisher('/b166er/arm_homed', Bool, queue_size=1, latch=True)
+        rospy.Subscriber('/b166er/arm_limit_switch', JointState, self._cb_ls, queue_size=1)
+        rospy.Subscriber('/b166er/arm_home_cmd', Bool, self._cb_home_cmd, queue_size=1)
 
         self._pub_sp = rospy.Publisher('/setpoints', SetpointMsg, queue_size=1)
         self._pub_reached = rospy.Publisher('/b166er/arm_posture_reached', Bool,
@@ -194,6 +218,58 @@ class ArmJointServo:
         if self._q_alvo is not None:
             rospy.logwarn('[arm_joint_servo] resync: postura ativa cancelada')
         self._q_alvo = None
+
+    def _cb_ls(self, m):
+        if len(m.position) == 5:
+            self._ls = np.array(m.position, dtype=float)
+
+    def _cb_home_cmd(self, m):
+        if m.data:
+            self._iniciar_homing('comando externo')
+
+    # ------------------------------------------------------------ homing
+    def _iniciar_homing(self, why):
+        fila = [j for j in self._home_ordem if 0 <= j < 5 and self._home_side[j] != 0]
+        if not fila:
+            rospy.logwarn('[arm_joint_servo] homing (%s): nenhuma junta configurada em /arm_switches', why)
+            return
+        self._q_alvo = None
+        self._homing = fila
+        self._homing_t0 = None
+        self._homing_resultado = {}
+        self._pub_homed.publish(Bool(data=False))
+        rospy.loginfo('[arm_joint_servo] homing (%s): juntas %s para os switches %s',
+                      why, [JOINT_NAMES[j] for j in fila], [int(self._home_side[j]) for j in fila])
+
+    def _passo_homing(self):
+        """Devolve v (rad/s) do homing, ou None se não há homing ativo."""
+        if not self._homing:
+            return None
+        j = self._homing[0]
+        agora = rospy.Time.now()
+        if self._homing_t0 is None:
+            self._homing_t0 = agora
+        lado = self._home_side[j]
+        if self._ls[j] == lado:
+            self._homing_resultado[JOINT_NAMES[j]] = 'switch %+d em %.1f s' % (int(lado), (agora - self._homing_t0).to_sec())
+            rospy.loginfo('[arm_joint_servo] homing: %s no switch %+d (%.1f s)',
+                          JOINT_NAMES[j], int(lado), (agora - self._homing_t0).to_sec())
+            self._homing.pop(0); self._homing_t0 = None
+        elif (agora - self._homing_t0).to_sec() > self._home_to:
+            self._homing_resultado[JOINT_NAMES[j]] = 'TIMEOUT'
+            rospy.logwarn('[arm_joint_servo] homing: %s não chegou ao switch %+d em %.0f s — seguindo',
+                          JOINT_NAMES[j], int(lado), self._home_to)
+            self._homing.pop(0); self._homing_t0 = None
+        if not self._homing:
+            ok = all(r != 'TIMEOUT' for r in self._homing_resultado.values())
+            rospy.loginfo('[arm_joint_servo] homing concluído %s: %s', 'OK' if ok else 'COM FALHA', self._homing_resultado)
+            self._pub_homed.publish(Bool(data=ok))
+            self._iniciar_postura(self._q_home, 'recolhido após homing')
+            return np.zeros(5)
+        v = np.zeros(5)
+        j = self._homing[0]
+        v[j] = self._home_side[j] * max(self._home_v[j], self._v_piso)
+        return v
 
     def _cb_tilt(self, m):
         self._tilt = bool(m.data)
@@ -316,10 +392,15 @@ class ArmJointServo:
             if self._state is None:
                 rate.sleep()
                 continue
-            if self._goto_home and not self._home_feito:
+            if not self._home_feito:
                 self._home_feito = True
-                self._iniciar_postura(self._q_home, 'home inicial')
-            v = self._passo_postura()
+                if self._homing_on_start:
+                    self._iniciar_homing('ao ligar')
+                elif self._goto_home:
+                    self._iniciar_postura(self._q_home, 'home inicial')
+            v = self._passo_homing()
+            if v is None:
+                v = self._passo_postura()
             if v is None:
                 # sem postura: velocidades do Fuzzy, com watchdog
                 if (self._t_fuzzy is not None

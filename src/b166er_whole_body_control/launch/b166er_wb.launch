@@ -92,7 +92,8 @@
   <!-- ── Robot description ───────────────────────────────────────── -->
   <param name="use_sim_time"
          value="$(eval 'true' if arg('mode') == 'gazebo' else 'false')"/>
-  <arg name="arm_iface" default="$(eval 'velocity' if arg('braco') == 'malha_aberta' else 'position')"/>
+  <arg name="arm_iface" default="position"
+       doc="position | velocity — interface ros_control das juntas; velocity só para diagnóstico (ver abaixo)"/>
   <param name="robot_description"
          command="$(find xacro)/xacro
                   $(find b166er_robot)/urdf/b166er.urdf.xacro
@@ -103,6 +104,13 @@
        postura) e pela futura máquina de estados da tarefa. -->
   <rosparam file="$(find b166er_whole_body_control)/config/arm_postures.yaml"
             command="load"/>
+  <!-- Fins de curso por junta e homing (braco:=malha_aberta): a única
+       referência absoluta de junta do braço sem encoder. Posições a medir
+       na bancada; ver o yaml. -->
+  <rosparam file="$(find b166er_whole_body_control)/config/arm_switches.yaml"
+            command="load" ns="arm_switches"/>
+  <!-- homing:=true leva J2/J3/J4 aos switches ao ligar (modo malha_aberta) -->
+  <arg name="homing" default="true"/>
 
   <node name="robot_state_publisher"
         pkg="robot_state_publisher"
@@ -166,6 +174,7 @@
           output="screen">
       <param name="rate" value="$(arg rate)"/>
       <param name="goto_home_on_start" value="false"/>
+      <param name="homing_on_start" value="$(arg homing)"/>
     </node>
 
   </group>
@@ -199,10 +208,17 @@
 
     <!-- Controladores ros_control das juntas do braço: posição (histórico)
          ou velocidade (braco:=malha_aberta, ver arm_controllers_vel.yaml) -->
-    <rosparam if="$(eval arg('braco') == 'malha_aberta')"
+    <!-- 2026-10-07: no modo malha_aberta o firmware emulado passou a
+         INTEGRAR a velocidade pedida num setpoint de POSIÇÃO (ver
+         arm_openloop_sim.py, ~saida): a leitura de velocidade de junta do
+         Gazebo/ODE sob carga não bate com Δposição/Δt (J2 subindo a
+         1,5 °/s com o controlador "vendo" 5 °/s) e os controladores de
+         velocidade andavam devagar. Controladores de velocidade só com
+         arm_iface:=velocity (fica para diagnóstico). -->
+    <rosparam if="$(eval arg('arm_iface') == 'velocity')"
               file="$(find b166er_whole_body_control)/config/arm_controllers_vel.yaml"
               command="load"/>
-    <rosparam unless="$(eval arg('braco') == 'malha_aberta')"
+    <rosparam unless="$(eval arg('arm_iface') == 'velocity')"
               file="$(find b166er_whole_body_control)/config/arm_controllers.yaml"
               command="load"/>
 
@@ -212,7 +228,7 @@
           pkg="b166er_whole_body_control"
           type="arm_controller_loader.py"
           output="screen">
-      <rosparam if="$(eval arg('braco') == 'malha_aberta')" param="controllers">
+      <rosparam if="$(eval arg('arm_iface') == 'velocity')" param="controllers">
         [joint_state_controller, J1_velocity_controller, J2_velocity_controller,
          J3_velocity_controller, J4_velocity_controller, J5_velocity_controller]
       </rosparam>
@@ -237,13 +253,16 @@
           name="arm_openloop_sim"
           pkg="b166er_whole_body_control"
           type="arm_openloop_sim.py"
-          output="screen"/>
+          output="screen">
+      <param name="saida" value="$(eval 'velocidade' if arg('arm_iface') == 'velocity' else 'posicao')"/>
+    </node>
     <node if="$(eval arg('braco') == 'malha_aberta')"
           name="arm_joint_servo"
           pkg="b166er_whole_body_control"
           type="arm_joint_servo.py"
           output="screen">
       <param name="rate" value="$(arg rate)"/>
+      <param name="homing_on_start" value="$(arg homing)"/>
     </node>
 
     <node if="$(arg rviz)"

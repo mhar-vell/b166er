@@ -31,7 +31,7 @@ from std_msgs.msg import Bool
 from std_srvs.srv import Empty
 from tf.transformations import euler_from_quaternion
 
-STOW = [0.0, 1.13, -1.04, -1.8, 0.0]
+STOW = [0.0, 1.10, -1.04, -1.8, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out)
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar
 SETTLE_S = 12.0       # tempo máximo esperando estabilizar

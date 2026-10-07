@@ -1,0 +1,30 @@
+# FINS DE CURSO do RV-M2 retrofitado — a única medida ABSOLUTA de junta que
+# o braço tem (não há encoder). Lido em /arm_switches por três nós:
+#   · arm_openloop_sim.py  (firmware emulado: switch "fecha" nestes ângulos,
+#                           corta o sentido e publica /b166er/arm_limit_switch)
+#   · state_estimator.py   (junta no switch -> estimativa ancorada no ângulo)
+#   · arm_joint_servo.py   (HOMING: leva cada junta até o seu switch ao ligar)
+# As placas reais leem os pinos LS_xA/LS_xB; o ângulo em que cada switch
+# está montado tem de ser MEDIDO na bancada, junta a junta, lado a lado —
+# os valores abaixo são os limites do manual (= URDF) e valem só até lá.
+# Convenção: lower = switch do lado negativo da junta (B nas placas),
+# upper = lado positivo (A).
+lower_deg: [-150.0, -65.0, -60.0, -110.0, -180.0]
+upper_deg: [ 150.0,  65.0,  60.0,  110.0,  180.0]
+# margem_deg: o switch FECHA a esta distância antes do ângulo acima (um
+# switch mecânico atua antes do batente; na simulação o batente do ODE
+# assenta 0,3–0,9° antes do limite nominal sob carga). O estimador ancora
+# a junta no ângulo em que o switch fecha (lower + margem / upper − margem).
+margem_deg: 1.5
+
+# HOMING (origem por switch, como o controlador original do RV-M2).
+# home_side: para que lado cada junta vai ao ligar: +1 (upper), -1 (lower),
+# 0 = não faz (J1 e J5 são observáveis pela orientação do T265; só a cadeia
+# de arfagem J2/J3/J4 tem o ramo ambíguo). Os lados escolhidos são os do
+# STOW: J2 no upper (+65 = recolhido), J3 no lower (-60), J4 no lower
+# (-110): o braço só encosta nos batentes em que já descansa — pouco
+# movimento, sem risco de colisão com a base.
+home_side:   [0, 1, -1, -1, 0]
+home_ordem:  [4, 3, 2]          # J4 (punho), depois J3 (cotovelo), depois J2 (ombro)
+home_v_deg:  [10.0, 5.0, 5.0, 5.0, 10.0]
+home_timeout_s: 40.0
