@@ -104,6 +104,33 @@ Saldo do dia, com as três correções acumuladas: **8/9 missões em malha abert
 (5/5 da bateria + 3/3 finais), e os abortos restantes do dia foram cada um
 um defeito distinto, corrigido na missão seguinte.
 
+## O home tem de ser feito no início da missão — e a simulação não mostrava (14:00)
+
+Preocupação do orientador: "o home position deve ser setado logo no início
+da missão na vida real e eu não vi isso aqui na simulação". Procedia: o
+estado HOME pedia o homing, mas o reset entre missões deixava o braço no
+stow, encostado nos três switches, e o homing fechava em **1,6 / 0,0 /
+0,2 s** sem andar — só a primeira missão de cada bateria, vinda da postura
+de spawn, fazia o homing de verdade (22 / 12 / 13 s). Três mudanças:
+
+- `homing:=false` por padrão no `b166er_wb.launch` e sem recolher ao
+  ligar: o braço acorda onde está e o servo só espera comandos. Quem faz
+  o home é o estado HOME da missão, como na bancada.
+- `reset_sim.py` deixa o braço numa postura "de desligado", longe dos
+  switches (`ACORDA` = J2 +20°, J3 −20°, J4 −57°; `--postura stow`
+  recupera o antigo). Cada missão tem de fazer o homing inteiro.
+- Três defeitos que isso expôs: a leitura de juntas do reset pegava ao
+  acaso a mensagem das rodas (dois publicadores em `/joint_states`); o
+  firmware emulado não acompanhava o teleporte (`/b166er/arm_resync`) e o
+  anti-windup puxava o setpoint de volta; e, no primeiro passo de física
+  após o reset, a junta cai antes de o PID criar torque e a folga agia
+  como catraca (J2 assentava 10° abaixo) — anti-windup suspenso por 3 s
+  após o resync.
+
+Missão run10 com o braço acordando longe dos switches: HOME fez o homing
+inteiro — **J4 10,4 s, J3 7,8 s, J2 8,7 s** —, SEARCH partiu dali e a
+chave abriu a 31,0°.
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo
