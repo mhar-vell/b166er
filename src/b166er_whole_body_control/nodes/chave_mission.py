@@ -2001,11 +2001,19 @@ class Manipulate(smach.State):
             # escorregou do arame. Sobe reassenta_sobe_m acima da captura,
             # refaz a captura por IK (registra o novo zero) e tenta o
             # destrava de novo, até reassenta_max vezes.
+            # CAPTURA QUE NÃO FECHA (2026-10-08, missão_completa run3): a
+            # descida escorregou o degrau ~15 mm para fora do furo pelo arame
+            # curvo e a IK não consegue empurrar de volta (J1 bloqueado pelo
+            # contato); com a tolerância de eixo apertada a fase agora falha
+            # em vez de deixar a libera perder o olhal. Recuperação = o mesmo
+            # reassentar da libera: sobe, volta ao ponto do atravessa (dentro
+            # do furo, na altura em que o degrau passa) e desce de novo.
             tentativas = 0
             while (not ok_fase
                    and ((phase == 'destrava' and ctx.falha_fase == 'estagnou_curto')
                         or (phase == 'libera' and ctx.falha_fase == 'preso'
-                            and ctx.reassenta_libera))
+                            and ctx.reassenta_libera)
+                        or phase == 'captura')
                    and tentativas < ctx.reassenta_max):
                 tentativas += 1
                 rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
@@ -2026,7 +2034,7 @@ class Manipulate(smach.State):
                 if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
                     rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
                     break
-                if phase == 'libera':
+                if phase in ('libera', 'captura'):
                     # VOLTA PELO CAMINHO DA ENTRADA: depois de subir, o
                     # ponto da fase 'atravessa' (dentro do furo, na altura
                     # em que o degrau passa) e só então a captura desce e
@@ -2043,7 +2051,11 @@ class Manipulate(smach.State):
                 ctx.offset_efetivo = off_cap
                 p_cap = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_cap)
                 if not _reach_by_iterative_ik(ctx, p_cap, 'captura'):
-                    rospy.logerr('[mission] destrava/reassenta: recaptura não fechou')
+                    rospy.logerr('[mission] %s/reassenta: recaptura não fechou', phase)
+                    break
+                if phase == 'captura':
+                    ok_fase = True      # a captura é a própria fase: registrada logo abaixo pelo fluxo normal
+                    rospy.loginfo('[mission] captura/reassenta: recaptura fechou na tentativa %d', tentativas)
                     break
                 ctx.pose_captura = _pose_na_parede(ctx, _tooltip_now(ctx))
                 ctx.alt_captura = float(ctx.pose_captura[2])
