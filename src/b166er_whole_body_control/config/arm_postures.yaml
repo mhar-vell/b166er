@@ -21,6 +21,13 @@
 # dia o range do ombro for revisado contra o manual do RV-M2 (o clássico
 # é assimétrico, tipo -30°/+100°), dá pra recolher mais.
 arm_postures:
+  # HOME (2026-10-08) não é uma postura comandada: é onde o homing pelos
+  # fins de curso deixa o braço (J4, J3 e J2 nos switches, ver
+  # arm_switches.yaml) — a posição física de descanso do laboratório, de
+  # onde a missão parte para o SEARCH. Para referência, com os ângulos do
+  # manual e a margem de 1,5°: [0, 1.108, -1.021, -1.894, 0] rad
+  # (63,5° / -58,5° / -108,5°). stow_home continua sendo o "recolhido" dos
+  # abortos, do RETRACT e do reset.
   stow_home: [0.0, 1.10, -1.04, -1.8, 0.0]   # J2 1,13 -> 1,10 (07 Out): 1,13 fica a 0,3° do limite, dentro da zona do fim de curso (ver arm_switches.yaml)
 
   # ═══ Postura de BUSCA DA TAG — refeita em 2026-08-27 ═══

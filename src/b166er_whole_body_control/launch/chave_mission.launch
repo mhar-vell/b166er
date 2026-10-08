@@ -78,7 +78,7 @@
        estado adiante e/ou terminar depois de um estado. Ex.:
          E3: estado_inicial:=REFINE  (base estacionada à mão no standoff)
          E4: estado_final:=REFINE    (só SEARCH + APPROACH + REFINE)
-       Estados: STOW_INIT SEARCH APPROACH REFINE DEPLOY MANIPULATE RETRACT RETURN -->
+       Estados: HOME SEARCH APPROACH REFINE DEPLOY MANIPULATE RETRACT RETURN -->
   <!-- Mesmo valor passado a b166er_wb.launch (garra aberta 0.03 /
        fechada 0.0); a missão confere contra o robot_description e
        aborta se os dois não casarem. -->
@@ -93,7 +93,7 @@
   <env name="B166ER_J2_MIN_DEG" value="$(arg j2_min_deg)"/>
   <arg name="j2_max_deg" default="65.0"/>
   <env name="B166ER_J2_MAX_DEG" value="$(arg j2_max_deg)"/>
-  <arg name="estado_inicial" default="STOW_INIT"/>
+  <arg name="estado_inicial" default="HOME"/>
   <arg name="estado_final"   default=""/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
   <group if="$(arg localizer)">
