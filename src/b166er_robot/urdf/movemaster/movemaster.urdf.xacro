@@ -709,8 +709,20 @@
     <xacro:property name="tool_length"
                     value="${dedo_garfo_h + dedo_afun_h + dedo_haste_l}"/>
 
+    <!-- MONTAGEM DA PEÇA (2026-10-07). O Marco, olhando o Gazebo com o
+         braço recolhido e de trás do robô: "vc posicionou o dedo errado,
+         ele tem q virar 90 graus para esquerda" — "o dedo completo gira,
+         toda a peça" (desenho scratchpad dedo_90_esquerda.png, leitura 2).
+         A peça v3 NÃO muda (garfo, rasgo, furos, degrau em +Y do próprio
+         frame): o que estava errado era como ela monta na castanha. O
+         yaw de +90° gira o frame tool_rod/tool_tip inteiro em torno da
+         haste; no braço recolhido o degrau passa a apontar para a
+         ESQUERDA do robô (base +Y), e o rasgo do garfo fica no eixo
+         transversal da garra (x do GripCube), que é o eixo em que a
+         castanha anda. kinematics._T_L5_TOOLTIP leva o mesmo _rotz;
+         checa_garra_dx confere os dois. -->
     <joint name="JTool" type="fixed">
-      <origin xyz="${garra_dx} 0 -0.08" rpy="0 0 0"/>
+      <origin xyz="${garra_dx} 0 -0.08" rpy="0 0 1.5708"/>
       <parent link="GripCube"/>
       <child link="tool_rod"/>
     </joint>
@@ -819,14 +831,22 @@
          justamente câmera x ferramenta. -->
     <gazebo reference="t265_link"><material>Gazebo/Green</material></gazebo>
 
+    <!-- INTERFACE DAS JUNTAS no gazebo_ros_control (2026-10-06): position
+         (histórico, controladores de posição) ou velocity (braco:=malha_aberta
+         — o braço real não tem encoder; a placa só aplica velocidade/PWM, e
+         a simulação passa a executar igual). Vem do arg arm_iface, que o
+         b166er_wb.launch e o b166er_gazebo.launch passam ao xacro. -->
+    <xacro:arg name="arm_iface" default="position"/>
+    <xacro:property name="arm_hw_iface"
+                    value="${'hardware_interface/VelocityJointInterface' if '$(arg arm_iface)' == 'velocity' else 'hardware_interface/PositionJointInterface'}"/>
     <xacro:macro name="arm_transmission" params="joint_name">
       <transmission name="${joint_name}_trans">
         <type>transmission_interface/SimpleTransmission</type>
         <joint name="${joint_name}">
-          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+          <hardwareInterface>${arm_hw_iface}</hardwareInterface>
         </joint>
         <actuator name="${joint_name}_motor">
-          <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+          <hardwareInterface>${arm_hw_iface}</hardwareInterface>
           <mechanicalReduction>1</mechanicalReduction>
         </actuator>
       </transmission>

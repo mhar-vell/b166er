@@ -30,9 +30,11 @@
        b166er_wb.launch DEPOIS do robot_description dele e sobrescreve o
        parâmetro — por isso recebe o mesmo argumento (2026-09-30). -->
   <arg name="garra_dx" default="0.03"/>
+  <!-- arm_iface: position | velocity (braco:=malha_aberta) — ver movemaster.urdf.xacro -->
+  <arg name="arm_iface" default="position"/>
   <param name="robot_description"
          command="$(find xacro)/xacro $(find b166er_robot)/urdf/b166er.urdf.xacro
-                  garra_dx:=$(arg garra_dx)"/>
+                  garra_dx:=$(arg garra_dx) arm_iface:=$(arg arm_iface)"/>
 
   <!-- Inicia pausado: garante que o braço não cai antes dos controladores
        carregarem. O arm_controller_loader despausa após carregar tudo. -->

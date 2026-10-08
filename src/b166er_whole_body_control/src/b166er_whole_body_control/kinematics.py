@@ -21,6 +21,22 @@ import numpy as np
 JOINT_NAMES   = ['J1', 'J2', 'J3', 'J4', 'J5']
 JOINT_LOWER   = np.array([-2.61799, -1.13446, -1.04720, -1.91986, -3.14159])
 JOINT_UPPER   = np.array([ 2.61799,  1.13446,  1.04720,  1.91986,  3.14159])
+# LIMITES DO J2 POR SOFTWARE (B166ER_J2_MIN_DEG / B166ER_J2_MAX_DEG, args
+# j2_min_deg / j2_max_deg de b166er_wb.launch e chave_mission.launch; vêm do
+# ambiente pelo mesmo motivo do GARRA_DX). Valem para a IK (toda solução
+# nasce dentro), para o servo e para o Fuzzy. HISTÓRICO (07–08 Out 2026): o
+# Marco pediu "0 a 65" olhando o desenho das juntas, mas a convenção do
+# modelo (J2 = 0 é o braço superior na horizontal à frente, 90 a vertical)
+# não casa com o robô, cujo switch de trás fica depois da vertical — o zero
+# do J2 do modelo está deslocado e isso é pendência com o robô real. Com o
+# J2 >= 0 a IK não fecha no olhal (resíduo 28 mm). Decisão (08 Out): "por
+# enquanto vamos trabalhar com estes modelos e considerar a atuação dos
+# switches nestes extremos das juntas" — padrão = extremos do modelo
+# (−65/+65), switch em cada ponta; o J2 só faz homing para trás (+65).
+J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-65.0'))
+JOINT_LOWER[1] = max(JOINT_LOWER[1], np.radians(J2_MIN_DEG))
+J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '65.0'))
+JOINT_UPPER[1] = min(JOINT_UPPER[1], np.radians(J2_MAX_DEG))
 
 # IK
 IK_MAX_ITER   = 300
@@ -102,9 +118,22 @@ _T_L5_T265     = _trans(0, 0, -0.08) @ _tf([-0.0011, 0.0860, -0.0194],
 # confere contra o robot_description para pegar os dois desencontrados.
 GARRA_DX = float(os.environ.get('B166ER_GARRA_DX', '0.03'))
 
+# JTOOL_YAW — como a peça monta na castanha (2026-10-07). O Marco, olhando
+# o braço recolhido de trás do robô: "vc posicionou o dedo errado, ele tem
+# q virar 90 graus para esquerda" — "o dedo completo gira, toda a peça". A
+# peça v3 é a mesma (degrau em +Y do seu próprio frame, DEGRAU_DIR_TIP não
+# muda); o frame tool_rod/tool_tip inteiro gira +90° em torno da haste no
+# JTool do URDF, e esta cadeia tem que girar junto. No braço recolhido o
+# degrau aponta para a ESQUERDA do robô (base +Y); na tarefa a IK escolhe
+# o J5 que põe o degrau no eixo do furo, então a missão não muda — o punho
+# fica 90° girado em relação à montagem antiga. checa_garra_dx confere o
+# yaw do JTool junto com o dx.
+JTOOL_YAW = 1.5708
+
 _T_L5_TOOLTIP = (_trans(0, 0, -0.08)     # JCam:      L5 → CameraSupport
                 @ _trans(0, 0, -0.005)   # JGripCube: CameraSupport → GripCube
                 @ _trans(GARRA_DX, 0, -0.08)  # JTool: GripCube → dedo fixo (castanha)
+                @ _rotz(JTOOL_YAW)       #   ... peça inteira girada +90° na castanha
                 @ _trans(0, 0, -0.115))  # JToolTip:  garfo + afunilamento + haste = 115 mm
 
 
@@ -115,12 +144,19 @@ def checa_garra_dx(robot_description, tol=1e-4):
     olhal sem nenhum outro sintoma."""
     import re
     # O xacro expandido reordena os atributos (rpy antes de xyz).
-    m = re.search(r'<joint name="JTool"[^>]*>\s*<origin[^>]*\bxyz="([^"]+)"',
-                  robot_description)
+    m = re.search(r'<joint name="JTool"[^>]*>\s*<origin([^>]*)>', robot_description)
     if not m:
         return False, None
-    dx = float(m.group(1).split()[0])
-    return abs(dx - GARRA_DX) <= tol, dx
+    attrs = m.group(1)
+    mx = re.search(r'\bxyz="([^"]+)"', attrs)
+    mr = re.search(r'\brpy="([^"]+)"', attrs)
+    if not mx:
+        return False, None
+    dx = float(mx.group(1).split()[0])
+    yaw = float(mr.group(1).split()[2]) if mr else 0.0
+    # Yaw da montagem (JTOOL_YAW): 90° de desencontro aqui põe o degrau
+    # perpendicular ao furo e a missão falha sem outro sintoma.
+    return (abs(dx - GARRA_DX) <= tol and abs(yaw - JTOOL_YAW) <= 1e-3), dx
 # A origem de tool_tip é a base do DEGRAU — o ponto onde o arame do olhal
 # repousa depois da descida de 5 mm. É esse ponto, e não a extremidade da
 # peça, que a missão persegue: o degrau se estende 20 mm a partir daqui
@@ -132,7 +168,9 @@ def checa_garra_dx(robot_description, tol=1e-4):
 # das ABAS do garfo em U — e não mais em −X (v1). É a única constante que
 # diz para que lado o degrau aponta; degrau_dir(), ik_tooltip_com_degrau
 # e ik_tooltip_nivelado leem daqui. Tem que casar com as caixas do link
-# tool_tip em movemaster.urdf.xacro e com gera_dedo.py --versao 2.
+# tool_tip em movemaster.urdf.xacro e com gera_dedo.py --versao 3.
+# É a direção NO FRAME DA PEÇA: a montagem da peça na castanha (JTOOL_YAW,
+# 2026-10-07) gira o frame inteiro, não esta constante.
 DEGRAU_DIR_TIP = np.array([0.0, 1.0, 0.0])
 
 # Offset FIXO e conhecido de t265_link até a ponta da ferramenta —

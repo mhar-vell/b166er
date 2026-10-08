@@ -84,6 +84,12 @@ Numeração do Marco:
   O URDF (`tool_tip`) e `kinematics.DEGRAU_DIR_TIP` acompanham a direção
   do degrau; `dedo_haste_l` = 0,080 já casa com a v3. O que o modelo
   ainda simplifica: o garfo é uma caixa de 20 × 25 sem rasgo nem furos.
+  **Montagem (07 Out 2026):** a peça inteira monta girada **+90°** em
+  torno da haste (`JTool` rpy yaw 1,5708 no URDF, `kinematics.JTOOL_YAW`)
+  — o Marco, de trás do robô com o braço recolhido: "o dedo completo
+  gira". A v3 em si não muda; com o braço recolhido o degrau aponta para
+  a esquerda do robô e o rasgo do garfo fica no eixo em que a castanha
+  anda.
 
 A v1 não traz os furos no STL; v2 e v3 trazem (grade 10 × 15, a
 conferir contra a castanha — passe o medido a `gera_dedo.py --furo-dx

@@ -36,6 +36,19 @@
        doc="Taxa de controle do stack WB (Hz)"/>
   <arg name="rviz_config"
        default="$(find b166er_robot)/config/b166er.rviz"/>
+  <!-- EXECUÇÃO DO BRAÇO (2026-10-06). O RV-M2 real não tem encoder em
+       nenhuma junta: a placa só aplica sentido e PWM. Dois modos:
+       · posicao (histórico): controladores de POSIÇÃO do Gazebo seguram
+         a junta onde se pede — fiel à percepção, mas não à execução;
+         não existe no hardware.
+       · malha_aberta: velocidades por junta em /setpoints (graus/s),
+         executadas por um "firmware emulado" (arm_openloop_sim, Gazebo
+         com controladores de VELOCIDADE) ou pelo firmware de velocidade
+         nos Arduinos; posturas viram velocidade pelo arm_joint_servo
+         usando a ESTIMATIVA de junta (T265 → IK), nunca /joint_states.
+         É o que o robô real tem; a missão deve ser validada aqui. -->
+  <arg name="braco" default="posicao"
+       doc="posicao | malha_aberta — como as juntas do braço executam comandos"/>
   <arg name="garra_dx" default="0.03"
        doc="Posição da castanha onde o dedo fixo monta, em m no eixo
             transversal do GripCube: 0.03 = garra ABERTA (histórico),
@@ -44,6 +57,15 @@
             kinematics.py de todos os nós deste launch. Passar o MESMO
             valor a chave_mission.launch."/>
   <env name="B166ER_GARRA_DX" value="$(arg garra_dx)"/>
+  <!-- Limites do J2 por software (graus): IK, servo e Fuzzy leem via
+       kinematics (B166ER_J2_MIN_DEG / _MAX_DEG). Padrão = extremos do
+       modelo, com switch em cada ponta (Marco, 08 Out 2026: "por enquanto
+       vamos trabalhar com estes modelos"); o pedido de "0 a 65" fica para
+       quando o zero do J2 do modelo for acertado com o robô. -->
+  <arg name="j2_min_deg" default="-65.0"/>
+  <env name="B166ER_J2_MIN_DEG" value="$(arg j2_min_deg)"/>
+  <arg name="j2_max_deg" default="65.0"/>
+  <env name="B166ER_J2_MAX_DEG" value="$(arg j2_max_deg)"/>
   <!-- MASSA E CG DA BASE para o teto de tombamento (fuzzy_wb_controller,
        margem_tombamento). "Base" = tudo o que não são os cinco elos
        móveis do braço (19,7 kg no URDF): Pioneer, baterias, NUC, placas,
@@ -79,16 +101,25 @@
   <!-- ── Robot description ───────────────────────────────────────── -->
   <param name="use_sim_time"
          value="$(eval 'true' if arg('mode') == 'gazebo' else 'false')"/>
+  <arg name="arm_iface" default="position"
+       doc="position | velocity — interface ros_control das juntas; velocity só para diagnóstico (ver abaixo)"/>
   <param name="robot_description"
          command="$(find xacro)/xacro
                   $(find b166er_robot)/urdf/b166er.urdf.xacro
-                  garra_dx:=$(arg garra_dx)"/>
+                  garra_dx:=$(arg garra_dx) arm_iface:=$(arg arm_iface)"/>
 
   <!-- Posturas nomeadas do braço (home recolhido, deploy) — usadas
        pelo gazebo_arm_bridge (rampa pós-warm-start e comandos de
        postura) e pela futura máquina de estados da tarefa. -->
   <rosparam file="$(find b166er_whole_body_control)/config/arm_postures.yaml"
             command="load"/>
+  <!-- Fins de curso por junta e homing (braco:=malha_aberta): a única
+       referência absoluta de junta do braço sem encoder. Posições a medir
+       na bancada; ver o yaml. -->
+  <rosparam file="$(find b166er_whole_body_control)/config/arm_switches.yaml"
+            command="load" ns="arm_switches"/>
+  <!-- homing:=true leva J2/J3/J4 aos switches ao ligar (modo malha_aberta) -->
+  <arg name="homing" default="true"/>
 
   <node name="robot_state_publisher"
         pkg="robot_state_publisher"
@@ -132,13 +163,27 @@
           name="rviz" pkg="rviz" type="rviz"
           args="-d $(arg rviz_config)" output="screen"/>
 
-    <!-- Integra vel → posição em graus → Arduino rosserial -->
-    <node name="arm_vel_integrator"
+    <!-- braco:=posicao — integra vel → posição em graus → Arduino rosserial
+         (pressupõe firmware de posição, que exige encoder: NÃO é o caso
+         deste braço; mantido só por compatibilidade) -->
+    <node unless="$(eval arg('braco') == 'malha_aberta')"
+          name="arm_vel_integrator"
           pkg="b166er_whole_body_control"
           type="arm_vel_integrator.py"
           output="screen">
       <param name="rate"      value="$(arg rate)"/>
       <param name="goto_home" value="false"/>
+    </node>
+    <!-- braco:=malha_aberta — velocidades em graus/s para o firmware de
+         velocidade dos Arduinos; posturas pela estimativa da T265 -->
+    <node if="$(eval arg('braco') == 'malha_aberta')"
+          name="arm_joint_servo"
+          pkg="b166er_whole_body_control"
+          type="arm_joint_servo.py"
+          output="screen">
+      <param name="rate" value="$(arg rate)"/>
+      <param name="goto_home_on_start" value="false"/>
+      <param name="homing_on_start" value="$(arg homing)"/>
     </node>
 
   </group>
@@ -167,10 +212,23 @@
       <arg name="gui"             value="$(arg gui)"/>
       <arg name="robot_state_pub" value="false"/>
       <arg name="garra_dx"        value="$(arg garra_dx)"/>
+      <arg name="arm_iface"       value="$(arg arm_iface)"/>
     </include>
 
-    <!-- Controladores ros_control das juntas do braço -->
-    <rosparam file="$(find b166er_whole_body_control)/config/arm_controllers.yaml"
+    <!-- Controladores ros_control das juntas do braço: posição (histórico)
+         ou velocidade (braco:=malha_aberta, ver arm_controllers_vel.yaml) -->
+    <!-- 2026-10-07: no modo malha_aberta o firmware emulado passou a
+         INTEGRAR a velocidade pedida num setpoint de POSIÇÃO (ver
+         arm_openloop_sim.py, ~saida): a leitura de velocidade de junta do
+         Gazebo/ODE sob carga não bate com Δposição/Δt (J2 subindo a
+         1,5 °/s com o controlador "vendo" 5 °/s) e os controladores de
+         velocidade andavam devagar. Controladores de velocidade só com
+         arm_iface:=velocity (fica para diagnóstico). -->
+    <rosparam if="$(eval arg('arm_iface') == 'velocity')"
+              file="$(find b166er_whole_body_control)/config/arm_controllers_vel.yaml"
+              command="load"/>
+    <rosparam unless="$(eval arg('arm_iface') == 'velocity')"
+              file="$(find b166er_whole_body_control)/config/arm_controllers.yaml"
               command="load"/>
 
     <!-- arm_controller_loader usa rospy.init_node(disable_rostime=True)
@@ -178,7 +236,12 @@
     <node name="arm_controller_loader"
           pkg="b166er_whole_body_control"
           type="arm_controller_loader.py"
-          output="screen"/>
+          output="screen">
+      <rosparam if="$(eval arg('arm_iface') == 'velocity')" param="controllers">
+        [joint_state_controller, J1_velocity_controller, J2_velocity_controller,
+         J3_velocity_controller, J4_velocity_controller, J5_velocity_controller]
+      </rosparam>
+    </node>
 
     <!-- Simula /t265/odom/sample e /pioneer/pose a partir do Gazebo -->
     <node name="gazebo_sensor_sim"
@@ -186,11 +249,30 @@
           type="gazebo_sensor_sim.py"
           output="screen"/>
 
-    <!-- Roteia /b166er/arm_vel_cmd → Jx_velocity_controller/command -->
-    <node name="gazebo_arm_bridge"
+    <!-- braco:=posicao — ponte histórica: integra vel → posição e comanda
+         os controladores de POSIÇÃO do Gazebo -->
+    <node unless="$(eval arg('braco') == 'malha_aberta')"
+          name="gazebo_arm_bridge"
           pkg="b166er_whole_body_control"
           type="gazebo_arm_bridge.py"
           output="screen"/>
+    <!-- braco:=malha_aberta — firmware emulado (velocidade por junta, zona
+         morta, watchdog) + executor de posturas pela estimativa -->
+    <node if="$(eval arg('braco') == 'malha_aberta')"
+          name="arm_openloop_sim"
+          pkg="b166er_whole_body_control"
+          type="arm_openloop_sim.py"
+          output="screen">
+      <param name="saida" value="$(eval 'velocidade' if arg('arm_iface') == 'velocity' else 'posicao')"/>
+    </node>
+    <node if="$(eval arg('braco') == 'malha_aberta')"
+          name="arm_joint_servo"
+          pkg="b166er_whole_body_control"
+          type="arm_joint_servo.py"
+          output="screen">
+      <param name="rate" value="$(arg rate)"/>
+      <param name="homing_on_start" value="$(arg homing)"/>
+    </node>
 
     <node if="$(arg rviz)"
           name="rviz" pkg="rviz" type="rviz"

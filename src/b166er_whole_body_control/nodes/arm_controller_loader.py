@@ -21,6 +21,8 @@ from controller_manager_msgs.srv import (
 )
 from std_srvs.srv import Empty
 
+# Lista padrão (modo braco:=posicao). Com braco:=malha_aberta o launch passa
+# ~controllers com os *_velocity_controller (arm_controllers_vel.yaml).
 CONTROLLERS = [
     'joint_state_controller',
     'J1_position_controller',
@@ -75,7 +77,9 @@ def main():
 
         load_svc = rospy.ServiceProxy('/controller_manager/load_controller', LoadController)
 
-        for ctrl in CONTROLLERS:
+        controllers = rospy.get_param('~controllers', CONTROLLERS)
+
+        for ctrl in controllers:
             try:
                 resp = load_svc(name=ctrl)
                 if resp.ok:

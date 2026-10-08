@@ -46,7 +46,7 @@ CONDA_ENV="${CONDA_ENV:-ros_env}"
 
 # Nós que compõem o stack. Usados só para relatório — o desligamento
 # varre por caminho do workspace, para pegar também o que não está aqui.
-NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge
+NODES=(state_estimator fuzzy_wb_controller gazebo_arm_bridge arm_openloop_sim arm_joint_servo
        tilt_monitor laser_safety base_watchdog apriltag_localizer
        chave_mission)
 
@@ -289,7 +289,13 @@ cmd_preflight() {
     local falhas=0
     echo "── PREFLIGHT ───────────────────────────────────────────"
 
-    for n in state_estimator fuzzy_wb_controller gazebo_arm_bridge \
+    # Execução do braço: ponte de posição (braco:=posicao) OU firmware
+    # emulado + executor (braco:=malha_aberta, 2026-10-06) — um dos dois.
+    local braco="gazebo_arm_bridge"
+    if [ "$(conta_proc "b166er_whole_body_control/arm_joint_servo.py")" -ge 1 ]; then
+        braco="arm_openloop_sim arm_joint_servo"
+    fi
+    for n in state_estimator fuzzy_wb_controller $braco \
              tilt_monitor laser_safety base_watchdog apriltag_localizer; do
         local c
         c=$(conta_proc "b166er_whole_body_control/$n.py")
@@ -297,7 +303,7 @@ cmd_preflight() {
             echo "  FALHA  $n: $c processos (esperado 1)"; falhas=$((falhas + 1))
         fi
     done
-    [ "$falhas" -eq 0 ] && echo "  ok     um processo por nó"
+    [ "$falhas" -eq 0 ] && echo "  ok     um processo por nó (braço: $braco)"
 
     # Cenário montado: sem a fixture não há tag, e o SEARCH roda 90 s no vazio.
     if timeout 10 rosservice call /gazebo/get_world_properties 2>/dev/null \

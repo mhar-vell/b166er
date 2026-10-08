@@ -1,0 +1,42 @@
+# FINS DE CURSO do RV-M2 retrofitado — a única medida ABSOLUTA de junta que
+# o braço tem (não há encoder). Lido em /arm_switches por três nós:
+#   · arm_openloop_sim.py  (firmware emulado: switch "fecha" nestes ângulos,
+#                           corta o sentido e publica /b166er/arm_limit_switch)
+#   · state_estimator.py   (junta no switch -> estimativa ancorada no ângulo)
+#   · arm_joint_servo.py   (HOMING: leva cada junta até o seu switch ao ligar)
+# As placas reais leem os pinos LS_xA/LS_xB. Os ângulos abaixo são os
+# DECLARADOS NO MANUAL do RV-M2 (BFP-A5296: cintura 300°, ombro 130°,
+# cotovelo 120°, punho ±110° e ±180°, repartidos simetricamente — os
+# mesmos do URDF). Decisão do Marco (07 Out 2026): "vamos usar os ângulos
+# declarados pelo manual", sem medir na bancada.
+# Convenção: lower = switch do lado negativo da junta (B nas placas),
+# upper = lado positivo (A).
+lower_deg: [-150.0, -65.0, -60.0, -110.0, -180.0]
+upper_deg: [ 150.0,  65.0,  60.0,  110.0,  180.0]
+# margem_deg: o switch FECHA a esta distância antes do ângulo acima (um
+# switch mecânico atua antes do batente; na simulação o batente do ODE
+# assenta 0,3–0,9° antes do limite nominal sob carga). O estimador ancora
+# a junta no ângulo em que o switch fecha (lower + margem / upper − margem).
+margem_deg: 1.5
+
+# HOMING (origem por switch, como o controlador original do RV-M2).
+# home_side: para que lado cada junta vai ao ligar: +1 (upper), -1 (lower),
+# 0 = não faz (J1 e J5 são observáveis pela orientação do T265; só a cadeia
+# de arfagem J2/J3/J4 tem o ramo ambíguo). Os lados escolhidos são os do
+# STOW: J2 no upper (+65 = recolhido), J3 no lower (-60), J4 no lower
+# (-110): o braço só encosta nos batentes em que já descansa — pouco
+# movimento, sem risco de colisão com a base.
+home_side:   [0, 1, -1, -1, 0]
+# J2 SÓ PARA TRÁS (Marco, 07 Out 2026): "quanto a J2 eu só faria o homing
+# para trás, nem tentaria fazer para baixo pois seria um risco, e eu
+# limitaria a um determinado ângulo a partir deste ponto de checagem atrás".
+# home_side de J2 tem de ser +1 (o servo recusa −1). Os limites de software
+# do J2 vivem em B166ER_J2_MIN_DEG / _MAX_DEG (args dos launches; padrão =
+# extremos do modelo, ±65). O pedido de "0 a 65" (07 Out) espera o acerto do
+# zero do J2 do modelo com o robô: no modelo 0° é o braço superior na
+# horizontal à frente e 90° a vertical, e o switch de trás real fica depois
+# da vertical (08 Out: "por enquanto vamos trabalhar com estes modelos e
+# considerar a atuação dos switches nestes extremos das juntas").
+home_ordem:  [4, 3, 2]          # J4 (punho), depois J3 (cotovelo), depois J2 (ombro)
+home_v_deg:  [10.0, 5.0, 5.0, 5.0, 10.0]
+home_timeout_s: 40.0
