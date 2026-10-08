@@ -131,6 +131,30 @@ Missão run10 com o braço acordando longe dos switches: HOME fez o homing
 inteiro — **J4 10,4 s, J3 7,8 s, J2 8,7 s** —, SEARCH partiu dali e a
 chave abriu a 31,0°.
 
+## "Deve existir um processo para ir à HOME" (15:00)
+
+Orientador: "nada garante que o robô esteja na posição que precisamos
+entre uma missão e outra". O homing passou a ser um procedimento que não
+assume nada (`_ir_para_home` na missão + servo):
+
+1. Se o laser vê obstáculo a menos de `min_clearance` à frente, a base
+   RECUA `home_afasta_m` (0,25 m) antes de mexer o braço — um braço
+   estendido para dentro do olhal não pode ser dobrado no lugar.
+2. Homing J4 → J3 → J2; junta já no switch passa direto. Sem encoder o
+   único sinal de que a junta ANDA é a T265: se a ponta não se desloca
+   3 mm em 2 s enquanto a junta é comandada, ela está presa — o servo
+   recua 1,5 s no sentido oposto e tenta de novo uma vez; na segunda, a
+   junta fica `BLOQUEADA` e o homing falha, com pedido de intervenção.
+3. Só devolve HOME com as três juntas nos switches.
+4. A missão TERMINA em HOME: o RETURN, depois de voltar à pose de
+   partida, faz o homing de novo — a próxima missão parte de onde esta
+   terminou, sem supor nada.
+
+run11: HOME 10,4 / 7,8 / 8,7 s; chave a 32,4°; RETURN terminou com o
+homing em 1,2 / 0,0 / 0,1 s (o RETRACT já tinha recolhido). A detecção de
+junta presa não foi exercitada (não houve contato no homing): testar
+deliberadamente com o braço acordando dentro do olhal.
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo
