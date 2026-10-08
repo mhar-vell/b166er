@@ -118,8 +118,11 @@
        na bancada; ver o yaml. -->
   <rosparam file="$(find b166er_whole_body_control)/config/arm_switches.yaml"
             command="load" ns="arm_switches"/>
-  <!-- homing:=true leva J2/J3/J4 aos switches ao ligar (modo malha_aberta) -->
-  <arg name="homing" default="true"/>
+  <!-- homing:=true leva J2/J3/J4 aos switches AO LIGAR o stack. Padrão
+       false (2026-10-08): na vida real o home é setado no início da
+       MISSÃO (estado HOME), e a simulação ensaia isso — ao ligar, o braço
+       fica onde o Gazebo o pôs e o servo só espera comandos. -->
+  <arg name="homing" default="false"/>
 
   <node name="robot_state_publisher"
         pkg="robot_state_publisher"
@@ -272,6 +275,8 @@
           output="screen">
       <param name="rate" value="$(arg rate)"/>
       <param name="homing_on_start" value="$(arg homing)"/>
+      <!-- sem recolher ao ligar: o braço acorda onde está, como na bancada -->
+      <param name="goto_home_on_start" value="false"/>
     </node>
 
     <node if="$(arg rviz)"

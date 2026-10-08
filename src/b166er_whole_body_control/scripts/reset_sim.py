@@ -32,6 +32,16 @@ from std_srvs.srv import Empty
 from tf.transformations import euler_from_quaternion
 
 STOW = [0.0, 1.10, -1.04, -1.8, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out)
+# COMO O ROBÔ ACORDA (2026-10-08, preocupação do Marco: "o home position deve
+# ser setado logo no início da missão na vida real e eu não vi isso na
+# simulação"). O reset deixava o braço no stow, encostado nos switches, e o
+# homing do estado HOME fechava em 1–2 s sem andar — a missão nunca ensaiava
+# o homing de verdade. Agora o reset deixa o braço numa postura "de
+# desligado", longe dos três switches (J2 +20°, J3 −20°, J4 −57°), e a
+# missão tem de fazer o homing inteiro para partir (como na bancada, onde o
+# braço acorda onde foi deixado). --postura stow recupera o antigo.
+ACORDA = [0.0, 0.35, -0.35, -1.0, 0.0]
+ALVO = ACORDA
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar
 SETTLE_S = 12.0       # tempo máximo esperando estabilizar
@@ -68,22 +78,27 @@ def _juntas_reais():
     estimador; para conferir um RESET queremos a medida mais crua
     disponível.
     """
-    try:
-        js = rospy.wait_for_message('/joint_states', JointState, 5)
-    except rospy.ROSException:
-        return None
-    z = dict(zip(js.name, js.position))
-    if not all(j in z for j in JOINTS):
-        return None
-    return [_wrap(z[j]) for j in JOINTS]
+    # /joint_states tem DOIS publicadores (rodas do Pioneer e braço): a
+    # primeira mensagem pode ser a das rodas — era isso que devolvia None
+    # ao acaso ("q=None -> FALHOU", 08/10). Tenta até achar a do braço.
+    t0 = time.time()
+    while time.time() - t0 < 5.0:
+        try:
+            js = rospy.wait_for_message('/joint_states', JointState, 2)
+        except rospy.ROSException:
+            return None
+        z = dict(zip(js.name, js.position))
+        if all(j in z for j in JOINTS):
+            return [_wrap(z[j]) for j in JOINTS]
+    return None
 
 
 def _erro_postura():
-    """Maior desvio absoluto em relação ao stow, em rad."""
+    """Maior desvio absoluto em relação à postura-alvo do reset, em rad."""
     q = _juntas_reais()
     if q is None:
         return None
-    return max(abs(_wrap(a - b)) for a, b in zip(q, STOW))
+    return max(abs(_wrap(a - b)) for a, b in zip(q, ALVO))
 
 
 def _args():
@@ -94,12 +109,15 @@ def _args():
     ap.add_argument('--x', type=float, default=START_X, help='m (padrão %(default)s)')
     ap.add_argument('--y', type=float, default=START_Y, help='m (padrão %(default)s)')
     ap.add_argument('--yaw', type=float, default=0.0, help='graus (padrão 0)')
+    ap.add_argument('--postura', choices=['acorda', 'stow'], default='acorda',
+                    help='postura em que o braço fica após o reset: acorda (longe dos switches, padrão) ou stow')
     ap.add_argument('--sem-recolher', action='store_true',
                     help='pula o recolhimento do braço pela ponte antes do teleporte')
     return ap.parse_args(rospy.myargv(sys.argv)[1:])
 
 
 def main():
+    global ALVO
     args = _args()
     rospy.init_node('reset_sim', anonymous=True, disable_signals=True)
     for s in ('/gazebo/set_model_state', '/gazebo/set_model_configuration',
@@ -147,6 +165,7 @@ def main():
     pub_post = rospy.Publisher('/b166er/arm_posture_cmd', JointState,
                                queue_size=1, latch=True)
     chegou = {'t': None}
+    ALVO = STOW if args.postura == 'stow' else ACORDA
     rospy.Subscriber('/b166er/arm_posture_reached', Bool,
                      lambda m: chegou.update(t=time.time()) if m.data else None)
     time.sleep(0.5)
@@ -172,14 +191,14 @@ def main():
         time.sleep(0.5)   # velocidades residuais assentam
 
     pause()
-    set_cfg('b166er', 'robot_description', JOINTS, STOW)
+    set_cfg('b166er', 'robot_description', JOINTS, ALVO)
     # Ainda PAUSADO: a ponte precisa saber da nova postura antes do
     # primeiro passo de física, senão os controladores disparam o braço
     # para o setpoint antigo.
     js = JointState()
     js.header.stamp = rospy.Time.now()
     js.name = JOINTS
-    js.position = STOW
+    js.position = ALVO
     pub_resync.publish(js)
     time.sleep(0.5)
     ms = ModelState()
@@ -239,8 +258,8 @@ def main():
              [round(math.degrees(v), 1) for v in q_real] if q_real else None,
              'OK' if ok else 'FALHOU'))
     if not ok and erro_q is not None and erro_q >= POSTURA_TOL:
-        print('  causa: braço fora do stow (esperado %s)'
-              % [round(math.degrees(v), 1) for v in STOW])
+        print('  causa: braço fora da postura do reset (esperado %s)'
+              % [round(math.degrees(v), 1) for v in ALVO])
     return 0 if ok else 1
 
 
