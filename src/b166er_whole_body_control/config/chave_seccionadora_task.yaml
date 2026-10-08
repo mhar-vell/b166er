@@ -188,10 +188,20 @@ chave_seccionadora_task:
   # furo, com a face de baixo encostada na aba inferior do anel, em −20.
   # Com o degrau de 17 eram 11,5 mm de descida e −3,0 de alvo. CALCULADO
   # pela mesma fórmula, ainda não medido na simulação com a peça nova.
+  # EIXO 40 → 8 mm (2026-10-08, investigação dos abortos em malha aberta,
+  # RELATORIO25/26). Nas 31 capturas das baterias sem encoder, as que
+  # fecharam com o olhal terminaram com a ponta em eixo −6…−9 mm (haste
+  # encostada no arame, como o atravessa deixa); as três missões em que
+  # a libera "perdeu o olhal" tinham a captura registrada em +7,3 e +8,6
+  # mm — a descida escorregou o degrau 15 mm para FORA do furo pelo arame
+  # curvo, sobrou ~5 mm de degrau sob o anel, o destrava não moveu a
+  # lingueta (4,1 / 0,0 mm) e a libera puxou com o gatilho travado. A
+  # tolerância de 40 mm (herdada de "o degrau tem 30 mm") aceitava isso.
+  # Agora a captura só fecha com a ponta dentro do furo, como o atravessa.
   captura:
     modo: ik
     offset_xyz_m: [0.0, 0.0, -0.0100]
-    tol_xyz_m: [0.040, 0.006, 0.010]
+    tol_xyz_m: [0.008, 0.006, 0.010]
 
   # ── 3b. DESTRAVA: desce mais 15 mm e solta o gatilho ──
   # O Marco, em 2026-09-03: "o primeiro movimento (que chamamos de arco
@@ -212,7 +222,7 @@ chave_seccionadora_task:
   destrava:
     modo: wb
     offset_xyz_m: [0.0, 0.0, -0.0250]
-    tol_xyz_m: [0.040, 0.006, 0.004]
+    tol_xyz_m: [0.010, 0.006, 0.004]   # eixo 40 → 10 (2026-10-08): empurrar só com a haste dentro do furo
     # CRITÉRIO OBSERVÁVEL (2026-09-03). A fase NÃO fecha por atingir a
     # altura-alvo acima; fecha quando a ponta, medida pela T265, DESCEU
     # pelo menos curso_min_m desde o instante em que a captura fechou
