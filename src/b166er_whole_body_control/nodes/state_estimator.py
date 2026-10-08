@@ -25,7 +25,8 @@ from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM,
     ik_arm,
-    arm_jacobian_world)
+    arm_jacobian_world,
+    fk_arm, pose_error)
 from movemaster_msg.msg import setpoint as SetpointMsg
 
 # Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
@@ -102,6 +103,7 @@ class StateEstimator:
         # CONTINUIDADE da estimativa desde o stow conhecido.
         self._dr_seed      = bool(rospy.get_param('~dr_seed', False))
         self._seed_gt      = bool(rospy.get_param('~seed_ground_truth', False))
+        self._q_rate_max   = float(rospy.get_param('~q_rate_max_rad_s', 1.0))   # ver o limitador no laço
         # RAMO PELA VELOCIDADE MEDIDA (2026-10-07). A pose do T265 não separa
         # cotovelo para cima de cotovelo para baixo (mesma ponta, mesmo
         # punho), e seguir só por continuidade prende a estimativa no
@@ -273,6 +275,7 @@ class StateEstimator:
             # cair numa bacia ruim mesmo assim. O retry em _solve_ik é
             # que garante a recuperação depois que tudo assenta.
             self._q_arm = self._posture_target_q.copy()
+            self._q_arm_prev = self._q_arm.copy()   # o limitador de taxa parte daqui
             if abs(self._posture_target_q[2]) > self._j3_zona:
                 self._j3_sinal = float(np.sign(self._posture_target_q[2]))
             rospy.loginfo('[state_estimator] re-seed por postura concluída: %s rad',
@@ -519,6 +522,29 @@ class StateEstimator:
                     np.degrees(self._v_cmd).round(1).tolist())
 
             dt = (now - self._t_prev).to_sec() if self._t_prev else None
+            # LIMITADOR DE TAXA (2026-10-08, missão_completa run1): em contato
+            # a IK semeada por continuidade pulou 50° em J3 num único ciclo
+            # (duas soluções com o mesmo punho, o solver cruzou a singularidade)
+            # e a captura foi para o espaço. O braço FÍSICO não faz isso: nenhuma
+            # junta passa de ~0,3 rad/s. A estimativa só pode andar
+            # ~q_rate_max_rad_s por segundo; o que passa disso é descartado e
+            # a estimativa segue o caminho contínuo — se a pose do T265
+            # realmente mudou, ela chega lá em alguns ciclos. Fins de curso
+            # (âncora absoluta) e resync passam por fora deste limite.
+            if dt and 0.0 < dt < 0.5 and self._q_rate_max > 0 and not np.any(self._ls != 0.0):
+                passo = self._q_rate_max * dt
+                salto = q - self._q_arm_prev
+                if np.any(np.abs(salto) > passo + 1e-9):
+                    q_lim = self._q_arm_prev + np.clip(salto, -passo, passo)
+                    T_lim = fk_arm(q_lim.tolist())
+                    e6 = pose_error(T_lim, T_target)
+                    rospy.logwarn_throttle(
+                        2.0, '[state_estimator] salto de %s° num ciclo — limitado a %.1f°/ciclo '
+                             '(resíduo %.1f mm)', np.degrees(salto).round(1).tolist(),
+                        math.degrees(passo), 1000 * float(np.linalg.norm(e6[:3])))
+                    q = q_lim
+                    res_p = float(np.linalg.norm(e6[:3])); res_o = float(np.linalg.norm(e6[3:]))
+                    conv = res_p < 0.01
             if dt and dt > 0:
                 self._dq_arm = (q - self._q_arm_prev) / dt
             self._q_arm_prev = q.copy()
