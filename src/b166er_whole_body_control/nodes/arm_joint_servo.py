@@ -160,10 +160,13 @@ class ArmJointServo:
         self._ls = np.zeros(5)
         # J2 só para trás (Marco, 07/10): limite de curso por software a
         # partir do switch de trás — ver arm_switches.yaml (j2_curso_deg).
-        j2_sup = float(rospy.get_param('/arm_switches/upper_deg', [150, 65, 60, 110, 180])[1])
-        self._j2_min = math.radians(j2_sup - float(rospy.get_param('/arm_switches/j2_curso_deg', 115.0)))
-        rospy.loginfo('[arm_joint_servo] J2 limitado por software a >= %.1f° (switch de trás %.1f° − curso)',
-                      math.degrees(self._j2_min), j2_sup)
+        # O limite vem da cinemática (B166ER_J2_MIN_DEG, padrão 0°): a IK, o
+        # servo e o Fuzzy enxergam o MESMO J2 mínimo.
+        self._j2_min = float(JOINT_LOWER[1])
+        self._j2_max = float(JOINT_UPPER[1])
+        rospy.loginfo('[arm_joint_servo] J2 limitado por software a %.1f° … %.1f° '
+                      '(B166ER_J2_MIN_DEG / B166ER_J2_MAX_DEG); homing do J2 só para trás',
+                      math.degrees(self._j2_min), math.degrees(self._j2_max))
         self._homing = []          # fila de índices de junta ainda por fazer
         self._homing_t0 = None
         self._homing_resultado = {}
@@ -288,10 +291,10 @@ class ArmJointServo:
 
     # ------------------------------------------------------------ postura
     def _iniciar_postura(self, q, why):
-        if q[1] < self._j2_min:
-            rospy.logwarn('[arm_joint_servo] postura (%s): J2 %.1f° abaixo do limite de software %.1f° — cortada',
-                          why, math.degrees(q[1]), math.degrees(self._j2_min))
-            q = q.copy(); q[1] = self._j2_min
+        if q[1] < self._j2_min or q[1] > self._j2_max:
+            rospy.logwarn('[arm_joint_servo] postura (%s): J2 %.1f° fora do limite de software %.1f° … %.1f° — cortada',
+                          why, math.degrees(q[1]), math.degrees(self._j2_min), math.degrees(self._j2_max))
+            q = q.copy(); q[1] = min(max(q[1], self._j2_min), self._j2_max)
         self._q_alvo = q
         self._t_alvo = rospy.Time.now()
         self._t_ok = None
@@ -430,6 +433,8 @@ class ArmJointServo:
             # abaixo de j2_min nunca se comanda para baixo
             if self._q_est is not None and self._q_est[1] <= self._j2_min and v[1] < 0.0:
                 v[1] = 0.0
+            if self._q_est is not None and self._q_est[1] >= self._j2_max and v[1] > 0.0 and not self._homing:
+                v[1] = 0.0      # (no homing o J2 vai até o switch, que fecha exatamente aqui)
             m = SetpointMsg()
             vd = np.degrees(v)
             m.set_1, m.set_2, m.set_3, m.set_4, m.set_5 = (float(x) for x in vd)

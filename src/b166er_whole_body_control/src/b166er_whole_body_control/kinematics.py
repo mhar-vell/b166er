@@ -21,6 +21,22 @@ import numpy as np
 JOINT_NAMES   = ['J1', 'J2', 'J3', 'J4', 'J5']
 JOINT_LOWER   = np.array([-2.61799, -1.13446, -1.04720, -1.91986, -3.14159])
 JOINT_UPPER   = np.array([ 2.61799,  1.13446,  1.04720,  1.91986,  3.14159])
+# LIMITES DO J2 POR SOFTWARE (B166ER_J2_MIN_DEG / B166ER_J2_MAX_DEG, args
+# j2_min_deg / j2_max_deg de b166er_wb.launch e chave_mission.launch; vêm do
+# ambiente pelo mesmo motivo do GARRA_DX). Valem para a IK (toda solução
+# nasce dentro), para o servo e para o Fuzzy. HISTÓRICO (07–08 Out 2026): o
+# Marco pediu "0 a 65" olhando o desenho das juntas, mas a convenção do
+# modelo (J2 = 0 é o braço superior na horizontal à frente, 90 a vertical)
+# não casa com o robô, cujo switch de trás fica depois da vertical — o zero
+# do J2 do modelo está deslocado e isso é pendência com o robô real. Com o
+# J2 >= 0 a IK não fecha no olhal (resíduo 28 mm). Decisão (08 Out): "por
+# enquanto vamos trabalhar com estes modelos e considerar a atuação dos
+# switches nestes extremos das juntas" — padrão = extremos do modelo
+# (−65/+65), switch em cada ponta; o J2 só faz homing para trás (+65).
+J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-65.0'))
+JOINT_LOWER[1] = max(JOINT_LOWER[1], np.radians(J2_MIN_DEG))
+J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '65.0'))
+JOINT_UPPER[1] = min(JOINT_UPPER[1], np.radians(J2_MAX_DEG))
 
 # IK
 IK_MAX_ITER   = 300

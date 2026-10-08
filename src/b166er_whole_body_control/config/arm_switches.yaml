@@ -30,13 +30,13 @@ home_side:   [0, 1, -1, -1, 0]
 # J2 SÓ PARA TRÁS (Marco, 07 Out 2026): "quanto a J2 eu só faria o homing
 # para trás, nem tentaria fazer para baixo pois seria um risco, e eu
 # limitaria a um determinado ângulo a partir deste ponto de checagem atrás".
-# home_side de J2 tem de ser +1 (o servo recusa −1), e o curso útil de J2
-# é limitado por software a j2_curso_deg abaixo do switch de trás:
-# j2_min = upper_deg[J2] − j2_curso_deg. O servo não comanda J2 abaixo
-# disso (posturas são cortadas, velocidade negativa é zerada ali) — vale
-# para posturas e para o Fuzzy. 115° cobre a missão (o pré-deploy pede
-# −46°); o switch de baixo fica só como corte de segurança na placa.
-j2_curso_deg: 115.0
+# home_side de J2 tem de ser +1 (o servo recusa −1). Os limites de software
+# do J2 vivem em B166ER_J2_MIN_DEG / _MAX_DEG (args dos launches; padrão =
+# extremos do modelo, ±65). O pedido de "0 a 65" (07 Out) espera o acerto do
+# zero do J2 do modelo com o robô: no modelo 0° é o braço superior na
+# horizontal à frente e 90° a vertical, e o switch de trás real fica depois
+# da vertical (08 Out: "por enquanto vamos trabalhar com estes modelos e
+# considerar a atuação dos switches nestes extremos das juntas").
 home_ordem:  [4, 3, 2]          # J4 (punho), depois J3 (cotovelo), depois J2 (ombro)
 home_v_deg:  [10.0, 5.0, 5.0, 5.0, 10.0]
 home_timeout_s: 40.0

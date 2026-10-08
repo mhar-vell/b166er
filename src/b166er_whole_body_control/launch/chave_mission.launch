@@ -84,6 +84,15 @@
        aborta se os dois não casarem. -->
   <arg name="garra_dx" default="0.03"/>
   <env name="B166ER_GARRA_DX" value="$(arg garra_dx)"/>
+  <!-- Limites do J2 por software (graus): IK, servo e Fuzzy leem via
+       kinematics (B166ER_J2_MIN_DEG / _MAX_DEG). Padrão = extremos do
+       modelo, com switch em cada ponta (Marco, 08 Out 2026: "por enquanto
+       vamos trabalhar com estes modelos"); o pedido de "0 a 65" fica para
+       quando o zero do J2 do modelo for acertado com o robô. -->
+  <arg name="j2_min_deg" default="-65.0"/>
+  <env name="B166ER_J2_MIN_DEG" value="$(arg j2_min_deg)"/>
+  <arg name="j2_max_deg" default="65.0"/>
+  <env name="B166ER_J2_MAX_DEG" value="$(arg j2_max_deg)"/>
   <arg name="estado_inicial" default="STOW_INIT"/>
   <arg name="estado_final"   default=""/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
