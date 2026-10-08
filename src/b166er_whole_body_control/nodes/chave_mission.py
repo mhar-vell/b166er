@@ -784,6 +784,7 @@ class MissionContext(object):
         # HOME: homing pelos fins de curso (arm_joint_servo)
         self.homed = None
         self.homing_timeout = rospy.get_param('~homing_timeout', 150.0)
+        self.home_afasta_m  = rospy.get_param('~home_afasta_m', 0.25)
         self.pub_home_cmd = rospy.Publisher('/b166er/arm_home_cmd', Bool, queue_size=1, latch=True)
         rospy.Subscriber('/b166er/arm_homed', Bool, self._cb_homed)
         rospy.Subscriber('/b166er/tag_pixel', Point, self._cb_tag_pixel)
@@ -1407,6 +1408,41 @@ class MissionContext(object):
 # Estados
 # ═══════════════════════════════════════════════════════════════════════
 
+def _ir_para_home(ctx, tag):
+    """IR PARA HOME de qualquer lugar (Marco, 08/10: "deve existir um
+    processo para ir à HOME, pois nada garante que o robô esteja na posição
+    que precisamos entre uma missão e outra"). Não assume nada sobre onde o
+    braço está: (1) se o laser vê a parede/obstáculo perto da frente, recua
+    a base antes de mexer o braço (um braço estendido para dentro do olhal
+    não pode ser dobrado no lugar); (2) homing pelos fins de curso, com o
+    servo detectando junta presa pela T265 e recuando/retentando; (3) só
+    devolve True com as três juntas nos switches. Usado no HOME (início) e
+    no fim do RETURN (a missão termina em HOME, pronta para a próxima)."""
+    if (ctx.front_clearance is not None and ctx.front_clearance < ctx.min_clearance):
+        rospy.logwarn('[mission] %s: obstáculo a %.2f m à frente (mín %.2f) — recuando a base %.2f m antes do homing',
+                      tag, ctx.front_clearance, ctx.min_clearance, ctx.home_afasta_m)
+        if not _creep_base(ctx, -ctx.home_afasta_m, '%s/afasta' % tag):
+            rospy.logerr('[mission] %s: não conseguiu afastar a base', tag)
+            return False
+    ctx.homed = None
+    ctx.pub_home_cmd.publish(Bool(data=True))
+    rospy.loginfo('[mission] %s: homing pelos fins de curso (J4, J3, J2)', tag)
+    t0 = rospy.Time.now(); rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        if ctx.homed is True:
+            rospy.loginfo('[mission] %s: braço nos três fins de curso — em HOME', tag)
+            return True
+        if ctx.homed is False:
+            rospy.logerr('[mission] %s: homing terminou com falha (junta presa ou switch não alcançado) — '
+                         'intervenção do operador', tag)
+            return False
+        if (rospy.Time.now() - t0).to_sec() > ctx.homing_timeout:
+            rospy.logerr('[mission] %s: homing não concluiu em %.0f s', tag, ctx.homing_timeout)
+            return False
+        rate.sleep()
+    return False
+
+
 class Home(smach.State):
     """HOME (2026-10-08, pedido do Marco: "vamos incluir o ESTADO de posição
     de home; na vida real, lá no laboratório, é essa posição em que o robô
@@ -1437,22 +1473,10 @@ class Home(smach.State):
             rospy.logwarn('[mission] HOME: stack sem homing por fins de curso — recolhendo em stow_home')
             ctx.send_posture('stow_home')
             return 'ok' if _wait_posture(ctx) else 'failed'
-        ctx.homed = None
-        ctx.pub_home_cmd.publish(Bool(data=True))
-        rospy.loginfo('[mission] HOME: homing pelos fins de curso (J4, J3, J2)')
-        t0 = rospy.Time.now(); rate = rospy.Rate(10)
-        while not rospy.is_shutdown():
-            if ctx.homed is True:
-                rospy.loginfo('[mission] HOME: braço nos fins de curso — partindo daqui para o SEARCH')
-                return 'ok'
-            if ctx.homed is False:
-                rospy.logerr('[mission] HOME: homing terminou com falha (switch não alcançado)')
-                return 'failed'
-            if (rospy.Time.now() - t0).to_sec() > ctx.homing_timeout:
-                rospy.logerr('[mission] HOME: homing não concluiu em %.0f s', ctx.homing_timeout)
-                return 'failed'
-            rate.sleep()
-        return 'failed'
+        if not _ir_para_home(ctx, 'HOME'):
+            return 'failed'
+        rospy.loginfo('[mission] HOME: partindo daqui para o SEARCH')
+        return 'ok'
 
 
 class StowInit(smach.State):
@@ -2182,7 +2206,14 @@ class Return(smach.State):
         rospy.loginfo('[mission] RETURN — voltando a (%.2f, %.2f, %.2f rad)',
                       *ctx.start_pose)
         ok = _navigate_to(ctx, ctx.start_pose, ctx.approach_timeout, 'RETURN')
-        return 'home' if ok else 'failed'
+        if not ok:
+            return 'failed'
+        # A MISSÃO TERMINA EM HOME (08/10): o braço volta aos switches para
+        # a próxima missão partir de onde esta terminou — sem supor nada.
+        tem_homing = any(t == '/b166er/arm_homed' for t, _ in rospy.get_published_topics())
+        if tem_homing and not _ir_para_home(ctx, 'RETURN/home'):
+            return 'failed'
+        return 'home'
 
 
 class AbortSafe(smach.State):
