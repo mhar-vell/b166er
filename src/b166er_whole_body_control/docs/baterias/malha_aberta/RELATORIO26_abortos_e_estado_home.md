@@ -88,6 +88,22 @@ arame). Servo: 24 alcançadas (mediana 2 mm, máx 3), 1 timeout, 35
 BLOQUEADA — mediana a 4 mm, isto é, fechamentos por estagnação logo acima
 da tolerância de 3 mm, que a missão absorve na iteração seguinte.
 
+## "Rode uma missão completa agora" (10:24–11:10) — três defeitos a mais, nove missões
+
+| run | resultado | o que aconteceu |
+|---|---|---|
+| 1 | ABORT (captura) | o estimador pulou **50° em J3 num ciclo** durante o contato (IK por continuidade cruzou a singularidade) e o servo perseguiu a configuração errada |
+| 2 | OK 32,7° | com o **limitador de taxa** da estimativa (`~q_rate_max_rad_s` 1,0: nenhuma junta real anda mais que isso; saltos maiores são descartados e a estimativa segue o caminho contínuo) |
+| 3 | ABORT (captura) | a descida escorregou o degrau ~15 mm para fora do furo e a IK não conseguia empurrar de volta (J1 bloqueado) — com a tolerância de 8 mm a fase agora FALHA em vez de deixar a libera perder o olhal, mas faltava recuperar |
+| 4 | OK 31,0° | com o **reassentar da captura** (sobe, volta ao ponto do atravessa, desce de novo — o mesmo da libera) |
+| 5 | ABORT (captura, 2×) | eixo travado em **+9,5 mm** (tol 8) nas duas tentativas, J1 pedindo cada vez mais: o alvo da captura pedia eixo **0** (origem no plano do furo), inalcançável — a haste para na face do arame com a origem a 8 mm, o batente que já tinha levado o atravessa a −8 em 02/09. Era o "erro sistemático" de +6…+9 mm de TODAS as capturas |
+| 6 | OK 30,6° | — |
+| 7, 8, 9 | OK 30,9° · 31,8° · 31,9° | com o alvo da captura em **eixo −8 mm**; captura registrada em −9,2 / −8,7 / −8,4 (a haste no arame), lingueta 12,0 / 12,4 / 16,2 mm |
+
+Saldo do dia, com as três correções acumuladas: **8/9 missões em malha aberta**
+(5/5 da bateria + 3/3 finais), e os abortos restantes do dia foram cada um
+um defeito distinto, corrigido na missão seguinte.
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo
@@ -95,4 +111,6 @@ da tolerância de 3 mm, que a missão absorve na iteração seguinte.
   se a libera está completando a soltura (RELATORIO14/16).
 - BLOQUEADA a 4 mm é barulho: o detector de estagnação poderia aceitar
   "parou dentro de 1,5× a tolerância" como alcançada.
+- Captura ainda leva 3–4 iterações em algumas missões (runs 7 e 8): olhar o
+  que falta por eixo depois do alvo em −8.
 - O zero do J2 do modelo (RELATORIO25) continua pendente com o robô.
