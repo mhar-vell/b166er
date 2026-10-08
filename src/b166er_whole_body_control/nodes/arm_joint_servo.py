@@ -58,7 +58,12 @@ class ArmJointServo:
         self._kp        = float(rospy.get_param('~kp', 1.5))          # 1/s
         self._v_max     = float(rospy.get_param('/arm_postures/ramp_velocity', 0.3))
         self._tol_q     = float(rospy.get_param('~tol_q', 0.03))      # rad
-        self._tol_ee    = float(rospy.get_param('~tol_ee', 0.006))    # m (era 0,03; ver abaixo)
+        # 6 → 3 mm (2026-10-08, abortos em malha aberta): com a postura
+        # fechando ao ENTRAR em 6 mm, a ponta parava do lado de onde vinha
+        # — viés de +3 mm em profundidade e em altura em 30 atravessas —
+        # contra tolerâncias de fase de 6/5 mm; 5 de 30 atravessas não
+        # fecharam em 5 iterações. A lei de tarefa chega a 1–3 mm.
+        self._tol_ee    = float(rospy.get_param('~tol_ee', 0.003))    # m (era 0,03 → 0,006 → 0,003)
         self._estavel_s = float(rospy.get_param('~estavel_s', 0.5))
         self._timeout   = float(rospy.get_param('~timeout', 20.0))   # era 30; stow<->deploy leva 11-14 s
         self._vel_to    = float(rospy.get_param('~vel_timeout', 0.5))
@@ -100,7 +105,7 @@ class ArmJointServo:
         self._kp_p      = float(rospy.get_param('~kp_pos', 2.0))      # 1/s
         self._kp_o      = float(rospy.get_param('~kp_ori', 1.5))      # 1/s
         self._tol_ang   = float(rospy.get_param('~tol_ang', 0.05))    # rad (~3°)
-        self._v_fina    = math.radians(float(rospy.get_param('~v_fina_deg', 0.5)))
+        self._v_fina    = math.radians(float(rospy.get_param('~v_fina_deg', 0.25)))   # 0,5 → 0,25 (08/10: com tol 3 mm a ponta parava a 5 mm com todas as juntas em repouso)
         self._dls_lam   = float(rospy.get_param('~dls_lambda', 0.05))
         # Duas etapas (teste de 11:42: resolved-rate direto do stow para o
         # deploy fechou "BLOQUEADA" — com 1,6 rad de erro angular as linhas
@@ -125,7 +130,7 @@ class ArmJointServo:
         # anda, mas o dead reckoning integra o piso — foi assim que q_dr de
         # J1 derivou −25° → −75°. Em repouso a junta só volta a andar quando
         # o erro passa de ~hist× a zona morta.
-        self._hist_fator = float(rospy.get_param('~histerese', 3.0))
+        self._hist_fator = float(rospy.get_param('~histerese', 2.0))   # 3 → 2 (08/10)
         self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.8, 0.0])
@@ -153,6 +158,10 @@ class ArmJointServo:
         # último switch, a postura recolhida como sempre. Enquanto o homing
         # está ativo, posturas e Fuzzy são ignorados.
         self._homing_on_start = bool(rospy.get_param('~homing_on_start', False))
+        # Depois do homing o braço FICA nos switches — é a posição de HOME
+        # do laboratório, de onde a missão parte para o SEARCH (Marco,
+        # 08/10). 'stow' recolhe como antes.
+        self._apos_homing = rospy.get_param('~apos_homing', 'home')
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
@@ -249,7 +258,9 @@ class ArmJointServo:
         self._homing = fila
         self._homing_t0 = None
         self._homing_resultado = {}
-        self._pub_homed.publish(Bool(data=False))
+        # NÃO publica False aqui: /b166er/arm_homed só carrega o RESULTADO
+        # (True/False) — a missão (estado HOME) espera a próxima mensagem
+        # depois de pedir o homing, e um False no início era lido como falha.
         rospy.loginfo('[arm_joint_servo] homing (%s): juntas %s para os switches %s',
                       why, [JOINT_NAMES[j] for j in fila], [int(self._home_side[j]) for j in fila])
 
@@ -276,7 +287,10 @@ class ArmJointServo:
             ok = all(r != 'TIMEOUT' for r in self._homing_resultado.values())
             rospy.loginfo('[arm_joint_servo] homing concluído %s: %s', 'OK' if ok else 'COM FALHA', self._homing_resultado)
             self._pub_homed.publish(Bool(data=ok))
-            self._iniciar_postura(self._q_home, 'recolhido após homing')
+            if self._apos_homing == 'stow':
+                self._iniciar_postura(self._q_home, 'recolhido após homing')
+            else:
+                rospy.loginfo('[arm_joint_servo] homing: braço fica em HOME (nos fins de curso)')
             return np.zeros(5)
         v = np.zeros(5)
         j = self._homing[0]
