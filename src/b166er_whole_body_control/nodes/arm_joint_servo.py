@@ -161,7 +161,7 @@ class ArmJointServo:
         # Depois do homing o braço FICA nos switches — é a posição de HOME
         # do laboratório, de onde a missão parte para o SEARCH (Marco,
         # 08/10). 'stow' recolhe como antes.
-        self._apos_homing = rospy.get_param('~apos_homing', 'home')
+        self._apos_homing = rospy.get_param('~apos_homing', 'switches')   # a missão comanda a HOME POSITION (estado próprio)
         # HOME POSITION (09/10): depois do último switch o braço vem para
         # /arm_postures/home (cintura e rolagem em zero, J2/J3/J4 onde os
         # switches fecham) e só então /b166er/arm_homed é publicado.

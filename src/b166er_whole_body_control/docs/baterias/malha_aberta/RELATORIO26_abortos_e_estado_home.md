@@ -175,6 +175,23 @@ Missão até o HOME, stack limpo (`garra/missao_completa_09out_home`): J4
 verdade [149,2 63,9 −59,2 −109,2 179,3] contra estimativa ancorada nos
 switches [148,5 63,5 −58,5 −108,5 178,5].
 
+## Dois estados: HOMING e HOME_POSITION (09/10, 15:30)
+
+Orientador: "se você está chegando em +150, na HOME POSITION ele deve
+estar em zero graus" e "HOME POSITION é o ponto final do INDO PARA HOME,
+então devemos ter dois estados". A missão passa a começar por **HOMING**
+(registra a pose de partida; recua a base se há obstáculo; leva as cinco
+juntas aos fins de curso — a referência) e **HOME_POSITION** (o ponto
+final: cintura e rolagem em ZERO, apontando para a frente, J2/J3/J4 onde
+os switches fecham — `/arm_postures/home`). É da HOME_POSITION que o
+SEARCH parte, e o RETURN termina com os dois passos. `HOME` e `STOW_INIT`
+seguem aceitos como nomes antigos em `~estado_inicial`/`~estado_final`.
+
+Missão até a HOME_POSITION, stack limpo, braço acordando em J1 −30° e
+J5 +40°: HOMING 59 s (J4 10,4, J3 7,8, J2 8,7, J5 13,9, J1 17,9),
+HOME_POSITION 14 s; verdade [0,1 63,5 −58,6 −108,5 −0,1] contra
+estimativa [−0,1 63,5 −58,5 −108,5 −0,1].
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo

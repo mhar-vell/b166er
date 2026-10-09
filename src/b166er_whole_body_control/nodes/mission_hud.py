@@ -49,7 +49,7 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Float64, String
 
-ESTADOS = ['HOME', 'SEARCH', 'APPROACH', 'REFINE', 'DEPLOY',
+ESTADOS = ['HOMING', 'HOME_POSITION', 'SEARCH', 'APPROACH', 'REFINE', 'DEPLOY',
            'MANIPULATE', 'RETRACT', 'RETURN']
 # Fases cartesianas do MANIPULATE (PHASE_ORDER em chave_mission.py).
 FASES = ['orienta', 'aproxima_lateral', 'atravessa', 'captura',
