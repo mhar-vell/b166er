@@ -1,0 +1,95 @@
+[ERROR] [1789135688.024465, 254.709000]: [mission] SEARCH: tag não encontrada em 90s
+[WARN] [1789135688.032397, 254.714000]: [mission] ABORT — parando base e recolhendo braço
+[WARN] [1789135703.063711, 265.530000]: [mission] ABORT — voltando à pose de partida (-0.01, 1.00, 0.00 rad)
+[INFO] [1789135553.619900, 158.341000]: State machine starting in initial state 'STOW_INIT' with userdata: 
+	[]
+[INFO] [1789135553.895920, 158.546000]: [mission] pose de partida registrada: (-0.01, 1.00, 0.00 rad)
+[INFO] [1789135553.899519, 158.549000]: [mission] postura "stow_home" comandada: [0.0, 1.13, -1.04, -1.8, 0.0]
+[INFO] [1789135554.042644, 158.651000]: State machine transitioning 'STOW_INIT':'ok'-->'SEARCH'
+[INFO] [1789135554.046046, 158.651000]: [mission] postura "search" comandada: [0.0, 1.0, -1.0, 0.0, 0.0]
+[INFO] [1789135562.720226, 164.655000]: [mission] SEARCH — girando à procura da tag...
+[INFO] [1789135562.723078, 164.655000]: [mission] SEARCH: amostra quando a tag estiver a raio 0.35-0.50 do quadro (vista oblíqua; omega fina 0.15 rad/s)
+[INFO] [1789135688.027919, 254.711000]: State machine transitioning 'SEARCH':'failed'-->'ABORT_SAFE'
+[INFO] [1789135688.565909, 255.118000]: [mission] ABORT/afasta: RECUANDO 0.250 m só com as rodas
+[INFO] [1789135694.835117, 259.521000]: [mission] ABORT/afasta: concluído (0.250 m)
+[INFO] [1789135694.843061, 259.528000]: [mission] postura "stow_home" comandada: [0.0, 1.13, -1.04, -1.8, 0.0]
+[INFO] [1789135705.540586, 267.182000]: [mission] ABORT/retorno: alinhado, avançando (0.23 m)
+[INFO] [1789135705.610463, 267.232000]: [mission] teto por postura ativo no drive: v<=0.23 w<=0.50 rampa 0.51/1.52
+[INFO] [1789135789.145211, 324.283000]: [mission] ABORT/retorno: chegou, ajustando heading final
+[INFO] [1789135789.213949, 324.332000]: [mission] teto por postura ativo no drive: v<=0.22 w<=0.50 rampa 0.51/1.52
+[INFO] [1789135790.895224, 325.582000]: [mission] ABORT/retorno: concluído
+[INFO] [1789135790.899132, 325.584000]: State machine terminating 'ABORT_SAFE':'aborted':'MISSION_ABORTED'
+[INFO] [1789135790.903598, 325.586000]: [mission] resultado: MISSION_ABORTED
+... logging to /home/robo/.ros/log/5fcef3a8-ade9-11f1-8b3c-3413e824a1df/roslaunch-b166er-nuc-13529.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+Done checking log file disk usage. Usage is <1GB.
+]2;/home/robo/b166er/src/b166er_whole_body_control/launch/chave_mission.launch
+[1mstarted roslaunch server http://b166er-nuc:39651/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /chave_mission/estado_final: 
+ * /chave_mission/estado_inicial: STOW_INIT
+ * /chave_mission/pausa_por_fase: False
+ * /chave_mission/search_omega: 0.35
+ * /chave_mission/standoff_distance: 0.62
+ * /chave_mission/use_wholebody: False
+ * /chave_seccionadora_task/aproxima_lateral/modo: ik
+ * /chave_seccionadora_task/aproxima_lateral/offset_xyz_m: [-0.09, 0.0, 0.01]
+ * /chave_seccionadora_task/aproxima_lateral/tol_xyz_m: [0.04, 0.008, 0.005]
+ * /chave_seccionadora_task/arco1/blade_angle_deg: 15
+ * /chave_seccionadora_task/arco1/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco1/modo: wb
+ * /chave_seccionadora_task/arco1/offset_xyz_m: [0.0, 0.0518, -0....
+ * /chave_seccionadora_task/arco1/soltura_recuo_min_m: 0.04
+ * /chave_seccionadora_task/arco1/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/arco2/blade_angle_deg: 30
+ * /chave_seccionadora_task/arco2/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco2/modo: wb
+ * /chave_seccionadora_task/arco2/offset_xyz_m: [0.0, 0.1, -0.0518]
+ * /chave_seccionadora_task/arco2/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/atravessa/modo: ik
+ * /chave_seccionadora_task/atravessa/offset_xyz_m: [-0.008, 0.0, 0.01]
+ * /chave_seccionadora_task/atravessa/tol_xyz_m: [0.008, 0.006, 0....
+ * /chave_seccionadora_task/captura/modo: ik
+ * /chave_seccionadora_task/captura/offset_xyz_m: [0.0, 0.0, -0.01]
+ * /chave_seccionadora_task/captura/tol_xyz_m: [0.04, 0.006, 0.01]
+ * /chave_seccionadora_task/desengata/modo: ik
+ * /chave_seccionadora_task/desengata/offset_xyz_m: [-0.09, 0.1, -0.0...
+ * /chave_seccionadora_task/destrava/curso_estagna_m: 0.01
+ * /chave_seccionadora_task/destrava/curso_margem_m: 0.002
+ * /chave_seccionadora_task/destrava/curso_min_m: 0.018
+ * /chave_seccionadora_task/destrava/modo: wb
+ * /chave_seccionadora_task/destrava/offset_xyz_m: [0.0, 0.0, -0.025]
+ * /chave_seccionadora_task/destrava/tol_xyz_m: [0.04, 0.006, 0.004]
+ * /chave_seccionadora_task/libera/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/libera/modo: wb
+ * /chave_seccionadora_task/libera/offset_xyz_m: [0.0, 0.03, -0.025]
+ * /chave_seccionadora_task/libera/tol_xyz_m: [0.04, 0.008, 0.006]
+ * /chave_seccionadora_task/orienta/modo: ik
+ * /chave_seccionadora_task/orienta/offset_xyz_m: [-0.09, 0.15, 0.0...
+ * /chave_seccionadora_task/reassenta_sobe/tol_xyz_m: [0.03, 0.02, 0.005]
+ * /chave_seccionadora_task/saida_eixo/tol_xyz_m: [0.02, 0.02, 0.015]
+ * /chave_seccionadora_task/saida_fora/tol_xyz_m: [0.03, 0.02, 0.02]
+ * /chave_seccionadora_task/saida_sobe/tol_xyz_m: [0.03, 0.02, 0.01]
+ * /chave_seccionadora_task/target_frame: chave_olhal_link
+ * /fuzzy_wb_controller/fixed_gains: []
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    chave_mission (b166er_whole_body_control/chave_mission.py)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/home/robo/b166er/src/b166er_whole_body_control/launch/chave_mission.launch http://localhost:11311
+[1mprocess[chave_mission-1]: started with pid [13553][0m
+[1m[chave_mission-1] process has finished cleanly
+log file: /home/robo/.ros/log/5fcef3a8-ade9-11f1-8b3c-3413e824a1df/chave_mission-1*.log[0m
+all processes on machine have died, roslaunch will exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
