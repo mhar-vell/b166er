@@ -192,6 +192,24 @@ J5 +40°: HOMING 59 s (J4 10,4, J3 7,8, J2 8,7, J5 13,9, J1 17,9),
 HOME_POSITION 14 s; verdade [0,1 63,5 −58,6 −108,5 −0,1] contra
 estimativa [−0,1 63,5 −58,5 −108,5 −0,1].
 
+## Bateria com o fluxo completo (`garra/bateria_home_09out`, 09/10 18:16–18:46)
+
+Cinco missões, cada uma partindo do braço "acordado" longe dos switches
+(J1 −30°, J5 +40°), com HOMING, HOME_POSITION, missão e volta ao HOME:
+
+| run | resultado | lâmina | orienta/aprox/atravessa/captura | HOMING · HOME_POSITION · fim em HOME |
+|---|---|---|---|---|
+| 1 | OK | 31,5° | 1 / 1 / 1 / 1 | ✓ · ✓ · ✓ |
+| 2 | OK | 31,2° | 1 / 1 / 1 / 1 | ✓ · ✓ · ✓ |
+| 3 | OK | 30,5° | 1 / 1 / 1 / 1 | ✓ · ✓ · ✓ |
+| 4 | OK | 30,3° | 1 / 1 / 1 / 1 | ✓ · ✓ · ✓ |
+| 5 | OK | 30,8° | 1 / 1 / 1 / 3 | ✓ · ✓ · ✓ |
+
+**5/5**, ~6 min por missão (dos quais ~75 s de homing no início e ~15 s no
+fim). Com a missão completa avulsa das 16:05 (30,9°): 6/6 no dia com o
+fluxo que a bancada vai usar. Os `run.log` desta bateria são os primeiros
+versionados (ver a nota do `.gitignore`).
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo
