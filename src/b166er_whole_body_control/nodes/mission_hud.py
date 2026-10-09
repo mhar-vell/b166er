@@ -174,10 +174,23 @@ class Hud(object):
                 return abrev.get(nome, nome)
             return nomes.get(nome, nome)
         itens = []
+        # HOMING É UM PROCESSO, HOME_POSITION É UM OU ZERO (Marco, 09/10):
+        # "começamos com o HOMING já dado um check, mas na verdade é um
+        # processo, e o HOME POSITION é um ou zero. Então o HOMING ficará
+        # em amarelo até chegar em HOME POSITION". Enquanto a missão está
+        # em HOMING ou em HOME_POSITION, HOMING fica ▶ amarelo e
+        # HOME_POSITION fica · (zero); os dois só ganham ✓ quando a missão
+        # passa de HOME_POSITION (um).
+        PROCESSO = {'HOMING': 'HOME_POSITION'}
         for i, nome in enumerate(seq):
+            fim = PROCESSO.get(nome)
             if apagada:
                 itens.append(C + ('✓' if 0 <= i <= i_at else '·')
                              + rot(i, nome) + F)
+            elif fim and atual in (nome, fim):
+                itens.append(N + A + '▶' + rot(i, nome) + F)
+            elif nome in PROCESSO.values() and i == i_at:
+                itens.append(C + '·' + rot(i, nome) + F)
             elif i_at >= 0 and i < i_at:
                 itens.append(V + '✓' + rot(i, nome) + F)
             elif i == i_at:
