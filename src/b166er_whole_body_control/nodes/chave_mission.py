@@ -1426,7 +1426,7 @@ def _ir_para_home(ctx, tag):
             return False
     ctx.homed = None
     ctx.pub_home_cmd.publish(Bool(data=True))
-    rospy.loginfo('[mission] %s: homing pelos fins de curso (J4, J3, J2)', tag)
+    rospy.loginfo('[mission] %s: homing pelos fins de curso (J4, J3, J2, J5, J1)', tag)
     t0 = rospy.Time.now(); rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if ctx.homed is True:

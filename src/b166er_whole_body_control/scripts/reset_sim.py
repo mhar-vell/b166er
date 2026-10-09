@@ -37,10 +37,10 @@ STOW = [0.0, 1.10, -1.04, -1.8, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 
 # simulação"). O reset deixava o braço no stow, encostado nos switches, e o
 # homing do estado HOME fechava em 1–2 s sem andar — a missão nunca ensaiava
 # o homing de verdade. Agora o reset deixa o braço numa postura "de
-# desligado", longe dos três switches (J2 +20°, J3 −20°, J4 −57°), e a
+# desligado", longe dos switches (J1 −30°, J2 +20°, J3 −20°, J4 −57°, J5 +40°), e a
 # missão tem de fazer o homing inteiro para partir (como na bancada, onde o
 # braço acorda onde foi deixado). --postura stow recupera o antigo.
-ACORDA = [0.0, 0.35, -0.35, -1.0, 0.0]
+ACORDA = [-0.52, 0.35, -0.35, -1.0, 0.70]   # J1 −30° e J5 +40° (09 Out): J1 e J5 também fazem homing
 ALVO = ACORDA
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar
