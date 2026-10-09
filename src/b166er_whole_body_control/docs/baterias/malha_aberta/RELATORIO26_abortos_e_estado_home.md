@@ -210,6 +210,31 @@ fim). Com a missão completa avulsa das 16:05 (30,9°): 6/6 no dia com o
 fluxo que a bancada vai usar. Os `run.log` desta bateria são os primeiros
 versionados (ver a nota do `.gitignore`).
 
+## Bateria SEM a âncora da base (`garra/bateria_sem_ancora_09out`, 19:07–19:39)
+
+Orientador: "e toda essa bateria, não foi usado os 'encoders' do Gazebo,
+correto?". Auditoria: o controle do braço (estimador, servo, Fuzzy,
+decisões da missão) não lê as juntas do Gazebo; o firmware emulado lê, como
+planta (freio, switches, anti-windup); a missão lê a lâmina como JUIZ do
+MISSION_OK e a lingueta só para o log; e a **âncora da base** — teleporte
+do Gazebo que devolve o chassi à pose ancorada quando ele deriva nas fases
+de manipulação (artefato da física) — era a única intervenção do
+simulador no caminho crítico. `ancora_base:=false` (arg novo do
+`chave_mission.launch`) e cinco missões com o fluxo completo:
+
+| run | resultado | lâmina | orienta/aprox/atravessa/captura | descida do destrava | correções da âncora |
+|---|---|---|---|---|---|
+| 1 | OK | 32,0° | 1 / 4 / 1 / 1 | 23,1 mm | 0 |
+| 2 | OK | 29,5° | 1 / 1 / 1 / 1 | 15,2 mm | 0 |
+| 3 | OK | 32,5° | 1 / 2 / 2 / 5 | 19,3 mm | 0 |
+| 4 | OK | 32,0° | 1 / 1 / 1 / 2 | 20,2 mm | 0 |
+| 5 | OK | 31,7° | 2 / 1 / 1 / 1 | 17,5 mm | 0 |
+
+**5/5 sem a muleta.** A deriva do chassi custa iterações (aproxima 4,
+captura 5 numa run), que a malha da T265 absorve. A âncora não escondia
+fragilidade da manipulação; fica como opção, ligada por padrão para as
+baterias de regressão compararem com o histórico.
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo

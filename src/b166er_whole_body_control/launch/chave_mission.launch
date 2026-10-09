@@ -95,6 +95,10 @@
   <env name="B166ER_J2_MAX_DEG" value="$(arg j2_max_deg)"/>
   <arg name="estado_inicial" default="HOMING"/>
   <arg name="estado_final"   default=""/>
+  <!-- ancora_base:=false desliga a ÂNCORA da base (teleporte do Gazebo que
+       compensa a deriva do chassi nas fases de manipulação) — muleta só de
+       simulação; false = o braço em malha aberta tem de aguentar a deriva. -->
+  <arg name="ancora_base"    default="true"/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
@@ -117,5 +121,6 @@
     <param name="use_wholebody"     value="$(arg use_wholebody)"/>
     <param name="estado_inicial"    value="$(arg estado_inicial)"/>
     <param name="estado_final"      value="$(arg estado_final)"/>
+    <param name="ancora_base"       value="$(arg ancora_base)"/>
   </node>
 </launch>
