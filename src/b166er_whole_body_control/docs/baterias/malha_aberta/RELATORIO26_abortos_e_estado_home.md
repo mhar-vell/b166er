@@ -155,6 +155,26 @@ homing em 1,2 / 0,0 / 0,1 s (o RETRACT já tinha recolhido). A detecção de
 junta presa não foi exercitada (não houve contato no homing): testar
 deliberadamente com o braço acordando dentro do olhal.
 
+## J1 e J5 entram no homing (09/10)
+
+Orientador: "como você sabe que está em zero no J1? Eu não vi nenhum
+movimento do J1 para nenhum dos lados para encontrar o switch". Não sabia:
+o 0° era a verdade do Gazebo. Eu tinha deixado J1 e J5 de fora do homing
+supondo que a T265 os observa — vale na simulação, onde câmera e odometria
+compartilham o referencial; no robô real a GUINADA da T265 é relativa a
+onde ela acordou, que depende do J1 ao ligar, e a rolagem só identifica o
+J5 em parte. Decisão: "inclui J1 e J5 no homing, J1 procura o switch de
+trás". Ordem J4 → J3 → J2 → J5 → J1 (a cintura por último, com o braço já
+recolhido); J1 para o switch de +150° do modelo (cintura girando para a
+esquerda, vista de trás, até apontar para trás — se o lado livre do
+laboratório for o outro, `home_side[0] = -1`); J5 para +180°. O reset
+"acorda" o braço com J1 −30° e J5 +40° para o homing ser real.
+
+Missão até o HOME, stack limpo (`garra/missao_completa_09out_home`): J4
+10,4 s, J3 7,8 s, J2 8,7 s, **J5 13,9 s, J1 17,9 s** (59 s no total);
+verdade [149,2 63,9 −59,2 −109,2 179,3] contra estimativa ancorada nos
+switches [148,5 63,5 −58,5 −108,5 178,5].
+
 ## Pendências
 
 - Lingueta a 7–9 mm em três runs (esperado ≥ 12) e a chave abriu mesmo
