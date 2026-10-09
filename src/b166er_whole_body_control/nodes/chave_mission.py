@@ -1430,7 +1430,7 @@ def _ir_para_home(ctx, tag):
     t0 = rospy.Time.now(); rate = rospy.Rate(10)
     while not rospy.is_shutdown():
         if ctx.homed is True:
-            rospy.loginfo('[mission] %s: braço nos três fins de curso — em HOME', tag)
+            rospy.loginfo('[mission] %s: switches achados e braço em HOME POSITION (J1/J5 em zero)', tag)
             return True
         if ctx.homed is False:
             rospy.logerr('[mission] %s: homing terminou com falha (junta presa ou switch não alcançado) — '

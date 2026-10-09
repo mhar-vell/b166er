@@ -162,6 +162,12 @@ class ArmJointServo:
         # do laboratório, de onde a missão parte para o SEARCH (Marco,
         # 08/10). 'stow' recolhe como antes.
         self._apos_homing = rospy.get_param('~apos_homing', 'home')
+        # HOME POSITION (09/10): depois do último switch o braço vem para
+        # /arm_postures/home (cintura e rolagem em zero, J2/J3/J4 onde os
+        # switches fecham) e só então /b166er/arm_homed é publicado.
+        # 'switches' deixa o braço nos fins de curso (comportamento de 08/10).
+        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.108, -1.021, -1.894, 0.0]), dtype=float)
+        self._homing_para_home = False
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
@@ -331,11 +337,15 @@ class ArmJointServo:
         if not self._homing:
             ok = all(r not in ('TIMEOUT', 'BLOQUEADA') for r in self._homing_resultado.values())
             rospy.loginfo('[arm_joint_servo] homing concluído %s: %s', 'OK' if ok else 'COM FALHA', self._homing_resultado)
-            self._pub_homed.publish(Bool(data=ok))
-            if self._apos_homing == 'stow':
+            if not ok or self._apos_homing == 'switches':
+                self._pub_homed.publish(Bool(data=ok))
+                rospy.loginfo('[arm_joint_servo] homing: braço fica nos fins de curso')
+            elif self._apos_homing == 'stow':
+                self._pub_homed.publish(Bool(data=ok))
                 self._iniciar_postura(self._q_home, 'recolhido após homing')
             else:
-                rospy.loginfo('[arm_joint_servo] homing: braço fica em HOME (nos fins de curso)')
+                self._homing_para_home = True
+                self._iniciar_postura(self._q_home_pos, 'HOME POSITION após os switches')
             return np.zeros(5)
         v = np.zeros(5)
         j = self._homing[0]
@@ -459,6 +469,11 @@ class ArmJointServo:
         self._q_alvo = None
         self._pub_ok.publish(Bool(data=(como == 'alcançada')))   # antes do reached (latched)
         self._pub_reached.publish(Bool(data=True))
+        if self._homing_para_home:
+            self._homing_para_home = False
+            ok = como in ('alcançada', 'BLOQUEADA')   # bloqueada = parou a poucos mm, ainda é HOME
+            rospy.loginfo('[arm_joint_servo] HOME POSITION %s (%s)', 'alcançada' if ok else 'NÃO alcançada', como)
+            self._pub_homed.publish(Bool(data=ok))
 
     # ------------------------------------------------------------ laço
     def spin(self):
