@@ -13,7 +13,9 @@ from b166er_whole_body_control.kinematics import fk_arm_joint_frames
 
 cfg = yaml.safe_load(open('src/b166er_whole_body_control/config/arm_switches.yaml'))
 LO = np.array(cfg['lower_deg']); UP = np.array(cfg['upper_deg']); MG = cfg['margem_deg']
-SIDE = cfg['home_side']; ORDEM = cfg['home_ordem']; J2MIN = UP[1] - cfg['j2_curso_deg']
+SIDE = cfg['home_side']; ORDEM = cfg['home_ordem']
+import os
+J2MIN = float(os.environ.get('B166ER_J2_MIN_DEG', '-65.0'))   # limite de software do J2 (padrão = extremo do modelo)
 STOW = np.array([0.0, 1.10, -1.04, -1.8, 0.0]); STOWd = np.degrees(STOW)
 DEPLOY = np.array([-0.19, -0.81, 1.047, 1.368, -0.19])
 NOMES = ['J1 cintura', 'J2 ombro', 'J3 cotovelo', 'J4 punho (arfagem)', 'J5 punho (rolagem)']
@@ -63,12 +65,12 @@ for k, prox in ((1, 2), (2, 3), (3, 5)):
         ax.annotate('switch %+d\n%.1f°' % (lado, a), p, textcoords='offset points', xytext=(8, 8 if lado > 0 else -22),
                     fontsize=8, color=cores[k])
     # setor proibido do J2 (abaixo do limite de software)
-    if k == 1:
+    if k == 1 and J2MIN > LO[k] + 0.5:
         ang_p = np.linspace(LO[k], J2MIN, 40)
         pp = np.array([ponto(a) for a in ang_p])
         ax.fill(np.r_[centro[0], pp[:, 0]], np.r_[centro[1], pp[:, 1]], color='#c33', alpha=0.15, lw=0)
         p = ponto(J2MIN); ax.plot(p[0], p[1], 'x', color='#c33', ms=12, mew=3, zorder=8)
-        ax.annotate('limite de SOFTWARE %.0f°\n(switch de trás − %.0f°)' % (J2MIN, cfg['j2_curso_deg']), p,
+        ax.annotate('limite de SOFTWARE %.0f°\n(B166ER_J2_MIN_DEG)' % J2MIN, p,
                     textcoords='offset points', xytext=(-175, -34), fontsize=8.5, color='#c33', weight='bold')
     # seta do homing: do stow ao switch escolhido
     if SIDE[k] != 0:
