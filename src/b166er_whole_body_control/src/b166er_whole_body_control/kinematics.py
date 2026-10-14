@@ -19,23 +19,39 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 JOINT_NAMES   = ['J1', 'J2', 'J3', 'J4', 'J5']
-JOINT_LOWER   = np.array([-2.61799, -1.13446, -1.04720, -1.91986, -3.14159])
-JOINT_UPPER   = np.array([ 2.61799,  1.13446,  1.04720,  1.91986,  3.14159])
+# LIMITES DE TRABALHO DO RV-M2 RETROFITADO (14 Out 2026). Não são os do
+# manual repartidos ao meio (±150/±65/±60/±110): são os que o Cerbaro
+# definiu ao instalar os fins de curso (dissertação, Tabela 2, p. 42; home
+# nos switches na Tabela 3, p. 47):
+#   J1 ±100°   (chapa do switch invertida; ele ainda limitava a ±90 por software)
+#   J2 −30° … +100°, switch de trás (home) em +106°
+#   J3 −120° … 0°,   switch (home) em −123°  → o cotovelo só dobra para um lado
+#   J4 ±100°   (chapa movida para a câmera não bater no corpo; manual ±110)
+#   J5 ±180°
+# Mesma convenção de zero do nosso modelo (J2 = 0 é o braço superior na
+# horizontal à frente, 90 a vertical): o switch de trás a 106° fica ~16°
+# depois da vertical, como na foto do Marco (14 Out). O URDF tem os BATENTES
+# nos switches (config/arm_switches.yaml); aqui fica o limite de TRABALHO =
+# o ângulo em que cada switch FECHA (nominal ∓ margem de 1,5°): J1 ±98,5,
+# J2 −30 … 104,5, J3 −121,5 … 0, J4 ±98,5, J5 ±178,5. Regra única: a IK
+# pode ir até onde o firmware corta o sentido, nunca além — e a postura
+# home (J2/J3 nos switches) fica DENTRO da faixa. O Cerbaro apertava J2/J3
+# por software a 100/−120 (Tabela 2); isso cabe em j2_max_deg se for
+# preciso. Decisão do Marco (14 Out 2026): "vc vai considerar os switches
+# nas posições originais que Cerbaro adotou" — sim; "pode seguir com a
+# correção do modelo".
+JOINT_LOWER   = np.array([-1.71915, -0.52360, -2.12058, -1.71915, -3.11541])
+JOINT_UPPER   = np.array([ 1.71915,  1.82387,  0.00000,  1.71915,  3.11541])
 # LIMITES DO J2 POR SOFTWARE (B166ER_J2_MIN_DEG / B166ER_J2_MAX_DEG, args
 # j2_min_deg / j2_max_deg de b166er_wb.launch e chave_mission.launch; vêm do
-# ambiente pelo mesmo motivo do GARRA_DX). Valem para a IK (toda solução
-# nasce dentro), para o servo e para o Fuzzy. HISTÓRICO (07–08 Out 2026): o
-# Marco pediu "0 a 65" olhando o desenho das juntas, mas a convenção do
-# modelo (J2 = 0 é o braço superior na horizontal à frente, 90 a vertical)
-# não casa com o robô, cujo switch de trás fica depois da vertical — o zero
-# do J2 do modelo está deslocado e isso é pendência com o robô real. Com o
-# J2 >= 0 a IK não fecha no olhal (resíduo 28 mm). Decisão (08 Out): "por
-# enquanto vamos trabalhar com estes modelos e considerar a atuação dos
-# switches nestes extremos das juntas" — padrão = extremos do modelo
-# (−65/+65), switch em cada ponta; o J2 só faz homing para trás (+65).
-J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-65.0'))
+# ambiente pelo mesmo motivo do GARRA_DX). Só APERTAM a faixa acima (nunca
+# alargam). Valem para a IK (toda solução nasce dentro), para o servo e
+# para o Fuzzy. HISTÓRICO: 07–08 Out 2026 o Marco pediu "0 a 65" olhando o
+# desenho das juntas do modelo antigo (±65); em 14 Out o zero do J2 foi
+# acertado pela dissertação do Cerbaro e a faixa passou a ser a real.
+J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-30.0'))
 JOINT_LOWER[1] = max(JOINT_LOWER[1], np.radians(J2_MIN_DEG))
-J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '65.0'))
+J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '104.5'))
 JOINT_UPPER[1] = min(JOINT_UPPER[1], np.radians(J2_MAX_DEG))
 
 # IK
