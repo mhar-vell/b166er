@@ -30,7 +30,7 @@ from b166er_whole_body_control.kinematics import (
 from movemaster_msg.msg import setpoint as SetpointMsg
 
 # Mesma HOME_Q do gazebo_arm_bridge: pose não-singular para warm-start do IK
-_HOME_Q = np.array([0.0, -0.5, 0.8, 0.0, 0.0])
+_HOME_Q = np.array([0.0, 0.5, -0.8, -0.5, 0.0])   # 14 Out 2026: dentro dos limites reais (J3 ≤ 0); era [0, -0.5, +0.8, 0, 0]
 
 
 def _odom_to_matrix(odom):
@@ -127,7 +127,10 @@ class StateEstimator:
         # tem o sinal contrário, a IK é resolvida do espelho e, se ele tem o
         # sinal certo com resíduo igual ou melhor, substitui. Postura
         # alcançada reancora o sinal esperado no alvo.
-        self._ramo_sinal   = bool(rospy.get_param('~ramo_sinal', True))
+        # 14 Out 2026: DESLIGADO por padrão. Com os limites reais (Cerbaro,
+        # Tabela 2) J3 vive em −120° … 0°: o cotovelo só dobra para um lado
+        # e não existe o espelho — a IK já nasce no ramo certo pelo clip.
+        self._ramo_sinal   = bool(rospy.get_param('~ramo_sinal', False))
         self._j3_zona      = math.radians(float(rospy.get_param('~j3_zona_deg', 8.0)))
         self._j3_sinal     = float(np.sign(_HOME_Q[2])) if abs(_HOME_Q[2]) > 1e-3 else None
         # FINS DE CURSO como referência absoluta (2026-10-07, bateria 6):

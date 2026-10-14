@@ -133,7 +133,7 @@ class ArmJointServo:
         self._hist_fator = float(rospy.get_param('~histerese', 2.0))   # 3 → 2 (08/10)
         self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
-        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.8, 0.0])
+        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.70, 0.0])
         self._q_home = np.array(home, dtype=float)
 
         self._state = None
@@ -166,7 +166,7 @@ class ArmJointServo:
         # /arm_postures/home (cintura e rolagem em zero, J2/J3/J4 onde os
         # switches fecham) e só então /b166er/arm_homed é publicado.
         # 'switches' deixa o braço nos fins de curso (comportamento de 08/10).
-        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.108, -1.021, -1.894, 0.0]), dtype=float)
+        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.82387, -2.12058, 0.0, 0.0]), dtype=float)
         self._homing_para_home = False
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]

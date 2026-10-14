@@ -70,7 +70,7 @@ class GazeboArmBridge:
         self._reached_tol = rospy.get_param('/arm_postures/reached_tolerance', 0.02)
         self._goto_home   = rospy.get_param('~goto_home_on_start', True)
         home_list = rospy.get_param('/arm_postures/stow_home',
-                                    [0.0, 1.1, -1.0, -1.8, 0.0])
+                                    [0.0, 1.1, -1.0, -1.70, 0.0])
         self._q_home = np.clip(np.array(home_list, dtype=float),
                                JOINT_LOWER, JOINT_UPPER)
         self._q_posture_target = None    # None = sem postura ativa

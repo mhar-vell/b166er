@@ -31,7 +31,7 @@ from std_msgs.msg import Bool
 from std_srvs.srv import Empty
 from tf.transformations import euler_from_quaternion
 
-STOW = [0.0, 1.10, -1.04, -1.8, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out)
+STOW = [0.0, 1.10, -1.04, -1.70, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out; J4 −1,70 desde 14 Out, limite ±100°)
 # COMO O ROBÔ ACORDA (2026-10-08, preocupação do Marco: "o home position deve
 # ser setado logo no início da missão na vida real e eu não vi isso na
 # simulação"). O reset deixava o braço no stow, encostado nos switches, e o
