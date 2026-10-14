@@ -161,7 +161,13 @@ class ArmJointServo:
         # Depois do homing o braço FICA nos switches — é a posição de HOME
         # do laboratório, de onde a missão parte para o SEARCH (Marco,
         # 08/10). 'stow' recolhe como antes.
-        self._apos_homing = rospy.get_param('~apos_homing', 'home')
+        self._apos_homing = rospy.get_param('~apos_homing', 'switches')   # a missão comanda a HOME POSITION (estado próprio)
+        # HOME POSITION (09/10): depois do último switch o braço vem para
+        # /arm_postures/home (cintura e rolagem em zero, J2/J3/J4 onde os
+        # switches fecham) e só então /b166er/arm_homed é publicado.
+        # 'switches' deixa o braço nos fins de curso (comportamento de 08/10).
+        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.108, -1.021, -1.894, 0.0]), dtype=float)
+        self._homing_para_home = False
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
@@ -179,6 +185,22 @@ class ArmJointServo:
         self._homing = []          # fila de índices de junta ainda por fazer
         self._homing_t0 = None
         self._homing_resultado = {}
+        # "IR PARA HOME" de qualquer lugar (Marco, 08/10: "deve existir um
+        # processo para ir à HOME, pois nada garante que o robô esteja na
+        # posição que precisamos entre uma missão e outra"). Sem encoder o
+        # único sinal de que a junta ANDA é a T265: se, comandando a junta,
+        # a ponta não se desloca ~homing_bloqueio_mm em ~homing_bloqueio_s,
+        # a junta está presa (contato, batente, obstáculo) — recua
+        # ~homing_recuo_s no sentido oposto e tenta de novo UMA vez; na
+        # segunda, a junta fica 'BLOQUEADA' e o homing falha (a missão
+        # trata). Junta já no switch passa direto.
+        self._hb_mm   = float(rospy.get_param('~homing_bloqueio_mm', 3.0))
+        self._hb_s    = float(rospy.get_param('~homing_bloqueio_s', 2.0))
+        self._hrec_s  = float(rospy.get_param('~homing_recuo_s', 1.5))
+        self._h_fase  = 'avanca'     # avanca | recua
+        self._h_tent  = 0
+        self._h_hist  = []           # (t, p_ee) durante o avanço da junta atual
+        self._h_t_rec = None
         self._pub_homed = rospy.Publisher('/b166er/arm_homed', Bool, queue_size=1, latch=True)
         rospy.Subscriber('/b166er/arm_limit_switch', JointState, self._cb_ls, queue_size=1)
         rospy.Subscriber('/b166er/arm_home_cmd', Bool, self._cb_home_cmd, queue_size=1)
@@ -258,6 +280,7 @@ class ArmJointServo:
         self._homing = fila
         self._homing_t0 = None
         self._homing_resultado = {}
+        self._h_fase, self._h_tent, self._h_hist, self._h_t_rec = 'avanca', 0, [], None
         # NÃO publica False aqui: /b166er/arm_homed só carrega o RESULTADO
         # (True/False) — a missão (estado HOME) espera a próxima mensagem
         # depois de pedir o homing, e um False no início era lido como falha.
@@ -273,24 +296,56 @@ class ArmJointServo:
         if self._homing_t0 is None:
             self._homing_t0 = agora
         lado = self._home_side[j]
-        if self._ls[j] == lado:
-            self._homing_resultado[JOINT_NAMES[j]] = 'switch %+d em %.1f s' % (int(lado), (agora - self._homing_t0).to_sec())
-            rospy.loginfo('[arm_joint_servo] homing: %s no switch %+d (%.1f s)',
-                          JOINT_NAMES[j], int(lado), (agora - self._homing_t0).to_sec())
+        t_j = (agora - self._homing_t0).to_sec()
+        def _proxima(resultado):
+            self._homing_resultado[JOINT_NAMES[j]] = resultado
             self._homing.pop(0); self._homing_t0 = None
-        elif (agora - self._homing_t0).to_sec() > self._home_to:
-            self._homing_resultado[JOINT_NAMES[j]] = 'TIMEOUT'
+            self._h_fase, self._h_tent, self._h_hist, self._h_t_rec = 'avanca', 0, [], None
+        if self._h_fase == 'recua':
+            if (agora - self._h_t_rec).to_sec() >= self._hrec_s:
+                self._h_fase, self._h_hist = 'avanca', []
+                rospy.logwarn('[arm_joint_servo] homing: %s — recuou, tentando o switch de novo (%d/2)',
+                              JOINT_NAMES[j], self._h_tent + 1)
+            else:
+                v = np.zeros(5); v[j] = -lado * max(self._home_v[j], self._v_piso)
+                return v
+        elif self._ls[j] == lado:
+            _proxima('switch %+d em %.1f s' % (int(lado), t_j))
+            rospy.loginfo('[arm_joint_servo] homing: %s no switch %+d (%.1f s)', JOINT_NAMES[j], int(lado), t_j)
+        elif t_j > self._home_to:
+            _proxima('TIMEOUT')
             rospy.logwarn('[arm_joint_servo] homing: %s não chegou ao switch %+d em %.0f s — seguindo',
                           JOINT_NAMES[j], int(lado), self._home_to)
-            self._homing.pop(0); self._homing_t0 = None
+        else:
+            # bloqueio: a ponta (T265) não se desloca enquanto a junta é comandada
+            if self._p_ee is not None:
+                self._h_hist.append((agora.to_sec(), self._p_ee.copy()))
+                self._h_hist = [h for h in self._h_hist if agora.to_sec() - h[0] <= self._hb_s + 0.05]
+                if (len(self._h_hist) > 3 and agora.to_sec() - self._h_hist[0][0] >= self._hb_s
+                        and max(float(np.linalg.norm(h[1] - self._h_hist[0][1])) for h in self._h_hist[1:]) < self._hb_mm / 1000.0):
+                    self._h_tent += 1
+                    if self._h_tent >= 2:
+                        rospy.logerr('[arm_joint_servo] homing: %s BLOQUEADA — a ponta não se move comandando o switch %+d (2 tentativas)',
+                                     JOINT_NAMES[j], int(lado))
+                        _proxima('BLOQUEADA')
+                    else:
+                        rospy.logwarn('[arm_joint_servo] homing: %s presa (ponta parada %.1f s) — recuando %.1f s antes de tentar de novo',
+                                      JOINT_NAMES[j], self._hb_s, self._hrec_s)
+                        self._h_fase, self._h_t_rec, self._h_hist = 'recua', agora, []
+                        v = np.zeros(5); v[j] = -lado * max(self._home_v[j], self._v_piso)
+                        return v
         if not self._homing:
-            ok = all(r != 'TIMEOUT' for r in self._homing_resultado.values())
+            ok = all(r not in ('TIMEOUT', 'BLOQUEADA') for r in self._homing_resultado.values())
             rospy.loginfo('[arm_joint_servo] homing concluído %s: %s', 'OK' if ok else 'COM FALHA', self._homing_resultado)
-            self._pub_homed.publish(Bool(data=ok))
-            if self._apos_homing == 'stow':
+            if not ok or self._apos_homing == 'switches':
+                self._pub_homed.publish(Bool(data=ok))
+                rospy.loginfo('[arm_joint_servo] homing: braço fica nos fins de curso')
+            elif self._apos_homing == 'stow':
+                self._pub_homed.publish(Bool(data=ok))
                 self._iniciar_postura(self._q_home, 'recolhido após homing')
             else:
-                rospy.loginfo('[arm_joint_servo] homing: braço fica em HOME (nos fins de curso)')
+                self._homing_para_home = True
+                self._iniciar_postura(self._q_home_pos, 'HOME POSITION após os switches')
             return np.zeros(5)
         v = np.zeros(5)
         j = self._homing[0]
@@ -414,6 +469,11 @@ class ArmJointServo:
         self._q_alvo = None
         self._pub_ok.publish(Bool(data=(como == 'alcançada')))   # antes do reached (latched)
         self._pub_reached.publish(Bool(data=True))
+        if self._homing_para_home:
+            self._homing_para_home = False
+            ok = como in ('alcançada', 'BLOQUEADA')   # bloqueada = parou a poucos mm, ainda é HOME
+            rospy.loginfo('[arm_joint_servo] HOME POSITION %s (%s)', 'alcançada' if ok else 'NÃO alcançada', como)
+            self._pub_homed.publish(Bool(data=ok))
 
     # ------------------------------------------------------------ laço
     def spin(self):

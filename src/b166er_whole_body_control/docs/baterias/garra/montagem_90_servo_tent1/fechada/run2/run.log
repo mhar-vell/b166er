@@ -1,0 +1,142 @@
+[31mWARNING: disk usage in log directory [/home/marco/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+the rosdep view is empty: call 'sudo rosdep init' and 'rosdep update'
+[ERROR] [1791381896.283112, 344.731000]: InvalidUserCodeError: Could not execute state 'STOW_INIT' of type '<__main__.StowInit object at 0x70bf2cb42cc0>': Traceback (most recent call last):
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/smach/state_machine.py", line 260, in _update_once
+    outcome = self._current_state.execute(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 1423, in execute
+    return 'ok' if _wait_posture(ctx) else 'failed'
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 2704, in _wait_posture
+    rate.sleep()
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 103, in sleep
+    sleep(self._remaining(curr_time))
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 165, in sleep
+    raise rospy.exceptions.ROSInterruptException("ROS shutdown request")
+rospy.exceptions.ROSInterruptException: ROS shutdown request
+
+[INFO] [1791381766.214041, 344.212000]: garra_dx = 0.000 m (fechada)
+[INFO] [1791381766.313915, 344.312000]: State machine starting in initial state 'STOW_INIT' with userdata: 
+	[]
+[INFO] [1791381766.515095, 344.513000]: [mission] pose de partida registrada: (0.02, 0.99, 0.05 rad)
+[INFO] [1791381766.516217, 344.514000]: [mission] postura "stow_home" comandada: [0.0, 1.13, -1.04, -1.8, 0.0]
+shutdown request: user request
+Traceback (most recent call last):
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/smach/state_machine.py", line 260, in _update_once
+    outcome = self._current_state.execute(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 1423, in execute
+    return 'ok' if _wait_posture(ctx) else 'failed'
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 2704, in _wait_posture
+    rate.sleep()
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 103, in sleep
+    sleep(self._remaining(curr_time))
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 165, in sleep
+    raise rospy.exceptions.ROSInterruptException("ROS shutdown request")
+rospy.exceptions.ROSInterruptException: ROS shutdown request
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/marco/b166er/devel/.private/b166er_whole_body_control/lib/b166er_whole_body_control/chave_mission.py", line 15, in <module>
+    exec(compile(fh.read(), python_script, 'exec'), context)
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 3656, in <module>
+    main()
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 3649, in main
+    outcome = sm.execute()
+              ^^^^^^^^^^^^
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/smach/state_machine.py", line 378, in execute
+    container_outcome = self._update_once()
+                        ^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/smach/state_machine.py", line 270, in _update_once
+    raise smach.InvalidUserCodeError("Could not execute state '%s' of type '%s': " %
+smach.exceptions.InvalidUserCodeError: Could not execute state 'STOW_INIT' of type '<__main__.StowInit object at 0x70bf2cb42cc0>': Traceback (most recent call last):
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/smach/state_machine.py", line 260, in _update_once
+    outcome = self._current_state.execute(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 1423, in execute
+    return 'ok' if _wait_posture(ctx) else 'failed'
+                   ^^^^^^^^^^^^^^^^^^
+  File "/home/marco/b166er/src/b166er_whole_body_control/nodes/chave_mission.py", line 2704, in _wait_posture
+    rate.sleep()
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 103, in sleep
+    sleep(self._remaining(curr_time))
+  File "/home/marco/miniforge3/envs/ros_env/lib/python3.12/site-packages/rospy/timer.py", line 165, in sleep
+    raise rospy.exceptions.ROSInterruptException("ROS shutdown request")
+rospy.exceptions.ROSInterruptException: ROS shutdown request
+
+[31m[chave_mission-1] process has died [pid 3105332, exit code 1, cmd /home/marco/b166er/devel/.private/b166er_whole_body_control/lib/b166er_whole_body_control/chave_mission.py __name:=chave_mission __log:=/home/marco/.ros/log/f1a5be3e-c256-11f1-844a-b025aa85b2a2/chave_mission-1.log].
+log file: /home/marco/.ros/log/f1a5be3e-c256-11f1-844a-b025aa85b2a2/chave_mission-1*.log[0m
+... logging to /home/marco/.ros/log/f1a5be3e-c256-11f1-844a-b025aa85b2a2/roslaunch-shiroi-3105288.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch
+[1mstarted roslaunch server http://shiroi:45893/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /chave_mission/estado_final: 
+ * /chave_mission/estado_inicial: STOW_INIT
+ * /chave_mission/pausa_por_fase: False
+ * /chave_mission/search_omega: 0.35
+ * /chave_mission/standoff_distance: 0.62
+ * /chave_mission/use_wholebody: False
+ * /chave_seccionadora_task/aproxima_lateral/modo: ik
+ * /chave_seccionadora_task/aproxima_lateral/offset_xyz_m: [-0.09, 0.008, 0.01]
+ * /chave_seccionadora_task/aproxima_lateral/tol_xyz_m: [0.04, 0.008, 0.005]
+ * /chave_seccionadora_task/arco1/blade_angle_deg: 15
+ * /chave_seccionadora_task/arco1/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco1/modo: wb
+ * /chave_seccionadora_task/arco1/offset_xyz_m: [0.0, 0.0518, -0....
+ * /chave_seccionadora_task/arco1/soltura_recuo_min_m: 0.04
+ * /chave_seccionadora_task/arco1/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/arco2/blade_angle_deg: 30
+ * /chave_seccionadora_task/arco2/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco2/modo: wb
+ * /chave_seccionadora_task/arco2/offset_xyz_m: [0.0, 0.1, -0.0518]
+ * /chave_seccionadora_task/arco2/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/atravessa/modo: ik
+ * /chave_seccionadora_task/atravessa/offset_xyz_m: [-0.008, 0.008, 0...
+ * /chave_seccionadora_task/atravessa/tol_xyz_m: [0.008, 0.006, 0....
+ * /chave_seccionadora_task/captura/modo: ik
+ * /chave_seccionadora_task/captura/offset_xyz_m: [0.0, 0.0, -0.01]
+ * /chave_seccionadora_task/captura/tol_xyz_m: [0.04, 0.006, 0.01]
+ * /chave_seccionadora_task/desengata/modo: ik
+ * /chave_seccionadora_task/desengata/offset_xyz_m: [-0.09, 0.1, -0.0...
+ * /chave_seccionadora_task/destrava/curso_estagna_m: 0.01
+ * /chave_seccionadora_task/destrava/curso_margem_m: 0.002
+ * /chave_seccionadora_task/destrava/curso_min_m: 0.018
+ * /chave_seccionadora_task/destrava/curso_teto_m: 0.022
+ * /chave_seccionadora_task/destrava/modo: wb
+ * /chave_seccionadora_task/destrava/offset_xyz_m: [0.0, 0.0, -0.025]
+ * /chave_seccionadora_task/destrava/tol_xyz_m: [0.04, 0.006, 0.004]
+ * /chave_seccionadora_task/libera/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/libera/modo: wb
+ * /chave_seccionadora_task/libera/offset_xyz_m: [0.0, 0.03, -0.025]
+ * /chave_seccionadora_task/libera/tol_xyz_m: [0.04, 0.008, 0.006]
+ * /chave_seccionadora_task/orienta/modo: ik
+ * /chave_seccionadora_task/orienta/offset_xyz_m: [-0.09, 0.15, 0.0...
+ * /chave_seccionadora_task/reassenta_sobe/tol_xyz_m: [0.03, 0.02, 0.005]
+ * /chave_seccionadora_task/saida_eixo/tol_xyz_m: [0.02, 0.02, 0.015]
+ * /chave_seccionadora_task/saida_fora/tol_xyz_m: [0.03, 0.02, 0.02]
+ * /chave_seccionadora_task/saida_sobe/tol_xyz_m: [0.03, 0.02, 0.01]
+ * /chave_seccionadora_task/target_frame: chave_olhal_link
+ * /fuzzy_wb_controller/fixed_gains: []
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    chave_mission (b166er_whole_body_control/chave_mission.py)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch http://localhost:11311
+[1mprocess[chave_mission-1]: started with pid [3105332][0m
+all processes on machine have died, roslaunch will exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m

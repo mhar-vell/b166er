@@ -198,9 +198,18 @@ chave_seccionadora_task:
   # lingueta (4,1 / 0,0 mm) e a libera puxou com o gatilho travado. A
   # tolerância de 40 mm (herdada de "o degrau tem 30 mm") aceitava isso.
   # Agora a captura só fecha com a ponta dentro do furo, como o atravessa.
+  # EIXO −8 mm TAMBÉM NA CAPTURA (2026-10-08, missão_completa run5): o
+  # alvo da captura pedia a origem do tool_tip NO PLANO do furo (eixo 0),
+  # mas a haste para na face do arame com a origem a 8 mm do plano — o
+  # mesmo batente físico que levou o atravessa a −8 em 02/09. Resultado:
+  # erro "sistemático" de +6…+9 mm no eixo em TODAS as capturas (as que
+  # fecharam ficaram em +6,3 ± 1,0; a run5 travou em +9,5 com o J1
+  # pedindo cada vez mais e bloqueado pelo contato), que a tolerância de
+  # 40 mm escondia e a de 8 mm expõe. O alvo passa a ser onde a
+  # ferramenta fisicamente para, como no atravessa.
   captura:
     modo: ik
-    offset_xyz_m: [0.0, 0.0, -0.0100]
+    offset_xyz_m: [-0.008, 0.0, -0.0100]
     tol_xyz_m: [0.008, 0.006, 0.010]
 
   # ── 3b. DESTRAVA: desce mais 15 mm e solta o gatilho ──

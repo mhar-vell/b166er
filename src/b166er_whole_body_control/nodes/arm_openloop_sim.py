@@ -112,6 +112,8 @@ class FirmwareEmulado:
         self._folga   = np.radians(np.array(rospy.get_param('~folga_deg', [4.0, 10.0, 6.0, 3.0, 3.0]), dtype=float))
         self._q_cmd   = None
         self._t_prev  = None
+        self._t_resync = None
+        self._resync_graca = float(rospy.get_param('~resync_graca_s', 3.0))
         if self._saida == 'velocidade':
             self._pubs = [rospy.Publisher('/%s_velocity_controller/command' % j,
                                           Float64, queue_size=1) for j in JOINTS]
@@ -119,6 +121,11 @@ class FirmwareEmulado:
             self._pubs = [rospy.Publisher('/%s_position_controller/command' % j,
                                           Float64, queue_size=1) for j in JOINTS]
         rospy.Subscriber(topico, SetpointMsg, self._cb_setpoint, queue_size=1)
+        # Reset da simulação teleporta as juntas e publica /b166er/arm_resync
+        # com a postura nova: o setpoint integrado tem de ir junto, senão o
+        # anti-windup o deixa a 'folga' da postura antiga e o PID puxa o
+        # braço de volta (reset em 'acorda' falhava por 10° no J2, 08/10).
+        rospy.Subscriber('/b166er/arm_resync', JointState, self._cb_resync, queue_size=1)
         rospy.Subscriber('/b166er/tilt_critical', Bool, self._cb_tilt)
         rospy.loginfo('[arm_openloop_sim] firmware emulado: %s em graus/s, zona morta '
                       '%.1f, máx %.0f, ganho %s, watchdog %.2f s, saída %s', topico,
@@ -134,6 +141,23 @@ class FirmwareEmulado:
         self._parado = False
         self._v_cmd = np.array([m.set_1, m.set_2, m.set_3, m.set_4, m.set_5], dtype=float)
         self._t_cmd = rospy.Time.now()
+
+    def _cb_resync(self, m):
+        if len(m.position) == 5:
+            self._q_cmd = np.array(m.position, dtype=float)
+            # a física está PAUSADA durante o reset e /joint_states fica
+            # parado na postura antiga: sem isto o anti-windup puxava o
+            # setpoint para perto da postura velha antes do primeiro passo
+            self._q_true = self._q_cmd.copy()
+            self._q_hold = [None] * 5
+            # e o anti-windup fica suspenso por uns segundos: no primeiro
+            # passo de física o PID parte de torque zero, a junta cai sob a
+            # gravidade antes de o esforço crescer e a folga agia como
+            # catraca — o setpoint descia com a junta e o J2 assentava 10°
+            # abaixo da postura do reset (08/10).
+            self._t_resync = rospy.Time.now()
+            rospy.loginfo('[arm_openloop_sim] resync: setpoint integrado = %s°',
+                          np.degrees(self._q_cmd).round(1).tolist())
 
     def _cb_js(self, m):
         # Verdade do Gazebo, usada SÓ pelo freio emulado (ver docstring).
@@ -203,7 +227,10 @@ class FirmwareEmulado:
                     dt = (agora - self._t_prev).to_sec() if self._t_prev else 0.0
                     if 0.0 < dt < 0.5:
                         self._q_cmd = self._q_cmd + np.radians(v) * dt
-                    self._q_cmd = np.clip(self._q_cmd, self._q_true - self._folga, self._q_true + self._folga)
+                    em_graca = (self._t_resync is not None
+                                and (agora - self._t_resync).to_sec() < self._resync_graca)
+                    if not em_graca:
+                        self._q_cmd = np.clip(self._q_cmd, self._q_true - self._folga, self._q_true + self._folga)
                     # o setpoint pode passar do limite nominal (até a folga): é o
                     # batente físico que para a junta, como no motor real —
                     # com o setpoint preso em 65° o P puro do J2 cedia 3,5°

@@ -21,12 +21,17 @@ margem_deg: 1.5
 
 # HOMING (origem por switch, como o controlador original do RV-M2).
 # home_side: para que lado cada junta vai ao ligar: +1 (upper), -1 (lower),
-# 0 = não faz (J1 e J5 são observáveis pela orientação do T265; só a cadeia
-# de arfagem J2/J3/J4 tem o ramo ambíguo). Os lados escolhidos são os do
-# STOW: J2 no upper (+65 = recolhido), J3 no lower (-60), J4 no lower
-# (-110): o braço só encosta nos batentes em que já descansa — pouco
-# movimento, sem risco de colisão com a base.
-home_side:   [0, 1, -1, -1, 0]
+# 0 = não faz. TODAS as cinco juntas (Marco, 09 Out 2026: "inclui J1 e J5
+# no homing, J1 procura o switch de trás"). Eu tinha deixado J1 e J5 de
+# fora supondo que a T265 os observa — vale na simulação, onde câmera e
+# odometria compartilham o referencial; no robô real a guinada da T265 é
+# relativa a onde ELA acordou, que depende do J1 ao ligar: sem switch,
+# o zero do J1 é inventado. J2 no upper (+65 = recolhido), J3 e J4 no
+# lower (-60, -110): os batentes em que o braço já descansa. J5 no upper
+# (+180, meia-volta do punho, inofensiva). J1 no upper (+150): no modelo,
+# cintura girando para a ESQUERDA (vista de trás) até apontar para trás —
+# se no laboratório o lado livre for o outro, trocar para -1.
+home_side:   [1, 1, -1, -1, 1]
 # J2 SÓ PARA TRÁS (Marco, 07 Out 2026): "quanto a J2 eu só faria o homing
 # para trás, nem tentaria fazer para baixo pois seria um risco, e eu
 # limitaria a um determinado ângulo a partir deste ponto de checagem atrás".
@@ -37,6 +42,6 @@ home_side:   [0, 1, -1, -1, 0]
 # horizontal à frente e 90° a vertical, e o switch de trás real fica depois
 # da vertical (08 Out: "por enquanto vamos trabalhar com estes modelos e
 # considerar a atuação dos switches nestes extremos das juntas").
-home_ordem:  [4, 3, 2]          # J4 (punho), depois J3 (cotovelo), depois J2 (ombro)
+home_ordem:  [4, 3, 2, 5, 1]    # punho, cotovelo, ombro, rolagem; a CINTURA por último, com o braço já recolhido
 home_v_deg:  [10.0, 5.0, 5.0, 5.0, 10.0]
 home_timeout_s: 40.0
