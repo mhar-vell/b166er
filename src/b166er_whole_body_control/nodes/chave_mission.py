@@ -12,7 +12,7 @@ Sequência
 ---------
   HOMING     → "indo para home": fins de curso das cinco juntas (sem
                homing no stack, recolhe em stow_home como antes).
-  HOME_POSITION → ponto final do homing: J1/J5 em zero, J2/J3/J4 nos switches.
+  HOME_POSITION → ponto final do homing: J1/J5 em zero, J2 na vertical (90°), J3 no switch, J4 em zero.
                Nada se move com o braço estendido: a postura estendida
                já tombou o robô contra a parede em 2026-08-12.
   SEARCH     → postura "search" (câmera apontando à frente) e giro no
@@ -1451,7 +1451,7 @@ def _home_position(ctx, tag):
     if not _wait_posture(ctx):
         rospy.logerr('[mission] %s: não chegou à HOME POSITION', tag)
         return False
-    rospy.loginfo('[mission] %s: braço em HOME POSITION (J1/J5 em zero, J2/J3/J4 nos switches)', tag)
+    rospy.loginfo('[mission] %s: braço em HOME POSITION (J1/J5 em zero, J2 vertical, J3 no switch, J4 zero)', tag)
     return True
 
 
