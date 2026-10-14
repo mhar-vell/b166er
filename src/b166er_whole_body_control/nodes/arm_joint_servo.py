@@ -179,8 +179,8 @@ class ArmJointServo:
         # dentro da base. home_park_deg[j] = ângulo para onde a junta volta
         # logo depois de fechar o seu switch (null = fica no switch); anda
         # pela estimativa (T265 + IK), que acabou de ser ancorada no switch.
-        _park = rospy.get_param('/arm_switches/home_park_deg', [None] * 5)
-        self._home_park = [None if p is None else math.radians(float(p)) for p in _park]
+        _park = rospy.get_param('/arm_switches/home_park_deg', [999.0] * 5)   # 999 = fica no switch (rosparam não aceita null)
+        self._home_park = [None if p is None or abs(float(p)) >= 900.0 else math.radians(float(p)) for p in _park]
         self._home_park_tol = math.radians(float(rospy.get_param('/arm_switches/home_park_tol_deg', 2.0)))
         self._h_park_res = None
         self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
