@@ -171,6 +171,18 @@ class ArmJointServo:
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
+        # ESTACIONAR depois do switch (14 Out 2026). O Marco viu, na primeira
+        # missão com os switches do Cerbaro, "o movimento da J3 chocar com o
+        # manipulador … por causa da posição da J4 também": J4 no switch
+        # (−98,5°) deixa a ferramenta apontada para o braço superior, e J3
+        # dobrando até −121,5° com J2 ainda baixo manda o antebraço para
+        # dentro da base. home_park_deg[j] = ângulo para onde a junta volta
+        # logo depois de fechar o seu switch (null = fica no switch); anda
+        # pela estimativa (T265 + IK), que acabou de ser ancorada no switch.
+        _park = rospy.get_param('/arm_switches/home_park_deg', [None] * 5)
+        self._home_park = [None if p is None else math.radians(float(p)) for p in _park]
+        self._home_park_tol = math.radians(float(rospy.get_param('/arm_switches/home_park_tol_deg', 2.0)))
+        self._h_park_res = None
         self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
         self._ls = np.zeros(5)
         # J2 só para trás (Marco, 07/10): limite de curso por software a
@@ -309,9 +321,29 @@ class ArmJointServo:
             else:
                 v = np.zeros(5); v[j] = -lado * max(self._home_v[j], self._v_piso)
                 return v
+        elif self._h_fase == 'estaciona':
+            alvo = self._home_park[j]
+            q_j = None if self._q_est is None else float(self._q_est[j])
+            dt_p = (agora - self._h_t_rec).to_sec()
+            if q_j is not None and abs(alvo - q_j) <= self._home_park_tol:
+                rospy.loginfo('[arm_joint_servo] homing: %s estacionada em %.1f° (%.1f s)', JOINT_NAMES[j], math.degrees(q_j), dt_p)
+                _proxima(self._h_park_res)
+            elif dt_p > self._home_to or q_j is None:
+                rospy.logwarn('[arm_joint_servo] homing: %s não estacionou em %.1f° (está em %s) — seguindo',
+                              JOINT_NAMES[j], math.degrees(alvo), 'None' if q_j is None else '%.1f°' % math.degrees(q_j))
+                _proxima(self._h_park_res)
+            else:
+                v = np.zeros(5); v[j] = math.copysign(max(self._home_v[j], self._v_piso), alvo - q_j)
+                return v
         elif self._ls[j] == lado:
-            _proxima('switch %+d em %.1f s' % (int(lado), t_j))
+            res = 'switch %+d em %.1f s' % (int(lado), t_j)
             rospy.loginfo('[arm_joint_servo] homing: %s no switch %+d (%.1f s)', JOINT_NAMES[j], int(lado), t_j)
+            if self._home_park[j] is not None:
+                rospy.loginfo('[arm_joint_servo] homing: %s volta para %.1f° antes da próxima junta',
+                              JOINT_NAMES[j], math.degrees(self._home_park[j]))
+                self._h_fase, self._h_t_rec, self._h_park_res = 'estaciona', agora, res
+                return np.zeros(5)
+            _proxima(res)
         elif t_j > self._home_to:
             _proxima('TIMEOUT')
             rospy.logwarn('[arm_joint_servo] homing: %s não chegou ao switch %+d em %.0f s — seguindo',

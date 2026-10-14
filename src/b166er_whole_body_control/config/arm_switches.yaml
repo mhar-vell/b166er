@@ -54,6 +54,22 @@ home_side:   [1, 1, -1, -1, 1]
 # para trás, nem tentaria fazer para baixo pois seria um risco". home_side
 # de J2 tem de ser +1 (o servo recusa −1). Os limites de trabalho do J2
 # vivem em B166ER_J2_MIN_DEG / _MAX_DEG (args dos launches; padrão −30/+100).
-home_ordem:  [4, 3, 2, 5, 1]    # punho, cotovelo, ombro, rolagem; a CINTURA por último, com o braço já recolhido
+# ORDEM (14 Out 2026): OMBRO PARA TRÁS primeiro, depois o punho (que
+# volta a zero), só então o cotovelo. Na primeira missão com estes
+# switches (ordem 4-3-2) o J3 foi ao −121,5° com o J2 ainda em 20° e o J4
+# em −98,5°: o antebraço dobrou para dentro da base e a ferramenta apontou
+# para o braço superior ("o movimento da J3 chocou com o manipulador … por
+# causa da posição da J4 também" — Marco). Varredura por FK
+# (scratchpad/homing_seq.py, 4 posturas de partida + J4 em +98°): com o J2
+# já em 104,5° o antebraço está em pé, o punho gira no alto e a dobra do
+# J3 leva o antebraço à configuração home do Cerbaro (à frente, 17° abaixo
+# da horizontal) sem passar pela base — ponto mais baixo da sequência a
+# 0,47 m acima da base do braço, contra 0,21 m na ordem antiga.
+home_ordem:  [2, 4, 3, 5, 1]    # ombro (para trás), punho, cotovelo, rolagem; a CINTURA por último, com o braço já recolhido
+# home_park_deg: para onde a junta VOLTA logo depois de fechar o switch
+# (null = fica no switch até a HOME POSITION). J4 volta a zero: ferramenta
+# alinhada com o antebraço (home do Cerbaro, Tab. 3) antes de o J3 dobrar.
+home_park_deg: [null, null, null, 0.0, null]
+home_park_tol_deg: 2.0
 home_v_deg:  [10.0, 5.0, 5.0, 5.0, 10.0]
 home_timeout_s: 40.0
