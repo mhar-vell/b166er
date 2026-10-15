@@ -3110,6 +3110,31 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         # ultrapassar: não há arco a executar sem o anel.
         cfg_deriva = cfg_fase.get('deriva_eixo_max_m')
         cfg_deriva = float(cfg_deriva) if cfg_deriva is not None else None
+        # ARCO DESLIZANTE (15 Out 2026). O Marco viu que "no segundo arco o
+        # movimento começa com um movimento para baixo semelhante ao usado
+        # para liberar a lingueta": o alvo do arco2 é o ponto da
+        # circunferência a 30°, 48 mm à frente e 20 mm abaixo do de 15°, e
+        # o whole-body vai em linha reta para ele — o braço resolve a altura
+        # em um ciclo, a base leva segundos para avançar, e a primeira
+        # coisa que acontece é empurrar o olhal contra o mecanismo (run3 da
+        # bateria standoff_068: erro inicial prof +7,6 / alt −15,1 mm). Com
+        # arco_raio_m no YAML o alvo publicado deixa de ser o ponto final:
+        # a cada ciclo a missão lê a profundidade da ponta pela T265, toma o
+        # ponto da circunferência arco_antecipacao_m à frente e manda esse
+        # ponto, com a altura DO ARCO nele. O movimento sai tangente ao
+        # arco. A régua de fechamento continua sendo o ponto final (p_goal).
+        raio_arco = cfg_fase.get('arco_raio_m')
+        raio_arco = float(raio_arco) if raio_arco is not None else None
+        if raio_arco is not None:
+            off_fim = (ctx.offset_efetivo if ctx.offset_efetivo is not None
+                       else cfg_fase.get('offset_xyz_m', [0.0, 0.0, 0.0]))
+            ante_arco = float(cfg_fase.get('arco_antecipacao_m', 0.015))
+            th_fim = math.asin(max(-1.0, min(1.0, float(off_fim[1]) / raio_arco)))
+            z_press = float(off_fim[2]) + raio_arco * (1.0 - math.cos(th_fim))
+            rospy.loginfo('[mission] fase "%s": arco deslizante — raio %.0f mm, '
+                          'fim em %.1f°, antecipação %.0f mm, pressão %+.1f mm',
+                          phase, raio_arco * 1000, math.degrees(th_fim),
+                          ante_arco * 1000, z_press * 1000)
         # A régua é GEOMÉTRICA, não estatística: o furo do olhal é oval,
         # 40 x 30 mm, e o dedo tem ~10 mm, então a ponta pode deslizar
         # ±15 mm no eixo SEM sair do anel. 10 mm (a primeira escolha, pela
@@ -3139,6 +3164,26 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             err   = p_goal - p_now
             n_err = float(np.linalg.norm(err))
             melhor = min(melhor, n_err)
+
+            if raio_arco is not None:
+                pw = _pose_na_parede(ctx, p_now)
+                th_now = math.asin(max(-1.0, min(1.0, float(pw[1]) / raio_arco)))
+                th_t = min(max(th_now, 0.0) + ante_arco / raio_arco, th_fim)
+                off_t = [float(off_fim[0]), raio_arco * math.sin(th_t),
+                         z_press - raio_arco * (1.0 - math.cos(th_t))]
+                p_t = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_t)
+                alvo_t = PoseStamped()
+                alvo_t.header.stamp = rospy.Time.now()
+                alvo_t.header.frame_id = 'odom'
+                alvo_t.pose.position.x = float(p_t[0])
+                alvo_t.pose.position.y = float(p_t[1])
+                alvo_t.pose.position.z = float(p_t[2])
+                alvo_t.pose.orientation.w = 1.0
+                ctx.pub_target.publish(alvo_t)
+                rospy.loginfo_throttle(1.0, '[mission] fase "%s": arco — ponta em %.1f°, '
+                                       'alvo deslizante em %.1f° (prof %+.1f alt %+.1f mm)',
+                                       phase, math.degrees(th_now), math.degrees(th_t),
+                                       off_t[1] * 1000, off_t[2] * 1000)
 
             # A MESMA RÉGUA DA IK ITERATIVA (2026-09-03, pedido do Marco:
             # "vamos realizar os testes com a mesma régua"). Até a bateria

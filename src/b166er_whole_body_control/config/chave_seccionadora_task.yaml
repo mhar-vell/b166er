@@ -313,7 +313,15 @@ chave_seccionadora_task:
   # é ΔZ do arco somado à captura ANTIGA de −3 mm (degrau de 17 mm). A
   # captura mudou para −10 em 02/09 e os arcos não acompanharam; a
   # tolerância de 15 mm em altura escondeu a diferença.
+  # ARCO DESLIZANTE (15 Out 2026): com arco_raio_m o alvo publicado ao
+  # whole-body desliza pela circunferência (ponto arco_antecipacao_m à
+  # frente da ponta, com a altura do arco nele) em vez de ser o ponto
+  # final — sem isso o arco2 começava empurrando o olhal 20 mm para baixo
+  # antes de avançar. Raio = L da lâmina (200 mm). A régua de fechamento
+  # continua sendo o ponto final.
   arco1:
+    arco_raio_m: 0.200
+    arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     soltura_recuo_min_m: 0.040
     modo: wb
@@ -323,6 +331,8 @@ chave_seccionadora_task:
     offset_xyz_m: [0.0, 0.0518, -0.0318]
     blade_angle_deg: 15
   arco2:
+    arco_raio_m: 0.200
+    arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     modo: wb
     tol_xyz_m: [0.040, 0.010, 0.015]
