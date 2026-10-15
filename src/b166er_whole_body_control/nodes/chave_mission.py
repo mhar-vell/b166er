@@ -2040,6 +2040,11 @@ class Manipulate(smach.State):
                 offset[0] = float(ctx.pose_captura[0])
                 rospy.loginfo('[mission] fase "%s": eixo do alvo = o da captura (%+.1f mm)',
                               phase, offset[0] * 1000)
+            elif phase == 'desengata' and ctx.pose_captura is not None:
+                # Sai pelo eixo a partir de ONDE O DEDO ESTÁ (15 Out 2026).
+                offset[0] = float(ctx.pose_captura[0]) + float(offset[0])
+                rospy.loginfo('[mission] fase "%s": eixo do alvo relativo à captura (%+.1f mm)',
+                              phase, offset[0] * 1000)
             ctx.offset_efetivo = offset
 
             # PUXAR COM AS RODAS. A componente Y do offset é o quanto o

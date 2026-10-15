@@ -348,9 +348,18 @@ chave_seccionadora_task:
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
   # fora do anel sem puxá-lo de volta.
+  # WHOLE-BODY, NÃO IK (15 Out 2026, run4 de arco_deslizante). Os arcos
+  # são whole-body só de posição: a orientação da ferramenta fica livre
+  # durante o arco. O desengata por IK, com alinhamento do degrau,
+  # re-alinhava a haste com um giro de punho de 20–25° (J4 −61 → −84)
+  # com o dedo ainda no anel e arrastou a lâmina de volta a 0°. Em
+  # whole-body (só braço: PHASES_SO_BRACO) a ponta sai pelo eixo com a
+  # orientação que tiver. Eixo relativo ao da captura (−90 mm de onde o
+  # dedo está), como nas demais fases depois da captura.
   desengata:
-    modo: ik
-    offset_xyz_m: [-0.090, 0.1147, -0.0612]   # = fim do arco2 (35°)
+    modo: wb
+    tol_xyz_m: [0.015, 0.020, 0.020]
+    offset_xyz_m: [-0.090, 0.1147, -0.0612]   # y/z = fim do arco2 (35°); x relativo à captura
 
   # ── SAÍDA DE EMERGÊNCIA (ABORT_SAFE, 2026-09-09) ──
   # Não são fases da trilha: são as tolerâncias dos três degraus com que
