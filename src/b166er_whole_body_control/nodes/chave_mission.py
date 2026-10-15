@@ -2012,11 +2012,22 @@ class Manipulate(smach.State):
             if cfg.get('curso_min_m') is not None and ctx.alt_captura is not None:
                 margem = float(cfg.get('curso_margem_m', 0.002))
                 offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
+                # EIXO TAMBÉM RELATIVO À CAPTURA (15 Out 2026). A captura
+                # deixa a ponta 8 mm para dentro do furo de propósito
+                # (offset −8, tolerância ±8) e o destrava pedia eixo = 0: o
+                # erro de eixo nascia em 0–16 mm por construção, a ponta
+                # presa no olhal não o corrige, e a régua de 10 mm decidia
+                # a missão no cara ou coroa (run5 da bateria v3: 10,8 mm,
+                # abortada; run4: 8,6 mm, passou; 09 Out: 9,0–9,3). Empurrar
+                # para baixo é onde a haste está; o eixo da fase passa a
+                # medir DERIVA desde a captura, que é o que a régua queria.
+                offset[0] = float(ctx.pose_captura[0])
                 rospy.loginfo('[mission] fase "%s": alvo em altura relativo à '
                               'captura: %+.1f mm (captura %+.1f − curso %.0f − '
-                              'margem %.0f)', phase, offset[2] * 1000,
+                              'margem %.0f); eixo = o da captura (%+.1f mm)',
+                              phase, offset[2] * 1000,
                               ctx.alt_captura * 1000, cfg['curso_min_m'] * 1000,
-                              margem * 1000)
+                              margem * 1000, offset[0] * 1000)
             ctx.offset_efetivo = offset
 
             # PUXAR COM AS RODAS. A componente Y do offset é o quanto o
