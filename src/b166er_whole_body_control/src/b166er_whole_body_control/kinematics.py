@@ -63,6 +63,7 @@ IK_LAMBDA     = 0.02
 # sobre o gradiente da barreira (rad²) e passo máximo por iteração (rad)
 IK_PESO_LIM   = float(os.environ.get('B166ER_IK_PESO_LIM', '2.5e-4'))
 IK_PASSO_LIM  = 0.0087   # 0,5°/iteração
+IK_LIM_ZONA   = math.radians(float(os.environ.get('B166ER_IK_LIM_ZONA_DEG', '6.0')))   # barreira só a menos disto do limite
 IK_DQ_STEP    = 1e-6
 IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 # Parada por ESTAGNAÇÃO (2026-09-11): um DLS que não melhora o resíduo em
@@ -454,15 +455,23 @@ def joint_limit_gradient(q_arm):
     return -(q_arm - q_mid) / (q_range ** 2)
 
 
-def gradiente_barreira(q_arm, cap=80.0):
+def gradiente_barreira(q_arm, cap=80.0, zona=IK_LIM_ZONA):
     """dH/dq do custo clássico de limite (Chan & Dubey 1995),
         H = Σ (q_max−q_min)² / [4 (q_max−q)(q−q_min)],
     ~0 no meio do curso e explodindo nos limites (limitado a ±cap, 1/rad).
-    Positivo = a junta está do lado de cima; descer H = ir para o centro."""
+    Positivo = a junta está do lado de cima; descer H = ir para o centro.
+    ZONA MORTA (15 Out 2026): só age a menos de `zona` rad do limite, com
+    rampa linear. Sem isso a barreira rebalanceava as juntas no grau de
+    liberdade livre da tarefa (rotação da haste em torno do eixo do furo =
+    J4) e inclinou a haste 12° para dentro da parede — a fase atravessa
+    encostou e não avançou (run1 da bateria v2). A barreira existe para
+    tirar a junta do switch por alguns graus, não para escolher postura."""
     q = np.clip(np.asarray(q_arm, dtype=float), JOINT_LOWER + 1e-3, JOINT_UPPER - 1e-3)
     rng = JOINT_UPPER - JOINT_LOWER
     g = rng ** 2 * (2.0 * q - JOINT_UPPER - JOINT_LOWER) / (4.0 * (JOINT_UPPER - q) ** 2 * (q - JOINT_LOWER) ** 2)
-    return np.clip(g, -cap, cap)
+    dist = np.minimum(JOINT_UPPER - q, q - JOINT_LOWER)
+    rampa = np.clip((zona - dist) / zona, 0.0, 1.0)
+    return np.clip(g, -cap, cap) * rampa
 
 
 def juntas_saturadas(q_arm, qdot_arm, ls=None, margem=0.0):
