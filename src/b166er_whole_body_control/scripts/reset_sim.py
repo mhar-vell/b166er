@@ -31,16 +31,16 @@ from std_msgs.msg import Bool
 from std_srvs.srv import Empty
 from tf.transformations import euler_from_quaternion
 
-STOW = [0.0, 1.10, -1.04, -1.8, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out)
+STOW = [0.0, 1.10, -1.04, -1.70, 0.0]   # = arm_postures.yaml stow_home (J2 1,10 desde 07 Out; J4 −1,70 desde 14 Out, limite ±100°)
 # COMO O ROBÔ ACORDA (2026-10-08, preocupação do Marco: "o home position deve
 # ser setado logo no início da missão na vida real e eu não vi isso na
 # simulação"). O reset deixava o braço no stow, encostado nos switches, e o
 # homing do estado HOME fechava em 1–2 s sem andar — a missão nunca ensaiava
 # o homing de verdade. Agora o reset deixa o braço numa postura "de
-# desligado", longe dos switches (J1 −30°, J2 +20°, J3 −20°, J4 −57°, J5 +40°), e a
+# desligado", longe dos switches (J1 −30°, J2 90° = vertical, J3 −20°, J4 −57°, J5 +40°), e a
 # missão tem de fazer o homing inteiro para partir (como na bancada, onde o
 # braço acorda onde foi deixado). --postura stow recupera o antigo.
-ACORDA = [-0.52, 0.35, -0.35, -1.0, 0.70]   # J1 −30° e J5 +40° (09 Out): J1 e J5 também fazem homing
+ACORDA = [-0.52, 1.5708, -0.35, -1.0, 0.70]   # J1 −30° e J5 +40° (09 Out): J1 e J5 também fazem homing; J2 90° (14 Out, Marco: "vamos nos dois em 90 graus")
 ALVO = ACORDA
 JOINTS = ['J1', 'J2', 'J3', 'J4', 'J5']
 LEVEL_TOL = 0.10      # rad — nivelado o bastante para começar

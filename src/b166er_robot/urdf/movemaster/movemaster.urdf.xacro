@@ -55,8 +55,12 @@
       <origin xyz="0 0 0.400" rpy="0 0 0"/>
       <parent link="Base"/>
       <child link="L1"/>
-      <!-- Cintura (waist): 300° de curso total no manual, assumido ±150° -->
-      <limit upper="2.61799" lower="-2.61799" effort="30" velocity="3.14" />
+      <!-- Cintura (waist): 300° no manual, mas o robô retrofitado tem os fins
+           de curso em ±100° (Cerbaro, dissertação, Tabela 2 — chapa do
+           switch invertida para o operador atrás do robô). Batente = switch.
+           14 Out 2026: limites do Cerbaro em todas as juntas (eram os do
+           manual repartidos ao meio). -->
+      <limit upper="1.74533" lower="-1.74533" effort="30" velocity="3.14" />
       <dynamics damping="0.5" friction="0.0"/>
     </joint>
 
@@ -134,8 +138,11 @@
       <origin xyz="0.120 0 0" rpy="1.57 0 0"/>
       <parent link="L1"/>
       <child link="L2"/>
-      <!-- Ombro (shoulder): 130° de curso total no manual, assumido ±65° -->
-      <limit upper="1.13446" lower="-1.13446" effort="80" velocity="2.09" />
+      <!-- Ombro (shoulder): trabalho −30° … +100° (Cerbaro, Tabela 2); o
+           switch de trás (home) fica em +106° (Tabela 3) — ~16° depois da
+           vertical, como na foto do Marco de 14 Out 2026. Batentes nos
+           switches: −31,5° (o da frente fecha em −30°) e +106°. -->
+      <limit upper="1.85005" lower="-0.54978" effort="80" velocity="2.09" />
       <dynamics damping="1.0" friction="0.0"/>
     </joint>
 
@@ -161,8 +168,10 @@
       <origin xyz="0.250 0 0" rpy="0 0 0"/>
       <parent link="L2"/>
       <child link="L3"/>
-      <!-- Cotovelo (elbow): 120° de curso total no manual, assumido ±60° -->
-      <limit upper="1.04720" lower="-1.04720" effort="50" velocity="2.09" />
+      <!-- Cotovelo (elbow): trabalho −120° … 0° (Cerbaro, Tabela 2): o
+           cotovelo só dobra para UM lado, não há ramo. Switch (home) em
+           −123° (Tabela 3); batente de cima em +1,5° (fecha em 0°). -->
+      <limit upper="0.02618" lower="-2.14675" effort="50" velocity="2.09" />
       <dynamics damping="0.5" friction="0.0"/>
     </joint>
 
@@ -207,7 +216,10 @@
            responde é se o híbrido ainda abre a chave com um punho do
            tamanho do real; se não abrir, o destrava tem que vir de J2/J3
            com o punho travado. -->
-      <limit upper="1.91986" lower="-1.91986" effort="4.2" velocity="3.14" />
+      <!-- Arfagem do punho: ±100° (Cerbaro, Tabela 2 — chapa do switch
+           movida para o suporte da câmera não bater no corpo); o manual
+           diz ±110°. -->
+      <limit upper="1.74533" lower="-1.74533" effort="4.2" velocity="3.14" />
       <dynamics damping="0.3" friction="0.0"/>
     </joint>
 

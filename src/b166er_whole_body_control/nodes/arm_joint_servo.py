@@ -48,7 +48,7 @@ from movemaster_msg.msg import setpoint as SetpointMsg
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, fk_arm,
-    arm_jacobian_world, dls_pseudoinverse, pose_error)
+    arm_jacobian_world, dls_pseudoinverse, pose_error, resolve_com_saturacao)
 
 
 class ArmJointServo:
@@ -133,7 +133,7 @@ class ArmJointServo:
         self._hist_fator = float(rospy.get_param('~histerese', 2.0))   # 3 → 2 (08/10)
         self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
-        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.8, 0.0])
+        home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.70, 0.0])
         self._q_home = np.array(home, dtype=float)
 
         self._state = None
@@ -166,13 +166,26 @@ class ArmJointServo:
         # /arm_postures/home (cintura e rolagem em zero, J2/J3/J4 onde os
         # switches fecham) e só então /b166er/arm_homed é publicado.
         # 'switches' deixa o braço nos fins de curso (comportamento de 08/10).
-        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.108, -1.021, -1.894, 0.0]), dtype=float)
+        self._q_home_pos = np.array(rospy.get_param('/arm_postures/home', [0.0, 1.5708, -2.12058, 0.0, 0.0]), dtype=float)
         self._homing_para_home = False
         self._home_side  = np.array(rospy.get_param('/arm_switches/home_side', [0, 0, 0, 0, 0]), dtype=float)
         self._home_ordem = [int(j) - 1 for j in rospy.get_param('/arm_switches/home_ordem', [])]
         self._home_v     = np.radians(np.array(rospy.get_param('/arm_switches/home_v_deg', [5.0] * 5), dtype=float))
+        # ESTACIONAR depois do switch (14 Out 2026). O Marco viu, na primeira
+        # missão com os switches do Cerbaro, "o movimento da J3 chocar com o
+        # manipulador … por causa da posição da J4 também": J4 no switch
+        # (−98,5°) deixa a ferramenta apontada para o braço superior, e J3
+        # dobrando até −121,5° com J2 ainda baixo manda o antebraço para
+        # dentro da base. home_park_deg[j] = ângulo para onde a junta volta
+        # logo depois de fechar o seu switch (null = fica no switch); anda
+        # pela estimativa (T265 + IK), que acabou de ser ancorada no switch.
+        _park = rospy.get_param('/arm_switches/home_park_deg', [999.0] * 5)   # 999 = fica no switch (rosparam não aceita null)
+        self._home_park = [None if p is None or abs(float(p)) >= 900.0 else math.radians(float(p)) for p in _park]
+        self._home_park_tol = math.radians(float(rospy.get_param('/arm_switches/home_park_tol_deg', 2.0)))
+        self._h_park_res = None
         self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
         self._ls = np.zeros(5)
+        self._sat_margem = math.radians(float(rospy.get_param('~sat_margem_deg', 0.3)))
         # J2 só para trás (Marco, 07/10): limite de curso por software a
         # partir do switch de trás — ver arm_switches.yaml (j2_curso_deg).
         # O limite vem da cinemática (B166ER_J2_MIN_DEG, padrão 0°): a IK, o
@@ -309,9 +322,29 @@ class ArmJointServo:
             else:
                 v = np.zeros(5); v[j] = -lado * max(self._home_v[j], self._v_piso)
                 return v
+        elif self._h_fase == 'estaciona':
+            alvo = self._home_park[j]
+            q_j = None if self._q_est is None else float(self._q_est[j])
+            dt_p = (agora - self._h_t_rec).to_sec()
+            if q_j is not None and abs(alvo - q_j) <= self._home_park_tol:
+                rospy.loginfo('[arm_joint_servo] homing: %s estacionada em %.1f° (%.1f s)', JOINT_NAMES[j], math.degrees(q_j), dt_p)
+                _proxima(self._h_park_res)
+            elif dt_p > self._home_to or q_j is None:
+                rospy.logwarn('[arm_joint_servo] homing: %s não estacionou em %.1f° (está em %s) — seguindo',
+                              JOINT_NAMES[j], math.degrees(alvo), 'None' if q_j is None else '%.1f°' % math.degrees(q_j))
+                _proxima(self._h_park_res)
+            else:
+                v = np.zeros(5); v[j] = math.copysign(max(self._home_v[j], self._v_piso), alvo - q_j)
+                return v
         elif self._ls[j] == lado:
-            _proxima('switch %+d em %.1f s' % (int(lado), t_j))
+            res = 'switch %+d em %.1f s' % (int(lado), t_j)
             rospy.loginfo('[arm_joint_servo] homing: %s no switch %+d (%.1f s)', JOINT_NAMES[j], int(lado), t_j)
+            if self._home_park[j] is not None:
+                rospy.loginfo('[arm_joint_servo] homing: %s volta para %.1f° antes da próxima junta',
+                              JOINT_NAMES[j], math.degrees(self._home_park[j]))
+                self._h_fase, self._h_t_rec, self._h_park_res = 'estaciona', agora, res
+                return np.zeros(5)
+            _proxima(res)
         elif t_j > self._home_to:
             _proxima('TIMEOUT')
             rospy.logwarn('[arm_joint_servo] homing: %s não chegou ao switch %+d em %.0f s — seguindo',
@@ -404,7 +437,13 @@ class ArmJointServo:
         J = arm_jacobian_world(self._q_est.tolist(), self._T_wb @ T_BASELINK_ARM)
         J = np.vstack([J[:3], self._w_ang * J[3:]])          # rad -> m-equivalente
         ref = np.concatenate([self._kp_p * e6[:3], self._kp_o * self._w_ang * e6[3:]])
-        v = dls_pseudoinverse(J, self._dls_lam) @ ref
+        # CIENTE DA SATURAÇÃO (14 Out 2026): junta no limite/switch com
+        # velocidade pedida para fora não anda; resolve sem a coluna dela
+        # para as outras compensarem (ver kinematics.resolve_com_saturacao).
+        v, bloq, _ = resolve_com_saturacao(lambda Jr: dls_pseudoinverse(Jr, self._dls_lam) @ ref,
+                                           J, self._q_est, 0, self._ls, self._sat_margem)
+        if bloq:
+            rospy.logwarn_throttle(2.0, '[arm_joint_servo] tarefa: %s saturada(s) — resolvido sem', [JOINT_NAMES[j] for j in bloq])
         v = np.clip(v, -self._v_max, self._v_max)
         # consciente da placa: junta com pedido miúdo descansa (o freio
         # segura); as outras andam a pelo menos v_piso (zona morta do PWM)

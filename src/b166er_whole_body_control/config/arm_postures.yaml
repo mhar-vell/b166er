@@ -1,4 +1,11 @@
 # Posturas nomeadas do braço RV-M2 (espaço de juntas, rad, ordem J1..J5).
+#
+# 14 Out 2026 — LIMITES REAIS (Cerbaro, Tabela 2): J1 ±100°, J2 −30…+100°
+# (switch de trás 106°), J3 −120…0° (switch −123°), J4 ±100°, J5 ±180°.
+# Os comentários antigos abaixo citam os limites do modelo anterior
+# (±65/±60/±110); ficaram como história. O que mudou aqui: home = posição
+# dos switches do Cerbaro (Tabela 3) com J1/J5 em zero; J4 −1,8 → −1,70
+# (−97,4°, dentro de ±98,5° onde o switch fecha) no stow_home e no travel.
 # Carregado pelo b166er_wb.launch; consumido pelo gazebo_arm_bridge
 # (home inicial + comandos de postura) e pela máquina de estados da
 # tarefa da chave seccionadora.
@@ -29,8 +36,16 @@ arm_postures:
   # vem para cá e só então publica /b166er/arm_homed. É daqui que a
   # missão parte para o SEARCH. stow_home continua sendo o "recolhido"
   # dos abortos, do RETRACT e do reset.
-  home: [0.0, 1.108, -1.021, -1.894, 0.0]
-  stow_home: [0.0, 1.10, -1.04, -1.8, 0.0]   # J2 1,13 -> 1,10 (07 Out): 1,13 fica a 0,3° do limite, dentro da zona do fim de curso (ver arm_switches.yaml)
+  # 14 Out 2026: J3 onde o switch do Cerbaro FECHA (−123 + 1,5 = −121,5°),
+  # J4 em zero como na Tabela 3 (o switch do J4 fica em −100°, o homing
+  # passa por ele e volta a zero), J1/J5 em zero — e o J2 na VERTICAL
+  # (90°), não no switch (104,5°): decisão do Marco ("acho um risco fazer
+  # o HOME com o J2 no zero, sugiro 90 graus" → "vamos nos dois em 90
+  # graus": aqui e na postura de acordar do reset). O homing acha o switch
+  # de trás e o servo traz o J2 14,5° à frente, como já faz com J1/J5.
+  # Antebraço 31,5° abaixo da horizontal, à frente.
+  home: [0.0, 1.5708, -2.12058, 0.0, 0.0]
+  stow_home: [0.0, 1.10, -1.04, -1.70, 0.0]   # J2 1,13 -> 1,10 (07 Out); J4 −1,8 → −1,70 (14 Out, limite ±100°)
 
   # ═══ Postura de BUSCA DA TAG — refeita em 2026-08-27 ═══
   #
@@ -133,7 +148,7 @@ arm_postures:
   # para a frente e a tag seguir no quadro durante o deslocamento — com
   # 170° de campo ela aparece mesmo com o eixo óptico 52° para baixo,
   # que foi como a missão funcionou até hoje.
-  travel: [-0.5289, 1.10, -1.04, -1.8, 0.0]
+  travel: [-0.5289, 1.10, -1.04, -1.70, 0.0]   # J4 −1,8 → −1,70 (14 Out, limite ±100°)
 
   # Postura de pré-manipulação. J1=0, NÃO 90° como a postura de busca:
   # a câmera está montada 90° defasada da direção de alcance do braço,

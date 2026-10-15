@@ -19,23 +19,39 @@ import numpy as np
 # ---------------------------------------------------------------------------
 
 JOINT_NAMES   = ['J1', 'J2', 'J3', 'J4', 'J5']
-JOINT_LOWER   = np.array([-2.61799, -1.13446, -1.04720, -1.91986, -3.14159])
-JOINT_UPPER   = np.array([ 2.61799,  1.13446,  1.04720,  1.91986,  3.14159])
+# LIMITES DE TRABALHO DO RV-M2 RETROFITADO (14 Out 2026). Não são os do
+# manual repartidos ao meio (±150/±65/±60/±110): são os que o Cerbaro
+# definiu ao instalar os fins de curso (dissertação, Tabela 2, p. 42; home
+# nos switches na Tabela 3, p. 47):
+#   J1 ±100°   (chapa do switch invertida; ele ainda limitava a ±90 por software)
+#   J2 −30° … +100°, switch de trás (home) em +106°
+#   J3 −120° … 0°,   switch (home) em −123°  → o cotovelo só dobra para um lado
+#   J4 ±100°   (chapa movida para a câmera não bater no corpo; manual ±110)
+#   J5 ±180°
+# Mesma convenção de zero do nosso modelo (J2 = 0 é o braço superior na
+# horizontal à frente, 90 a vertical): o switch de trás a 106° fica ~16°
+# depois da vertical, como na foto do Marco (14 Out). O URDF tem os BATENTES
+# nos switches (config/arm_switches.yaml); aqui fica o limite de TRABALHO =
+# o ângulo em que cada switch FECHA (nominal ∓ margem de 1,5°): J1 ±98,5,
+# J2 −30 … 104,5, J3 −121,5 … 0, J4 ±98,5, J5 ±178,5. Regra única: a IK
+# pode ir até onde o firmware corta o sentido, nunca além — e a postura
+# home (J2/J3 nos switches) fica DENTRO da faixa. O Cerbaro apertava J2/J3
+# por software a 100/−120 (Tabela 2); isso cabe em j2_max_deg se for
+# preciso. Decisão do Marco (14 Out 2026): "vc vai considerar os switches
+# nas posições originais que Cerbaro adotou" — sim; "pode seguir com a
+# correção do modelo".
+JOINT_LOWER   = np.array([-1.71915, -0.52360, -2.12058, -1.71915, -3.11541])
+JOINT_UPPER   = np.array([ 1.71915,  1.82387,  0.00000,  1.71915,  3.11541])
 # LIMITES DO J2 POR SOFTWARE (B166ER_J2_MIN_DEG / B166ER_J2_MAX_DEG, args
 # j2_min_deg / j2_max_deg de b166er_wb.launch e chave_mission.launch; vêm do
-# ambiente pelo mesmo motivo do GARRA_DX). Valem para a IK (toda solução
-# nasce dentro), para o servo e para o Fuzzy. HISTÓRICO (07–08 Out 2026): o
-# Marco pediu "0 a 65" olhando o desenho das juntas, mas a convenção do
-# modelo (J2 = 0 é o braço superior na horizontal à frente, 90 a vertical)
-# não casa com o robô, cujo switch de trás fica depois da vertical — o zero
-# do J2 do modelo está deslocado e isso é pendência com o robô real. Com o
-# J2 >= 0 a IK não fecha no olhal (resíduo 28 mm). Decisão (08 Out): "por
-# enquanto vamos trabalhar com estes modelos e considerar a atuação dos
-# switches nestes extremos das juntas" — padrão = extremos do modelo
-# (−65/+65), switch em cada ponta; o J2 só faz homing para trás (+65).
-J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-65.0'))
+# ambiente pelo mesmo motivo do GARRA_DX). Só APERTAM a faixa acima (nunca
+# alargam). Valem para a IK (toda solução nasce dentro), para o servo e
+# para o Fuzzy. HISTÓRICO: 07–08 Out 2026 o Marco pediu "0 a 65" olhando o
+# desenho das juntas do modelo antigo (±65); em 14 Out o zero do J2 foi
+# acertado pela dissertação do Cerbaro e a faixa passou a ser a real.
+J2_MIN_DEG = float(os.environ.get('B166ER_J2_MIN_DEG', '-30.0'))
 JOINT_LOWER[1] = max(JOINT_LOWER[1], np.radians(J2_MIN_DEG))
-J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '65.0'))
+J2_MAX_DEG = float(os.environ.get('B166ER_J2_MAX_DEG', '104.5'))
 JOINT_UPPER[1] = min(JOINT_UPPER[1], np.radians(J2_MAX_DEG))
 
 # IK
@@ -43,6 +59,11 @@ IK_MAX_ITER   = 300
 IK_TOL_POS    = 3e-3   # m  — 3 mm suficiente para estimação de estado
 IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
+# afastamento de limites na IK da tarefa (ik_tooltip_com_degrau): ganho
+# sobre o gradiente da barreira (rad²) e passo máximo por iteração (rad)
+IK_PESO_LIM   = float(os.environ.get('B166ER_IK_PESO_LIM', '2.5e-4'))
+IK_PASSO_LIM  = 0.0087   # 0,5°/iteração
+IK_LIM_ZONA   = math.radians(float(os.environ.get('B166ER_IK_LIM_ZONA_DEG', '6.0')))   # barreira só a menos disto do limite
 IK_DQ_STEP    = 1e-6
 IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 # Parada por ESTAGNAÇÃO (2026-09-11): um DLS que não melhora o resíduo em
@@ -432,6 +453,65 @@ def joint_limit_gradient(q_arm):
     q_mid   = (JOINT_UPPER + JOINT_LOWER) / 2.0
     q_range = (JOINT_UPPER - JOINT_LOWER) / 2.0
     return -(q_arm - q_mid) / (q_range ** 2)
+
+
+def gradiente_barreira(q_arm, cap=80.0, zona=IK_LIM_ZONA):
+    """dH/dq do custo clássico de limite (Chan & Dubey 1995),
+        H = Σ (q_max−q_min)² / [4 (q_max−q)(q−q_min)],
+    ~0 no meio do curso e explodindo nos limites (limitado a ±cap, 1/rad).
+    Positivo = a junta está do lado de cima; descer H = ir para o centro.
+    ZONA MORTA (15 Out 2026): só age a menos de `zona` rad do limite, com
+    rampa linear. Sem isso a barreira rebalanceava as juntas no grau de
+    liberdade livre da tarefa (rotação da haste em torno do eixo do furo =
+    J4) e inclinou a haste 12° para dentro da parede — a fase atravessa
+    encostou e não avançou (run1 da bateria v2). A barreira existe para
+    tirar a junta do switch por alguns graus, não para escolher postura."""
+    q = np.clip(np.asarray(q_arm, dtype=float), JOINT_LOWER + 1e-3, JOINT_UPPER - 1e-3)
+    rng = JOINT_UPPER - JOINT_LOWER
+    g = rng ** 2 * (2.0 * q - JOINT_UPPER - JOINT_LOWER) / (4.0 * (JOINT_UPPER - q) ** 2 * (q - JOINT_LOWER) ** 2)
+    dist = np.minimum(JOINT_UPPER - q, q - JOINT_LOWER)
+    rampa = np.clip((zona - dist) / zona, 0.0, 1.0)
+    return np.clip(g, -cap, cap) * rampa
+
+
+def juntas_saturadas(q_arm, qdot_arm, ls=None, margem=0.0):
+    """Índices (0..4) das juntas que NÃO vão andar: no limite de trabalho
+    (ou com o fim de curso fechado, ls = ±1) e com velocidade pedida para
+    FORA. O firmware (real e emulado) corta o sentido no switch; o modelo
+    tem de saber disso, senão a pseudo-inversa distribui velocidade para
+    uma junta parada e o movimento realizado difere do planejado."""
+    q = np.asarray(q_arm, dtype=float); v = np.asarray(qdot_arm, dtype=float)
+    sup = q >= JOINT_UPPER - margem
+    inf = q <= JOINT_LOWER + margem
+    if ls is not None:
+        ls = np.asarray(ls, dtype=float)
+        sup = sup | (ls > 0.5)
+        inf = inf | (ls < -0.5)
+    return [int(j) for j in np.where((sup & (v > 1e-6)) | (inf & (v < -1e-6)))[0]]
+
+
+def resolve_com_saturacao(solver, J, q_arm, col0=0, ls=None, margem=0.0, max_it=5):
+    """Resolved-rate CIENTE DA SATURAÇÃO (14 Out 2026). `solver(J)` devolve
+    q̇ para a Jacobiana dada; as colunas col0..col0+4 são as juntas do
+    braço. Junta saturada (juntas_saturadas) perde a coluna e o sistema é
+    resolvido de novo — as outras juntas (e a base) compensam — até
+    nenhuma junta nova saturar. Devolve (q̇ com as saturadas em zero,
+    lista das bloqueadas, J reduzida)."""
+    J = np.array(J, dtype=float, copy=True)
+    bloq = []
+    qdot = solver(J)
+    for _ in range(max_it):
+        novas = [j for j in juntas_saturadas(q_arm, qdot[col0:col0 + 5], ls, margem) if j not in bloq]
+        if not novas:
+            break
+        bloq += novas
+        for j in novas:
+            J[:, col0 + j] = 0.0
+        qdot = solver(J)
+    qdot = np.array(qdot, dtype=float, copy=True)
+    for j in bloq:
+        qdot[col0 + j] = 0.0
+    return qdot, sorted(bloq), J
 
 
 # ---------------------------------------------------------------------------
@@ -910,7 +990,8 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
 def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                           max_iter=400, max_step=0.08, q_current=None,
                           continuity_weight=0.35, ik_reach_tol=0.005,
-                          peso_dir=0.05, ang_tol=0.20, sentido_fixo=False):
+                          peso_dir=0.05, ang_tol=0.20, sentido_fixo=False,
+                          peso_lim=IK_PESO_LIM):
     """
     IK de POSIÇÃO da ponta + DIREÇÃO do degrau.
 
@@ -1042,6 +1123,20 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                 Jm[3:, i] = peso_dir * (d1 - d0) / (2 * IK_DQ_STEP)
             dq = np.linalg.solve(Jm.T @ Jm + IK_LAMBDA**2 * np.eye(5),
                                  Jm.T @ err)
+            if peso_lim > 0.0:
+                # AFASTAMENTO DE LIMITES (14 Out 2026). Com os limites reais
+                # do RV-M2 (Cerbaro) a solução encostava em J3 = 0 / J4 =
+                # −98,5° e o servo ficava "BLOQUEADA" a 3–5 mm. A barreira
+                # (gradiente ~0 no meio do curso, grande só perto do limite)
+                # é projetada no espaço nulo das linhas de POSIÇÃO: não
+                # custa alcance, só gasta a folga do degrau (ang_tol).
+                Jp = Jm[:3]
+                Np = np.eye(5) - np.linalg.solve(Jp @ Jp.T + IK_LAMBDA**2 * np.eye(3), Jp).T @ Jp
+                dq_lim = Np @ (-peso_lim * gradiente_barreira(q))
+                m_l = np.max(np.abs(dq_lim))
+                if m_l > IK_PASSO_LIM:
+                    dq_lim *= IK_PASSO_LIM / m_l
+                dq = dq + dq_lim
             m = np.max(np.abs(dq))
             if m > max_step:
                 dq *= max_step / m
