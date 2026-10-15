@@ -2028,6 +2028,18 @@ class Manipulate(smach.State):
                               phase, offset[2] * 1000,
                               ctx.alt_captura * 1000, cfg['curso_min_m'] * 1000,
                               margem * 1000, offset[0] * 1000)
+            elif cfg.get('deriva_eixo_max_m') is not None and ctx.pose_captura is not None:
+                # LIBERA E ARCOS TAMBÉM (15 Out 2026, run2 de arco_deslizante).
+                # O alvo pedia eixo = 0 com a ponta capturada a −8…−10 mm;
+                # enquanto o whole-body durava um segundo nos arcos isso
+                # passava, mas fazendo o arco inteiro ele puxou a ponta 10 mm
+                # pelo furo e a guarda de deriva (15 mm) disparou — "PERDEU O
+                # OLHAL" sem ter perdido. O anel não anda nesse eixo: o alvo
+                # fica onde a captura registrou a ponta e a régua/guarda
+                # medem só deriva.
+                offset[0] = float(ctx.pose_captura[0])
+                rospy.loginfo('[mission] fase "%s": eixo do alvo = o da captura (%+.1f mm)',
+                              phase, offset[0] * 1000)
             ctx.offset_efetivo = offset
 
             # PUXAR COM AS RODAS. A componente Y do offset é o quanto o
