@@ -2037,8 +2037,16 @@ class Manipulate(smach.State):
             # é onde ele tem folga. Antes, o braço fazia as duas coisas e
             # varria perto da parede no meio do movimento.
             dy = offset[1] - y_anterior
+            # Fase de ARCO DESLIZANTE (arco_raio_m): sem recuo prévio com
+            # as rodas. O recuo puxava a ponta 48 mm na horizontal com o
+            # braço parado enquanto o olhal precisava descer 20 mm pelo
+            # arco, e o whole-body só entrava depois, já a 27,7°, para
+            # fazer o mergulho que sobrou (run1 de arco_deslizante). Com o
+            # alvo deslizante o whole-body faz o arco inteiro, base
+            # incluída, tangente à circunferência.
             if (ctx.pull_with_base and dy > 0.005
-                    and phase not in PHASES_SO_BRACO):
+                    and phase not in PHASES_SO_BRACO
+                    and ctx.phases[phase].get('arco_raio_m') is None):
                 if not _creep_base(ctx, -dy, 'fase "%s"/puxa' % phase):
                     return 'failed'
             y_anterior = offset[1]
