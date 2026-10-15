@@ -330,21 +330,27 @@ chave_seccionadora_task:
     tol_xyz_m: [0.040, 0.010, 0.015]
     offset_xyz_m: [0.0, 0.0518, -0.0318]
     blade_angle_deg: 15
+  # FIM DO ARCO2 EM 35° (15 Out 2026). Com o arco deslizante a fase fecha
+  # pela régua de profundidade (10 mm ≈ 3° de arco) e a lâmina recua ~3°
+  # quando o dedo sai no desengata: com o fim em 30° a missão terminou com
+  # 25,6° contra o limiar de 25 (run1 de arco_deslizante). Antes, o recuo
+  # com as rodas passava do ponto e deixava 31–34° sem ninguém pedir. Com
+  # 35° a fase fecha em ≥ 32° e a lâmina termina em ≥ 29°.
   arco2:
     arco_raio_m: 0.200
     arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     modo: wb
     tol_xyz_m: [0.040, 0.010, 0.015]
-    offset_xyz_m: [0.0, 0.1000, -0.0518]
-    blade_angle_deg: 30
+    offset_xyz_m: [0.0, 0.1147, -0.0612]
+    blade_angle_deg: 35
 
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
   # fora do anel sem puxá-lo de volta.
   desengata:
     modo: ik
-    offset_xyz_m: [-0.090, 0.1000, -0.0518]
+    offset_xyz_m: [-0.090, 0.1147, -0.0612]   # = fim do arco2 (35°)
 
   # ── SAÍDA DE EMERGÊNCIA (ABORT_SAFE, 2026-09-09) ──
   # Não são fases da trilha: são as tolerâncias dos três degraus com que
