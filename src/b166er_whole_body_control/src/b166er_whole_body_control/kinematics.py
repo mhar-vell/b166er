@@ -59,6 +59,10 @@ IK_MAX_ITER   = 300
 IK_TOL_POS    = 3e-3   # m  — 3 mm suficiente para estimação de estado
 IK_TOL_ORIENT = 5e-2   # rad — ~3°, suficiente para estimação de estado
 IK_LAMBDA     = 0.02
+# afastamento de limites na IK da tarefa (ik_tooltip_com_degrau): ganho
+# sobre o gradiente da barreira (rad²) e passo máximo por iteração (rad)
+IK_PESO_LIM   = float(os.environ.get('B166ER_IK_PESO_LIM', '2.5e-4'))
+IK_PASSO_LIM  = 0.0087   # 0,5°/iteração
 IK_DQ_STEP    = 1e-6
 IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 # Parada por ESTAGNAÇÃO (2026-09-11): um DLS que não melhora o resíduo em
@@ -448,6 +452,57 @@ def joint_limit_gradient(q_arm):
     q_mid   = (JOINT_UPPER + JOINT_LOWER) / 2.0
     q_range = (JOINT_UPPER - JOINT_LOWER) / 2.0
     return -(q_arm - q_mid) / (q_range ** 2)
+
+
+def gradiente_barreira(q_arm, cap=80.0):
+    """dH/dq do custo clássico de limite (Chan & Dubey 1995),
+        H = Σ (q_max−q_min)² / [4 (q_max−q)(q−q_min)],
+    ~0 no meio do curso e explodindo nos limites (limitado a ±cap, 1/rad).
+    Positivo = a junta está do lado de cima; descer H = ir para o centro."""
+    q = np.clip(np.asarray(q_arm, dtype=float), JOINT_LOWER + 1e-3, JOINT_UPPER - 1e-3)
+    rng = JOINT_UPPER - JOINT_LOWER
+    g = rng ** 2 * (2.0 * q - JOINT_UPPER - JOINT_LOWER) / (4.0 * (JOINT_UPPER - q) ** 2 * (q - JOINT_LOWER) ** 2)
+    return np.clip(g, -cap, cap)
+
+
+def juntas_saturadas(q_arm, qdot_arm, ls=None, margem=0.0):
+    """Índices (0..4) das juntas que NÃO vão andar: no limite de trabalho
+    (ou com o fim de curso fechado, ls = ±1) e com velocidade pedida para
+    FORA. O firmware (real e emulado) corta o sentido no switch; o modelo
+    tem de saber disso, senão a pseudo-inversa distribui velocidade para
+    uma junta parada e o movimento realizado difere do planejado."""
+    q = np.asarray(q_arm, dtype=float); v = np.asarray(qdot_arm, dtype=float)
+    sup = q >= JOINT_UPPER - margem
+    inf = q <= JOINT_LOWER + margem
+    if ls is not None:
+        ls = np.asarray(ls, dtype=float)
+        sup = sup | (ls > 0.5)
+        inf = inf | (ls < -0.5)
+    return [int(j) for j in np.where((sup & (v > 1e-6)) | (inf & (v < -1e-6)))[0]]
+
+
+def resolve_com_saturacao(solver, J, q_arm, col0=0, ls=None, margem=0.0, max_it=5):
+    """Resolved-rate CIENTE DA SATURAÇÃO (14 Out 2026). `solver(J)` devolve
+    q̇ para a Jacobiana dada; as colunas col0..col0+4 são as juntas do
+    braço. Junta saturada (juntas_saturadas) perde a coluna e o sistema é
+    resolvido de novo — as outras juntas (e a base) compensam — até
+    nenhuma junta nova saturar. Devolve (q̇ com as saturadas em zero,
+    lista das bloqueadas, J reduzida)."""
+    J = np.array(J, dtype=float, copy=True)
+    bloq = []
+    qdot = solver(J)
+    for _ in range(max_it):
+        novas = [j for j in juntas_saturadas(q_arm, qdot[col0:col0 + 5], ls, margem) if j not in bloq]
+        if not novas:
+            break
+        bloq += novas
+        for j in novas:
+            J[:, col0 + j] = 0.0
+        qdot = solver(J)
+    qdot = np.array(qdot, dtype=float, copy=True)
+    for j in bloq:
+        qdot[col0 + j] = 0.0
+    return qdot, sorted(bloq), J
 
 
 # ---------------------------------------------------------------------------
@@ -926,7 +981,8 @@ def ik_tooltip_nivelado(p_target_arm, eixo_furo_arm, up_arm, q_seeds=None,
 def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                           max_iter=400, max_step=0.08, q_current=None,
                           continuity_weight=0.35, ik_reach_tol=0.005,
-                          peso_dir=0.05, ang_tol=0.20, sentido_fixo=False):
+                          peso_dir=0.05, ang_tol=0.20, sentido_fixo=False,
+                          peso_lim=IK_PESO_LIM):
     """
     IK de POSIÇÃO da ponta + DIREÇÃO do degrau.
 
@@ -1058,6 +1114,20 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                 Jm[3:, i] = peso_dir * (d1 - d0) / (2 * IK_DQ_STEP)
             dq = np.linalg.solve(Jm.T @ Jm + IK_LAMBDA**2 * np.eye(5),
                                  Jm.T @ err)
+            if peso_lim > 0.0:
+                # AFASTAMENTO DE LIMITES (14 Out 2026). Com os limites reais
+                # do RV-M2 (Cerbaro) a solução encostava em J3 = 0 / J4 =
+                # −98,5° e o servo ficava "BLOQUEADA" a 3–5 mm. A barreira
+                # (gradiente ~0 no meio do curso, grande só perto do limite)
+                # é projetada no espaço nulo das linhas de POSIÇÃO: não
+                # custa alcance, só gasta a folga do degrau (ang_tol).
+                Jp = Jm[:3]
+                Np = np.eye(5) - np.linalg.solve(Jp @ Jp.T + IK_LAMBDA**2 * np.eye(3), Jp).T @ Jp
+                dq_lim = Np @ (-peso_lim * gradiente_barreira(q))
+                m_l = np.max(np.abs(dq_lim))
+                if m_l > IK_PASSO_LIM:
+                    dq_lim *= IK_PASSO_LIM / m_l
+                dq = dq + dq_lim
             m = np.max(np.abs(dq))
             if m > max_step:
                 dq *= max_step / m

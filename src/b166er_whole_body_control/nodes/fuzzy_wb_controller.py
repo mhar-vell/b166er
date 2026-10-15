@@ -43,7 +43,7 @@ from b166er_whole_body_control.kinematics import (
     fk_arm_joint_frames, _LINK_MASSES,
     whole_body_jacobian, arm_jacobian_world,
     dls_pseudoinverse, null_space_projector,
-    joint_limit_gradient,
+    joint_limit_gradient, resolve_com_saturacao,
     pose_error,
 )
 from b166er_whole_body_control.fuzzy_gain import FuzzyGain
@@ -240,6 +240,15 @@ class FuzzyWBController:
         # integrado com o q̇ publicado.
         self._limit_margin = math.radians(rospy.get_param('~limit_margin_deg', 5.0))
         self._q_dot_prev = None
+        # SATURAÇÃO (14 Out 2026): junta no limite de trabalho (ou com o fim
+        # de curso fechado) com velocidade pedida para fora não anda — o
+        # firmware corta o sentido. A pseudo-inversa passa a resolver SEM a
+        # coluna dessa junta (kinematics.resolve_com_saturacao): as outras
+        # juntas e a base compensam. Antes, no destrava com J3 em 0° (run1
+        # de 14 Out), o comando ia para uma junta parada e a ponta derivava
+        # 11,5 mm pelo eixo do furo em vez de descer.
+        self._sat_margem = math.radians(float(rospy.get_param('~sat_margem_deg', 0.3)))
+        self._ls = np.zeros(5)
         self._q_cmd = None
         self._t_q_cmd = None
         self._limit_w_cap = rospy.get_param('~limit_weight_cap', 100.0)
@@ -373,6 +382,7 @@ class FuzzyWBController:
 
         # Subscritores
         rospy.Subscriber('/b166er/robot_state', RobotState,   self._cb_state)
+        rospy.Subscriber('/b166er/arm_limit_switch', JointState, self._cb_ls, queue_size=1)
         rospy.Subscriber('/b166er/ee_target',   PoseStamped,  self._cb_target)
         rospy.Subscriber('/b166er/wb_enable',   Bool,         self._cb_wb_enable)
         rospy.Subscriber('/b166er/base_lock',   Bool,         self._cb_base_lock)
@@ -392,6 +402,15 @@ class FuzzyWBController:
     # ------------------------------------------------------------------
     def _cb_state(self, msg):
         self._robot_state = msg
+
+    def _cb_ls(self, msg):
+        if len(msg.position) == 5:
+            self._ls = np.array(msg.position, dtype=float)
+
+    def _bloqueio_log(self, bloq, modo):
+        if bloq:
+            rospy.logwarn_throttle(2.0, '[fuzzy_wb] %s: junta(s) %s saturada(s) — resolvido sem ela(s)',
+                                   modo, [JOINT_NAMES[j] for j in bloq])
 
     def _cb_base_lock(self, msg):
         if msg.data != self._base_locked:
@@ -1028,17 +1047,20 @@ class FuzzyWBController:
                             '[fuzzy_wb] batente: pesos das juntas %s',
                             np.round(w_arm, 1))
                 if self._base_locked:
-                    Jl = J_pos[:, 3:]
-                    Winv = np.diag(1.0 / w[3:])
-                    JW = Jl @ Winv
+                    def _solve_l(Jl, Winv=np.diag(1.0 / w[3:])):
+                        JW = Jl @ Winv
+                        return Winv @ Jl.T @ np.linalg.solve(JW @ Jl.T + lam**2 * np.eye(3), xdot)
+                    q_arm_dot, bloq, _ = resolve_com_saturacao(_solve_l, J_pos[:, 3:], q_arm, 0,
+                                                               self._ls, self._sat_margem)
                     q_dot = np.zeros(J_pos.shape[1])
-                    q_dot[3:] = Winv @ Jl.T @ np.linalg.solve(
-                        JW @ Jl.T + lam**2 * np.eye(3), xdot)
+                    q_dot[3:] = q_arm_dot
                 else:
-                    Winv = np.diag(1.0 / w)
-                    JW = J_pos @ Winv
-                    q_dot = Winv @ J_pos.T @ np.linalg.solve(
-                        JW @ J_pos.T + lam**2 * np.eye(3), xdot)
+                    def _solve_w(Jw, Winv=np.diag(1.0 / w)):
+                        JW = Jw @ Winv
+                        return Winv @ Jw.T @ np.linalg.solve(JW @ Jw.T + lam**2 * np.eye(3), xdot)
+                    q_dot, bloq, _ = resolve_com_saturacao(_solve_w, J_pos, q_arm, 3,
+                                                           self._ls, self._sat_margem)
+                self._bloqueio_log(bloq, 'ponta')
                 # Sem termo de espaço nulo: ele empurra as juntas para o
                 # meio da faixa e briga com a configuração escolhida pela
                 # IK do sequenciador (em 2026-08-13 arrastou J3 de +58°
@@ -1067,10 +1089,12 @@ class FuzzyWBController:
 
             # ---- 4. Jacobiana whole-body e DLS ---------------------------
             J_wb  = whole_body_jacobian(q_arm, T_world_base)
-            J_pin = dls_pseudoinverse(J_wb, lam)
-            N     = null_space_projector(J_wb, J_pin)
-
-            q_dot_task = J_pin @ xdot_d
+            q_dot_task, bloq, J_red = resolve_com_saturacao(
+                lambda Jr: dls_pseudoinverse(Jr, lam) @ xdot_d, J_wb, q_arm, 3,
+                self._ls, self._sat_margem)
+            self._bloqueio_log(bloq, 'whole-body')
+            J_pin = dls_pseudoinverse(J_red, lam)
+            N     = null_space_projector(J_red, J_pin)
             q_dot_null = N @ np.concatenate([
                 np.zeros(3),
                 self._ns_gain * joint_limit_gradient(q_arm),

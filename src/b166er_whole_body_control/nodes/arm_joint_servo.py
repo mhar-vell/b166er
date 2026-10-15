@@ -48,7 +48,7 @@ from movemaster_msg.msg import setpoint as SetpointMsg
 from b166er_whole_body_control.msg import RobotState
 from b166er_whole_body_control.kinematics import (
     JOINT_NAMES, JOINT_LOWER, JOINT_UPPER, T_BASELINK_ARM, fk_arm,
-    arm_jacobian_world, dls_pseudoinverse, pose_error)
+    arm_jacobian_world, dls_pseudoinverse, pose_error, resolve_com_saturacao)
 
 
 class ArmJointServo:
@@ -185,6 +185,7 @@ class ArmJointServo:
         self._h_park_res = None
         self._home_to    = float(rospy.get_param('/arm_switches/home_timeout_s', 40.0))
         self._ls = np.zeros(5)
+        self._sat_margem = math.radians(float(rospy.get_param('~sat_margem_deg', 0.3)))
         # J2 só para trás (Marco, 07/10): limite de curso por software a
         # partir do switch de trás — ver arm_switches.yaml (j2_curso_deg).
         # O limite vem da cinemática (B166ER_J2_MIN_DEG, padrão 0°): a IK, o
@@ -436,7 +437,13 @@ class ArmJointServo:
         J = arm_jacobian_world(self._q_est.tolist(), self._T_wb @ T_BASELINK_ARM)
         J = np.vstack([J[:3], self._w_ang * J[3:]])          # rad -> m-equivalente
         ref = np.concatenate([self._kp_p * e6[:3], self._kp_o * self._w_ang * e6[3:]])
-        v = dls_pseudoinverse(J, self._dls_lam) @ ref
+        # CIENTE DA SATURAÇÃO (14 Out 2026): junta no limite/switch com
+        # velocidade pedida para fora não anda; resolve sem a coluna dela
+        # para as outras compensarem (ver kinematics.resolve_com_saturacao).
+        v, bloq, _ = resolve_com_saturacao(lambda Jr: dls_pseudoinverse(Jr, self._dls_lam) @ ref,
+                                           J, self._q_est, 0, self._ls, self._sat_margem)
+        if bloq:
+            rospy.logwarn_throttle(2.0, '[arm_joint_servo] tarefa: %s saturada(s) — resolvido sem', [JOINT_NAMES[j] for j in bloq])
         v = np.clip(v, -self._v_max, self._v_max)
         # consciente da placa: junta com pedido miúdo descansa (o freio
         # segura); as outras andam a pelo menos v_piso (zona morta do PWM)
