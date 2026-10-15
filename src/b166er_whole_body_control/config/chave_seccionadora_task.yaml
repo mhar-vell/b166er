@@ -94,9 +94,17 @@ chave_seccionadora_task:
   # Com esta fase o braço assume a altura e a atitude com o degrau
   # alinhado enquanto ainda está a 15 cm da parede, e a aproximação
   # passa a ser LATERAL em vez de de baixo para cima.
+  #
+  # 150 → 100 mm (15 Out 2026): com os limites reais do RV-M2 o ponto a
+  # 15 cm da parede fica PERTO DEMAIS DA BASE — para alcançá-lo com a
+  # ferramenta horizontal o punho precisa de mais de 98,5° e o DEPLOY
+  # pré-posicionava com o J4 no switch (resíduo 0,9–4,4 mm). A 10 cm o
+  # J4 fica a 4° do switch com a base a 0,68 m (varredura em
+  # scratchpad/standoff_q.py); a 10 cm do olhal ainda há 23 cm até a
+  # parede e 15 até o mecanismo — a aproximação segue lateral.
   orienta:
     modo: ik
-    offset_xyz_m: [-0.090, 0.150, 0.0085]
+    offset_xyz_m: [-0.090, 0.100, 0.0085]
 
   # ── 1. ao lado do furo, na altura do centro dele ──
   # Entra em −Y a partir de 'orienta', mantendo o deslocamento lateral.

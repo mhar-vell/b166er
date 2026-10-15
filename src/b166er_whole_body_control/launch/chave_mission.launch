@@ -13,8 +13,17 @@
          rosrun smach_viewer smach_viewer.py
   -->
 
-  <arg name="standoff_distance" default="0.62"
+  <arg name="standoff_distance" default="0.68"
        doc="Distância (m) do olhal em que a base para para manipular.
+            0,68 (15 Out 2026): com os limites REAIS do RV-M2 (Cerbaro,
+            J4 ±98,5°) a dobra do punho nas fases de manipulação cai
+            linearmente com a distância — varredura por IK
+            (scratchpad/standoff_q.py): J4 a 6° do switch em 0,62 m,
+            10,7° em 0,64, 15,5° em 0,66, 20,5° em 0,68, 25,7° em 0,70;
+            resíduo 0,0–0,2 mm e degrau ≤ 4,7° em todas. 0,68 cobre um
+            erro de estacionamento de ±2 cm com 15–25° de folga. O
+            degrau de 0,66 abaixo vinha do modelo ANTIGO (J3 ±60°).
+            Histórico anterior:
             0,62 e não 0,70: varrendo a pose da base em 2026-09-01 há um
             degrau entre 0,62 e 0,66 — abaixo dele o braço consegue
             posição E alinhamento no waypoint de inserção, acima ele
