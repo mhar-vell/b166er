@@ -116,7 +116,95 @@ no J4). A missão não chega nela porque parte do DEPLOY já pinado no J4 e, com
 semente única (continuidade, decisão de 2026-09-01 contra saltos de 142°),
 escorrega para o ramo J3 = 0.
 
-### Próximos passos (depois da pausa de 14 Out)
+### Decisão do Marco: J2 na vertical
+
+"Acho um risco fazer o HOME com o J2 no zero, sugiro 90 graus" → "vamos nos
+dois em 90 graus". HOME POSITION = [0, 90°, −121,5°, 0, 0] (o homing acha o
+switch em 104,5° e o servo traz o J2 14,5° à frente, como J1/J5 voltam a
+zero) e o reset acorda o braço com o J2 vertical. Homing do J2 passa a
+durar 2 s em vez de 16.
+
+## 15 Out — resolved-rate ciente da saturação e barreira na IK
+
+**`kinematics.resolve_com_saturacao`**: junta no limite de trabalho (ou com o
+fim de curso fechado em `/b166er/arm_limit_switch`) e velocidade pedida para
+fora perde a coluna da Jacobiana e o sistema é resolvido de novo; as outras
+juntas e a base compensam. Usado no `fuzzy_wb_controller` (modo ponta com e
+sem base travada, whole-body 8-DOF) e no `arm_joint_servo` (lei de tarefa).
+`~sat_margem_deg` = 0,3. Nas baterias aparece como "J3 saturada — resolvido
+sem" na HOME POSITION (J3 no próprio switch) e "J4 saturada" na saída do
+olhal; em nenhum caso bloqueou uma fase.
+
+**Barreira na `ik_tooltip_com_degrau`** (Chan & Dubey projetada no espaço nulo
+das linhas de posição, `IK_PESO_LIM` 2,5e-4, passo ≤ 0,5°/it). Primeira versão
+agia em todo o curso e **derrubou a run1 da bateria v2 na atravessa**: a
+barreira gastou o grau de liberdade livre da tarefa — a rotação da haste em
+torno do eixo do furo, que é o J4 — e inclinou a haste 12° para dentro da
+parede (J4 −83 → −71°); a ponta encostava a 10,5 mm no eixo e o recuo por
+contato não resolveu. Com **zona morta de 6°** (`IK_LIM_ZONA`, rampa linear) a
+barreira só tira a junta do switch por alguns graus e não escolhe postura:
+offline, do deploy a captura fica em J3 −10°/J4 −90° (era −12/−89) e a
+solução pinada em J3 = 0 vai só a −3,3°.
+
+### Bateria v3 (garra fechada, âncora ligada, J2 em 90°, saturação + barreira com zona morta)
+
+| run | homing | fases da manipulação | lâmina | resultado |
+|---|---|---|---|---|
+| 1 | OK (J2 2,1 s, J4 8,2 + 19,9 s, J3 20,3 s) | todas em 1 iteração | 32,8° | **OK** |
+| 2 | OK | 1 iteração | 30,6° | **OK** |
+| 3 | OK | 1 iteração | 32,1° | **OK** |
+| 4 | OK | 1 iteração; destrava fechou por estagnação a 17,7 mm, eixo +8,6 | 30,7° | **OK** |
+| 5 | OK | 1 iteração até a captura; **destrava estagnou a 16 mm com eixo +10,8** (régua 10) | — | ABORT |
+
+IK por fase na v3 (run1): orienta [−19,5, 59,3, −12,5, −98,5, 12,0]°,
+aproxima_lateral [−16,2, 48,9, −4,7, −84,1, 7,7]°, atravessa [−9,0, 50,7,
+−5,6, −86,9, 3,1]° — J3 fora do switch, J4 com 11° de folga; só a orienta
+ainda encosta o J4 (o DEPLOY pré-posiciona em −98,5 e a orienta é a fase
+mais longe do olhal).
+
+**A run5 não é o braço: é o alvo.** A captura deixa a ponta 8 mm para dentro
+do furo de propósito (offset −8, tolerância ±8) e o destrava pedia eixo = 0.
+O erro de eixo nascia em 0–16 mm por construção, a ponta presa no olhal não
+o corrige (o whole-body não move a haste pelo furo), e a régua de 10 mm
+decidia a missão no cara ou coroa: run4 8,6 mm (passou), run5 10,8 (caiu),
+09 Out 9,0–9,3 (passaram), run1 de 14 Out 11,5 (caiu). Fix (commit d368ec4):
+o alvo em eixo do destrava passa a ser onde a captura registrou a ponta,
+como já era em altura; a régua mede deriva desde a captura, que era a
+intenção ("empurrar só com a haste dentro do furo").
+
+### Bateria v4 (idem + eixo do destrava relativo à captura)
+
+| run | homing | destrava | lâmina | resultado |
+|---|---|---|---|---|
+| 1 | OK | estagnou a 16,3 mm | 34,2° | **OK** |
+| 2 | OK | estagnou a 14,9 mm | 30,8° | **OK** |
+| 3 | OK | 2915 [mission] fase "destrava" alcançada por whole-body em 0.8s (0.0011 m) — no frame da parede eixo=+0.1 prof=+0.7 alt=+0.8 mm (tolerân | 34,4° | **OK** |
+| 4 | OK | teto de descida a 22,3 mm, eixo −0,1 mm desde a captura | 34,4° | **OK** |
+| 5 | OK | estagnou a 16,5 mm | 34,4° | **OK** |
+
+**5/5**, 00:40–01:12, ~6,5 min por missão, zero timeouts, sem reiniciar o stack
+entre a v3 e a v4 (só a missão é relançada). Eixo herdado da captura entre
+−6,2 e −8,1 mm. Logs em `garra/limites_cerbaro_v4/fechada/run1..5`.
+
+## Conclusão (15 Out, 01:15)
+
+O modelo tem os limites do robô que existe e a missão fecha 5/5 com eles —
+mas só depois de três coisas que os limites antigos escondiam:
+
+1. **Ordem do homing**: ombro para trás, punho ao switch e de volta a zero,
+   cotovelo por último. Com a ordem antiga o antebraço entrava na base.
+2. **Saturação explícita** no resolved-rate (junta no switch perde a coluna)
+   e **barreira com zona morta** na IK (tira a junta do switch por alguns
+   graus, sem escolher postura — a primeira versão inclinou a haste e caiu).
+3. **Eixo do destrava relativo à captura**: o erro de 0–16 mm era de
+   construção e decidia a missão no cara ou coroa desde 08 Out.
+
+A tarefa continua perto da borda do espaço de trabalho (orienta com J4 em
+−98,5°, 11° de folga nas demais fases). Standoff ficou como estava (0,62 m).
+Para a bancada: a ordem do homing e a saturação são exatamente o que as
+placas fazem (cortam o sentido no switch); o que a simulação ensaia agora é
+o que o robô vai fazer.
+### Próximos passos (escritos em 14 Out, 18:50 — executados acima)
 
 1. **Jacobiana ciente da saturação** no whole-body e no servo: junta com o
    switch fechado (ou no limite de software) e velocidade pedida para fora →
