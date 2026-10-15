@@ -441,6 +441,12 @@ class MissionContext(object):
         self.nav_pose_stale = rospy.get_param('~nav_pose_stale', 0.4)   # s
         self.nav_slow_dist  = rospy.get_param('~nav_slow_dist', 0.30)   # m
         self.nav_v_min_frac = rospy.get_param('~nav_v_min_frac', 0.3)
+        # Chegada "ao lado" e teto de ω perto do alvo (15 Out 2026; ver o
+        # laço DRIVE em _navigate_to). nav_cross_tol: erro lateral aceito
+        # quando o alvo fica para trás. nav_w_min_perto: ω mínimo perto do
+        # alvo, para o rumo ainda ser corrigível sem orbitar.
+        self.nav_cross_tol  = rospy.get_param('~nav_cross_tol', 0.12)      # m
+        self.nav_w_min_perto = rospy.get_param('~nav_w_min_perto', 0.15)   # rad/s
         self.robot_state_t  = None     # rospy.Time da última pose recebida
         # ── Alinhamento do degrau com o eixo do furo ──
         #
@@ -2935,11 +2941,29 @@ def _navigate_to(ctx, goal, timeout, tag):
             elif abs(_ang_diff(bearing, yaw)) > math.pi / 2:
                 # Alvo ficou para trás: curvar a 0,15 m/s com ω saturado
                 # é orbitar. Parar e realinhar.
+                #
+                # PASSOU AO LADO = CHEGOU (15 Out 2026, run3 de arco_deslizante).
+                # A base NÃO gira em torno do próprio centro: gira em torno
+                # do CG, que com o braço fica ~14 cm à frente, e cada giro
+                # parado translada o chassi (bag: 22 cm em 134°, 21 cm em
+                # 100°). Dar meia-volta para corrigir 10 cm de erro lateral
+                # custou 2 × 20 cm e a base estacionou ~20 cm fora (J1 da
+                # orienta +3° contra −13…−19°; "IK não fechou" na fase
+                # seguinte). Dentro de nav_cross_tol o erro lateral é da
+                # ordem do estacionamento normal (~2 cm medidos, tolerado
+                # pela IK): aceitar e ir para o heading final.
+                d_cross = abs(-dx * math.sin(yaw) + dy * math.cos(yaw))
                 ctx.stop_base()
-                phase = 'TURN_TO'
-                rospy.logwarn('[mission] %s: passou do alvo (%.2f m, rumo %.0f°) — '
-                              'realinhando', tag, dist,
-                              math.degrees(_ang_diff(bearing, yaw)))
+                if d_cross < ctx.nav_cross_tol:
+                    phase = 'TURN_FINAL'
+                    rospy.logwarn('[mission] %s: passou ao lado do alvo (%.2f m, lateral '
+                                  '%.0f mm < %.0f) — aceito como chegada, sem meia-volta',
+                                  tag, dist, d_cross * 1000, ctx.nav_cross_tol * 1000)
+                else:
+                    phase = 'TURN_TO'
+                    rospy.logwarn('[mission] %s: passou do alvo (%.2f m, rumo %.0f°, lateral '
+                                  '%.0f mm) — realinhando', tag, dist,
+                                  math.degrees(_ang_diff(bearing, yaw)), d_cross * 1000)
             else:
                 # Correção proporcional de rumo enquanto avança; desacelera
                 # perto do alvo para a janela de chegada não depender de
@@ -2947,7 +2971,15 @@ def _navigate_to(ctx, goal, timeout, tag):
                 err = _ang_diff(bearing, yaw)
                 frac = max(ctx.nav_v_min_frac,
                            min(1.0, dist / max(ctx.nav_slow_dist, 1e-3)))
-                ctx.drive(ctx.nav_v * frac, 1.2 * err)
+                # SEM ÓRBITA (15 Out 2026): perto do alvo o rumo ao ponto
+                # muda depressa e ω = 1,2·err saturado em nav_w com v no
+                # mínimo faz o robô girar mais do que anda — na run3 o rumo
+                # foi de 128° a 180° em 5 s passando ao lado do alvo. O
+                # teto de ω cai com a distância (mínimo nav_w_min_perto),
+                # de modo que o avanço vence o giro na chegada.
+                w_cap = ctx.nav_w if dist >= ctx.nav_slow_dist else max(
+                    ctx.nav_w_min_perto, ctx.nav_w * dist / max(ctx.nav_slow_dist, 1e-3))
+                ctx.drive(ctx.nav_v * frac, max(-w_cap, min(w_cap, 1.2 * err)))
 
         else:  # TURN_FINAL
             err = _ang_diff(gyaw, yaw)
