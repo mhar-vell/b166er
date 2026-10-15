@@ -94,9 +94,17 @@ chave_seccionadora_task:
   # Com esta fase o braço assume a altura e a atitude com o degrau
   # alinhado enquanto ainda está a 15 cm da parede, e a aproximação
   # passa a ser LATERAL em vez de de baixo para cima.
+  #
+  # 150 → 100 mm (15 Out 2026): com os limites reais do RV-M2 o ponto a
+  # 15 cm da parede fica PERTO DEMAIS DA BASE — para alcançá-lo com a
+  # ferramenta horizontal o punho precisa de mais de 98,5° e o DEPLOY
+  # pré-posicionava com o J4 no switch (resíduo 0,9–4,4 mm). A 10 cm o
+  # J4 fica a 4° do switch com a base a 0,68 m (varredura em
+  # scratchpad/standoff_q.py); a 10 cm do olhal ainda há 23 cm até a
+  # parede e 15 até o mecanismo — a aproximação segue lateral.
   orienta:
     modo: ik
-    offset_xyz_m: [-0.090, 0.150, 0.0085]
+    offset_xyz_m: [-0.090, 0.100, 0.0085]
 
   # ── 1. ao lado do furo, na altura do centro dele ──
   # Entra em −Y a partir de 'orienta', mantendo o deslocamento lateral.
@@ -305,7 +313,15 @@ chave_seccionadora_task:
   # é ΔZ do arco somado à captura ANTIGA de −3 mm (degrau de 17 mm). A
   # captura mudou para −10 em 02/09 e os arcos não acompanharam; a
   # tolerância de 15 mm em altura escondeu a diferença.
+  # ARCO DESLIZANTE (15 Out 2026): com arco_raio_m o alvo publicado ao
+  # whole-body desliza pela circunferência (ponto arco_antecipacao_m à
+  # frente da ponta, com a altura do arco nele) em vez de ser o ponto
+  # final — sem isso o arco2 começava empurrando o olhal 20 mm para baixo
+  # antes de avançar. Raio = L da lâmina (200 mm). A régua de fechamento
+  # continua sendo o ponto final.
   arco1:
+    arco_raio_m: 0.200
+    arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     soltura_recuo_min_m: 0.040
     modo: wb
@@ -314,19 +330,36 @@ chave_seccionadora_task:
     tol_xyz_m: [0.040, 0.010, 0.015]
     offset_xyz_m: [0.0, 0.0518, -0.0318]
     blade_angle_deg: 15
+  # FIM DO ARCO2 EM 35° (15 Out 2026). Com o arco deslizante a fase fecha
+  # pela régua de profundidade (10 mm ≈ 3° de arco) e a lâmina recua ~3°
+  # quando o dedo sai no desengata: com o fim em 30° a missão terminou com
+  # 25,6° contra o limiar de 25 (run1 de arco_deslizante). Antes, o recuo
+  # com as rodas passava do ponto e deixava 31–34° sem ninguém pedir. Com
+  # 35° a fase fecha em ≥ 32° e a lâmina termina em ≥ 29°.
   arco2:
+    arco_raio_m: 0.200
+    arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     modo: wb
     tol_xyz_m: [0.040, 0.010, 0.015]
-    offset_xyz_m: [0.0, 0.1000, -0.0518]
-    blade_angle_deg: 30
+    offset_xyz_m: [0.0, 0.1147, -0.0612]
+    blade_angle_deg: 35
 
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
   # fora do anel sem puxá-lo de volta.
+  # WHOLE-BODY, NÃO IK (15 Out 2026, run4 de arco_deslizante). Os arcos
+  # são whole-body só de posição: a orientação da ferramenta fica livre
+  # durante o arco. O desengata por IK, com alinhamento do degrau,
+  # re-alinhava a haste com um giro de punho de 20–25° (J4 −61 → −84)
+  # com o dedo ainda no anel e arrastou a lâmina de volta a 0°. Em
+  # whole-body (só braço: PHASES_SO_BRACO) a ponta sai pelo eixo com a
+  # orientação que tiver. Eixo relativo ao da captura (−90 mm de onde o
+  # dedo está), como nas demais fases depois da captura.
   desengata:
-    modo: ik
-    offset_xyz_m: [-0.090, 0.1000, -0.0518]
+    modo: wb
+    tol_xyz_m: [0.015, 0.020, 0.020]
+    offset_xyz_m: [-0.090, 0.1147, -0.0612]   # y/z = fim do arco2 (35°); x relativo à captura
 
   # ── SAÍDA DE EMERGÊNCIA (ABORT_SAFE, 2026-09-09) ──
   # Não são fases da trilha: são as tolerâncias dos três degraus com que

@@ -64,6 +64,7 @@ IK_LAMBDA     = 0.02
 IK_PESO_LIM   = float(os.environ.get('B166ER_IK_PESO_LIM', '2.5e-4'))
 IK_PASSO_LIM  = 0.0087   # 0,5°/iteração
 IK_LIM_ZONA   = math.radians(float(os.environ.get('B166ER_IK_LIM_ZONA_DEG', '6.0')))   # barreira só a menos disto do limite
+IK_PESO_CONT  = float(os.environ.get('B166ER_IK_PESO_CONT', '0.05'))   # continuidade com q_current no espaço nulo da posição (1/it)
 IK_DQ_STEP    = 1e-6
 IK_MAX_STEP   = 0.1    # rad/iteração — clamp de passo do DLS (ver ik_arm)
 # Parada por ESTAGNAÇÃO (2026-09-11): um DLS que não melhora o resíduo em
@@ -991,7 +992,7 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                           max_iter=400, max_step=0.08, q_current=None,
                           continuity_weight=0.35, ik_reach_tol=0.005,
                           peso_dir=0.05, ang_tol=0.20, sentido_fixo=False,
-                          peso_lim=IK_PESO_LIM):
+                          peso_lim=IK_PESO_LIM, peso_cont=IK_PESO_CONT):
     """
     IK de POSIÇÃO da ponta + DIREÇÃO do degrau.
 
@@ -1123,16 +1124,31 @@ def ik_tooltip_com_degrau(p_target_arm, eixo_furo_arm, q_seeds=None,
                 Jm[3:, i] = peso_dir * (d1 - d0) / (2 * IK_DQ_STEP)
             dq = np.linalg.solve(Jm.T @ Jm + IK_LAMBDA**2 * np.eye(5),
                                  Jm.T @ err)
-            if peso_lim > 0.0:
+            if peso_lim > 0.0 or (peso_cont > 0.0 and q_current is not None):
                 # AFASTAMENTO DE LIMITES (14 Out 2026). Com os limites reais
                 # do RV-M2 (Cerbaro) a solução encostava em J3 = 0 / J4 =
                 # −98,5° e o servo ficava "BLOQUEADA" a 3–5 mm. A barreira
                 # (gradiente ~0 no meio do curso, grande só perto do limite)
                 # é projetada no espaço nulo das linhas de POSIÇÃO: não
                 # custa alcance, só gasta a folga do degrau (ang_tol).
+                #
+                # CONTINUIDADE NO ESPAÇO NULO (15 Out 2026). A tarefa deixa
+                # um grau de liberdade livre (rotação da haste em torno do
+                # eixo do furo ≈ J4 compensado por J2/J3) e o DLS puro deixa
+                # a solução vagar por ele: no desengata a IK girou o punho
+                # 20–25° com o dedo ainda no anel e, na run4 de
+                # arco_deslizante, arrastou a lâmina de volta a 0°. Com
+                # q_current, a solução é puxada para a postura em que o
+                # braço está, também no espaço nulo da posição — o tilt só
+                # muda quando a barreira (junta em cima do limite) manda.
                 Jp = Jm[:3]
                 Np = np.eye(5) - np.linalg.solve(Jp @ Jp.T + IK_LAMBDA**2 * np.eye(3), Jp).T @ Jp
-                dq_lim = Np @ (-peso_lim * gradiente_barreira(q))
+                g = np.zeros(5)
+                if peso_lim > 0.0:
+                    g = g - peso_lim * gradiente_barreira(q)
+                if peso_cont > 0.0 and q_current is not None:
+                    g = g - peso_cont * (q - np.asarray(q_current, dtype=float))
+                dq_lim = Np @ g
                 m_l = np.max(np.abs(dq_lim))
                 if m_l > IK_PASSO_LIM:
                     dq_lim *= IK_PASSO_LIM / m_l
