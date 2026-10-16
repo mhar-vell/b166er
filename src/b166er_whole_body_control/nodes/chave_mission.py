@@ -3150,7 +3150,15 @@ def _reach_by_wholebody(ctx, p_goal, phase):
     # trata como preferência de peso baixo (fuzzy_wb_controller,
     # ~ori_w_ang). Desligável por ~wb_orientacao.
     ori_ref = ctx.ori_captura if ctx.ori_captura is not None else ctx.ee_orientation
-    if ctx.wb_orientacao and ori_ref is not None:
+    # Por fase (YAML wb_orientacao). DESENGATA fica SEM (16 Out 2026, run1 de
+    # wb_orientacao): com a base travada o braço tem 5 DOF e não sai 90 mm
+    # de lado mantendo a atitude completa — a preferência brigou com a
+    # posição e a ponta oscilou 30 s entre −24 e −48 mm no eixo. A
+    # orientação vale onde o dedo está no anel e a base participa
+    # (destrava, libera, arcos).
+    _cfg0 = ctx.phases.get(phase, {}) if isinstance(ctx.phases, dict) else {}
+    usa_ori = bool(ctx.wb_orientacao and bool(_cfg0.get('wb_orientacao', True)) and ori_ref is not None)
+    if usa_ori:
         alvo.pose.orientation = ori_ref
     ctx.pub_target.publish(alvo)
     rospy.sleep(0.2)
@@ -3251,7 +3259,7 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 alvo_t.pose.position.y = float(p_t[1])
                 alvo_t.pose.position.z = float(p_t[2])
                 alvo_t.pose.orientation.w = 1.0
-                if ctx.wb_orientacao and ori_ref is not None:
+                if usa_ori:
                     alvo_t.pose.orientation = ori_ref
                 ctx.pub_target.publish(alvo_t)
                 rospy.loginfo_throttle(1.0, '[mission] fase "%s": arco — ponta em %.1f°, '
