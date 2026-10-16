@@ -923,6 +923,16 @@ class FuzzyWBController:
                         self._target[:3, 3] - (T_cur[:3, 3] + r_tool)))
                     if err_tip < self._tol_pos:
                         self._reached = True
+                    elif err_tip > 1.5 * self._tol_pos:
+                        # VOLTA DA HISTERESE (16 Out 2026, bateria de poses,
+                        # esq2 e costas1): sem este ramo o "alcançado" era
+                        # um TRINCO — a ponta passava a < tol_pos num
+                        # transiente, o controlador parava e nunca mais
+                        # atuava; o contato puxava a ponta 15 mm para fora
+                        # do alvo e a libera estourava o timeout com as
+                        # juntas congeladas (bag: q constante por 30 s,
+                        # base arrastada 3,4 cm para a parede).
+                        self._reached = False
                 elif err_pos_norm < self._tol_pos:
                     self._reached = True
             elif err_pos_norm < self._tol_pos and err_orient_norm < self._tol_orient:
@@ -1111,6 +1121,8 @@ class FuzzyWBController:
                 self._publish_jacobian(J_pos)
                 if err_pos_norm < self._tol_pos:
                     self._reached = True
+                elif err_pos_norm > 1.5 * self._tol_pos:
+                    self._reached = False   # histerese também aqui (16 Out 2026)
                 rospy.loginfo_throttle(1.0,
                     '[fuzzy_wb] PONTA (%s) err=%.4f | q_dot=%s',
                     'base travada' if self._base_locked else 'whole-body 8-DOF',
