@@ -248,6 +248,20 @@ class FuzzyWBController:
         # de 14 Out), o comando ia para uma junta parada e a ponta derivava
         # 11,5 mm pelo eixo do furo em vez de descer.
         self._sat_margem = math.radians(float(rospy.get_param('~sat_margem_deg', 0.3)))
+        # ORIENTAÇÃO NO MODO PONTA (16 Out 2026). As fases engatadas (destrava,
+        # libera, arcos, desengata) eram whole-body SÓ de posição e deixavam
+        # a atitude da ferramenta livre; a primeira fase por IK depois delas
+        # re-alinhava o degrau de uma vez (giro de punho de 20–25° com o
+        # dedo no anel, lâmina arrastada de volta a 0° — RELATORIO28). Com
+        # o alvo carregando a orientação do T265, as três linhas angulares
+        # entram na Jacobiana com peso ~ori_w_ang (m por rad, baixo: é
+        # preferência, não restrição — 5 DOF não fecham pose 6D com a base
+        # travada) e ganho ~ori_k. Alvo com orientação identidade continua
+        # só de posição.
+        self._ori_w_ang = float(rospy.get_param('~ori_w_ang', 0.10))   # m/rad
+        self._ori_k     = float(rospy.get_param('~ori_k', 1.0))        # 1/s
+        self._ori_wmax  = float(rospy.get_param('~ori_wmax', 0.5))     # rad/s
+        self._target_tem_ori = False
         self._ls = np.zeros(5)
         self._q_cmd = None
         self._t_q_cmd = None
@@ -530,6 +544,12 @@ class FuzzyWBController:
 
     def _cb_target(self, msg):
         self._target   = _pose_stamped_to_matrix(msg)
+        o = msg.pose.orientation
+        # Orientação "vazia" (w = 1, identidade) = alvo só de posição, como
+        # sempre foi; qualquer outra = a missão quer a atitude do T265
+        # mantida (fases engatadas, 16 Out 2026).
+        self._target_tem_ori = not (abs(o.w - 1.0) < 1e-6 and abs(o.x) < 1e-6
+                                    and abs(o.y) < 1e-6 and abs(o.z) < 1e-6)
         self._enabled  = True
         self._reached  = False
         self._err_prev = None   # reset derivada ao mudar alvo
@@ -994,9 +1014,10 @@ class FuzzyWBController:
                                    [-r_tool[1], r_tool[0], 0.0]])
                 J_pos = J6[:3, :] - r_skew @ J6[3:, :]
 
-                # POSIÇÃO APENAS: 5 DOF não fecham pose 6D, e a tarefa da
-                # chave especifica direções de força, não orientação de
-                # ferramenta (ver chave_seccionadora_task.md).
+                # POSIÇÃO sempre; ORIENTAÇÃO como preferência quando o alvo
+                # a carrega (ver ~ori_w_ang). 5 DOF não fecham pose 6D com a
+                # base travada: o DLS reparte, e o peso baixo das linhas
+                # angulares garante que a posição manda.
                 err_lin = self._target[:3, 3] - (p_t265 + r_tool)
                 err_pos_norm = float(np.linalg.norm(err_lin))
 
@@ -1004,6 +1025,16 @@ class FuzzyWBController:
                 sp = float(np.linalg.norm(xdot))
                 if sp > MAX_CART_VEL_LOCKED:
                     xdot = xdot * (MAX_CART_VEL_LOCKED / sp)
+                if self._target_tem_ori:
+                    err_ang = pose_error(T_cur, self._target)[3:]
+                    w_ang = self._ori_k * err_ang
+                    na = float(np.linalg.norm(w_ang))
+                    if na > self._ori_wmax:
+                        w_ang = w_ang * (self._ori_wmax / na)
+                    J_pos = np.vstack([J_pos, self._ori_w_ang * J6[3:, :]])
+                    xdot = np.concatenate([xdot, self._ori_w_ang * w_ang])
+                    rospy.loginfo_throttle(2.0, '[fuzzy_wb] ponta com orientação: erro angular %.1f°',
+                                           math.degrees(float(np.linalg.norm(err_ang))))
 
                 # DLS PONDERADO: q̇ = W⁻¹Jᵀ(JW⁻¹Jᵀ + λ²I)⁻¹ ẋ
                 # W penaliza a base (BASE_WEIGHT) e, desde 2026-09-03, as
@@ -1049,7 +1080,7 @@ class FuzzyWBController:
                 if self._base_locked:
                     def _solve_l(Jl, Winv=np.diag(1.0 / w[3:])):
                         JW = Jl @ Winv
-                        return Winv @ Jl.T @ np.linalg.solve(JW @ Jl.T + lam**2 * np.eye(3), xdot)
+                        return Winv @ Jl.T @ np.linalg.solve(JW @ Jl.T + lam**2 * np.eye(Jl.shape[0]), xdot)
                     q_arm_dot, bloq, _ = resolve_com_saturacao(_solve_l, J_pos[:, 3:], q_arm, 0,
                                                                self._ls, self._sat_margem)
                     q_dot = np.zeros(J_pos.shape[1])
@@ -1057,7 +1088,7 @@ class FuzzyWBController:
                 else:
                     def _solve_w(Jw, Winv=np.diag(1.0 / w)):
                         JW = Jw @ Winv
-                        return Winv @ Jw.T @ np.linalg.solve(JW @ Jw.T + lam**2 * np.eye(3), xdot)
+                        return Winv @ Jw.T @ np.linalg.solve(JW @ Jw.T + lam**2 * np.eye(Jw.shape[0]), xdot)
                     q_dot, bloq, _ = resolve_com_saturacao(_solve_w, J_pos, q_arm, 3,
                                                            self._ls, self._sat_margem)
                 self._bloqueio_log(bloq, 'ponta')

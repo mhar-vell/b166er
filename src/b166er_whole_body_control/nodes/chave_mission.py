@@ -446,6 +446,7 @@ class MissionContext(object):
         # quando o alvo fica para trás. nav_w_min_perto: ω mínimo perto do
         # alvo, para o rumo ainda ser corrigível sem orbitar.
         self.nav_cross_tol  = rospy.get_param('~nav_cross_tol', 0.12)      # m
+        self.wb_orientacao  = bool(rospy.get_param('~wb_orientacao', True))   # fases wb levam a atitude do T265 (16 Out 2026)
         self.nav_w_min_perto = rospy.get_param('~nav_w_min_perto', 0.15)   # rad/s
         self.robot_state_t  = None     # rospy.Time da última pose recebida
         # ── Alinhamento do degrau com o eixo do furo ──
@@ -742,6 +743,7 @@ class MissionContext(object):
         self.wall_pos      = None   # np(3,) estimado por visão
         self.wall_R        = None   # np(3,3)
         self.ee_orientation = None  # orientação do EE fixada na manipulação
+        self.ori_captura = None     # atitude do T265 no engate (fases wb depois da captura)
 
         self.pub_cmdvel  = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
         self.pub_target  = rospy.Publisher('/b166er/ee_target', PoseStamped,
@@ -1999,6 +2001,7 @@ class Manipulate(smach.State):
         # o documento da tarefa especifica direções de força, não uma
         # orientação de ferramenta (ver task_sequencer.py).
         ctx.ee_orientation = ctx.robot_state.ee_pose.pose.orientation
+        ctx.ori_captura = None
         R_ee = quaternion_matrix([ctx.ee_orientation.x, ctx.ee_orientation.y,
                                   ctx.ee_orientation.z, ctx.ee_orientation.w])[:3, :3]
 
@@ -2148,6 +2151,7 @@ class Manipulate(smach.State):
                     break
                 ctx.pose_captura = _pose_na_parede(ctx, _tooltip_now(ctx))
                 ctx.alt_captura = float(ctx.pose_captura[2])
+                ctx.ori_captura = ctx.robot_state.ee_pose.pose.orientation
                 rospy.loginfo('[mission] destrava/reassenta: captura registrada em eixo=%+.1f '
                               'prof=%+.1f alt=%+.1f mm', *(ctx.pose_captura * 1000))
                 # Destrava de novo, com o alvo relativo à captura nova.
@@ -2187,6 +2191,10 @@ class Manipulate(smach.State):
                 # parou quando o degrau apoiou no arame.
                 ctx.pose_captura = _pose_na_parede(ctx, _tooltip_now(ctx))
                 ctx.alt_captura = float(ctx.pose_captura[2])
+                # Atitude do T265 no engate (16 Out 2026): é ESTA que as fases
+                # whole-body seguintes mantêm, não a do início do MANIPULATE
+                # (as fases por IK até aqui ainda alinham o degrau).
+                ctx.ori_captura = ctx.robot_state.ee_pose.pose.orientation
                 ctx.status(alt_captura_mm=ctx.alt_captura * 1000,
                            eixo_captura_mm=ctx.pose_captura[0] * 1000)
                 rospy.loginfo('[mission] captura: ponta registrada em eixo=%+.1f '
@@ -3136,7 +3144,14 @@ def _reach_by_wholebody(ctx, p_goal, phase):
     alvo.pose.position.x = float(p_goal[0])
     alvo.pose.position.y = float(p_goal[1])
     alvo.pose.position.z = float(p_goal[2])
-    alvo.pose.orientation.w = 1.0   # com servo_tooltip só a posição conta
+    alvo.pose.orientation.w = 1.0   # sem orientação = só a posição conta
+    # ORIENTAÇÃO MANTIDA NAS FASES ENGATADAS (16 Out 2026): a atitude do
+    # T265 fixada no início do MANIPULATE vai no alvo; o controlador a
+    # trata como preferência de peso baixo (fuzzy_wb_controller,
+    # ~ori_w_ang). Desligável por ~wb_orientacao.
+    ori_ref = ctx.ori_captura if ctx.ori_captura is not None else ctx.ee_orientation
+    if ctx.wb_orientacao and ori_ref is not None:
+        alvo.pose.orientation = ori_ref
     ctx.pub_target.publish(alvo)
     rospy.sleep(0.2)
 
@@ -3236,6 +3251,8 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 alvo_t.pose.position.y = float(p_t[1])
                 alvo_t.pose.position.z = float(p_t[2])
                 alvo_t.pose.orientation.w = 1.0
+                if ctx.wb_orientacao and ori_ref is not None:
+                    alvo_t.pose.orientation = ori_ref
                 ctx.pub_target.publish(alvo_t)
                 rospy.loginfo_throttle(1.0, '[mission] fase "%s": arco — ponta em %.1f°, '
                                        'alvo deslizante em %.1f° (prof %+.1f alt %+.1f mm)',
