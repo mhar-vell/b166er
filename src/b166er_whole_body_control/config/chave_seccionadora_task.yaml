@@ -343,21 +343,23 @@ chave_seccionadora_task:
   # 25,6° contra o limiar de 25 (run1 de arco_deslizante). Antes, o recuo
   # com as rodas passava do ponto e deixava 31–34° sem ninguém pedir. Com
   # 35° a fase fecha em ≥ 32° e a lâmina termina em ≥ 29°.
-  # 35 → 33° (16 Out 2026, bateria de poses, dir2 e diag1): a lâmina para
-  # em 34,4° em TODAS as runs — é o batente dela. Com o alvo a 35° o
-  # whole-body empurra contra o batente até o erro de profundidade cair
-  # abaixo de 10 mm, e duas vezes o dedo escapou do anel antes (salto de
-  # 30–50 mm pelo eixo, "PERDEU O OLHAL"). A 33° o alvo é alcançável
-  # antes do batente; com o desengata em whole-body a lâmina não recua
-  # mais ao sair, então termina em ~33° (limiar 25).
+  # FIM DO ARCO2: 35 → 33 → 30° nominal (17 Out 2026, RELATORIO33). A lâmina
+  # para em 34,4° em todas as runs — é o batente. O anel vai PRESSIONADO
+  # ~20 mm para baixo na lingueta durante o arco, então o raio efetivo da
+  # circunferência que o olhal descreve é ~180 mm, não 200: um alvo em y a
+  # 33° nominal (109 mm) exige a lâmina a asin(109/180) = 37°, além do
+  # batente; o whole-body empurra contra ele e o dedo salta (sonda, run2
+  # de engate_fix: lâmina em 34,4°, eixo 25 → 59 mm, alt −25 → −65 num
+  # ciclo). A 30° nominal (y 100 mm) a lâmina fecha em ~34° no limite; com
+  # o desengata em whole-body ela não recua ao sair (limiar 25°).
   arco2:
     arco_raio_m: 0.200
     arco_antecipacao_m: 0.015
     deriva_eixo_max_m: 0.015
     modo: wb
     tol_xyz_m: [0.040, 0.010, 0.015]
-    offset_xyz_m: [0.0, 0.1089, -0.0573]
-    blade_angle_deg: 33
+    offset_xyz_m: [0.0, 0.1000, -0.0518]
+    blade_angle_deg: 30
 
   # ── 5. sai lateralmente, desengatando ──
   # Move em −X mantendo Y e Z do fim do arco: o degrau escorrega para
@@ -374,7 +376,7 @@ chave_seccionadora_task:
     modo: wb
     wb_orientacao: false   # 5 DOF (base travada) não saem 90 mm de lado mantendo a atitude: oscilou (16 Out)
     tol_xyz_m: [0.015, 0.020, 0.020]
-    offset_xyz_m: [-0.090, 0.1089, -0.0573]   # y/z = fim do arco2 (33°); x relativo à captura
+    offset_xyz_m: [-0.090, 0.1000, -0.0518]   # y/z = fim do arco2 (30° nominal); x relativo à captura
 
   # ── SAÍDA DE EMERGÊNCIA (ABORT_SAFE, 2026-09-09) ──
   # Não são fases da trilha: são as tolerâncias dos três degraus com que
