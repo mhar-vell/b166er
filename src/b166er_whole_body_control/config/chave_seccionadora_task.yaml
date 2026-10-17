@@ -128,6 +128,13 @@ chave_seccionadora_task:
 
   # ── 2. avança em X: o degrau atravessa o furo ──
   # Centrado na altura do furo, sem tocar o arame.
+  # EIXO −8 ± 8 → −10 ± 4 mm (17 Out 2026, RELATORIO32). O degrau tem 20 mm
+  # atravessados no furo e o arame 6 mm de bitola: a margem útil é de
+  # poucos milímetros e ±8 deixava o arame ao acaso entre a quina e a
+  # ponta do degrau. Nas duas perdas da sonda o arame ficou 2–3 mm mais
+  # perto da ponta do que nas runs boas; na libera ele correu 3 mm e
+  # passou por cima. −10 ± 4 põe o arame no meio do degrau sempre (na
+  # atravessa e na captura).
   atravessa:
     modo: ik
     # A LÂMINA TAPA A METADE DE BAIXO DO FURO.
@@ -176,8 +183,8 @@ chave_seccionadora_task:
     # desce com 12 mm de degrau sob o arame (20 de projeção − 8).
     # Sinal: +eixo entra no furo (o desengata SAI com −0,090).
     # y = +0.008: ver a nota em aproxima_lateral (aba da lingueta).
-    offset_xyz_m: [-0.008, 0.008, 0.010]
-    tol_xyz_m: [0.008, 0.006, 0.005]
+    offset_xyz_m: [-0.010, 0.008, 0.010]   # eixo −10 ± 4 (17 Out 2026, RELATORIO32): ver nota acima de atravessa
+    tol_xyz_m: [0.004, 0.006, 0.005]
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
   # É aqui que a captura acontece. O curso é
@@ -217,8 +224,8 @@ chave_seccionadora_task:
   # ferramenta fisicamente para, como no atravessa.
   captura:
     modo: ik
-    offset_xyz_m: [-0.008, 0.0, -0.0100]
-    tol_xyz_m: [0.008, 0.006, 0.010]
+    offset_xyz_m: [-0.010, 0.0, -0.0100]   # eixo −10 ± 4 (17 Out): ver atravessa
+    tol_xyz_m: [0.004, 0.006, 0.010]
 
   # ── 3b. DESTRAVA: desce mais 15 mm e solta o gatilho ──
   # O Marco, em 2026-09-03: "o primeiro movimento (que chamamos de arco
