@@ -2120,6 +2120,7 @@ class Manipulate(smach.State):
                         or phase == 'captura')
                    and tentativas < ctx.reassenta_max):
                 tentativas += 1
+                falha0 = ctx.falha_fase
                 rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
                               'recaptura, destrava de novo%s', phase, tentativas,
                               ctx.reassenta_max,
@@ -2133,11 +2134,28 @@ class Manipulate(smach.State):
                 # subir e entrar ao mesmo tempo, contra o arame (ensaio
                 # forçado de 09 Set: "não conseguiu subir").
                 sobe = ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m
-                p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, sobe])
                 ctx.offset_efetivo = None
-                if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
-                    rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
-                    break
+                if phase == 'libera' and falha0 == 'subiu':
+                    # SUBIU = o arame passou por cima do degrau e o anel está
+                    # apoiado na HASTE (sonda, RELATORIO32/33). Subir 25 mm não
+                    # desprende nada: o degrau continua dentro do anel, por
+                    # baixo do arame, e voltar ao ponto do atravessa prende e
+                    # afunda (engate_fix v3 run2: alt +8 → +26 mm). A saída é
+                    # a mesma do ABORT — pelo eixo do furo, em degraus — e a
+                    # reentrada é pela aproximação lateral, como na primeira
+                    # vez.
+                    _sai_pelo_eixo(ctx, 'reassenta')
+                    off_al = list(ctx.phases['aproxima_lateral']['offset_xyz_m'])
+                    ctx.offset_efetivo = off_al
+                    p_al = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_al)
+                    if not _reach_by_iterative_ik(ctx, p_al, 'aproxima_lateral'):
+                        rospy.logerr('[mission] %s/reassenta: não conseguiu reentrar pela aproximação lateral', phase)
+                        break
+                else:
+                    p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, sobe])
+                    if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
+                        rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
+                        break
                 if phase in ('libera', 'captura'):
                     # VOLTA PELO CAMINHO DA ENTRADA: depois de subir, o
                     # ponto da fase 'atravessa' (dentro do furo, na altura
