@@ -44,6 +44,7 @@ catkin_install_python(PROGRAMS
   nodes/gazebo_arm_bridge.py
   nodes/arm_openloop_sim.py
   nodes/arm_joint_servo.py
+  nodes/arm_switch_bridge.py
   nodes/arm_controller_loader.py
   nodes/kill_gui_zombie.py
   nodes/pioneer_wheel_state_pub.py

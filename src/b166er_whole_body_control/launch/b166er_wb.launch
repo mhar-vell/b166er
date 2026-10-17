@@ -153,6 +153,14 @@
     <include
       file="$(find b166er_robot)/launch/hardware/movemaster_hardware.launch"/>
 
+    <!-- FINS DE CURSO DAS PLACAS → /b166er/arm_limit_switch (17 Out 2026).
+         Os firmwares Joints*_vel publicam arm_switch_12 / _34 / _5
+         (Int8MultiArray, −1/0/+1 por junta, sinal do modelo); este nó
+         monta o JointState de cinco juntas que HOMING, estimador e
+         controlador consomem — o mesmo formato do firmware emulado. -->
+    <node pkg="b166er_whole_body_control" type="arm_switch_bridge.py"
+          name="arm_switch_bridge" output="screen"/>
+
     <include
       file="$(find b166er_robot)/launch/hardware/imu_hardware.launch"/>
 

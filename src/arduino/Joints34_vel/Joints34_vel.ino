@@ -15,6 +15,7 @@
 #include <ros.h>
 #include <movemaster_msg/setpoint.h>
 #include <movemaster_msg/status.h>
+#include <std_msgs/Int8MultiArray.h>
 
 // ---- pinos (= Joints34_test.ino) -------------------------------------------
 #define HBRIDGE_3A   4
@@ -50,6 +51,13 @@ ros::NodeHandle nh;
 movemaster_msg::status st3, st4;
 ros::Publisher pub3("status_3", &st3);
 ros::Publisher pub4("status_4", &st4);
+// FINS DE CURSO NO ROS (17 Out 2026): −1 = switch do lado NEGATIVO da junta no
+// modelo (B se DIR_SIGN=+1), +1 = lado positivo (A), 0 = livre. Publicado a 20 Hz
+// junto do status; o nó arm_switch_bridge.py junta as três placas em
+// /b166er/arm_limit_switch (JointState), que o HOMING e o estimador consomem.
+std_msgs::Int8MultiArray sw_msg;
+int8_t sw_data[2];
+ros::Publisher pub_sw("arm_switch_34", &sw_msg);
 
 float v_cmd[2] = {0.0f, 0.0f};     // J3, J4
 int   pwm_out[2] = {0, 0};
@@ -117,6 +125,10 @@ void publishStatus() {
   st3.output = pwm_out[0]; st3.control_loop = LOOP_HZ; st3.IsDone = (pwm_out[0] == 0);
   st4.joint = "J4"; st4.setpoint = v_cmd[1]; st4.pulse_count = 0; st4.error = 0;
   st4.output = pwm_out[1]; st4.control_loop = LOOP_HZ; st4.IsDone = (pwm_out[1] == 0);
+  sw_data[0] = (int8_t)(DIR_SIGN_3 * ((digitalRead(LS_3A) == HIGH) ? 1 : ((digitalRead(LS_3B) == HIGH) ? -1 : 0)));
+  sw_data[1] = (int8_t)(DIR_SIGN_4 * ((digitalRead(LS_4A) == HIGH) ? 1 : ((digitalRead(LS_4B) == HIGH) ? -1 : 0)));
+  sw_msg.data = sw_data; sw_msg.data_length = 2;
+  pub_sw.publish(&sw_msg);
   pub3.publish(&st3);
   pub4.publish(&st4);
 }
@@ -132,6 +144,7 @@ void setup() {
   stopAll();
   nh.initNode();
   nh.subscribe(sub);
+  nh.advertise(pub_sw);
   nh.advertise(pub3);
   nh.advertise(pub4);
   nh.loginfo("Joints34_vel: malha aberta, graus/s em set_3/set_4, sem encoder");
