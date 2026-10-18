@@ -17,6 +17,7 @@
 #include <ros.h>
 #include <movemaster_msg/setpoint.h>
 #include <movemaster_msg/status.h>
+#include <std_msgs/Int8MultiArray.h>
 
 // ---- pinos (= Joints56_test.ino) -------------------------------------------
 #define HBRIDGE_5A   4
@@ -46,6 +47,13 @@ ros::NodeHandle nh;
 movemaster_msg::status st5, st6;
 ros::Publisher pub5("status_5", &st5);
 ros::Publisher pub6("status_6", &st6);
+// FINS DE CURSO NO ROS (17 Out 2026): −1 = switch do lado NEGATIVO da junta no
+// modelo (B se DIR_SIGN=+1), +1 = lado positivo (A), 0 = livre. Publicado a 20 Hz
+// junto do status; o nó arm_switch_bridge.py junta as três placas em
+// /b166er/arm_limit_switch (JointState), que o HOMING e o estimador consomem.
+std_msgs::Int8MultiArray sw_msg;
+int8_t sw_data[1];
+ros::Publisher pub_sw("arm_switch_5", &sw_msg);
 
 float v_cmd5 = 0.0f;
 int   pwm_out5 = 0;
@@ -122,6 +130,9 @@ void publishStatus() {
   st6.joint = "J6"; st6.setpoint = grip_closed_cmd ? 1 : 0; st6.pulse_count = 0; st6.error = 0;
   st6.output = (t_grip_pulse != 0) ? grip_dir * GRIP_PWM : 0; st6.control_loop = LOOP_HZ;
   st6.IsDone = (t_grip_pulse == 0);
+  sw_data[0] = (int8_t)(DIR_SIGN_5 * ((digitalRead(LS_5A) == HIGH) ? 1 : ((digitalRead(LS_5B) == HIGH) ? -1 : 0)));
+  sw_msg.data = sw_data; sw_msg.data_length = 1;
+  pub_sw.publish(&sw_msg);
   pub5.publish(&st5);
   pub6.publish(&st6);
 }
@@ -136,6 +147,7 @@ void setup() {
   stopAll();
   nh.initNode();
   nh.subscribe(sub);
+  nh.advertise(pub_sw);
   nh.advertise(pub5);
   nh.advertise(pub6);
   nh.loginfo("Joints56_vel: malha aberta, graus/s em set_5, gripper por set_GRIP, sem encoder");
