@@ -587,6 +587,16 @@ class MissionContext(object):
         # até isso ser feito e validado, a libera presa segue abortando
         # pela guarda (RELATORIO16).
         self.reassenta_libera = bool(rospy.get_param('~reassenta_libera', False))
+        # SUBIDA NA LIBERA (17 Out 2026, RELATORIO32): a sonda mostrou que a
+        # perda do anel é um escorregão no fim do puxão — a lingueta devolve
+        # o anel e ele sobe 14 mm em 0,2 s levando o dedo. A ponta subir
+        # mais de ~libera_subida_m em ~libera_subida_janela_s durante a
+        # libera é a assinatura, visível pela T265 (vale na bancada). A
+        # fase falha com 'subiu' e reassenta (sobe, atravessa, recaptura,
+        # destrava, puxa de novo) se ~reassenta_subida.
+        self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
+        self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
+        self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
         # reassentamento sem depender de a ponta escorregar de verdade.
@@ -2105,9 +2115,12 @@ class Manipulate(smach.State):
                    and ((phase == 'destrava' and ctx.falha_fase == 'estagnou_curto')
                         or (phase == 'libera' and ctx.falha_fase == 'preso'
                             and ctx.reassenta_libera)
+                        or (phase == 'libera' and ctx.falha_fase == 'subiu'
+                            and ctx.reassenta_subida)
                         or phase == 'captura')
                    and tentativas < ctx.reassenta_max):
                 tentativas += 1
+                falha0 = ctx.falha_fase
                 rospy.logwarn('[mission] %s: REASSENTANDO (%d/%d) — sobe %.0f mm, '
                               'recaptura, destrava de novo%s', phase, tentativas,
                               ctx.reassenta_max,
@@ -2121,11 +2134,28 @@ class Manipulate(smach.State):
                 # subir e entrar ao mesmo tempo, contra o arame (ensaio
                 # forçado de 09 Set: "não conseguiu subir").
                 sobe = ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m
-                p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, sobe])
                 ctx.offset_efetivo = None
-                if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
-                    rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
-                    break
+                if phase == 'libera' and falha0 == 'subiu':
+                    # SUBIU = o arame passou por cima do degrau e o anel está
+                    # apoiado na HASTE (sonda, RELATORIO32/33). Subir 25 mm não
+                    # desprende nada: o degrau continua dentro do anel, por
+                    # baixo do arame, e voltar ao ponto do atravessa prende e
+                    # afunda (engate_fix v3 run2: alt +8 → +26 mm). A saída é
+                    # a mesma do ABORT — pelo eixo do furo, em degraus — e a
+                    # reentrada é pela aproximação lateral, como na primeira
+                    # vez.
+                    _sai_pelo_eixo(ctx, 'reassenta')
+                    off_al = list(ctx.phases['aproxima_lateral']['offset_xyz_m'])
+                    ctx.offset_efetivo = off_al
+                    p_al = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_al)
+                    if not _reach_by_iterative_ik(ctx, p_al, 'aproxima_lateral'):
+                        rospy.logerr('[mission] %s/reassenta: não conseguiu reentrar pela aproximação lateral', phase)
+                        break
+                else:
+                    p_sobe = _tooltip_now(ctx) + np.array([0.0, 0.0, sobe])
+                    if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
+                        rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
+                        break
                 if phase in ('libera', 'captura'):
                     # VOLTA PELO CAMINHO DA ENTRADA: depois de subir, o
                     # ponto da fase 'atravessa' (dentro do furo, na altura
@@ -3228,6 +3258,7 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             tol_fase = np.array([ctx.tol_pos] * 3)
         hist = []
         hist_curto = None
+        hist_alt = []
         ctx.falha_fase = None
         while not rospy.is_shutdown():
             if ctx.tilt_critical:
@@ -3318,6 +3349,21 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             # depois de pelo menos curso_estagna_m, a fase fecha AQUI: o
             # mecanismo chegou onde podia. Na bancada é a mesma leitura
             # (a T265 vê a ponta parar com o comando ainda descendo).
+            # SUBIDA SÚBITA NA LIBERA (17 Out 2026): ver ~libera_subida_m.
+            if phase == 'libera' and e_parede is not None:
+                off_l = ctx.offset_efetivo if ctx.offset_efetivo is not None else cfg_fase.get('offset_xyz_m', [0, 0, 0])
+                alt_now = float(off_l[2]) - float(e_parede[2])
+                t_now = rospy.Time.now().to_sec()
+                hist_alt.append((t_now, alt_now))
+                hist_alt = [h for h in hist_alt if t_now - h[0] <= ctx.libera_subida_janela_s]
+                subida = alt_now - min(h[1] for h in hist_alt)
+                if len(hist_alt) >= 3 and subida > ctx.libera_subida_m:
+                    rospy.logerr('[mission] fase "libera": ponta SUBIU %.1f mm em %.1f s — o arame '
+                                 'passou por cima do degrau (anel devolvido pela lingueta)',
+                                 subida * 1000, t_now - hist_alt[0][0])
+                    ctx.status(olhal_perdido=1)
+                    ctx.falha_fase = 'subiu'
+                    return False
             desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
             if desc is not None and cfg_curso is not None:
                 # TETO DE DESCIDA (2026-09-30, ver curso_teto_m no YAML):
