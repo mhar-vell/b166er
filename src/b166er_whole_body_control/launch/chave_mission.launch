@@ -107,6 +107,11 @@
        compensa a deriva do chassi nas fases de manipulação) — muleta só de
        simulação; false = o braço em malha aberta tem de aguentar a deriva. -->
   <arg name="ancora_base"    default="true"/>
+  <!-- teste_vies_parede_mm:="[0, 8, 0]" soma um viés (eixo, profundidade,
+       altura, mm, frame da parede) à estimativa depois da REFINE — SÓ para
+       reproduzir uma percepção fora em simulação e exercitar a varredura
+       lateral do recuo por contato. Zero na missão. -->
+  <arg name="teste_vies_parede_mm" default="[0, 0, 0]"/>
   <param name="/fuzzy_wb_controller/fixed_gains" type="yaml" value="$(arg fixed_gains)"/>
   <group if="$(arg localizer)">
     <node name="apriltag_localizer" pkg="b166er_whole_body_control"
@@ -130,5 +135,6 @@
     <param name="estado_inicial"    value="$(arg estado_inicial)"/>
     <param name="estado_final"      value="$(arg estado_final)"/>
     <param name="ancora_base"       value="$(arg ancora_base)"/>
+    <param name="teste_vies_parede_mm" type="yaml" value="$(arg teste_vies_parede_mm)"/>
   </node>
 </launch>
