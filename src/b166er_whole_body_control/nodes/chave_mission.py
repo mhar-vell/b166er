@@ -419,6 +419,24 @@ class MissionContext(object):
         self.ik_recuo_varredura_mm  = rospy.get_param(
             '~ik_recuo_varredura_mm',
             [[0.0, -5.0], [8.0, -5.0], [-8.0, -5.0], [0.0, 5.0]])
+        # ENGATE POR CONTATO (2026-10-21, RELATORIO34, item 1 — Marco:
+        # "pode seguir com o item 1"). Na run 4 de 17 Out e na run 6 da
+        # bateria de vieses o dedo ESTAVA engatado (sonda: degrau a 8 mm
+        # do anel, como numa captura boa) e a missão abortou porque a
+        # parede estava 13 mm fora ao longo do eixo do furo — a direção
+        # que o laser não corrige — e ela acreditava que faltavam 12 mm.
+        # Com a varredura esgotada, se a ponta travou SEMPRE no mesmo
+        # ponto do eixo (independe da posição lateral: não é a borda do
+        # furo), a menos de engate_contato_max_mm do alvo e com
+        # profundidade/altura dentro da tolerância, o bloqueio é o arame
+        # no canto do degrau: a fase fecha e a estimativa da parede é
+        # deslocada pelo eixo para o ponto do contato, de modo que a
+        # captura e as fases seguintes (já relativas à captura) partem
+        # do engate real. O contato manda sobre a estimativa.
+        self.engate_contato_fases  = rospy.get_param('~engate_contato_fases', ['atravessa'])
+        self.engate_contato_tol_mm = rospy.get_param('~engate_contato_tol_mm', 3.0)
+        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 20.0)
+        self.engate_contato_eixo_mm = None     # deslocamento aplicado (HUD/relatório)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
         # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
@@ -3548,6 +3566,53 @@ def _rolagem_degrau(ctx, q):
     return math.degrees(math.acos(min(1.0, abs(float(T[:3, 2] @ (v / n))))))
 
 
+def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
+    """Decide o engate por contato e desloca a parede pelo eixo.
+
+    Chamado quando a varredura do recuo se esgotou e a ponta travou de
+    novo. Verdadeiro se todos os travamentos ficaram no mesmo ponto do
+    eixo (± engate_contato_tol_mm — a borda do furo muda de lugar com a
+    posição lateral; o canto do degrau, não), a menos de
+    engate_contato_max_mm do alvo, e com profundidade e altura dentro
+    da tolerância da fase. Nesse caso move ctx.wall_pos pelo eixo de
+    modo que o alvo da fase coincida com a ponta: a estimativa passa a
+    ser a do contato."""
+    if len(travas_eixo) < 2 or ctx.wall_R is None or e_parede is None:
+        return False
+    tol_xyz, _ = _tolerancia_da_fase(ctx, phase)
+    if tol_xyz is None:
+        return False
+    t = np.asarray(travas_eixo, dtype=float) * 1000.0
+    espalha = float(t.max() - t.min())
+    e_mm = float(np.mean(t))
+    lateral_ok = (abs(e_parede[1]) < tol_xyz[1] and abs(e_parede[2]) < tol_xyz[2])
+    if (espalha > ctx.engate_contato_tol_mm or abs(e_mm) > ctx.engate_contato_max_mm
+            or not lateral_ok):
+        rospy.logwarn('[mission] fase "%s": varredura esgotada e ainda travada, '
+                      'mas NÃO é engate por contato (travas no eixo %s mm, '
+                      'espalhamento %.1f ≤ %.0f? | %.1f ≤ %.0f? | prof/alt '
+                      '%+.1f/%+.1f dentro de %.0f/%.0f? %s)', phase,
+                      t.round(1).tolist(), espalha, ctx.engate_contato_tol_mm,
+                      abs(e_mm), ctx.engate_contato_max_mm,
+                      e_parede[1] * 1000, e_parede[2] * 1000,
+                      tol_xyz[1] * 1000, tol_xyz[2] * 1000, lateral_ok)
+        return False
+    eixo = ctx.wall_R[:, 0]
+    ctx.wall_pos = ctx.wall_pos - (e_mm / 1000.0) * eixo
+    ctx.engate_contato_eixo_mm = e_mm
+    rospy.logwarn('[mission] fase "%s": ENGATE POR CONTATO — travou %d vezes no '
+                  'mesmo ponto do eixo (%s mm, espalhamento %.1f) com a varredura '
+                  'esgotada e prof/alt %+.1f/%+.1f mm dentro da tolerância: o '
+                  'arame está no canto do degrau. Parede deslocada %+.1f mm pelo '
+                  'eixo do furo; a fase fecha aqui e a captura parte do contato.',
+                  phase, len(t), t.round(1).tolist(), espalha,
+                  e_parede[1] * 1000, e_parede[2] * 1000, -e_mm)
+    rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f) após o contato',
+                  *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
+    ctx.status(fase=phase, engate_contato_mm=e_mm)
+    return True
+
+
 def _reach_by_iterative_ik(ctx, p_goal, phase):
     """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
 
@@ -3662,9 +3727,11 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
 
     it = 0
     recuos = 0
+    it_desde_recuo = 0      # orçamento de iterações recomeça a cada recuo
+    travas_eixo = []        # eixo (frame da parede) de cada travamento por contato
     prev_n_err = None
     prev_dq1 = None
-    while it < ctx.ik_max_iters:
+    while it_desde_recuo < ctx.ik_max_iters:
         if ctx.tilt_critical:
             ctx.ancora_solta()
             rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
@@ -3782,6 +3849,16 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                   and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
                   and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
         n_recuos = min(int(ctx.ik_recuos_max), len(ctx.ik_recuo_varredura_mm))
+        if travou and e_parede is not None and phase in ctx.ik_recuo_fases:
+            travas_eixo.append(float(e_parede[0]))
+        if (travou and recuos >= n_recuos and phase in ctx.engate_contato_fases
+                and phase in ctx.ik_recuo_fases
+                and _engate_por_contato(ctx, phase, travas_eixo, e_parede)):
+            n_corr = ctx.ancora_solta()
+            rospy.loginfo('[mission] fase "%s" fechada por CONTATO em %d iteração(ões) '
+                          'e %d recuo(s)%s', phase, it + 1, recuos,
+                          (' — âncora corrigiu %d vez(es)' % n_corr) if n_corr else '')
+            return True
         if (travou and recuos < n_recuos and ctx.wall_R is not None
                 and phase in ctx.ik_recuo_fases):
             eixo = ctx.wall_R[:, 0]
@@ -3832,6 +3909,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             p_aim = p_goal.copy()
             prev_n_err = None
             prev_dq1 = None
+            it_desde_recuo = 0    # o recuo recomeça o orçamento de iterações
             continue          # o recuo não consome iteração
         prev_n_err = n_err
         prev_dq1 = float(dq[0])
@@ -3843,10 +3921,12 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # iterações e fica dentro do alcance.
         p_aim = p_aim + ctx.ik_correction_gain * err
         it += 1
+        it_desde_recuo += 1
 
     ctx.ancora_solta()
     rospy.logerr('[mission] fase "%s": %d iterações sem fechar (%.4f m, '
-                 'tolerância %.3f)', phase, ctx.ik_max_iters, n_err, ctx.tol_pos)
+                 'tolerância %.3f)%s', phase, it, n_err, ctx.tol_pos,
+                 (' — %d recuo(s) por contato' % recuos) if recuos else '')
     return False
 
 
