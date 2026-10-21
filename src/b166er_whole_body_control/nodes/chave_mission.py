@@ -425,17 +425,28 @@ class MissionContext(object):
         # do anel, como numa captura boa) e a missão abortou porque a
         # parede estava 13 mm fora ao longo do eixo do furo — a direção
         # que o laser não corrige — e ela acreditava que faltavam 12 mm.
-        # Com a varredura esgotada, se a ponta travou SEMPRE no mesmo
-        # ponto do eixo (independe da posição lateral: não é a borda do
-        # furo), a menos de engate_contato_max_mm do alvo e com
-        # profundidade/altura dentro da tolerância, o bloqueio é o arame
-        # no canto do degrau: a fase fecha e a estimativa da parede é
-        # deslocada pelo eixo para o ponto do contato, de modo que a
-        # captura e as fases seguintes (já relativas à captura) partem
-        # do engate real. O contato manda sobre a estimativa.
+        # Se a ponta travou engate_contato_min_travas vezes no mesmo
+        # ponto do eixo (± engate_contato_tol_mm), a menos de
+        # engate_contato_max_mm do alvo e com profundidade/altura dentro
+        # da tolerância, o bloqueio é o arame no canto do degrau: a fase
+        # fecha e a estimativa da parede é deslocada pelo eixo para o
+        # ponto do contato, de modo que a captura e as fases seguintes
+        # (já relativas à captura) partem do engate real. O contato
+        # manda sobre a estimativa.
+        #
+        # POR QUE DECIDIR CEDO (2ª trava, antes dos passos laterais da
+        # varredura) e com teto de 15 mm: a borda do furo bloqueia a
+        # ~16,6 mm do alvo (10 mm de inserção + raio do arame — geometria
+        # fixa, independe do viés lateral), o canto do degrau a
+        # (viés no eixo − 2 mm). Até ~15 mm de viés os dois não se
+        # confundem. E esperar a varredura inteira é pior: na primeira
+        # bateria (21 Out) o passo de +8 mm em profundidade deixou o
+        # dedo escorregar 10 mm além do canto, a captura fechou com o
+        # arame no fim do degrau e a libera perdeu o anel.
         self.engate_contato_fases  = rospy.get_param('~engate_contato_fases', ['atravessa'])
+        self.engate_contato_min_travas = rospy.get_param('~engate_contato_min_travas', 2)
         self.engate_contato_tol_mm = rospy.get_param('~engate_contato_tol_mm', 3.0)
-        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 20.0)
+        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 15.0)
         self.engate_contato_eixo_mm = None     # deslocamento aplicado (HUD/relatório)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
@@ -3569,15 +3580,16 @@ def _rolagem_degrau(ctx, q):
 def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     """Decide o engate por contato e desloca a parede pelo eixo.
 
-    Chamado quando a varredura do recuo se esgotou e a ponta travou de
-    novo. Verdadeiro se todos os travamentos ficaram no mesmo ponto do
-    eixo (± engate_contato_tol_mm — a borda do furo muda de lugar com a
-    posição lateral; o canto do degrau, não), a menos de
-    engate_contato_max_mm do alvo, e com profundidade e altura dentro
-    da tolerância da fase. Nesse caso move ctx.wall_pos pelo eixo de
+    Chamado a cada travamento por contato a partir do
+    engate_contato_min_travas-ésimo. Verdadeiro se todos os travamentos
+    ficaram no mesmo ponto do eixo (± engate_contato_tol_mm), a menos de
+    engate_contato_max_mm do alvo (a borda do furo fica a ~16,6 mm; o
+    canto do degrau a viés − 2), e com profundidade e altura dentro da
+    tolerância da fase. Nesse caso move ctx.wall_pos pelo eixo de
     modo que o alvo da fase coincida com a ponta: a estimativa passa a
     ser a do contato."""
-    if len(travas_eixo) < 2 or ctx.wall_R is None or e_parede is None:
+    if (len(travas_eixo) < int(ctx.engate_contato_min_travas) or ctx.wall_R is None
+            or e_parede is None):
         return False
     tol_xyz, _ = _tolerancia_da_fase(ctx, phase)
     if tol_xyz is None:
@@ -3588,7 +3600,7 @@ def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     lateral_ok = (abs(e_parede[1]) < tol_xyz[1] and abs(e_parede[2]) < tol_xyz[2])
     if (espalha > ctx.engate_contato_tol_mm or abs(e_mm) > ctx.engate_contato_max_mm
             or not lateral_ok):
-        rospy.logwarn('[mission] fase "%s": varredura esgotada e ainda travada, '
+        rospy.logwarn('[mission] fase "%s": travou de novo, '
                       'mas NÃO é engate por contato (travas no eixo %s mm, '
                       'espalhamento %.1f ≤ %.0f? | %.1f ≤ %.0f? | prof/alt '
                       '%+.1f/%+.1f dentro de %.0f/%.0f? %s)', phase,
@@ -3601,8 +3613,8 @@ def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     ctx.wall_pos = ctx.wall_pos - (e_mm / 1000.0) * eixo
     ctx.engate_contato_eixo_mm = e_mm
     rospy.logwarn('[mission] fase "%s": ENGATE POR CONTATO — travou %d vezes no '
-                  'mesmo ponto do eixo (%s mm, espalhamento %.1f) com a varredura '
-                  'esgotada e prof/alt %+.1f/%+.1f mm dentro da tolerância: o '
+                  'mesmo ponto do eixo (%s mm, espalhamento %.1f) com '
+                  'prof/alt %+.1f/%+.1f mm dentro da tolerância: o '
                   'arame está no canto do degrau. Parede deslocada %+.1f mm pelo '
                   'eixo do furo; a fase fecha aqui e a captura parte do contato.',
                   phase, len(t), t.round(1).tolist(), espalha,
@@ -3851,7 +3863,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         n_recuos = min(int(ctx.ik_recuos_max), len(ctx.ik_recuo_varredura_mm))
         if travou and e_parede is not None and phase in ctx.ik_recuo_fases:
             travas_eixo.append(float(e_parede[0]))
-        if (travou and recuos >= n_recuos and phase in ctx.engate_contato_fases
+        if (travou and phase in ctx.engate_contato_fases
                 and phase in ctx.ik_recuo_fases
                 and _engate_por_contato(ctx, phase, travas_eixo, e_parede)):
             n_corr = ctx.ancora_solta()
