@@ -455,6 +455,18 @@ class MissionContext(object):
         # iterativa se comporta como antes.
         self.ik_recuo_fases = rospy.get_param('~ik_recuo_fases',
                                               ['aproxima_lateral', 'atravessa'])
+        # CONTATO CAÓTICO (2026-10-22, RELATORIO35 run 4). A assinatura
+        # acima exige progresso nulo entre DUAS ITERAÇÕES CONSECUTIVAS com
+        # o J1 aquém. Quando o dedo escorrega pela borda do furo a ponta
+        # pula (eixo +46 → −34 → −9 → −9 → +12 mm em cinco iterações), o
+        # erro muda muito a cada passo e a assinatura nunca repete: as
+        # iterações acabam e a varredura não chega ao passo que entra.
+        # Nas fases de entrada a IK fecha em 1–2 iterações quando não há
+        # contato; ik_recuo_caotico_its iterações sem fechar desde o
+        # último recuo (ou o início) valem como travamento — o recuo e a
+        # varredura seguem — mas NÃO contam para o engate por contato,
+        # que precisa do ponto do eixo repetido.
+        self.ik_recuo_caotico_its = rospy.get_param('~ik_recuo_caotico_its', 3)
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
         # SÓ PARA TESTE (simulação): viés somado à parede depois da REFINE,
         # no frame da parede (eixo, profundidade, altura) em mm, para
@@ -3857,13 +3869,18 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # são a assinatura do bloqueio por contato (RELATORIO19, seção
         # do aborto): sem contato o J1 obedece com erro nulo e a
         # iteração seguinte fecha.
-        travou = (prev_n_err is not None and prev_dq1 is not None
-                  and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
-                  and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
+        travou_contato = (prev_n_err is not None and prev_dq1 is not None
+                          and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
+                          and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
+        # Contato caótico: ik_recuo_caotico_its iterações sem fechar desde
+        # o último recuo (ver MissionContext.ik_recuo_caotico_its).
+        travou_caotico = (not travou_contato and phase in ctx.ik_recuo_fases
+                          and it_desde_recuo + 1 >= int(ctx.ik_recuo_caotico_its))
+        travou = travou_contato or travou_caotico
         n_recuos = min(int(ctx.ik_recuos_max), len(ctx.ik_recuo_varredura_mm))
-        if travou and e_parede is not None and phase in ctx.ik_recuo_fases:
+        if travou_contato and e_parede is not None and phase in ctx.ik_recuo_fases:
             travas_eixo.append(float(e_parede[0]))
-        if (travou and phase in ctx.engate_contato_fases
+        if (travou_contato and phase in ctx.engate_contato_fases
                 and phase in ctx.ik_recuo_fases
                 and _engate_por_contato(ctx, phase, travas_eixo, e_parede)):
             n_corr = ctx.ancora_solta()
@@ -3886,13 +3903,19 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             # nova posição da varredura, para reentrar alinhado com ela.
             p_recuo = p_now - sgn * ctx.ik_recuo_eixo_m * eixo \
                 + d_off[0] * prof + d_off[1] * up
-            rospy.logwarn('[mission] fase "%s" it%d: ponta não avança (erro '
-                          '%.1f → %.1f mm) e o J1 fica mais aquém (%.1f → '
-                          '%.1f°) — contato provável; recuo %d/%d: %.0f mm '
+            if travou_contato:
+                motivo = ('ponta não avança (erro %.1f → %.1f mm) e o J1 fica '
+                          'mais aquém (%.1f → %.1f°) — contato provável'
+                          % (prev_n_err * 1000, n_err * 1000, prev_dq1, dq[0]))
+            else:
+                motivo = ('%d iterações sem fechar desde o último recuo (erro '
+                          '%.1f mm, eixo %s) — contato caótico provável'
+                          % (it_desde_recuo + 1, n_err * 1000,
+                             ('%+.1f mm' % (e_parede[0] * 1000)) if e_parede is not None else 'n/d'))
+            rospy.logwarn('[mission] fase "%s" it%d: %s; recuo %d/%d: %.0f mm '
                           'pelo eixo e varredura: alvo original com '
                           'profundidade %+.0f mm, altura %+.0f mm',
-                          phase, it, prev_n_err * 1000, n_err * 1000,
-                          prev_dq1, dq[0], recuos, n_recuos,
+                          phase, it, motivo, recuos, n_recuos,
                           ctx.ik_recuo_eixo_m * 1000,
                           off_novo[0] * 1000, off_novo[1] * 1000)
             ctx.status(fase=phase, recuo=recuos, **est,
