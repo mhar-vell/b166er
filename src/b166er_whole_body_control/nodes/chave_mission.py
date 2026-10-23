@@ -480,6 +480,30 @@ class MissionContext(object):
         # varredura seguem — mas NÃO contam para o engate por contato,
         # que precisa do ponto do eixo repetido.
         self.ik_recuo_caotico_its = rospy.get_param('~ik_recuo_caotico_its', 3)
+        # ...E A PONTA PULANDO (2026-10-23, RELATORIO36). Só "N iterações
+        # sem fechar" disparava também quando o erro ficava PARADO logo
+        # acima da tolerância (alt +10b: eixo 6,9–7,5 mm contra 6, quatro
+        # recuos que gastaram a fase). O contato caótico de verdade tem a
+        # ponta saltando entre iterações (+46 → −34 → −9 mm na run que o
+        # motivou). Exige que a posição da ponta, no frame da parede, tenha
+        # variado pelo menos ik_recuo_caotico_espalha_mm entre as
+        # iterações desde o último recuo.
+        self.ik_recuo_caotico_espalha_mm = float(rospy.get_param('~ik_recuo_caotico_espalha_mm', 10.0))
+        # SONDA DE INSERÇÃO (2026-10-23, item 2 do RELATORIO36). Com a
+        # parede estimada 13 mm "antes" do real ao longo do eixo (viés
+        # −13, 0/6 nas baterias) a atravessa fecha SEM contato com o dedo
+        # raso — o arame na quina do degrau — e o anel escapa no destrava
+        # ou na libera. A atravessa fechar sem contato não diz onde está o
+        # canto do degrau; empurrar diz. Depois de uma atravessa sem
+        # engate por contato, a ponta avança atravessa_sonda_mm pelo
+        # sentido da inserção: se parar antes (progresso < sonda −
+        # atravessa_sonda_folga_mm) bateu no canto, que é a posição de
+        # engate das capturas boas, e a parede é deslocada pelo eixo para
+        # que ali seja o alvo da atravessa; se andar tudo, não havia
+        # canto (dedo fora do anel) e a ponta volta ao ponto de antes, sem
+        # mexer na parede. 0 desliga.
+        self.atravessa_sonda_mm = float(rospy.get_param('~atravessa_sonda_mm', 20.0))
+        self.atravessa_sonda_folga_mm = float(rospy.get_param('~atravessa_sonda_folga_mm', 3.0))
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
         # SÓ PARA TESTE (simulação): viés somado à parede depois da REFINE,
         # no frame da parede (eixo, profundidade, altura) em mm, para
@@ -2343,6 +2367,8 @@ class Manipulate(smach.State):
             # aborta aqui: o arco seguinte é que vai falhar, e falhar
             # com a lingueta medida no log é o relato correto.
             if phase == 'atravessa':
+                if ctx.engate_contato_eixo_mm is None and ctx.atravessa_sonda_mm > 0:
+                    _sonda_insercao(ctx)
                 ctx.alt_entrada = float(_pose_na_parede(ctx, _tooltip_now(ctx))[2])
                 ctx.status(alt_entrada_mm=ctx.alt_entrada * 1000)
             if phase == 'captura':
@@ -3727,6 +3753,56 @@ def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     return True
 
 
+def _sonda_insercao(ctx):
+    """Empurra a ponta pelo sentido da inserção até o canto do degrau.
+
+    Ver MissionContext.atravessa_sonda_mm. Melhor esforço: qualquer
+    falha deixa a parede como estava."""
+    try:
+        if ctx.wall_R is None:
+            return
+        eixo = ctx.wall_R[:, 0]
+        off_al = ctx.phases['aproxima_lateral']['offset_xyz_m']
+        off_at = list(ctx.phases['atravessa']['offset_xyz_m'])
+        sentido = 1.0 if float(off_at[0]) >= float(off_al[0]) else -1.0
+        # Tolerância apertada no eixo: a sonda só "fecha" se andar tudo; a
+        # parada no canto aparece como fase não fechada em 2 iterações.
+        for nome in ('sonda_eixo', 'sonda_volta'):
+            ctx.phases.setdefault(nome, {'tol_xyz_m': [0.002, 0.008, 0.006]})
+        p0 = _tooltip_now(ctx)
+        sonda = ctx.atravessa_sonda_mm / 1000.0
+        p_alvo = p0 + sentido * sonda * eixo
+        its0 = ctx.ik_max_iters
+        ctx.ik_max_iters = 2
+        try:
+            _reach_by_iterative_ik(ctx, p_alvo, 'sonda_eixo')
+        finally:
+            ctx.ik_max_iters = its0
+        p1 = _tooltip_now(ctx)
+        prog = float((p1 - p0) @ eixo) * sentido
+        if prog < sonda - ctx.atravessa_sonda_folga_mm / 1000.0:
+            p_nom = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_at)
+            e = float((ctx.wall_R.T @ (p_nom - p1))[0])
+            ctx.wall_pos = ctx.wall_pos - e * eixo
+            rospy.logwarn('[mission] SONDA DE INSERÇÃO: a ponta avançou só %.1f de %.0f mm '
+                          'e parou — canto do degrau; parede deslocada %+.1f mm pelo eixo '
+                          '(aqui passa a ser o alvo da atravessa)', prog * 1000,
+                          sonda * 1000, -e * 1000)
+            ctx.status(sonda_insercao_mm=prog * 1000, sonda_desloca_mm=-e * 1000)
+        else:
+            rospy.logwarn('[mission] SONDA DE INSERÇÃO: a ponta avançou %.1f de %.0f mm sem '
+                          'parar — sem canto à frente; voltando ao ponto da atravessa, parede '
+                          'inalterada', prog * 1000, sonda * 1000)
+            ctx.status(sonda_insercao_mm=prog * 1000, sonda_desloca_mm=0.0)
+            ctx.ik_max_iters = 2
+            try:
+                _reach_by_iterative_ik(ctx, p0, 'sonda_volta')
+            finally:
+                ctx.ik_max_iters = its0
+    except Exception as exc:            # noqa: BLE001
+        rospy.logwarn('[mission] SONDA DE INSERÇÃO falhou (%s) — seguindo sem ela', exc)
+
+
 def _reach_by_iterative_ik(ctx, p_goal, phase):
     """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
 
@@ -3843,6 +3919,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     recuos = 0
     it_desde_recuo = 0      # orçamento de iterações recomeça a cada recuo
     travas_eixo = []        # eixo (frame da parede) de cada travamento por contato
+    pontas_desde_recuo = [] # posição da ponta (frame da parede) desde o último recuo
     prev_n_err = None
     prev_dq1 = None
     while it_desde_recuo < ctx.ik_max_iters:
@@ -3964,8 +4041,15 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
         # Contato caótico: ik_recuo_caotico_its iterações sem fechar desde
         # o último recuo (ver MissionContext.ik_recuo_caotico_its).
+        if ctx.wall_R is not None:
+            pontas_desde_recuo.append(ctx.wall_R.T @ np.asarray(p_now, dtype=float))
+        espalha_mm = 0.0
+        if len(pontas_desde_recuo) >= 2:
+            P = np.array(pontas_desde_recuo)
+            espalha_mm = float(np.max(np.ptp(P, axis=0))) * 1000
         travou_caotico = (not travou_contato and phase in ctx.ik_recuo_fases
-                          and it_desde_recuo + 1 >= int(ctx.ik_recuo_caotico_its))
+                          and it_desde_recuo + 1 >= int(ctx.ik_recuo_caotico_its)
+                          and espalha_mm >= ctx.ik_recuo_caotico_espalha_mm)
         travou = travou_contato or travou_caotico
         n_recuos = min(int(ctx.ik_recuos_max), len(ctx.ik_recuo_varredura_mm))
         if travou_contato and e_parede is not None and phase in ctx.ik_recuo_fases:
@@ -4015,9 +4099,9 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           'mais aquém (%.1f → %.1f°) — contato provável'
                           % (prev_n_err * 1000, n_err * 1000, prev_dq1, dq[0]))
             else:
-                motivo = ('%d iterações sem fechar desde o último recuo (erro '
-                          '%.1f mm, eixo %s) — contato caótico provável'
-                          % (it_desde_recuo + 1, n_err * 1000,
+                motivo = ('%d iterações sem fechar desde o último recuo, ponta '
+                          'saltando %.0f mm (erro %.1f mm, eixo %s) — contato caótico provável'
+                          % (it_desde_recuo + 1, espalha_mm, n_err * 1000,
                              ('%+.1f mm' % (e_parede[0] * 1000)) if e_parede is not None else 'n/d'))
             rospy.logwarn('[mission] fase "%s" it%d: %s; recuo %d/%d: %.0f mm '
                           'pelo eixo e varredura: alvo original com '
@@ -4052,6 +4136,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             prev_n_err = None
             prev_dq1 = None
             it_desde_recuo = 0    # o recuo recomeça o orçamento de iterações
+            pontas_desde_recuo = []
             continue          # o recuo não consome iteração
         prev_n_err = n_err
         prev_dq1 = float(dq[0])
