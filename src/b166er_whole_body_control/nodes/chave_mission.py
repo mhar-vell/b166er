@@ -391,6 +391,14 @@ class MissionContext(object):
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        # TETO DA MIRA ALÉM (2026-10-22). Quando a ponta está presa (dedo
+        # no anel, arame por cima do degrau) a correção p_aim += 0,8·erro
+        # acumula a cada iteração sem a ponta sair do lugar: a mira foge
+        # dezenas de cm, a IK muda de postura inteira (J2 45 → 11 → 61°)
+        # e o braço chicoteia arrastando o anel e a lâmina (saida_sobe
+        # com erro de 173 e 226 mm nas baterias de 21/22 Out). A mira
+        # fica a no máximo ik_aim_max_m do alvo.
+        self.ik_aim_max_m = float(rospy.get_param('~ik_aim_max_m', 0.03))
         # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
         # IK a ponta não avança e o J1 fica cada vez mais aquém do
         # pedido, o braço está empurrando algo (degrau na aba da
@@ -446,7 +454,12 @@ class MissionContext(object):
         self.engate_contato_fases  = rospy.get_param('~engate_contato_fases', ['atravessa'])
         self.engate_contato_min_travas = rospy.get_param('~engate_contato_min_travas', 2)
         self.engate_contato_tol_mm = rospy.get_param('~engate_contato_tol_mm', 3.0)
-        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 15.0)
+        # 15 → 13,5 (22 Out): a borda do furo bloqueou a 14,6–15,3 mm em
+        # duas runs com prof +12 e o engate por contato fechou com o dedo
+        # FORA do anel; o canto do degrau, com viés de 13 no eixo, bloqueou
+        # a 10,6–12,4. 13,5 separa os valores medidos; viés no eixo acima
+        # de ~15 mm fica sem cobertura.
+        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 13.5)
         self.engate_contato_eixo_mm = None     # deslocamento aplicado (HUD/relatório)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
@@ -455,6 +468,18 @@ class MissionContext(object):
         # iterativa se comporta como antes.
         self.ik_recuo_fases = rospy.get_param('~ik_recuo_fases',
                                               ['aproxima_lateral', 'atravessa'])
+        # CONTATO CAÓTICO (2026-10-22, RELATORIO35 run 4). A assinatura
+        # acima exige progresso nulo entre DUAS ITERAÇÕES CONSECUTIVAS com
+        # o J1 aquém. Quando o dedo escorrega pela borda do furo a ponta
+        # pula (eixo +46 → −34 → −9 → −9 → +12 mm em cinco iterações), o
+        # erro muda muito a cada passo e a assinatura nunca repete: as
+        # iterações acabam e a varredura não chega ao passo que entra.
+        # Nas fases de entrada a IK fecha em 1–2 iterações quando não há
+        # contato; ik_recuo_caotico_its iterações sem fechar desde o
+        # último recuo (ou o início) valem como travamento — o recuo e a
+        # varredura seguem — mas NÃO contam para o engate por contato,
+        # que precisa do ponto do eixo repetido.
+        self.ik_recuo_caotico_its = rospy.get_param('~ik_recuo_caotico_its', 3)
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
         # SÓ PARA TESTE (simulação): viés somado à parede depois da REFINE,
         # no frame da parede (eixo, profundidade, altura) em mm, para
@@ -646,6 +671,49 @@ class MissionContext(object):
         # destrava, puxa de novo) se ~reassenta_subida.
         self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
         self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
+        # LÂMINA ABRINDO NA LIBERA ≠ ESCORREGÃO (2026-10-22, RELATORIO35
+        # run 5). Com o dedo 10 mm mais alto no anel o puxão destravou e
+        # a lâmina girou de 3° para 32° em um segundo; o anel correu pelo
+        # arco e a ponta foi junto (100 mm em profundidade), sem
+        # desengatar. A ponta também SUBIU 11 mm (o anel desceu no arco e
+        # ficou pendurado no degrau) e o detector acima mandou reassentar
+        # com o dedo ainda no anel a 32° — a saída pelo eixo arrastou a
+        # lâmina de volta e divergiu. O escorregão não move a ponta em
+        # profundidade (a lingueta devolve o anel 3 mm); a lâmina abrindo
+        # move dezenas de mm na mesma janela. Se a profundidade correu mais
+        # que libera_subida_prof_max_m na janela, a libera FECHA (o que ela
+        # queria já aconteceu) e os arcos seguem de onde a ponta está.
+        self.libera_subida_prof_max_m = float(rospy.get_param('~libera_subida_prof_max_m', 0.015))
+        # CAPTURA POR CONTATO EM PROFUNDIDADE (2026-10-22, RELATORIO34 item
+        # 2). Com a parede 12 mm fora em profundidade o dedo entra (a folga
+        # existe para esse lado) e a captura exige ±6 mm de um alvo que o
+        # anel não deixa alcançar: dez iterações com prof −9…−11 mm, eixo
+        # e altura dentro. captura_contato_its iterações sem fechar com
+        # eixo/altura na tolerância e |prof| ≤ captura_contato_prof_max_mm
+        # fecham a captura: o anel segura o dedo, e é isso que a captura
+        # quer. A estimativa da parede NÃO é deslocada (o contato só diz
+        # que o centro está a menos de uma folga dali).
+        self.captura_contato_fases = rospy.get_param('~captura_contato_fases', ['captura'])
+        # DESLIGADA POR PADRÃO (0) depois da bateria contato_manda de 22 Out:
+        # na run prof −12 fechou com eixo −5,8 / altura +8 (bordas da
+        # tolerância) e o destrava estagnou curto com prof −9,9; no caso
+        # que a motivou (RELATORIO34 run 3) a altura estava +9…+17, fora
+        # da tolerância, e ela nem teria disparado. Fica atrás do parâmetro.
+        self.captura_contato_its = int(rospy.get_param('~captura_contato_its', 0))
+        self.captura_contato_prof_max_mm = float(rospy.get_param('~captura_contato_prof_max_mm', 15.0))
+        # CURSO TOTAL DESDE A ENTRADA (2026-10-22, RELATORIO34 item 3). Com
+        # a parede 10 mm baixa o dedo entrou baixo e já comprimiu a
+        # lingueta 14 mm ANTES da captura; o destrava desceu 5,5 mm até o
+        # fim de curso e "curso ≥ 10 mm desde a captura" reprovou um
+        # gatilho destravado de verdade. A altura da ponta ao fechar a
+        # atravessa (alt_entrada) é a referência que não depende da
+        # captura: a atravessa passa o degrau POR CIMA do arame, logo tudo
+        # que a ponta desceu desde lá além da folga do furo (≈ 20 mm: furo
+        # de 30 menos o dedo de 10) só pode ter sido o anel descendo na
+        # lingueta. Uma estagnação curta com descida total ≥
+        # curso_total_min_m desde a entrada é fim de curso, não bloqueio.
+        self.curso_total_min_m = float(rospy.get_param('~curso_total_min_m', 0.025))
+        self.alt_entrada = None
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
@@ -2227,6 +2295,7 @@ class Manipulate(smach.State):
                     if not _reach_by_iterative_ik(ctx, p_atr, 'atravessa'):
                         rospy.logerr('[mission] %s/reassenta: não conseguiu voltar ao ponto do atravessa', phase)
                         break
+                    ctx.alt_entrada = float(_pose_na_parede(ctx, _tooltip_now(ctx))[2])
                 ctx.offset_efetivo = off_cap
                 p_cap = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_cap)
                 if not _reach_by_iterative_ik(ctx, p_cap, 'captura'):
@@ -2273,6 +2342,9 @@ class Manipulate(smach.State):
             # desceu de verdade (lingueta ≥ ~12 mm dos 15 pedidos). Não
             # aborta aqui: o arco seguinte é que vai falhar, e falhar
             # com a lingueta medida no log é o relato correto.
+            if phase == 'atravessa':
+                ctx.alt_entrada = float(_pose_na_parede(ctx, _tooltip_now(ctx))[2])
+                ctx.status(alt_entrada_mm=ctx.alt_entrada * 1000)
             if phase == 'captura':
                 # Zero do critério observável do destrava: onde a ponta
                 # parou quando o degrau apoiou no arame.
@@ -3410,10 +3482,22 @@ def _reach_by_wholebody(ctx, p_goal, phase):
             if phase == 'libera' and e_parede is not None:
                 off_l = ctx.offset_efetivo if ctx.offset_efetivo is not None else cfg_fase.get('offset_xyz_m', [0, 0, 0])
                 alt_now = float(off_l[2]) - float(e_parede[2])
+                prof_now = float(off_l[1]) - float(e_parede[1])
                 t_now = rospy.Time.now().to_sec()
-                hist_alt.append((t_now, alt_now))
+                hist_alt.append((t_now, alt_now, prof_now))
                 hist_alt = [h for h in hist_alt if t_now - h[0] <= ctx.libera_subida_janela_s]
                 subida = alt_now - min(h[1] for h in hist_alt)
+                corrida_prof = max(abs(prof_now - h[2]) for h in hist_alt)
+                if len(hist_alt) >= 3 and corrida_prof > ctx.libera_subida_prof_max_m:
+                    # Ver MissionContext.libera_subida_prof_max_m.
+                    rospy.logwarn('[mission] fase "libera": a LÂMINA ABRIU durante o puxão — '
+                                  'ponta correu %.0f mm em profundidade em %.1f s (subiu %.1f mm) '
+                                  'sem desengatar; a libera fecha aqui e os arcos seguem de '
+                                  'onde a ponta está', corrida_prof * 1000,
+                                  t_now - hist_alt[0][0], subida * 1000)
+                    ctx.status(lamina_abriu_na_libera=1)
+                    ok = True
+                    return True
                 if len(hist_alt) >= 3 and subida > ctx.libera_subida_m:
                     rospy.logerr('[mission] fase "libera": ponta SUBIU %.1f mm em %.1f s — o arame '
                                  'passou por cima do degrau (anel devolvido pela lingueta)',
@@ -3469,9 +3553,27 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                     hist_curto.append(((rospy.Time.now() - t0).to_sec(), desc))
                     while hist_curto and hist_curto[-1][0] - hist_curto[0][0] > 4.0:
                         hist_curto.pop(0)
-                    if (hist_curto[-1][0] - hist_curto[0][0] >= 3.9
+                    estagnou_curto = (hist_curto[-1][0] - hist_curto[0][0] >= 3.9
                             and max(h[1] for h in hist_curto) - min(h[1] for h in hist_curto) < 0.0005
-                            and (desc < cfg_estagna or abs(e_parede[1]) >= tol_fase[1])):
+                            and (desc < cfg_estagna or abs(e_parede[1]) >= tol_fase[1]))
+                    off_now = ctx.offset_efetivo if ctx.offset_efetivo is not None else cfg_fase.get('offset_xyz_m', [0, 0, 0])
+                    alt_now_d = float(off_now[2]) - float(e_parede[2])
+                    desc_total = (ctx.alt_entrada - alt_now_d) if ctx.alt_entrada is not None else None
+                    if (estagnou_curto and desc_total is not None
+                            and desc_total >= ctx.curso_total_min_m
+                            and abs(e_parede[1]) < tol_fase[1]):
+                        # Ver MissionContext.curso_total_min_m.
+                        rospy.logwarn('[mission] fase "%s": descida estagnou CURTA em %.1f mm '
+                                      '(mín %.0f) mas a ponta já desceu %.1f mm desde a ENTRADA '
+                                      '(≥ %.0f: mais que a folga do furo) — o anel estava '
+                                      'na lingueta antes da captura; fim de curso, fechando a '
+                                      'fase', phase, desc * 1000, cfg_estagna * 1000,
+                                      desc_total * 1000, ctx.curso_total_min_m * 1000)
+                        ctx.status(descida_mm=desc * 1000, descida_total_mm=desc_total * 1000,
+                                   estagnou=1)
+                        ok = True
+                        return True
+                    if estagnou_curto:
                         rospy.logwarn('[mission] fase "%s": descida estagnou CURTA em %.1f mm '
                                       '(mín %.0f; prof %+.1f mm, tol %.0f) — a ponta parou de '
                                       'empurrar; devolvendo para reassentar', phase, desc * 1000,
@@ -3857,13 +3959,35 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # são a assinatura do bloqueio por contato (RELATORIO19, seção
         # do aborto): sem contato o J1 obedece com erro nulo e a
         # iteração seguinte fecha.
-        travou = (prev_n_err is not None and prev_dq1 is not None
-                  and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
-                  and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
+        travou_contato = (prev_n_err is not None and prev_dq1 is not None
+                          and (prev_n_err - n_err) < ctx.ik_recuo_progresso_min
+                          and abs(dq[0]) > abs(prev_dq1) + ctx.ik_recuo_dq1_min_deg)
+        # Contato caótico: ik_recuo_caotico_its iterações sem fechar desde
+        # o último recuo (ver MissionContext.ik_recuo_caotico_its).
+        travou_caotico = (not travou_contato and phase in ctx.ik_recuo_fases
+                          and it_desde_recuo + 1 >= int(ctx.ik_recuo_caotico_its))
+        travou = travou_contato or travou_caotico
         n_recuos = min(int(ctx.ik_recuos_max), len(ctx.ik_recuo_varredura_mm))
-        if travou and e_parede is not None and phase in ctx.ik_recuo_fases:
+        if travou_contato and e_parede is not None and phase in ctx.ik_recuo_fases:
             travas_eixo.append(float(e_parede[0]))
-        if (travou and phase in ctx.engate_contato_fases
+        # CAPTURA POR CONTATO EM PROFUNDIDADE — ver MissionContext.captura_contato_its.
+        if (ctx.captura_contato_its > 0 and phase in ctx.captura_contato_fases
+                and e_parede is not None
+                and it_desde_recuo + 1 >= ctx.captura_contato_its):
+            tol_c, _ = _tolerancia_da_fase(ctx, phase)
+            if (tol_c is not None and abs(e_parede[0]) < tol_c[0] and abs(e_parede[2]) < tol_c[2]
+                    and abs(e_parede[1]) * 1000 <= ctx.captura_contato_prof_max_mm):
+                n_corr = ctx.ancora_solta()
+                rospy.logwarn('[mission] fase "%s": CAPTURA POR CONTATO — %d iterações sem '
+                              'fechar com eixo %+.1f e altura %+.1f mm dentro da tolerância e '
+                              'profundidade %+.1f mm (≤ %.0f): o anel segura o dedo; a fase '
+                              'fecha aqui%s', phase, it + 1, e_parede[0] * 1000,
+                              e_parede[2] * 1000, e_parede[1] * 1000,
+                              ctx.captura_contato_prof_max_mm,
+                              (' — âncora corrigiu %d vez(es)' % n_corr) if n_corr else '')
+                ctx.status(fase=phase, captura_contato_prof_mm=e_parede[1] * 1000)
+                return True
+        if (travou_contato and phase in ctx.engate_contato_fases
                 and phase in ctx.ik_recuo_fases
                 and _engate_por_contato(ctx, phase, travas_eixo, e_parede)):
             n_corr = ctx.ancora_solta()
@@ -3886,13 +4010,19 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             # nova posição da varredura, para reentrar alinhado com ela.
             p_recuo = p_now - sgn * ctx.ik_recuo_eixo_m * eixo \
                 + d_off[0] * prof + d_off[1] * up
-            rospy.logwarn('[mission] fase "%s" it%d: ponta não avança (erro '
-                          '%.1f → %.1f mm) e o J1 fica mais aquém (%.1f → '
-                          '%.1f°) — contato provável; recuo %d/%d: %.0f mm '
+            if travou_contato:
+                motivo = ('ponta não avança (erro %.1f → %.1f mm) e o J1 fica '
+                          'mais aquém (%.1f → %.1f°) — contato provável'
+                          % (prev_n_err * 1000, n_err * 1000, prev_dq1, dq[0]))
+            else:
+                motivo = ('%d iterações sem fechar desde o último recuo (erro '
+                          '%.1f mm, eixo %s) — contato caótico provável'
+                          % (it_desde_recuo + 1, n_err * 1000,
+                             ('%+.1f mm' % (e_parede[0] * 1000)) if e_parede is not None else 'n/d'))
+            rospy.logwarn('[mission] fase "%s" it%d: %s; recuo %d/%d: %.0f mm '
                           'pelo eixo e varredura: alvo original com '
                           'profundidade %+.0f mm, altura %+.0f mm',
-                          phase, it, prev_n_err * 1000, n_err * 1000,
-                          prev_dq1, dq[0], recuos, n_recuos,
+                          phase, it, motivo, recuos, n_recuos,
                           ctx.ik_recuo_eixo_m * 1000,
                           off_novo[0] * 1000, off_novo[1] * 1000)
             ctx.status(fase=phase, recuo=recuos, **est,
@@ -3932,6 +4062,14 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # workspace. Com 0,8 converge em praticamente o mesmo número de
         # iterações e fica dentro do alcance.
         p_aim = p_aim + ctx.ik_correction_gain * err
+        alem = p_aim - p_goal
+        n_alem = float(np.linalg.norm(alem))
+        if n_alem > ctx.ik_aim_max_m:
+            # Ver MissionContext.ik_aim_max_m.
+            p_aim = p_goal + alem * (ctx.ik_aim_max_m / n_alem)
+            rospy.logwarn_throttle(2.0, '[mission] fase "%s" it%d: mira além limitada a '
+                                   '%.0f mm do alvo (pedia %.0f) — a ponta não acompanha',
+                                   phase, it, ctx.ik_aim_max_m * 1000, n_alem * 1000)
         it += 1
         it_desde_recuo += 1
 
