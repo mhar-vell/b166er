@@ -391,6 +391,14 @@ class MissionContext(object):
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        # TETO DA MIRA ALÉM (2026-10-22). Quando a ponta está presa (dedo
+        # no anel, arame por cima do degrau) a correção p_aim += 0,8·erro
+        # acumula a cada iteração sem a ponta sair do lugar: a mira foge
+        # dezenas de cm, a IK muda de postura inteira (J2 45 → 11 → 61°)
+        # e o braço chicoteia arrastando o anel e a lâmina (saida_sobe
+        # com erro de 173 e 226 mm nas baterias de 21/22 Out). A mira
+        # fica a no máximo ik_aim_max_m do alvo.
+        self.ik_aim_max_m = float(rospy.get_param('~ik_aim_max_m', 0.03))
         # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
         # IK a ponta não avança e o J1 fica cada vez mais aquém do
         # pedido, o braço está empurrando algo (degrau na aba da
@@ -446,7 +454,12 @@ class MissionContext(object):
         self.engate_contato_fases  = rospy.get_param('~engate_contato_fases', ['atravessa'])
         self.engate_contato_min_travas = rospy.get_param('~engate_contato_min_travas', 2)
         self.engate_contato_tol_mm = rospy.get_param('~engate_contato_tol_mm', 3.0)
-        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 15.0)
+        # 15 → 13,5 (22 Out): a borda do furo bloqueou a 14,6–15,3 mm em
+        # duas runs com prof +12 e o engate por contato fechou com o dedo
+        # FORA do anel; o canto do degrau, com viés de 13 no eixo, bloqueou
+        # a 10,6–12,4. 13,5 separa os valores medidos; viés no eixo acima
+        # de ~15 mm fica sem cobertura.
+        self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 13.5)
         self.engate_contato_eixo_mm = None     # deslocamento aplicado (HUD/relatório)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
@@ -681,7 +694,12 @@ class MissionContext(object):
         # quer. A estimativa da parede NÃO é deslocada (o contato só diz
         # que o centro está a menos de uma folga dali).
         self.captura_contato_fases = rospy.get_param('~captura_contato_fases', ['captura'])
-        self.captura_contato_its = int(rospy.get_param('~captura_contato_its', 3))
+        # DESLIGADA POR PADRÃO (0) depois da bateria contato_manda de 22 Out:
+        # na run prof −12 fechou com eixo −5,8 / altura +8 (bordas da
+        # tolerância) e o destrava estagnou curto com prof −9,9; no caso
+        # que a motivou (RELATORIO34 run 3) a altura estava +9…+17, fora
+        # da tolerância, e ela nem teria disparado. Fica atrás do parâmetro.
+        self.captura_contato_its = int(rospy.get_param('~captura_contato_its', 0))
         self.captura_contato_prof_max_mm = float(rospy.get_param('~captura_contato_prof_max_mm', 15.0))
         # CURSO TOTAL DESDE A ENTRADA (2026-10-22, RELATORIO34 item 3). Com
         # a parede 10 mm baixa o dedo entrou baixo e já comprimiu a
@@ -3953,7 +3971,8 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         if travou_contato and e_parede is not None and phase in ctx.ik_recuo_fases:
             travas_eixo.append(float(e_parede[0]))
         # CAPTURA POR CONTATO EM PROFUNDIDADE — ver MissionContext.captura_contato_its.
-        if (phase in ctx.captura_contato_fases and e_parede is not None
+        if (ctx.captura_contato_its > 0 and phase in ctx.captura_contato_fases
+                and e_parede is not None
                 and it_desde_recuo + 1 >= ctx.captura_contato_its):
             tol_c, _ = _tolerancia_da_fase(ctx, phase)
             if (tol_c is not None and abs(e_parede[0]) < tol_c[0] and abs(e_parede[2]) < tol_c[2]
@@ -4043,6 +4062,14 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # workspace. Com 0,8 converge em praticamente o mesmo número de
         # iterações e fica dentro do alcance.
         p_aim = p_aim + ctx.ik_correction_gain * err
+        alem = p_aim - p_goal
+        n_alem = float(np.linalg.norm(alem))
+        if n_alem > ctx.ik_aim_max_m:
+            # Ver MissionContext.ik_aim_max_m.
+            p_aim = p_goal + alem * (ctx.ik_aim_max_m / n_alem)
+            rospy.logwarn_throttle(2.0, '[mission] fase "%s" it%d: mira além limitada a '
+                                   '%.0f mm do alvo (pedia %.0f) — a ponta não acompanha',
+                                   phase, it, ctx.ik_aim_max_m * 1000, n_alem * 1000)
         it += 1
         it_desde_recuo += 1
 
