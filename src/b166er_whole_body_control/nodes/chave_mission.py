@@ -502,7 +502,12 @@ class MissionContext(object):
         # que ali seja o alvo da atravessa; se andar tudo, não havia
         # canto (dedo fora do anel) e a ponta volta ao ponto de antes, sem
         # mexer na parede. 0 desliga.
-        self.atravessa_sonda_mm = float(rospy.get_param('~atravessa_sonda_mm', 20.0))
+        # DESLIGADA POR PADRÃO (23 Out, teste rápido): no viés −13 a verdade
+        # do Gazebo mostrou o dedo JÁ na posição boa ao fim da atravessa
+        # (degrau a 7,6 mm do anel, como nas capturas boas); a sonda o
+        # empurrou 20 mm para fora e ele não voltou. A hipótese "dedo raso
+        # na atravessa" estava errada — a perda acontece depois.
+        self.atravessa_sonda_mm = float(rospy.get_param('~atravessa_sonda_mm', 0.0))
         self.atravessa_sonda_folga_mm = float(rospy.get_param('~atravessa_sonda_folga_mm', 3.0))
         self.refine_timeout   = rospy.get_param('~refine_timeout', 15.0)
         # SÓ PARA TESTE (simulação): viés somado à parede depois da REFINE,
