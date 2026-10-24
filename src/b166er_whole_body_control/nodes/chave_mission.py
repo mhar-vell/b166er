@@ -3727,7 +3727,11 @@ def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     tol_xyz, _ = _tolerancia_da_fase(ctx, phase)
     if tol_xyz is None:
         return False
-    t = np.asarray(travas_eixo, dtype=float) * 1000.0
+    # Só as ÚLTIMAS engate_contato_min_travas travas (24 Out, medida_101
+    # eixo +13 run 4: [13,0, 9,9, 9,8, 9,8, 9,8] — a primeira trava, antes
+    # de o dedo assentar, deixava o espalhamento em 3,2 > 3 para sempre e
+    # quatro travas idênticas em 9,8 nunca valiam).
+    t = np.asarray(travas_eixo[-int(ctx.engate_contato_min_travas):], dtype=float) * 1000.0
     espalha = float(t.max() - t.min())
     e_mm = float(np.mean(t))
     lateral_ok = (abs(e_parede[1]) < tol_xyz[1] and abs(e_parede[2]) < tol_xyz[2])
