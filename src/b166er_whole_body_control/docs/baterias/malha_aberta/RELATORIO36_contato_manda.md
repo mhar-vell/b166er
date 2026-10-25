@@ -103,3 +103,61 @@ resultado**. O que dá para afirmar é qualitativo, pela sonda:
   resiste — o sinal que a estimativa não consegue dar.
 - PR #100 (varredura + engate por contato) continua sendo a parte com
   evidência mais forte (3/3 nos vieses do eixo positivo, RELATORIO35).
+
+## Medição com cinco execuções por viés (23–24 Out)
+
+Marco: "continue com os pontos da simulação" (medir a #101, viés −13,
+contato caótico). Antes da medição entraram 550aeb0 (o caótico passa a
+exigir a ponta saltando ≥ 10 mm) e a sonda de inserção, desligada em
+f08192e depois do teste rápido (`sonda_insercao_smoke`): no viés −13 a
+verdade do Gazebo mostrou o degrau a 7,6 mm do anel ao fim da
+atravessa, a posição de uma captura boa, e a sonda empurrou o dedo
+20 mm para fora. **A hipótese "dedo raso na atravessa" estava errada**:
+no viés −13 a perda acontece depois, na captura ou no destrava.
+
+### Bateria `medida_101`: 8 vieses × 5, intercalados — 18/40
+
+| viés | acertos |
+|---|---|
+| controle | **5/5** |
+| altura −10 | **5/5** |
+| profundidade +12 | 2/5 |
+| eixo +13 | 2/5 |
+| eixo +8 | 2/5 |
+| eixo −13 | 1/5 |
+| altura +10 | 1/5 |
+| profundidade −12 | 0/5 |
+
+Num eixo +13 o engate por contato nunca valeu com quatro travas
+idênticas em 9,8 mm, porque a primeira trava (13,0, antes de o dedo
+assentar) mantinha o espalhamento em 3,2 > 3. Corrigido em f93d139: o
+critério olha só as duas últimas travas.
+
+### Confirmação `medida_101_eixo`: eixo +13 × 5, com f93d139 — 1/5
+
+| run | atravessa | depois | resultado |
+|---|---|---|---|
+| 1 | travas 11,5/11,3 recusadas (prof/alt fora da tolerância) | libera perdeu o olhal | ABORT |
+| 2 | **engate por contato** 10,0/10,1 | chave 31,3° | **OK** |
+| 3 | travas 8,4/8,5 recusadas, depois caótico; 10 iterações | — | ABORT |
+| 4 | **engate por contato** 10,5/10,6 | libera SUBIU 10,2, recuperação falhou | ABORT |
+| 5 | **engate por contato** em −7,0/−6,6 | libera SUBIU 12,2, chave não abriu (0,6°) | ABORT |
+
+A correção fez o engate por contato disparar em 3 de 5 (antes 2 de 5),
+mas as perdas foram para a libera. No total de hoje, eixo +13 fica em
+**3 de 10**. Na PR #100 eram 3 de 3, com n pequeno; com n = 10 o caso
+está longe de resolvido.
+
+### Conclusão da medição
+
+- **Funciona de forma reprodutível:** o caminho sem viés (5/5) e o
+  altura −10 (5/5, coberto pela descida desde a entrada).
+- **Não funciona:** os outros seis vieses ficam entre 0 e 2 de 5. A
+  maioria das perdas acontece depois do engate (libera SUBIU, perdeu o
+  olhal, chave não abriu), não na atravessa.
+- **Recomendação:** mergear da #101 só o que tem efeito medido — a
+  descida do destrava desde a entrada — se o Marco quiser; o resto
+  continua sem evidência de ganho. O próximo trabalho útil é a libera
+  depois de um engate fora do centro, e o viés −13 precisa de um
+  desenho da geometria do degrau antes de qualquer código
+  (`feedback_desenhar_para_esclarecer`).
