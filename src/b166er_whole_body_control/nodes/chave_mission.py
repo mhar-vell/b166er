@@ -658,6 +658,18 @@ class MissionContext(object):
         # lateral (o dedo está ~20 mm abaixo e fora do anel: subir 12 mm
         # e recapturar não basta). Medido pela ponta (T265): vale na bancada.
         self.teto_reassenta = bool(rospy.get_param('~teto_reassenta', True))
+        # RECUPERAÇÃO DO LIMITE DE DESCIDA: AVANÇA EM +X (27 Out 2026,
+        # RELATORIO38). Com o Marco, pela Figura 6 (docs/geometria): quando
+        # o destrava chega ao limite de descida, a lingueta ficou em 0 e a
+        # ponta do degrau 2 a 8 mm ANTES do plano do olhal — o degrau não
+        # entrou no furo, ficou curto em X. A recuperação antiga (sair pelo
+        # eixo e reentrar com a mesma estimativa) recuperava 1 de 9. Esta
+        # sobe à altura da atravessa, avança em +X até a haste encostar no
+        # olhal ou até limite_avanco_x_m, e corrige a estimativa da parede
+        # para que ali seja o ponto da atravessa; daí recaptura e destrava
+        # de novo. No robô real o contato pode não aparecer: o avanço fixo
+        # basta, e a T265 confirma a posição.
+        self.limite_avanco_x_m = float(rospy.get_param('~limite_avanco_x_m', 0.015))
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
@@ -2204,7 +2216,12 @@ class Manipulate(smach.State):
                 # forçado de 09 Set: "não conseguiu subir").
                 sobe = ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m
                 ctx.offset_efetivo = None
-                if (phase == 'libera' and falha0 == 'subiu') or (phase == 'destrava' and falha0 == 'teto'):
+                if phase == 'destrava' and falha0 == 'teto':
+                    # Ver MissionContext.limite_avanco_x_m.
+                    if not _avanca_em_x(ctx):
+                        rospy.logerr('[mission] destrava/limite: não conseguiu subir e avançar em X')
+                        break
+                elif phase == 'libera' and falha0 == 'subiu':
                     # SUBIU = o arame passou por cima do degrau e o anel está
                     # apoiado na HASTE (sonda, RELATORIO32/33). Subir 25 mm não
                     # desprende nada: o degrau continua dentro do anel, por
@@ -2571,6 +2588,51 @@ def _fase_fechou(ctx, phase, err_world, n_err):
               and desc >= float(curso_min))
         return bool(ok), e
     return bool(np.all(np.abs(e) < tol_xyz)), e
+
+
+def _avanca_em_x(ctx):
+    """Recuperação do limite de descida do destrava (ver
+    MissionContext.limite_avanco_x_m): sobe à altura da atravessa, avança
+    em +X até a haste encostar no olhal ou até o avanço máximo, e corrige
+    a parede para que a ponta fique no ponto da atravessa."""
+    if ctx.wall_R is None:
+        return False
+    eixo = ctx.wall_R[:, 0]
+    off_at = list(ctx.phases['atravessa']['offset_xyz_m'])
+    off_al = ctx.phases['aproxima_lateral']['offset_xyz_m']
+    sentido = 1.0 if float(off_at[0]) >= float(off_al[0]) else -1.0
+    # 1. sobe: mesma posição em X/prof, altura da atravessa
+    p_now = _tooltip_now(ctx)
+    e = _pose_na_parede(ctx, p_now)
+    dz = float(off_at[2]) - float(e[2])
+    p_sobe = p_now + dz * ctx.wall_R[:, 2]
+    rospy.logwarn('[mission] destrava/limite: o degrau ficou curto em X — subindo %.0f mm à '
+                  'altura da atravessa para avançar', dz * 1000)
+    if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
+        return False
+    # 2. avança em +X
+    p0 = _tooltip_now(ctx)
+    p_av = p0 + sentido * ctx.limite_avanco_x_m * eixo
+    its0 = ctx.ik_max_iters
+    ctx.ik_max_iters = 3
+    ctx.phases.setdefault('avanca_x', {'tol_xyz_m': [0.002, 0.008, 0.006]})
+    try:
+        _reach_by_iterative_ik(ctx, p_av, 'avanca_x')
+    finally:
+        ctx.ik_max_iters = its0
+    p1 = _tooltip_now(ctx)
+    prog = float((p1 - p0) @ eixo) * sentido
+    encostou = prog < ctx.limite_avanco_x_m - 0.003
+    # 3. corrige a parede: aqui passa a ser o ponto da atravessa (em X)
+    p_nom = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_at)
+    de = float((ctx.wall_R.T @ (p_nom - p1))[0])
+    ctx.wall_pos = ctx.wall_pos - de * eixo
+    rospy.logwarn('[mission] destrava/limite: avançou %.1f de %.0f mm em X (%s); parede '
+                  'corrigida %+.1f mm pelo eixo', prog * 1000, ctx.limite_avanco_x_m * 1000,
+                  'a haste encostou no olhal' if encostou else 'sem contato',
+                  -de * 1000)
+    ctx.status(avanco_x_mm=prog * 1000, avanco_x_contato=int(encostou))
+    return True
 
 
 def _sai_pelo_eixo(ctx, tag):
