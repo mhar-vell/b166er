@@ -646,6 +646,18 @@ class MissionContext(object):
         # destrava, puxa de novo) se ~reassenta_subida.
         self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
         self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
+        # TETO NO DESTRAVA = NÃO ENGATOU (2026-10-26, RELATORIO37). Nas
+        # baterias de 21–24 Out o destrava fechou pelo TETO de descida em
+        # 17 execuções e 15 abortaram; fechou por ESTAGNAÇÃO (fim de curso)
+        # em 38 e 33 abriram a chave. A sonda mostra por quê: chegar ao
+        # teto sem o mecanismo parar é a ponta descendo SEM o anel — a
+        # lingueta em 0 no começo da libera, o degrau a 27–33 mm do anel.
+        # A libera puxava assim mesmo e "perdia o olhal", "subia" ou "não
+        # abria a chave". Com teto_reassenta, o teto falha a fase com
+        # 'teto' e o MANIPULATE reassenta pela saída do furo e reentrada
+        # lateral (o dedo está ~20 mm abaixo e fora do anel: subir 12 mm
+        # e recapturar não basta). Medido pela ponta (T265): vale na bancada.
+        self.teto_reassenta = bool(rospy.get_param('~teto_reassenta', True))
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
@@ -2169,7 +2181,7 @@ class Manipulate(smach.State):
             # do furo, na altura em que o degrau passa) e desce de novo.
             tentativas = 0
             while (not ok_fase
-                   and ((phase == 'destrava' and ctx.falha_fase == 'estagnou_curto')
+                   and ((phase == 'destrava' and ctx.falha_fase in ('estagnou_curto', 'teto'))
                         or (phase == 'libera' and ctx.falha_fase == 'preso'
                             and ctx.reassenta_libera)
                         or (phase == 'libera' and ctx.falha_fase == 'subiu'
@@ -2192,7 +2204,7 @@ class Manipulate(smach.State):
                 # forçado de 09 Set: "não conseguiu subir").
                 sobe = ctx.reassenta_sobe_libera_m if phase == 'libera' else ctx.reassenta_sobe_m
                 ctx.offset_efetivo = None
-                if phase == 'libera' and falha0 == 'subiu':
+                if (phase == 'libera' and falha0 == 'subiu') or (phase == 'destrava' and falha0 == 'teto'):
                     # SUBIU = o arame passou por cima do degrau e o anel está
                     # apoiado na HASTE (sonda, RELATORIO32/33). Subir 25 mm não
                     # desprende nada: o degrau continua dentro do anel, por
@@ -2213,7 +2225,7 @@ class Manipulate(smach.State):
                     if not _reach_by_iterative_ik(ctx, p_sobe, 'reassenta_sobe'):
                         rospy.logerr('[mission] %s/reassenta: não conseguiu subir', phase)
                         break
-                if phase in ('libera', 'captura'):
+                if phase in ('libera', 'captura') or falha0 == 'teto':
                     # VOLTA PELO CAMINHO DA ENTRADA: depois de subir, o
                     # ponto da fase 'atravessa' (dentro do furo, na altura
                     # em que o degrau passa) e só então a captura desce e
@@ -3435,6 +3447,13 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                                   cfg_teto * 1000, cfg_curso * 1000,
                                   e_parede[0] * 1000, e_parede[1] * 1000)
                     ctx.status(descida_mm=desc * 1000, teto=1)
+                    if phase == 'destrava' and ctx.teto_reassenta:
+                        # Ver MissionContext.teto_reassenta.
+                        rospy.logwarn('[mission] fase "destrava": o teto chegou sem o '
+                                      'mecanismo parar — a ponta desceu sem o anel; '
+                                      'devolvendo para reassentar')
+                        ctx.falha_fase = 'teto'
+                        return False
                     ok = True
                     return True
                 hist.append(((rospy.Time.now() - t0).to_sec(), desc))
