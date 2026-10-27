@@ -2613,7 +2613,9 @@ def _encosta_f5(ctx):
         ctx.ik_max_iters = its0
     p1 = _tooltip_now(ctx)
     prog = float((p1 - p0) @ prof)
-    encostou = prog < ctx.encosta_f5_max_m - 0.003
+    # Parou antes do alvo = encostou (no teste rápido a ponta parou a 0,8–1,3 mm do
+    # alvo com a sonda mostrando o dedo parado no arame).
+    encostou = prog < ctx.encosta_f5_max_m - 0.0005
     ctx.prof_encosta = float(_pose_na_parede(ctx, p1)[1])
     rospy.logwarn('[mission] ENCOSTA F5: andou %.1f de %.0f mm em +Y (%s); profundidade da '
                   'ponta %+.1f mm', prog * 1000, ctx.encosta_f5_max_m * 1000,
@@ -3309,6 +3311,26 @@ def _reach_by_wholebody(ctx, p_goal, phase):
     usa_ori = bool(ctx.wb_orientacao and bool(_cfg0.get('wb_orientacao', True)) and ori_ref is not None)
     if usa_ori:
         alvo.pose.orientation = ori_ref
+    # ARCO COMEÇA PELO ALVO DESLIZANTE (27 Out 2026, destrava_lateral_smoke
+    # run 2). O primeiro alvo publicado era o ponto FINAL do arco (30° no
+    # arco2); o deslizante só entrava no ciclo seguinte do laço, e nesse
+    # intervalo o whole-body foi em linha reta para o fim: o J1 girou 4° em
+    # 0,5 s, a ponta saiu 59 mm pelo eixo e o olhal caiu. Numa fase com
+    # arco_raio_m, o primeiro alvo já é o ponto deslizante.
+    _raio0 = _cfg0.get('arco_raio_m')
+    if _raio0 is not None and ctx.wall_R is not None:
+        _r = float(_raio0)
+        _off = (ctx.offset_efetivo if ctx.offset_efetivo is not None
+                else _cfg0.get('offset_xyz_m', [0.0, 0.0, 0.0]))
+        _th_fim = math.asin(max(-1.0, min(1.0, float(_off[1]) / _r)))
+        _zp = float(_off[2]) + _r * (1.0 - math.cos(_th_fim))
+        _pw = _pose_na_parede(ctx, _tooltip_now(ctx))
+        _th_now = math.asin(max(-1.0, min(1.0, float(_pw[1]) / _r)))
+        _th_t = min(max(_th_now, 0.0) + float(_cfg0.get('arco_antecipacao_m', 0.015)) / _r, _th_fim)
+        _p0 = chave_task.phase_target_position(
+            ctx.wall_pos, ctx.wall_R,
+            [float(_off[0]), _r * math.sin(_th_t), _zp - _r * (1.0 - math.cos(_th_t))])
+        alvo.pose.position.x, alvo.pose.position.y, alvo.pose.position.z = map(float, _p0)
     ctx.pub_target.publish(alvo)
     rospy.sleep(0.2)
 
