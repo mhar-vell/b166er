@@ -715,7 +715,12 @@
     <!-- Projeção do degrau além da haste: 20 mm, inalterada. É o
          comprimento útil que fica atravessado no furo e sustenta o
          arame do olhal. -->
-    <xacro:property name="dedo_degrau_l" value="0.020"/>
+    <!-- EXPERIMENTO 28 Out 2026 (Marco: "se aumentarmos o tamanho do
+         degrau, isso ajudaria?"): 20 → 30 mm só na COLISÃO; a malha visual
+         dedo_fixo_v3.stl continua desenhando 20 mm. Os batentes da lingueta
+         ficam a ≥ 19 mm do centro do furo em Y e o degrau a ≤ 8 mm: alongar
+         em X não muda essa folga. -->
+    <xacro:property name="dedo_degrau_l" value="0.030"/>
     <xacro:property name="dedo_degrau_z" value="0.010"/>
 
     <xacro:property name="tool_length"
