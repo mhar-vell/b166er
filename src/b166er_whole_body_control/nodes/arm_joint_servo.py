@@ -131,6 +131,20 @@ class ArmJointServo:
         # J1 derivou −25° → −75°. Em repouso a junta só volta a andar quando
         # o erro passa de ~hist× a zona morta.
         self._hist_fator = float(rospy.get_param('~histerese', 2.0))   # 3 → 2 (08/10)
+        # SEM CAÇAR O ALVO (28 Out 2026, Marco: "o robô está com muito
+        # shaking"). Ensaio de 2° no J1: perto do alvo a junta anda no piso
+        # (3°/s) e a medida da ponta volta ~0,2 s depois — ela passa ~0,5°
+        # (≈5 mm na ponta) e o comando inverte; com tol_ee de 3 mm a junta
+        # oscilou ±0,5° por 4 s, invertendo a cada 0,2–0,4 s, até cair na
+        # tolerância por acaso. Nas missões, 1–1,8 inversões/s por junta em
+        # quase todas as fases. Agora uma junta movida pelo piso que CRUZA o
+        # alvo (o pedido troca de sinal) descansa ali; com todas paradas e
+        # a ponta a menos de tol_ee_passo (o menor passo que o braço dá), a
+        # postura fecha — a iteração da missão mede e corrige o resíduo.
+        self._parar_ao_cruzar = bool(rospy.get_param('~parar_ao_cruzar', True))
+        self._tol_ee_passo = float(rospy.get_param('~tol_ee_passo', 0.008))
+        self._sinal_piso = np.zeros(5)      # sinal do último comando de piso por junta
+        self._cruzou = np.zeros(5, dtype=bool)
         self._repouso = np.zeros(5, dtype=bool)
         self._goto_home = bool(rospy.get_param('~goto_home_on_start', True))
         home = rospy.get_param('/arm_postures/stow_home', [0.0, 1.10, -1.04, -1.70, 0.0])
@@ -399,6 +413,8 @@ class ArmJointServo:
             q = q.copy(); q[1] = min(max(q[1], self._j2_min), self._j2_max)
         self._q_alvo = q
         self._t_alvo = rospy.Time.now()
+        self._cruzou[:] = False          # nova postura: pode andar de novo (SEM CAÇAR O ALVO)
+        self._sinal_piso[:] = 0.0
         self._t_ok = None
         self._hist_dp = []
         self._repouso[:] = False
@@ -455,6 +471,13 @@ class ArmJointServo:
         if not np.any(v_fino) and np.any(v):
             i = int(np.argmax(np.abs(v)))
             v_fino[i] = np.sign(v[i]) * self._v_piso
+        if self._parar_ao_cruzar:
+            # Ver __init__ (SEM CAÇAR O ALVO).
+            s_novo = np.sign(v_fino)
+            troca = (self._sinal_piso != 0) & (s_novo != 0) & (s_novo != self._sinal_piso)
+            self._cruzou |= troca
+            v_fino = np.where(self._cruzou, 0.0, v_fino)
+            self._sinal_piso = np.where(v_fino != 0, np.sign(v_fino), self._sinal_piso)
         return v_fino
 
     def _passo_postura(self):
@@ -471,6 +494,10 @@ class ArmJointServo:
             perto = dp < self._d_tarefa and dth < self._ang_tarefa
             v = self._lei_tarefa(e6) if perto else self._lei_junta(e)
             chegou = dp < self._tol_ee and dth < self._tol_ang
+            if (not chegou and perto and self._parar_ao_cruzar and np.any(self._cruzou)
+                    and not np.any(v) and dp < self._tol_ee_passo and dth < self._tol_ang):
+                self._fechar_postura(e, dp, 'alcançada (dentro do passo mínimo)')
+                return np.zeros(5)
             # bloqueio (só perto, onde há contato): comando não nulo e a
             # ponta não se aproxima
             if perto:
