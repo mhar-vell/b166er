@@ -183,7 +183,7 @@ chave_seccionadora_task:
     # desce com 12 mm de degrau sob o arame (20 de projeção − 8).
     # Sinal: +eixo entra no furo (o desengata SAI com −0,090).
     # y = +0.008: ver a nota em aproxima_lateral (aba da lingueta).
-    offset_xyz_m: [-0.010, 0.008, 0.010]   # eixo −10 ± 4 (17 Out 2026, RELATORIO32): ver nota acima de atravessa
+    offset_xyz_m: [-0.008, 0.008, 0.010]   # 27 Out: +2 mm de inserção (Marco: "o degrau poderia entrar mais um pouco")   # eixo −10 ± 4 (17 Out 2026, RELATORIO32): ver nota acima de atravessa
     tol_xyz_m: [0.006, 0.006, 0.005]   # eixo ±6 (17 Out): ±4 fica abaixo do que a estimativa do J1 sem encoder dá (~1° ≈ 10 mm)
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
@@ -224,8 +224,12 @@ chave_seccionadora_task:
   # ferramenta fisicamente para, como no atravessa.
   captura:
     modo: ik
-    offset_xyz_m: [-0.010, 0.0, -0.0100]   # eixo −10 ± 4 (17 Out): ver atravessa
-    tol_xyz_m: [0.006, 0.006, 0.010]   # eixo ±6 (17 Out): ver atravessa
+    # 27 Out 2026 (destrava pela lateral, procedimento do Marco): a captura
+    # deixa o DEGRAU NO CENTRO DO FURO (ponta = face F1 a +5 mm, F2 a −5 mm do
+    # centro), não mais apoiado no fundo do olhal. Daí a missão encosta F5 no
+    # arame em +Y e só então desce. Com destrava_lateral false voltar a −0,010.
+    offset_xyz_m: [-0.008, 0.0, 0.0050]  # 27 Out: +2 mm de inserção   # eixo −10 ± 6 (17 Out): ver atravessa
+    tol_xyz_m: [0.006, 0.006, 0.006]   # altura ±6: a descida do destrava conta a partir daqui
 
   # ── 3b. DESTRAVA: desce mais 15 mm e solta o gatilho ──
   # O Marco, em 2026-09-03: "o primeiro movimento (que chamamos de arco
@@ -266,7 +270,7 @@ chave_seccionadora_task:
     # dá o gatilho com margem sem chegar ao fim de curso de 20 mm do
     # modelo (18 − 4 ≈ 14 no anel). Medido, não deduzido: conferir a
     # lingueta no log das próximas missões.
-    curso_min_m: 0.018
+    curso_min_m: 0.030   # 27 Out: +15 mm livres do centro até O2 (era 0,018)
     # ESTAGNAÇÃO (2026-09-03): se a descida parou de crescer (< 0,5 mm
     # em 1,5 s) depois de pelo menos curso_estagna_m, a fase fecha — o
     # anel chegou ao fim de curso. Sem isto o braço continua empurrando
@@ -277,8 +281,8 @@ chave_seccionadora_task:
     # fim de curso a ponta continua descendo pelo colapso do J4, a
     # estagnação nunca aparece. 10 mm protege o punho (5/5 na bateria
     # 63-67) ao custo de a libera terminar a soltura. Ver chave_mission.
-    curso_estagna_m: 0.010
-    curso_margem_m: 0.002
+    curso_estagna_m: 0.025   # 27 Out (era 0,010)
+    curso_margem_m: 0.008   # 27 Out: alvo 38 mm abaixo da captura (era 0,002)
     # TETO DE DESCIDA (2026-09-30, RELATORIO22): a fase fechava por
     # curso_min_m só com eixo E profundidade dentro da tolerância. Com a
     # profundidade fora (o whole-body puxa em prof enquanto empurra em
@@ -290,7 +294,7 @@ chave_seccionadora_task:
     # degrau. 22 = alvo (18 + 2) + 2 mm; a ponta desce 3–5 mm a mais que
     # o anel, então o anel está em ~17–19 mm, bem além dos 13 em que a
     # aba passa sob o laço. Medido pela ponta (T265): vale na bancada.
-    curso_teto_m: 0.022
+    curso_teto_m: 0.042   # 27 Out: 22 + 15 livres + 5 (era 0,022)
 
   # ── 3c. LIBERA: avança 20 mm de olhal segurando embaixo ──
   # Com o olhal pressionado, puxar para fora faz a aba passar POR BAIXO

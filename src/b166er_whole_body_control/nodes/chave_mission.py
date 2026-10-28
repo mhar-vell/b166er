@@ -647,6 +647,22 @@ class MissionContext(object):
         self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
         self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
+        # DESTRAVA PELA LATERAL (27 Out 2026, procedimento do Marco, Figura 6
+        # em docs/geometria): "pensando que não temos encoders": (1) o
+        # degrau no centro do furo do olhal; (2) a partir do centro, o dedo
+        # anda em +Y até a face lateral do lado do robô (F5) encostar no
+        # arame; (3) com F5 encostada, desce em −Z e DEPOIS puxa em +Y,
+        # mantendo embaixo. Sem encoder o contato do passo 2 é a ponta
+        # (T265) parando de andar em Y com o comando ainda pedindo mais.
+        # A captura passa a deixar o degrau no centro do furo (YAML), a
+        # encostada em F5 acontece logo depois dela e define a nova
+        # referência do destrava, e a libera puxa na altura em que o
+        # destrava terminou (antes ela subia 2–9 mm até −25 e a aba podia
+        # voltar ao laço).
+        self.destrava_lateral   = bool(rospy.get_param('~destrava_lateral', True))
+        self.encosta_f5_max_m   = float(rospy.get_param('~encosta_f5_max_m', 0.016))
+        self.prof_encosta = None       # profundidade da ponta (frame da parede) com F5 no arame
+        self.alt_destrava_fim = None   # altura da ponta quando o destrava terminou
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
         # reassentamento sem depender de a ponta escorregar de verdade.
@@ -2098,6 +2114,8 @@ class Manipulate(smach.State):
                 # para baixo é onde a haste está; o eixo da fase passa a
                 # medir DERIVA desde a captura, que é o que a régua queria.
                 offset[0] = float(ctx.pose_captura[0])
+                if ctx.destrava_lateral and ctx.prof_encosta is not None:
+                    offset[1] = ctx.prof_encosta   # mantém F5 encostada no arame
                 rospy.loginfo('[mission] fase "%s": alvo em altura relativo à '
                               'captura: %+.1f mm (captura %+.1f − curso %.0f − '
                               'margem %.0f); eixo = o da captura (%+.1f mm)',
@@ -2116,6 +2134,12 @@ class Manipulate(smach.State):
                 offset[0] = float(ctx.pose_captura[0])
                 rospy.loginfo('[mission] fase "%s": eixo do alvo = o da captura (%+.1f mm)',
                               phase, offset[0] * 1000)
+                if (phase == 'libera' and ctx.destrava_lateral
+                        and ctx.alt_destrava_fim is not None):
+                    # Puxa em +Y MANTENDO EMBAIXO (ver destrava_lateral).
+                    offset[2] = ctx.alt_destrava_fim
+                    rospy.loginfo('[mission] fase "libera": puxa mantendo a altura do fim do '
+                                  'destrava (%+.1f mm), sem subir', offset[2] * 1000)
             elif phase == 'desengata' and ctx.pose_captura is not None:
                 # Sai pelo eixo a partir de ONDE O DEDO ESTÁ (15 Out 2026).
                 offset[0] = float(ctx.pose_captura[0]) + float(offset[0])
@@ -2241,9 +2265,14 @@ class Manipulate(smach.State):
                 ctx.ori_captura = ctx.robot_state.ee_pose.pose.orientation
                 rospy.loginfo('[mission] destrava/reassenta: captura registrada em eixo=%+.1f '
                               'prof=%+.1f alt=%+.1f mm', *(ctx.pose_captura * 1000))
+                if ctx.destrava_lateral:
+                    _encosta_f5(ctx)
                 # Destrava de novo, com o alvo relativo à captura nova.
                 cfg_d = ctx.phases['destrava']
                 off_d = list(cfg_d['offset_xyz_m'])
+                off_d[0] = float(ctx.pose_captura[0])
+                if ctx.destrava_lateral and ctx.prof_encosta is not None:
+                    off_d[1] = ctx.prof_encosta
                 off_d[2] = ctx.alt_captura - float(cfg_d['curso_min_m']) - float(cfg_d.get('curso_margem_m', 0.002))
                 ctx.offset_efetivo = off_d
                 p_d = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_d)
@@ -2288,7 +2317,11 @@ class Manipulate(smach.State):
                               'prof=%+.1f alt=%+.1f mm (zero da descida do '
                               'destrava e da deriva de eixo)',
                               *(ctx.pose_captura * 1000))
+                if ctx.destrava_lateral:
+                    _encosta_f5(ctx)
+                    y_anterior = ctx.prof_encosta if ctx.prof_encosta is not None else y_anterior
             if phase == 'destrava':
+                ctx.alt_destrava_fim = _alt_na_parede(ctx, _tooltip_now(ctx))
                 desc = None
                 if ctx.alt_captura is not None:
                     desc = ctx.alt_captura - _alt_na_parede(ctx, _tooltip_now(ctx))
@@ -2559,6 +2592,37 @@ def _fase_fechou(ctx, phase, err_world, n_err):
               and desc >= float(curso_min))
         return bool(ok), e
     return bool(np.all(np.abs(e) < tol_xyz)), e
+
+
+def _encosta_f5(ctx):
+    """Passo 2 do destrava pela lateral (ver MissionContext.destrava_lateral):
+    anda em +Y até a face F5 encostar no arame do olhal ou até
+    encosta_f5_max_m, e registra a profundidade da ponta. Devolve True se
+    o movimento foi feito (com ou sem contato detectado)."""
+    if ctx.wall_R is None:
+        return False
+    prof = ctx.wall_R[:, 1]          # +Y do frame da parede = para o robô
+    p0 = _tooltip_now(ctx)
+    alvo = p0 + ctx.encosta_f5_max_m * prof
+    ctx.phases.setdefault('encosta_f5', {'tol_xyz_m': [0.010, 0.002, 0.006]})
+    its0 = ctx.ik_max_iters
+    ctx.ik_max_iters = 3
+    try:
+        _reach_by_iterative_ik(ctx, alvo, 'encosta_f5')
+    finally:
+        ctx.ik_max_iters = its0
+    p1 = _tooltip_now(ctx)
+    prog = float((p1 - p0) @ prof)
+    # Parou antes do alvo = encostou (no teste rápido a ponta parou a 0,8–1,3 mm do
+    # alvo com a sonda mostrando o dedo parado no arame).
+    encostou = prog < ctx.encosta_f5_max_m - 0.0005
+    ctx.prof_encosta = float(_pose_na_parede(ctx, p1)[1])
+    rospy.logwarn('[mission] ENCOSTA F5: andou %.1f de %.0f mm em +Y (%s); profundidade da '
+                  'ponta %+.1f mm', prog * 1000, ctx.encosta_f5_max_m * 1000,
+                  'F5 encostou no arame' if encostou else 'SEM contato',
+                  ctx.prof_encosta * 1000)
+    ctx.status(encosta_f5_mm=prog * 1000, encosta_f5_contato=int(encostou))
+    return True
 
 
 def _sai_pelo_eixo(ctx, tag):
@@ -3247,6 +3311,26 @@ def _reach_by_wholebody(ctx, p_goal, phase):
     usa_ori = bool(ctx.wb_orientacao and bool(_cfg0.get('wb_orientacao', True)) and ori_ref is not None)
     if usa_ori:
         alvo.pose.orientation = ori_ref
+    # ARCO COMEÇA PELO ALVO DESLIZANTE (27 Out 2026, destrava_lateral_smoke
+    # run 2). O primeiro alvo publicado era o ponto FINAL do arco (30° no
+    # arco2); o deslizante só entrava no ciclo seguinte do laço, e nesse
+    # intervalo o whole-body foi em linha reta para o fim: o J1 girou 4° em
+    # 0,5 s, a ponta saiu 59 mm pelo eixo e o olhal caiu. Numa fase com
+    # arco_raio_m, o primeiro alvo já é o ponto deslizante.
+    _raio0 = _cfg0.get('arco_raio_m')
+    if _raio0 is not None and ctx.wall_R is not None:
+        _r = float(_raio0)
+        _off = (ctx.offset_efetivo if ctx.offset_efetivo is not None
+                else _cfg0.get('offset_xyz_m', [0.0, 0.0, 0.0]))
+        _th_fim = math.asin(max(-1.0, min(1.0, float(_off[1]) / _r)))
+        _zp = float(_off[2]) + _r * (1.0 - math.cos(_th_fim))
+        _pw = _pose_na_parede(ctx, _tooltip_now(ctx))
+        _th_now = math.asin(max(-1.0, min(1.0, float(_pw[1]) / _r)))
+        _th_t = min(max(_th_now, 0.0) + float(_cfg0.get('arco_antecipacao_m', 0.015)) / _r, _th_fim)
+        _p0 = chave_task.phase_target_position(
+            ctx.wall_pos, ctx.wall_R,
+            [float(_off[0]), _r * math.sin(_th_t), _zp - _r * (1.0 - math.cos(_th_t))])
+        alvo.pose.position.x, alvo.pose.position.y, alvo.pose.position.z = map(float, _p0)
     ctx.pub_target.publish(alvo)
     rospy.sleep(0.2)
 
