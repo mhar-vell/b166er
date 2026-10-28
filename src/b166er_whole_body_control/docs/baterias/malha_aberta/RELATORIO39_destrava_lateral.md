@@ -54,3 +54,21 @@ Onde falhou:
 **Próximo passo combinado com o Marco:** testar 2 mm a mais de inserção em X (atravessa e captura de −10 para −8 mm).
 
 **Recomendação:** não mergear ainda.
+
+## Teste com 2 mm a mais de inserção (`insercao_mais2`, f974e2b7): 6/10
+
+Marco, vendo a simulação: "o degrau poderia entrar mais um pouco no olhal". Atravessa e captura de −10 para −8 mm em X.
+Cinco controles e cinco com viés −13, intercalados.
+
+| viés | com −8 mm | com −10 mm (bateria acima) |
+|---|---|---|
+| controle | **5/5** (lâmina 30,8–34,4°) | 3/5 |
+| eixo −13 | 1/5 | 0/5 |
+
+- **Controle 5/5**: a F5 encostou nas cinco (14,1–14,9 mm em +Y) e a chave abriu em todas. É o melhor resultado de
+  controle com o destrava pela lateral.
+- **Eixo −13**: duas execuções não abriram a chave, duas atingiram o limite de descida e perderam o olhal na libera. É o
+  caso em que o degrau fica curto em X, e 2 mm não compensam 13.
+
+O ganho no controle é consistente com o que o Marco viu, mas são só cinco execuções. A comparação justa com os outros
+vieses fica para uma bateria completa com os −8 mm.
