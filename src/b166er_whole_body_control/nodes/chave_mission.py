@@ -416,6 +416,17 @@ class MissionContext(object):
         self.ik_recuo_progresso_min = rospy.get_param('~ik_recuo_progresso_min', 0.003)
         self.ik_recuo_dq1_min_deg   = rospy.get_param('~ik_recuo_dq1_min_deg', 0.5)
         self.ik_recuo_eixo_m        = rospy.get_param('~ik_recuo_eixo_m', 0.020)
+        # SALTO DO J1 NA ATRAVESSA (28 Out 2026, Marco: "o sistema robótico
+        # está posicionando o dedo no lado oposto da chave"). Run 11 da
+        # bateria destrava_lateral_mais2: a IK pediu ao J1 0,6° e o braço,
+        # sem encoder, girou 4–5°; pela T265 a ponta andou 48 mm em X numa
+        # iteração e passou para o outro lado do olhal, onde enganchou. Se
+        # numa fase de entrada a ponta aparece mais de salto_eixo_m ALÉM do
+        # alvo em X, a missão volta na hora até o X do alvo, antes de tentar
+        # qualquer outra coisa (até salto_max vezes por fase).
+        self.salto_eixo_m = float(rospy.get_param('~salto_eixo_m', 0.012))
+        self.salto_max    = int(rospy.get_param('~salto_max', 2))
+        self.salto_fases  = rospy.get_param('~salto_fases', ['atravessa', 'captura'])
         self.ik_recuo_varredura_mm  = rospy.get_param(
             '~ik_recuo_varredura_mm',
             [[0.0, -5.0], [8.0, -5.0], [-8.0, -5.0], [0.0, 5.0]])
@@ -3825,6 +3836,10 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     recuos = 0
     it_desde_recuo = 0      # orçamento de iterações recomeça a cada recuo
     travas_eixo = []        # eixo (frame da parede) de cada travamento por contato
+    saltos = 0              # ver MissionContext.salto_eixo_m
+    _off_al = ctx.phases.get('aproxima_lateral', {}).get('offset_xyz_m', [-0.09, 0, 0])
+    _off_at = ctx.phases.get('atravessa', {}).get('offset_xyz_m', [-0.01, 0, 0])
+    sentido_ins = 1.0 if float(_off_at[0]) >= float(_off_al[0]) else -1.0
     prev_n_err = None
     prev_dq1 = None
     while it_desde_recuo < ctx.ik_max_iters:
@@ -3934,6 +3949,35 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           if recuos else '')
             return True
 
+        # SALTO DO J1 (ver MissionContext.salto_eixo_m): a ponta além do alvo
+        # em X, no sentido da inserção, por mais que salto_eixo_m.
+        if (phase in ctx.salto_fases and e_parede is not None and ctx.wall_R is not None
+                and saltos < ctx.salto_max
+                and -sentido_ins * float(e_parede[0]) > ctx.salto_eixo_m):
+            saltos += 1
+            alem = -sentido_ins * float(e_parede[0])
+            p_back = p_now + float(e_parede[0]) * ctx.wall_R[:, 0]
+            rospy.logwarn('[mission] fase "%s" it%d: SALTO — a ponta está %.1f mm ALÉM do '
+                          'alvo em X (o J1 andou mais que o pedido); voltando já ao X do alvo '
+                          '(%d/%d)', phase, it, alem * 1000, saltos, ctx.salto_max)
+            ctx.status(fase=phase, salto=saltos, salto_mm=alem * 1000)
+            p_local = (T_arm_world @ np.append(p_back, 1))[:3]
+            q_b, err_b, _ = _resolve_ik(p_local, T_arm_world[:3, :3])
+            if err_b <= ctx.deploy_ik_tol:
+                msg = JointState()
+                msg.header.stamp = rospy.Time.now()
+                msg.name     = JOINT_NAMES
+                msg.position = q_b.tolist()
+                ctx.posture_done = False
+                ctx.pub_posture.publish(msg)
+                if not _wait_posture(ctx):
+                    return False
+                rospy.sleep(ctx.ik_settle_time)
+            p_aim = p_goal.copy()
+            prev_n_err = None
+            prev_dq1 = None
+            continue          # o salto não consome iteração
+
         # RECUO POR CONTATO (2026-09-30, ver MissionContext.ik_recuos_max).
         # "Não avança" = o erro caiu menos que ik_recuo_progresso_min
         # desde a iteração anterior; "J1 cada vez mais aquém" = |faltou|
@@ -3965,7 +4009,12 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                                   dtype=float) / 1000.0
             d_off = off_novo - off_atual
             recuos += 1
-            sgn = 1.0 if (e_parede is None or e_parede[0] >= 0.0) else -1.0
+            # SENTIDO DO RECUO (28 Out 2026): sempre CONTRA a inserção. Antes o
+            # sinal vinha do erro de eixo, e com a ponta ALÉM do alvo (erro
+            # negativo) o "recuo" avançava mais 20 mm — na run 11 de
+            # destrava_lateral_mais2 levou o dedo ainda mais para o outro
+            # lado do olhal.
+            sgn = sentido_ins
             # Sai 20 mm pelo eixo e já se desloca no plano do anel para a
             # nova posição da varredura, para reentrar alinhado com ela.
             p_recuo = p_now - sgn * ctx.ik_recuo_eixo_m * eixo \
