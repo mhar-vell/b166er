@@ -647,6 +647,16 @@ class MissionContext(object):
         self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
         self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
+        # LIBERA PUXA SEM SUBIR (29 Out 2026, RELATORIO42; o mesmo da PR #104,
+        # sem o resto dela). A libera pedia altura fixa (−25 mm), mas o
+        # destrava termina onde a lingueta chegou ao fim do curso, de −27 a
+        # −34 mm: puxando em +Y a ponta subia 2 a 9 mm, a aba voltava para o
+        # laço e a libera "subia" (altura +10: 0/5, quatro por subida). O
+        # Marco: "para liberar para a abertura tem que permanecer para baixo
+        # e puxar a alavanca". A libera passa a puxar na altura em que o
+        # destrava terminou.
+        self.libera_mantem_altura = bool(rospy.get_param('~libera_mantem_altura', True))
+        self.alt_destrava_fim = None   # altura da ponta (frame da parede) no fim do destrava
         # SÓ PARA ENSAIO: força o primeiro destrava a devolver
         # 'estagnou_curto' ao passar de 3 mm, para exercitar o caminho de
         # reassentamento sem depender de a ponta escorregar de verdade.
@@ -2116,6 +2126,12 @@ class Manipulate(smach.State):
                 offset[0] = float(ctx.pose_captura[0])
                 rospy.loginfo('[mission] fase "%s": eixo do alvo = o da captura (%+.1f mm)',
                               phase, offset[0] * 1000)
+                if (phase == 'libera' and ctx.libera_mantem_altura
+                        and ctx.alt_destrava_fim is not None):
+                    # Ver MissionContext.libera_mantem_altura.
+                    offset[2] = ctx.alt_destrava_fim
+                    rospy.loginfo('[mission] fase "libera": puxa mantendo a altura do fim do '
+                                  'destrava (%+.1f mm), sem subir', offset[2] * 1000)
             elif phase == 'desengata' and ctx.pose_captura is not None:
                 # Sai pelo eixo a partir de ONDE O DEDO ESTÁ (15 Out 2026).
                 offset[0] = float(ctx.pose_captura[0]) + float(offset[0])
@@ -2251,10 +2267,14 @@ class Manipulate(smach.State):
                     rospy.logerr('[mission] %s/reassenta: destrava não fechou de novo', phase)
                     ok_fase = False
                     break
+                ctx.alt_destrava_fim = _alt_na_parede(ctx, _tooltip_now(ctx))
                 if phase == 'destrava':
                     ok_fase = True
                     break
                 # libera: puxa de novo com o alvo original da fase.
+                if ctx.libera_mantem_altura:
+                    offset[2] = ctx.alt_destrava_fim
+                    p_tip = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, offset)
                 ctx.offset_efetivo = offset
                 ok_fase = alcancar(ctx, p_tip, phase)
             # Pausa TAMBÉM quando a fase falha: é justamente a postura de
@@ -2289,6 +2309,7 @@ class Manipulate(smach.State):
                               'destrava e da deriva de eixo)',
                               *(ctx.pose_captura * 1000))
             if phase == 'destrava':
+                ctx.alt_destrava_fim = _alt_na_parede(ctx, _tooltip_now(ctx))
                 desc = None
                 if ctx.alt_captura is not None:
                     desc = ctx.alt_captura - _alt_na_parede(ctx, _tooltip_now(ctx))
