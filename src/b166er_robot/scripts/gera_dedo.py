@@ -5,7 +5,7 @@ RV-M2 — a ferramenta de manobra que atravessa o olhal da chave.
 Pedido do Marco em 2026-09-09: "preciso do desenho técnico da
 ferramenta, preciso do STL também pois vou imprimir".
 
-TRÊS VERSÕES, numeração do Marco (--versao N; saídas dedo_fixo_vN.stl e
+QUATRO VERSÕES, numeração do Marco (--versao N; saídas dedo_fixo_vN.stl e
 dedo_fixo_vN_desenho.pdf/.png):
 
   v1  REV. A, 09 Set 2026 — geometria do bloco dedo_* do URDF revisada
@@ -26,6 +26,11 @@ dedo_fixo_vN_desenho.pdf/.png):
       furos abertos) com HASTE 80 (total 125, como no modelo da simulação)
       e o degrau em +Y, no sentido das ABAS. kinematics.DEGRAU_DIR_TIP e o
       tool_tip do URDF acompanham; o comprimento já era o do modelo.
+  v4  REV. D, 30 Out 2026 — DEGRAU DE 30 mm (era 20), o resto igual à v3.
+      Pergunta do Marco: "se aumentarmos o tamanho do degrau, isso
+      ajudaria?". Na simulação (RELATORIO44) o degrau de 30 mm levou a
+      bateria de 5 vieses de 14/25 para 17/25; o caso do degrau curto
+      (a ponta parava antes do olhal) foi de 0/5 a 3/5.
 
 A prancha das v2/v3 segue o formato padrão da REV. B: A3 paisagem com
 moldura, VISTA DE BAIXO / DE FRENTE / LATERAL cotadas em 1:1, DETALHE DA
@@ -60,6 +65,11 @@ GEO = {
             furo_dx=10.0, furo_dz=15.0, furo_d=3.5, furos_no_stl=True,
             degrau_eixo='+y', rev='C', data='2026-09-29',
             substitui='REV. B de 2026-09-09 (haste 30, degrau em −X)'),
+    4: dict(garfo_h=25.0, garfo_x=20.0, aba=10.0, rasgo=10.0, rasgo_prof=25.0,
+            afun_h=10.0, haste_l=80.0, haste=10.0, degrau_l=30.0, degrau_z=10.0,
+            furo_dx=10.0, furo_dz=15.0, furo_d=3.5, furos_no_stl=True,
+            degrau_eixo='+y', rev='D', data='2026-10-30',
+            substitui='REV. C de 2026-09-29 (degrau de 20 mm)'),
 }
 DENS_PLA = 1.24   # g/cm³
 
@@ -588,9 +598,10 @@ def desenho_v1(caminho_base, d):
 # ---------------------------------------------------------------- main
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
-    ap.add_argument('--versao', type=int, choices=(1, 2, 3), default=3,
+    ap.add_argument('--versao', type=int, choices=(1, 2, 3, 4), default=4,
                     help='1: REV. A (09 Set, haste 80); 2: REV. B reproduzida (haste 30, furos, degrau em -X); '
-                         '3: REV. C (padrão) — v2 com o degrau girado 90°, em +Y')
+                         '3: REV. C — v2 com o degrau girado 90°, em +Y; '
+                         '4: REV. D (padrão) — v3 com o degrau de 30 mm')
     ap.add_argument('--furo-dx', type=float, default=None, help='espaçamento dos furos em X (mm)')
     ap.add_argument('--furo-dz', type=float, default=None, help='espaçamento dos furos em Z (mm)')
     ap.add_argument('--furo-d', type=float, default=None, help='diâmetro dos furos (mm)')
