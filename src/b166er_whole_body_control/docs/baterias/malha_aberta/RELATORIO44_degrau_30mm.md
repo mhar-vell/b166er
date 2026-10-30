@@ -31,9 +31,11 @@ mais de degrau, a ponta passaria do plano.
 
 | falha | execuções |
 |---|---|
-| atravessa sem fechar | 5 (profundidade +12 ×3, eixo +8, eixo −13, altura +10) |
+| atravessa sem fechar | 6 (profundidade +12 ×3, eixo +8, eixo −13, altura +10) |
 | destrava não fechou em 40 s, nem depois de reassentar | 1 (altura +10) |
 | captura sem fechar e perdeu o olhal na libera | 1 (eixo −13) |
+
+(Corrigido em 30 Out: a primeira versão desta tabela contava 5 atravessas; são 6.)
 
 Com o degrau longo, **a atravessa sem fechar passa a ser quase a única falha**.
 
