@@ -715,7 +715,13 @@
     <!-- Projeção do degrau além da haste: 20 mm, inalterada. É o
          comprimento útil que fica atravessado no furo e sustenta o
          arame do olhal. -->
-    <xacro:property name="dedo_degrau_l" value="0.020"/>
+    <!-- DEGRAU DE 30 mm (dedo v4, REV. D, 30 Out 2026; Marco: "se
+         aumentarmos o tamanho do degrau, isso ajudaria?" — RELATORIO44,
+         14/25 → 17/25). Colisão e malha visual dedo_fixo_v4.stl
+         (gera_dedo.py, versão 4) agora concordam. Os batentes da lingueta
+         ficam a ≥ 19 mm do centro do furo em Y e o degrau a ≤ 8 mm: alongar
+         em X não muda essa folga. -->
+    <xacro:property name="dedo_degrau_l" value="0.030"/>
     <xacro:property name="dedo_degrau_z" value="0.010"/>
 
     <xacro:property name="tool_length"
@@ -742,7 +748,7 @@
     <link name="tool_rod">
       <!-- VISUAL = a peça impressa (dedo v3, REV. C, 2026-09-30, pedido
            do Marco: "usa o STL da v3 no visual"). meshes/movemaster/
-           dedo_fixo_v3.stl é gerado por scripts/gera_dedo.py (versao 3)
+           dedo_fixo_v4.stl é gerado por scripts/gera_dedo.py (versao 4; v3 = degrau de 20 mm)
            em mm, já no frame deste link: z=0 no topo do garfo, z=-125 na
            face de baixo do degrau, degrau em +Y (y de -5 a +25), garfo
            20 x 30 com rasgo e furos. Cobre também o tool_tip, que por
@@ -756,7 +762,7 @@
            conferir que as caixas ainda batem com ele. -->
       <visual>
         <origin xyz="0 0 0"/>
-        <geometry><mesh filename="package://b166er_robot/meshes/movemaster/dedo_fixo_v3.stl" scale="0.001 0.001 0.001"/></geometry>
+        <geometry><mesh filename="package://b166er_robot/meshes/movemaster/dedo_fixo_v4.stl" scale="0.001 0.001 0.001"/></geometry>
         <material name="ToolColor"><color rgba="0.85 0.75 0.1 1"/></material>
       </visual>
       <collision>
@@ -802,7 +808,7 @@
          A ORIGEM DESTE LINK é a referência da tarefa: é aqui que o
          arame do anel repousa depois da descida de 5 mm. -->
     <link name="tool_tip">
-      <!-- Sem visual próprio: a malha dedo_fixo_v3.stl do tool_rod já
+      <!-- Sem visual próprio: a malha dedo_fixo_v4.stl do tool_rod já
            desenha o degrau (2026-09-30). -->
       <!-- COLISÃO SÓ DA PARTE QUE SE PROJETA, não da largura do degrau.
            O degrau inteiro vai de y=-5 mm a y=+25 mm (v2/v3; na v1
