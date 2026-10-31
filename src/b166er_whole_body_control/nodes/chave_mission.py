@@ -391,6 +391,18 @@ class MissionContext(object):
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        # ATRAVESSA QUE NÃO FECHA (30 Out 2026, RELATORIO44: 6 das 8 falhas).
+        # Nas seis, a ponta saltava dezenas de mm entre iterações (eixo +6 →
+        # −42 → +39 → −62 mm) ou alternava de lado (+11, −11, +13, −12).
+        # (1) TETO DA MIRA: a correção p_aim += 0,8·erro acumulava sem
+        #     limite com a ponta presa ou oscilando, e a IK saltava; a mira
+        #     fica a no máximo ik_aim_max_m do alvo.
+        # (2) AMORTECIMENTO: quando o erro troca de sinal no frame da parede
+        #     de uma iteração para a outra (passou do alvo), o ganho da
+        #     correção naquele eixo cai pela metade a cada troca, até
+        #     ik_ganho_min.
+        self.ik_aim_max_m = float(rospy.get_param('~ik_aim_max_m', 0.03))
+        self.ik_ganho_min = float(rospy.get_param('~ik_ganho_min', 0.2))
         # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
         # IK a ponta não avança e o J1 fica cada vez mais aquém do
         # pedido, o braço está empurrando algo (degrau na aba da
@@ -3762,6 +3774,11 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     recuos = 0
     it_desde_recuo = 0      # orçamento de iterações recomeça a cada recuo
     travas_eixo = []        # eixo (frame da parede) de cada travamento por contato
+    ganho_eixo = np.full(3, float(ctx.ik_correction_gain))   # ganho por eixo da parede (ver ik_ganho_min)
+    e_ant = None            # erro no frame da parede na iteração anterior
+    _off_al = ctx.phases.get('aproxima_lateral', {}).get('offset_xyz_m', [-0.09, 0, 0])
+    _off_at = ctx.phases.get('atravessa', {}).get('offset_xyz_m', [-0.01, 0, 0])
+    sentido_ins = 1.0 if float(_off_at[0]) >= float(_off_al[0]) else -1.0
     prev_n_err = None
     prev_dq1 = None
     while it_desde_recuo < ctx.ik_max_iters:
@@ -3902,7 +3919,10 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                                   dtype=float) / 1000.0
             d_off = off_novo - off_atual
             recuos += 1
-            sgn = 1.0 if (e_parede is None or e_parede[0] >= 0.0) else -1.0
+            # SENTIDO DO RECUO (30 Out 2026, também na PR #106): sempre CONTRA
+            # a inserção. Antes o sinal vinha do erro de eixo; com a ponta ALÉM
+            # do alvo o "recuo" avançava mais 20 mm.
+            sgn = sentido_ins
             # Sai 20 mm pelo eixo e já se desloca no plano do anel para a
             # nova posição da varredura, para reentrar alinhado com ela.
             p_recuo = p_now - sgn * ctx.ik_recuo_eixo_m * eixo \
@@ -3942,6 +3962,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             p_aim = p_goal.copy()
             prev_n_err = None
             prev_dq1 = None
+            e_ant = None            # o amortecimento recomeça depois do recuo
             it_desde_recuo = 0    # o recuo recomeça o orçamento de iterações
             continue          # o recuo não consome iteração
         prev_n_err = n_err
@@ -3952,7 +3973,23 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
         # passo erra muito, e o ponto extrapolado pode sair do
         # workspace. Com 0,8 converge em praticamente o mesmo número de
         # iterações e fica dentro do alcance.
-        p_aim = p_aim + ctx.ik_correction_gain * err
+        if ctx.wall_R is not None:
+            e_w = ctx.wall_R.T @ np.asarray(err, dtype=float)
+            if e_ant is not None:
+                troca = (np.sign(e_w) != np.sign(e_ant)) & (np.abs(e_ant) > 0.003) & (np.abs(e_w) > 0.003)
+                ganho_eixo = np.where(troca, np.maximum(ganho_eixo * 0.5, ctx.ik_ganho_min), ganho_eixo)
+            e_ant = e_w
+            p_aim = p_aim + ctx.wall_R @ (ganho_eixo * e_w)
+        else:
+            p_aim = p_aim + ctx.ik_correction_gain * err
+        alem = p_aim - p_goal
+        n_alem = float(np.linalg.norm(alem))
+        if n_alem > ctx.ik_aim_max_m:
+            # Ver MissionContext (ATRAVESSA QUE NÃO FECHA, item 1).
+            p_aim = p_goal + alem * (ctx.ik_aim_max_m / n_alem)
+            rospy.logwarn_throttle(2.0, '[mission] fase "%s" it%d: mira além limitada a '
+                                   '%.0f mm do alvo (pedia %.0f)', phase, it,
+                                   ctx.ik_aim_max_m * 1000, n_alem * 1000)
         it += 1
         it_desde_recuo += 1
 
