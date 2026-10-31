@@ -391,6 +391,16 @@ class MissionContext(object):
         self.ik_max_iters     = rospy.get_param('~ik_max_iters', 5)
         self.ik_settle_time   = rospy.get_param('~ik_settle_time', 1.2)
         self.ik_correction_gain = rospy.get_param('~ik_correction_gain', 0.8)
+        # ENTRADA EM PASSOS (30 Out 2026, RELATORIO45). A atravessa levava a
+        # ponta da aproximação lateral (−90 mm em X) ao furo (−10 mm) num
+        # comando só: 80 mm de J1 em malha aberta, e o J1 passava do pedido
+        # na PRIMEIRA iteração (+31 → −57 mm), antes de qualquer correção
+        # atuar. Agora a ponta para em cada X de atravessa_passos_m (mesma
+        # profundidade e altura da atravessa) antes do X final, para o J1
+        # receber movimentos curtos perto do olhal. Melhor esforço: um passo
+        # que não fecha não aborta, a atravessa segue. [] desliga.
+        self.atravessa_passos_m = [float(x) for x in rospy.get_param(
+            '~atravessa_passos_m', [-0.060, -0.035])]
         # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
         # IK a ponta não avança e o J1 fica cada vez mais aquém do
         # pedido, o braço está empurrando algo (degrau na aba da
@@ -2171,6 +2181,18 @@ class Manipulate(smach.State):
                           'whole-body/Fuzzy' if modo == 'wb' else 'IK iterativa',
                           'forçado' if ctx.modo_fases != 'yaml' else 'YAML')
             ctx.status(modo=modo)
+            if phase == 'atravessa' and ctx.atravessa_passos_m:
+                # Ver MissionContext.atravessa_passos_m.
+                ctx.phases.setdefault('atravessa_passo', {'tol_xyz_m': [0.012, 0.008, 0.006]})
+                for x_p in ctx.atravessa_passos_m:
+                    off_p = list(offset)
+                    off_p[0] = x_p
+                    p_p = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_p)
+                    rospy.loginfo('[mission] fase "atravessa": passo intermediário em X = %+.0f mm',
+                                  x_p * 1000)
+                    if not _reach_by_iterative_ik(ctx, p_p, 'atravessa_passo'):
+                        rospy.logwarn('[mission] fase "atravessa": passo em X = %+.0f mm não '
+                                      'fechou — seguindo para o próximo', x_p * 1000)
             ok_fase = alcancar(ctx, p_tip, phase)
             # REASSENTAR (2026-09-09): destrava estagnou curto — a ponta
             # escorregou do arame. Sobe reassenta_sobe_m acima da captura,
