@@ -2107,7 +2107,7 @@ class Manipulate(smach.State):
             cfg = ctx.phases[phase]
             if cfg.get('curso_min_m') is not None and ctx.alt_captura is not None:
                 margem = float(cfg.get('curso_margem_m', 0.002))
-                offset[2] = ctx.alt_captura - _curso_alvo(cfg)
+                offset[2] = _alt_ref_descida(ctx, cfg) - _curso_alvo(cfg)
                 # EIXO TAMBÉM RELATIVO À CAPTURA (15 Out 2026). A captura
                 # deixa a ponta 8 mm para dentro do furo de propósito
                 # (offset −8, tolerância ±8) e o destrava pedia eixo = 0: o
@@ -2282,7 +2282,7 @@ class Manipulate(smach.State):
                 # Destrava de novo, com o alvo relativo à captura nova.
                 cfg_d = ctx.phases['destrava']
                 off_d = list(cfg_d['offset_xyz_m'])
-                off_d[2] = ctx.alt_captura - _curso_alvo(cfg_d)
+                off_d[2] = _alt_ref_descida(ctx, cfg_d) - _curso_alvo(cfg_d)
                 ctx.offset_efetivo = off_d
                 p_d = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_d)
                 if not _reach_by_wholebody(ctx, p_d, 'destrava'):
@@ -2334,7 +2334,7 @@ class Manipulate(smach.State):
                 ctx.alt_destrava_fim = _alt_na_parede(ctx, _tooltip_now(ctx))
                 desc = None
                 if ctx.alt_captura is not None:
-                    desc = ctx.alt_captura - _alt_na_parede(ctx, _tooltip_now(ctx))
+                    desc = _alt_ref_descida(ctx, ctx.phases["destrava"]) - _alt_na_parede(ctx, _tooltip_now(ctx))
                 curso = ctx.lingueta_now()
                 rospy.loginfo('[mission] destrava: ponta desceu %s desde a '
                               'captura (critério observável) | lingueta %s '
@@ -2587,7 +2587,27 @@ def _descida_desde_captura(ctx, phase, e_parede):
     off = ctx.offset_efetivo if ctx.offset_efetivo is not None else cfg.get('offset_xyz_m', [0, 0, 0])
     alt_alvo = float(off[2])
     alt_atual = alt_alvo - float(e_parede[2])
-    return ctx.alt_captura - alt_atual
+    return _alt_ref_descida(ctx, cfg) - alt_atual
+
+
+def _alt_ref_descida(ctx, cfg):
+    """Altura (frame da parede, m) de onde se conta a descida do destrava.
+
+    CAPTURA FUNDA CONTA (01 Nov 2026, RELATORIO48). O zero era a altura em
+    que a captura fechou. Com a entrada no centro do furo (profundidade +3)
+    o degrau desce mais fundo na captura (−10 a −20 mm, alvo −10, tolerância
+    ±10) e já empurra a lingueta 10–12 mm; no destrava ela chega ao fim de
+    curso com 7–9 mm de descida, abaixo do mínimo de 10 para aceitar a
+    estagnação, e a missão mandava reassentar um destrava cumprido (3 de 25
+    na bateria entrada_centro). Com curso_ref_alvo_captura, quando a
+    captura fecha ABAIXO do próprio alvo, a descida é contada a partir do
+    alvo: o que a captura desceu além dele é curso do destrava já feito.
+    Captura acima do alvo (degrau só encostado) continua contando dela.
+    """
+    ref = float(ctx.alt_captura)
+    if cfg.get('curso_ref_alvo_captura') and 'captura' in ctx.phases:
+        ref = max(ref, float(ctx.phases['captura']['offset_xyz_m'][2]))
+    return ref
 
 
 def _fase_fechou(ctx, phase, err_world, n_err):
