@@ -2107,7 +2107,7 @@ class Manipulate(smach.State):
             cfg = ctx.phases[phase]
             if cfg.get('curso_min_m') is not None and ctx.alt_captura is not None:
                 margem = float(cfg.get('curso_margem_m', 0.002))
-                offset[2] = ctx.alt_captura - float(cfg['curso_min_m']) - margem
+                offset[2] = ctx.alt_captura - _curso_alvo(cfg)
                 # EIXO TAMBÉM RELATIVO À CAPTURA (15 Out 2026). A captura
                 # deixa a ponta 8 mm para dentro do furo de propósito
                 # (offset −8, tolerância ±8) e o destrava pedia eixo = 0: o
@@ -2119,11 +2119,11 @@ class Manipulate(smach.State):
                 # medir DERIVA desde a captura, que é o que a régua queria.
                 offset[0] = float(ctx.pose_captura[0])
                 rospy.loginfo('[mission] fase "%s": alvo em altura relativo à '
-                              'captura: %+.1f mm (captura %+.1f − curso %.0f − '
-                              'margem %.0f); eixo = o da captura (%+.1f mm)',
+                              'captura: %+.1f mm (captura %+.1f − alvo de descida %.0f; '
+                              'curso mín %.0f); eixo = o da captura (%+.1f mm)',
                               phase, offset[2] * 1000,
-                              ctx.alt_captura * 1000, cfg['curso_min_m'] * 1000,
-                              margem * 1000, offset[0] * 1000)
+                              ctx.alt_captura * 1000, _curso_alvo(cfg) * 1000,
+                              float(cfg['curso_min_m']) * 1000, offset[0] * 1000)
             elif cfg.get('deriva_eixo_max_m') is not None and ctx.pose_captura is not None:
                 # LIBERA E ARCOS TAMBÉM (15 Out 2026, run2 de arco_deslizante).
                 # O alvo pedia eixo = 0 com a ponta capturada a −8…−10 mm;
@@ -2282,7 +2282,7 @@ class Manipulate(smach.State):
                 # Destrava de novo, com o alvo relativo à captura nova.
                 cfg_d = ctx.phases['destrava']
                 off_d = list(cfg_d['offset_xyz_m'])
-                off_d[2] = ctx.alt_captura - float(cfg_d['curso_min_m']) - float(cfg_d.get('curso_margem_m', 0.002))
+                off_d[2] = ctx.alt_captura - _curso_alvo(cfg_d)
                 ctx.offset_efetivo = off_d
                 p_d = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off_d)
                 if not _reach_by_wholebody(ctx, p_d, 'destrava'):
@@ -2548,6 +2548,27 @@ def _pose_na_parede(ctx, p_world):
     estimado: (eixo, prof, alt) em m."""
     olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)
     return ctx.wall_R.T @ (np.asarray(p_world, dtype=float) - olhal)
+
+
+def _curso_alvo(cfg):
+    """Descida COMANDADA de uma fase com curso_min_m, relativa à captura (m).
+
+    DESTRAVA ATÉ O FIM DE CURSO (31 Out 2026, RELATORIO47). O alvo era
+    curso_min + margem (20 mm abaixo da captura) e a fase fechava ao
+    alcançá-lo. Isso só solta o gatilho quando a captura já termina
+    empurrando a lingueta (2–13 mm em 19 das 21 missões medidas). Com a
+    parede estimada 10 mm acima da real, a captura para com o degrau só
+    encostado no arame, os mesmos 20 mm deixam a lingueta em 13,5–14,3 mm
+    (a aba passa sob o laço a 13) e a libera, com o punho cedendo, deixa a
+    trava fechar de novo: as três perdas de olhal com altura +10 da bateria
+    atravessa_passos. O desvio está no referencial estimado, então a missão
+    não o vê; o que ela vê é a ponta parar quando a lingueta bate no fim de
+    curso. curso_alvo_m manda descer até lá; quem fecha a fase passa a ser
+    a estagnação (ou o teto). Sem curso_alvo_m, o comportamento antigo.
+    """
+    if cfg.get('curso_alvo_m') is not None:
+        return float(cfg['curso_alvo_m'])
+    return float(cfg['curso_min_m']) + float(cfg.get('curso_margem_m', 0.002))
 
 
 def _alt_na_parede(ctx, p_world):
