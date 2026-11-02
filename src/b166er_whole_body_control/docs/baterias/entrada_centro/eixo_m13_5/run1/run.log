@@ -1,0 +1,279 @@
+[31mWARNING: disk usage in log directory [/home/marco/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+the rosdep view is empty: call 'sudo rosdep init' and 'rosdep update'
+[WARN] [1793540953.652087, 143951.757000]: [mission] SEARCH: 9 de 25 amostras descartadas como outlier (>0.15 m ou >0.20 rad da mediana)
+[WARN] [1793540953.705576, 143951.808000]: [mission] SEARCH: laser com só 11 pontos de parede (mín 30) — parede fica pela tag
+[ERROR] [1793540985.975357, 143983.119000]: [mission] APPROACH/remedida: só 0 amostras da tag
+[WARN] [1793540986.028724, 143983.170000]: [mission] APPROACH/remedida (sem tag): laser com só 12 pontos de parede (mín 30) — parede fica pela tag
+[WARN] [1793540986.032365, 143983.174000]: [mission] APPROACH/remedida: sem amostras — recuperando a tag: girando à esquerda no lugar (até 30s)
+[ERROR] [1793541051.245719, 144046.519000]: [mission] REFINE: só 0 amostras da tag
+[WARN] [1793541051.302897, 144046.573000]: [mission] REFINE: tag não visível no standoff — seguindo com a estimativa da aproximação (erro típico ~13 mm com a tag de 220 mm)
+[WARN] [1793541051.305735, 144046.574000]: [mission] REFINE: VIÉS DE TESTE somado à parede — eixo -13, profundidade +0, altura +0 mm (~teste_vies_parede_mm; só simulação)
+[INFO] [1793540813.484637, 143815.289000]: garra_dx = 0.000 m (fechada)
+[INFO] [1793540813.534945, 143815.340000]: State machine starting in initial state 'HOMING' with userdata: 
+	[]
+[INFO] [1793540813.836629, 143815.640000]: [mission] pose de partida registrada: (-0.51, 1.00, 0.02 rad)
+[INFO] [1793540813.839250, 143815.642000]: [mission] HOMING: procurando os fins de curso (J4, J3, J2, J5, J1)
+[INFO] [1793540894.066358, 143893.643000]: [mission] HOMING: cinco switches achados — referência das juntas estabelecida
+[INFO] [1793540894.067064, 143893.643000]: State machine transitioning 'HOMING':'ok'-->'HOME_POSITION'
+[INFO] [1793540894.067995, 143893.644000]: [mission] postura "home" comandada: [0.0, 1.5708, -2.12058, 0.0, 0.0]
+[INFO] [1793540914.676439, 143913.745000]: [mission] HOME_POSITION: braço em HOME POSITION (J1/J5 em zero, J2 vertical, J3 no switch, J4 zero)
+[INFO] [1793540914.677125, 143913.745000]: State machine transitioning 'HOME_POSITION':'ok'-->'SEARCH'
+[INFO] [1793540914.678008, 143913.746000]: [mission] postura "search" comandada: [0.0, 1.0, -1.0, 0.0, 0.0]
+[INFO] [1793540935.279845, 143933.847000]: [mission] SEARCH — girando à procura da tag...
+[INFO] [1793540935.280556, 143933.847000]: [mission] SEARCH: amostra quando a tag estiver a raio 0.35-0.50 do quadro (vista oblíqua; omega fina 0.15 rad/s)
+[INFO] [1793540935.436322, 143933.998000]: [mission] SEARCH: tag a raio 0.93 — girando até <= 0.50
+[INFO] [1793540943.353123, 143941.699000]: [mission] SEARCH: tag a raio 0.50 — parando
+[INFO] [1793540943.354021, 143941.700000]: [mission] tag avistada — parando para medir
+[INFO] [1793540944.393552, 143942.709000]: [mission] âncora engatada (coleta do SEARCH)
+[INFO] [1793540944.395872, 143942.711000]: [mission] SEARCH: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793540953.644290, 143951.749000]: [mission] âncora solta — 17 correções de deriva
+[INFO] [1793540953.645113, 143951.750000]: [mission] SEARCH: âncora corrigiu a deriva 17 vez(es) durante a coleta
+[INFO] [1793540953.652864, 143951.758000]: [mission] SEARCH: 16 amostras — parede (0.082, 3.251, -0.010) yaw=2.645
+[INFO] [1793540953.707333, 143951.808000]: [mission] parede localizada em (0.082, 3.251, -0.010)
+[INFO] [1793540953.718247, 143951.818000]: State machine transitioning 'SEARCH':'found'-->'APPROACH'
+[INFO] [1793540953.719275, 143951.818000]: [mission] APPROACH etapa 1/2 — 1.30 m do olhal, alvo (-0.42, 1.90, 1.07 rad)
+[INFO] [1793540958.059637, 143956.023000]: [mission] APPROACH: alinhado, avançando (1.04 m)
+[INFO] [1793540958.112174, 143956.073000]: [mission] teto por postura ativo no drive: v<=0.20 w<=0.50 rampa 0.48/1.50
+[INFO] [1793540966.253482, 143963.973000]: [mission] APPROACH: chegou, ajustando heading final
+[INFO] [1793540966.306418, 143964.023000]: [mission] teto por postura ativo no drive: v<=0.19 w<=0.50 rampa 0.48/1.50
+[INFO] [1793540969.416243, 143967.023000]: [mission] APPROACH: concluído
+[INFO] [1793540970.441849, 143968.026000]: [mission] âncora engatada (coleta do APPROACH/remedida)
+[INFO] [1793540970.442677, 143968.027000]: [mission] APPROACH/remedida: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793540985.973880, 143983.118000]: [mission] âncora solta — 18 correções de deriva
+[INFO] [1793540985.974686, 143983.119000]: [mission] APPROACH/remedida: âncora corrigiu a deriva 18 vez(es) durante a coleta
+[INFO] [1793541011.759282, 144008.127000]: [mission] SEARCH: tag a raio 0.92 — girando até <= 0.50
+[INFO] [1793541017.136444, 144013.330000]: [mission] SEARCH: tag a raio 0.50 — parando
+[INFO] [1793541017.137633, 144013.331000]: [mission] APPROACH/remedida: tag reencontrada em 30.2s — remedindo
+[INFO] [1793541018.167466, 144014.334000]: [mission] âncora engatada (coleta do APPROACH/remedida/recuperada)
+[INFO] [1793541018.168281, 144014.335000]: [mission] APPROACH/remedida/recuperada: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793541019.432359, 144015.550000]: [mission] âncora solta — 2 correções de deriva
+[INFO] [1793541019.434932, 144015.552000]: [mission] APPROACH/remedida/recuperada: âncora corrigiu a deriva 2 vez(es) durante a coleta
+[INFO] [1793541019.438143, 144015.554000]: [mission] APPROACH/remedida/recuperada: 10 amostras — parede (0.006, 2.995, -0.002) yaw=-3.118
+[INFO] [1793541019.491352, 144015.608000]: [mission] APPROACH/remedida/recuperada: parede pelo LASER — 99 pontos, resíduo 5.6 mm: profundidade -4.2 mm e yaw -1.46° em relação à tag → parede (0.006, 2.999, -0.002) yaw=3.140
+[INFO] [1793541019.492737, 144015.610000]: [mission] APPROACH etapa 2/2 — 0.88 m do olhal, alvo (0.37, 1.99, 1.57 rad)
+[INFO] [1793541021.035314, 144017.111000]: [mission] APPROACH: alinhado, avançando (0.89 m)
+[INFO] [1793541021.088364, 144017.161000]: [mission] teto por postura ativo no drive: v<=0.20 w<=0.50 rampa 0.48/1.50
+[INFO] [1793541028.307520, 144024.161000]: [mission] APPROACH: chegou, ajustando heading final
+[INFO] [1793541028.358868, 144024.211000]: [mission] teto por postura ativo no drive: v<=0.20 w<=0.50 rampa 0.48/1.50
+[INFO] [1793541035.822510, 144031.461000]: [mission] APPROACH: concluído
+[INFO] [1793541035.829354, 144031.468000]: State machine transitioning 'APPROACH':'arrived'-->'REFINE'
+[INFO] [1793541035.832295, 144031.471000]: [mission] REFINE — remedindo a parede de perto (10 amostras)
+[INFO] [1793541035.839745, 144031.478000]: [mission] âncora engatada (coleta do REFINE)
+[INFO] [1793541035.842527, 144031.481000]: [mission] REFINE: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793541051.243358, 144046.516000]: [mission] âncora solta — 17 correções de deriva
+[INFO] [1793541051.244786, 144046.518000]: [mission] REFINE: âncora corrigiu a deriva 17 vez(es) durante a coleta
+[INFO] [1793541051.299832, 144046.570000]: [mission] REFINE (sem tag): parede pelo LASER — 82 pontos, resíduo 4.4 mm: profundidade -1.8 mm e yaw +0.07° em relação à tag → parede (0.006, 3.001, -0.002) yaw=3.141
+[INFO] [1793541051.307807, 144046.576000]: [mission] olhal estimado em (0.219, 2.871, 0.803)
+[INFO] [1793541051.316478, 144046.585000]: State machine transitioning 'REFINE':'ok'-->'DEPLOY'
+[INFO] [1793541051.319002, 144046.587000]: [mission] DEPLOY: IK resolvida para a POSE DE MANIPULAÇÃO (0.22, 2.19, 1.57 rad), não para a atual
+[INFO] [1793541056.774343, 144051.143000]: [mission] DEPLOY: IK nivelada 0.0222 m, só eixo 0.0003 m — a MISSÃO INTEIRA usa "eixo"
+[INFO] [1793541056.778288, 144052.039000]: [mission] DEPLOY: IK da ponta resolvida (resíduo 0.0003 m, degrau 6.0°) — pré-posicionando em [ -8.8  59.3 -16.5 -90.2   6.2] graus
+[INFO] [1793541063.155005, 144058.241000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541063.359183, 144058.444000]: [mission] teto por postura ativo no drive: v<=0.28 w<=0.50 rampa 0.57/1.28
+[INFO] [1793541067.999830, 144062.944000]: [mission] DEPLOY/aproxima: alinhado, avançando (0.40 m)
+[INFO] [1793541071.668808, 144066.494000]: [mission] DEPLOY/aproxima: chegou, ajustando heading final
+[INFO] [1793541071.725078, 144066.545000]: [mission] teto por postura ativo no drive: v<=0.27 w<=0.50 rampa 0.57/1.28
+[INFO] [1793541075.779955, 144070.494000]: [mission] DEPLOY/aproxima: concluído
+[INFO] [1793541075.780960, 144070.495000]: State machine transitioning 'DEPLOY':'ok'-->'MANIPULATE'
+[INFO] [1793541075.781972, 144070.496000]: [mission] fase "orienta": modo IK iterativa (YAML)
+[INFO] [1793541075.784647, 144070.499000]: [mission] âncora engatada (fase "orienta")
+[INFO] [1793541079.345967, 144073.972000]: [mission] fase "orienta" it0: ponta (0.314, 2.775, 0.815) erro=0.0068 | degrau eixo 7.5° | rolagem 7.6° | IK pediu [-13.7  53.6 -14.  -80.4   6.6] | faltou [0. 0. 0. 0. 0.] graus
+[INFO] [1793541079.349209, 144073.976000]: [mission] âncora solta — 1 correções de deriva
+[INFO] [1793541079.350512, 144073.976000]: [mission] fase "orienta" alcançada em 1 iteração(ões) (0.0068 m) — âncora corrigiu 1 vez(es)
+[INFO] [1793541079.875142, 144074.485000]: [mission] fase "aproxima_lateral": modo IK iterativa (YAML)
+[INFO] [1793541079.877772, 144074.487000]: [mission] âncora engatada (fase "aproxima_lateral")
+[WARN] [1793541096.592228, 144090.782000]: [mission] fase "destrava": descida estagnou em 14.3 mm (mín 10 para aceitar; alvo 18) — fim de curso do mecanismo, fechando a fase
+[INFO] [1793541083.576061, 144078.103000]: [mission] fase "aproxima_lateral" it0: ponta (0.305, 2.873, 0.814) erro=0.0066 | degrau eixo 7.8° | rolagem 8.1° | IK pediu [-12.3  39.9  -5.7 -60.9   4.1] | faltou [0. 0. 0. 0. 0.] graus
+[INFO] [1793541083.577712, 144078.105000]: [mission] fase "aproxima_lateral" it0: no frame da parede eixo=-3.9 prof=+5.3 alt=-0.1 mm (tolerância 40/8/5)
+[INFO] [1793541083.578447, 144078.105000]: [mission] âncora solta — 1 correções de deriva
+[INFO] [1793541083.579349, 144078.106000]: [mission] fase "aproxima_lateral" alcançada em 1 iteração(ões) (0.0066 m) — âncora corrigiu 1 vez(es)
+[INFO] [1793541084.100224, 144078.609000]: [mission] fase "atravessa": modo IK iterativa (YAML)
+[INFO] [1793541084.102473, 144078.611000]: [mission] fase "atravessa": passo intermediário em X = -60 mm
+[INFO] [1793541084.109351, 144078.618000]: [mission] âncora engatada (fase "atravessa_passo")
+[INFO] [1793541086.362728, 144080.827000]: [mission] fase "atravessa_passo" it0: ponta (0.275, 2.870, 0.815) erro=0.0054 | degrau eixo 5.7° | rolagem 5.7° | IK pediu [-10.3  41.   -5.7 -63.4   3.1] | faltou [ 0.2  0.2 -0.1  0.  -0.1] graus
+[INFO] [1793541086.364258, 144080.828000]: [mission] fase "atravessa_passo" it0: no frame da parede eixo=-4.7 prof=+1.8 alt=-1.8 mm (tolerância 12/8/6)
+[INFO] [1793541086.365243, 144080.829000]: [mission] fase "atravessa_passo" alcançada em 1 iteração(ões) (0.0054 m)
+[INFO] [1793541086.366041, 144080.830000]: [mission] fase "atravessa": passo intermediário em X = -35 mm
+[INFO] [1793541086.368223, 144080.832000]: [mission] âncora engatada (fase "atravessa_passo")
+[INFO] [1793541088.706594, 144083.094000]: [mission] fase "atravessa_passo" it0: ponta (0.251, 2.870, 0.813) erro=0.0040 | degrau eixo 3.9° | rolagem 3.5° | IK pediu [ -8.5  41.7  -5.9 -64.8   2.2] | faltou [ 0.2  0.4 -0.8  0.1 -0.3] graus
+[INFO] [1793541088.712718, 144083.099000]: [mission] fase "atravessa_passo" it0: no frame da parede eixo=-3.5 prof=+1.9 alt=+0.7 mm (tolerância 12/8/6)
+[INFO] [1793541088.717264, 144083.104000]: [mission] fase "atravessa_passo" alcançada em 1 iteração(ões) (0.0040 m)
+[INFO] [1793541088.724813, 144083.111000]: [mission] âncora engatada (fase "atravessa")
+[INFO] [1793541090.979584, 144085.319000]: [mission] fase "atravessa" it0: ponta (0.227, 2.869, 0.815) erro=0.0027 | degrau eixo 2.1° | rolagem 1.8° | IK pediu [ -6.6  42.6  -6.7 -65.6   1.3] | faltou [ 0.3  0.5 -0.6 -0.  -0.2] graus
+[INFO] [1793541090.981626, 144085.321000]: [mission] fase "atravessa" it0: no frame da parede eixo=-2.3 prof=+0.9 alt=-1.2 mm (tolerância 6/6/5)
+[INFO] [1793541090.984643, 144085.324000]: [mission] fase "atravessa" alcançada em 1 iteração(ões) (0.0027 m)
+[INFO] [1793541091.507473, 144085.834000]: [mission] fase "captura": modo IK iterativa (YAML)
+[INFO] [1793541091.512043, 144085.838000]: [mission] âncora engatada (fase "captura")
+[INFO] [1793541093.494226, 144087.764000]: [mission] fase "captura" it0: ponta (0.234, 2.870, 0.792) erro=0.0044 | degrau eixo 2.1° | rolagem 2.2° | IK pediu [ -6.7  41.7  -7.9 -66.2   1.3] | faltou [-0.4  0.3 -0.4  0.3  0.1] graus
+[INFO] [1793541093.496592, 144087.766000]: [mission] fase "captura" it0: no frame da parede eixo=+4.3 prof=-0.3 alt=+1.0 mm (tolerância 6/6/10)
+[INFO] [1793541093.497826, 144087.768000]: [mission] fase "captura" alcançada em 1 iteração(ões) (0.0044 m)
+[INFO] [1793541093.506064, 144087.774000]: [mission] captura: ponta registrada em eixo=-14.3 prof=+0.3 alt=-11.0 mm (zero da descida do destrava e da deriva de eixo)
+[INFO] [1793541094.019902, 144088.276000]: [mission] fase "destrava": alvo em altura relativo à captura: -39.0 mm (captura -11.0 − alvo de descida 28; curso mín 18); eixo = o da captura (-14.3 mm)
+[INFO] [1793541094.021265, 144088.277000]: [mission] fase "destrava": modo whole-body/Fuzzy (YAML)
+[INFO] [1793541094.234350, 144088.478000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541094.540471, 144088.780000]: [mission] fase "destrava": whole-body assumiu (base livre, restrita pelo plano de exclusão)
+[INFO] [1793541094.542110, 144088.781000]: [mission] fase "destrava": whole-body a 0.0237 m do alvo — eixo=+0.0 prof=-0.5 alt=-23.7 mm
+[INFO] [1793541096.799138, 144090.988000]: [mission] destrava: ponta desceu 14.6 mm desde a captura (critério observável) | lingueta 20.0 mm (só na simulação)
+[INFO] [1793541096.799840, 144090.989000]: [mission] destrava: lingueta em 20.0 mm — gatilho solto
+[INFO] [1793541097.310929, 144091.489000]: [mission] fase "libera": eixo do alvo = o da captura (-14.3 mm)
+[INFO] [1793541097.311802, 144091.490000]: [mission] fase "libera": puxa mantendo a altura do fim do destrava (-25.6 mm), sem subir
+[INFO] [1793541097.312605, 144091.491000]: [mission] fase "libera": modo whole-body/Fuzzy (YAML)
+[INFO] [1793541097.520082, 144091.692000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541097.834398, 144091.994000]: [mission] fase "libera": whole-body assumiu (base livre, restrita pelo plano de exclusão)
+[INFO] [1793541097.836298, 144091.995000]: [mission] fase "libera": whole-body a 0.0270 m do alvo — eixo=-0.6 prof=+27.0 alt=+1.9 mm
+[INFO] [1793541099.699020, 144093.795000]: [mission] fase "libera" alcançada por whole-body em 1.8s (0.0044 m) — no frame da parede eixo=-0.0 prof=-1.3 alt=+4.2 mm (tolerância 40/8/6)
+[INFO] [1793541100.431049, 144094.499000]: [mission] fase "arco1": eixo do alvo = o da captura (-14.3 mm)
+[INFO] [1793541100.431864, 144094.499000]: [mission] fase "arco1": modo whole-body/Fuzzy (YAML)
+[INFO] [1793541100.636491, 144094.700000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541100.943407, 144095.003000]: [mission] fase "arco1": whole-body assumiu (base livre, restrita pelo plano de exclusão)
+[INFO] [1793541100.944809, 144095.004000]: [mission] fase "arco1": arco deslizante — raio 200 mm, fim em 15.0°, antecipação 15 mm, pressão -25.0 mm
+[INFO] [1793541100.947094, 144095.006000]: [mission] fase "arco1": arco — ponta em 9.8°, alvo deslizante em 14.1° (prof +48.7 alt -31.0 mm)
+[INFO] [1793541100.950310, 144095.009000]: [mission] fase "arco1": whole-body a 0.0179 m do alvo — eixo=+0.1 prof=+17.8 alt=-1.6 mm
+[INFO] [1793541101.760865, 144095.804000]: [mission] fase "arco1" alcançada por whole-body em 0.8s (0.0066 m) — no frame da parede eixo=+0.4 prof=+6.6 alt=-0.2 mm (tolerância 40/10/15)
+[INFO] [1793541101.761910, 144095.805000]: [mission] arco1: SOLTURA observável — recuo 44.9 mm desde a captura (mín 40) com deriva de eixo -0.4 mm → SOLTA
+[INFO] [1793541101.982775, 144096.016000]: [mission] waypoint de 15° — lâmina medida em 12.3° (abertura por CONTATO)
+[INFO] [1793541102.499027, 144096.519000]: [mission] fase "arco2": eixo do alvo = o da captura (-14.3 mm)
+[INFO] [1793541102.499762, 144096.519000]: [mission] fase "arco2": modo whole-body/Fuzzy (YAML)
+[INFO] [1793541102.704843, 144096.720000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541103.012944, 144097.022000]: [mission] fase "arco2": whole-body assumiu (base livre, restrita pelo plano de exclusão)
+[INFO] [1793541103.013704, 144097.022000]: [mission] fase "arco2": arco deslizante — raio 200 mm, fim em 30.0°, antecipação 15 mm, pressão -25.0 mm
+[INFO] [1793541103.014681, 144097.023000]: [mission] fase "arco2": arco — ponta em 15.4°, alvo deslizante em 19.7° (prof +67.5 alt -36.7 mm)
+[INFO] [1793541103.015863, 144097.024000]: [mission] fase "arco2": whole-body a 0.0504 m do alvo — eixo=+0.4 prof=+46.8 alt=-18.6 mm
+[INFO] [1793541104.146395, 144098.123000]: [mission] fase "arco2": arco — ponta em 18.6°, alvo deslizante em 22.9° (prof +77.7 alt -40.7 mm)
+[INFO] [1793541105.171267, 144099.122000]: [mission] fase "arco2": whole-body a 0.0331 m do alvo — eixo=+0.5 prof=+30.7 alt=-12.2 mm
+[INFO] [1793541105.274349, 144099.222000]: [mission] fase "arco2": arco — ponta em 20.3°, alvo deslizante em 24.6° (prof +83.2 alt -43.1 mm)
+[WARN] [1793541118.661775, 144112.268000]: [mission] RETRACT: ponta a 0.161 m do olhal — saindo em degraus: sobe 30 mm, 120 mm pelo eixo do furo, 100 mm para fora, antes de recolher
+[INFO] [1793541106.402596, 144100.322000]: [mission] fase "arco2": arco — ponta em 20.5°, alvo deslizante em 24.8° (prof +83.8 alt -43.4 mm)
+[INFO] [1793541107.227849, 144101.124000]: [mission] fase "arco2": whole-body a 0.0226 m do alvo — eixo=+0.9 prof=+21.5 alt=-7.0 mm
+[INFO] [1793541107.533677, 144101.422000]: [mission] fase "arco2": arco — ponta em 24.8°, alvo deslizante em 29.1° (prof +97.3 alt -50.2 mm)
+[INFO] [1793541108.248016, 144102.122000]: [mission] fase "arco2" alcançada por whole-body em 5.1s (0.0063 m) — no frame da parede eixo=+1.0 prof=+5.9 alt=+2.0 mm (tolerância 40/10/15)
+[INFO] [1793541108.472341, 144102.336000]: [mission] waypoint de 30° — lâmina medida em 32.3° (abertura por CONTATO)
+[INFO] [1793541108.988564, 144102.839000]: [mission] fase "desengata": eixo do alvo relativo à captura (-104.3 mm)
+[INFO] [1793541108.990514, 144102.840000]: [mission] fase "desengata": modo whole-body/Fuzzy (YAML)
+[INFO] [1793541109.201942, 144103.045000]: [mission] plano de exclusão publicado: parede em [ 1.900e-02  3.001e+00 -2.000e-03], normal segura [-0. -1.  0.]
+[INFO] [1793541109.518765, 144103.350000]: [mission] fase "desengata": whole-body assumiu (base livre, restrita pelo plano de exclusão)
+[INFO] [1793541109.520266, 144103.351000]: [mission] fase "desengata": whole-body a 0.0891 m do alvo — eixo=-89.0 prof=+4.3 alt=+3.0 mm
+[INFO] [1793541111.678500, 144105.452000]: [mission] fase "desengata": whole-body a 0.0870 m do alvo — eixo=-86.9 prof=+1.8 alt=+4.9 mm
+[INFO] [1793541113.826143, 144107.551000]: [mission] fase "desengata": whole-body a 0.0867 m do alvo — eixo=-86.5 prof=+0.9 alt=+5.8 mm
+[INFO] [1793541115.968028, 144109.651000]: [mission] fase "desengata": whole-body a 0.0802 m do alvo — eixo=-19.9 prof=-8.9 alt=+77.1 mm
+[INFO] [1793541117.510238, 144111.151000]: [mission] fase "desengata" alcançada por whole-body em 7.8s (0.0041 m) — no frame da parede eixo=-0.7 prof=-0.1 alt=-4.0 mm (tolerância 15/20/20)
+[INFO] [1793541118.246349, 144111.863000]: [mission] MANIPULATE concluída — chave ABERTA, lâmina medida em 34.2°
+[INFO] [1793541118.248880, 144111.865000]: State machine transitioning 'MANIPULATE':'done'-->'RETRACT'
+[INFO] [1793541118.664194, 144112.270000]: [mission] âncora engatada (fase "saida_sobe")
+[INFO] [1793541140.792650, 144133.673000]: [mission] fase "saida_sobe" it0: ponta (0.319, 2.779, 0.794) erro=0.0317 | degrau eixo 8.0° | rolagem 9.0° | IK pediu [-14.5  41.4 -13.4 -62.5   5.3] | faltou [ 0.5  3.7 -3.5  3.4  0.1] graus
+[INFO] [1793541140.798078, 144133.679000]: [mission] fase "saida_sobe" it0: no frame da parede eixo=-9.4 prof=+5.4 alt=-29.8 mm (tolerância 30/20/10)
+[INFO] [1793541143.468328, 144136.269000]: [mission] fase "saida_sobe" it1: ponta (0.337, 2.767, 0.735) erro=0.0312 | degrau eixo 8.1° | rolagem 8.1° | IK pediu [-15.4  39.9 -12.9 -65.8   6.5] | faltou [-0.2  0.8 -2.5  1.6  0.1] graus
+[INFO] [1793541143.473463, 144136.275000]: [mission] fase "saida_sobe" it1: no frame da parede eixo=+9.0 prof=-7.0 alt=+29.1 mm (tolerância 30/20/10)
+[INFO] [1793541145.840197, 144138.564000]: [mission] fase "saida_sobe" it2: ponta (0.324, 2.776, 0.773) erro=0.0097 | degrau eixo 8.0° | rolagem 8.0° | IK pediu [-14.7  39.8  -9.6 -65.5   5.7] | faltou [ 0.5  1.9 -3.4  2.6 -0.3] graus
+[INFO] [1793541145.846387, 144138.570000]: [mission] fase "saida_sobe" it2: no frame da parede eixo=-3.9 prof=+2.5 alt=-8.5 mm (tolerância 30/20/10)
+[INFO] [1793541145.849670, 144138.574000]: [mission] âncora solta — 27 correções de deriva
+[INFO] [1793541145.852369, 144138.576000]: [mission] fase "saida_sobe" alcançada em 3 iteração(ões) (0.0097 m) — âncora corrigiu 27 vez(es)
+[INFO] [1793541145.860169, 144138.584000]: [mission] âncora engatada (fase "saida_eixo")
+[INFO] [1793541148.961940, 144141.584000]: [mission] fase "saida_eixo" it0: ponta (0.447, 2.779, 0.763) erro=0.0056 | degrau eixo 16.3° | rolagem 16.1° | IK pediu [-23.8  34.5  -5.  -59.7   9.5] | faltou [-0.3  0.4 -1.3  1.   0.2] graus
+[INFO] [1793541148.964698, 144141.587000]: [mission] fase "saida_eixo" it0: no frame da parede eixo=-1.5 prof=+5.3 alt=+1.1 mm (tolerância 20/20/15)
+[INFO] [1793541148.966257, 144141.588000]: [mission] âncora solta — 1 correções de deriva
+[INFO] [1793541148.967640, 144141.590000]: [mission] fase "saida_eixo" alcançada em 1 iteração(ões) (0.0056 m) — âncora corrigiu 1 vez(es)
+[INFO] [1793541148.970147, 144141.592000]: [mission] âncora engatada (fase "saida_fora")
+[INFO] [1793541152.784763, 144145.281000]: [mission] fase "saida_fora" it0: ponta (0.446, 2.677, 0.761) erro=0.0048 | degrau eixo 14.8° | rolagem 14.8° | IK pediu [-27.1  44.3  -4.4 -86.6  16. ] | faltou [-0.1  2.1 -5.1  3.2  0.2] graus
+[INFO] [1793541152.787519, 144145.283000]: [mission] fase "saida_fora" it0: no frame da parede eixo=-2.2 prof=+2.9 alt=+3.2 mm (tolerância 30/20/20)
+[INFO] [1793541152.790827, 144145.285000]: [mission] âncora solta — 2 correções de deriva
+[INFO] [1793541152.793871, 144145.288000]: [mission] fase "saida_fora" alcançada em 1 iteração(ões) (0.0048 m) — âncora corrigiu 2 vez(es)
+[INFO] [1793541152.796306, 144145.292000]: [mission] RETRACT/afasta: RECUANDO 0.250 m só com as rodas
+[INFO] [1793541157.304309, 144149.695000]: [mission] RETRACT/afasta: concluído (0.250 m)
+[INFO] [1793541157.305276, 144149.696000]: [mission] postura "stow_home" comandada: [0.0, 1.1, -1.04, -1.7, 0.0]
+[INFO] [1793541160.906355, 144153.196000]: State machine transitioning 'RETRACT':'ok'-->'RETURN'
+[INFO] [1793541160.907270, 144153.196000]: [mission] RETURN — voltando a (-0.51, 1.00, 0.02 rad)
+[INFO] [1793541173.107180, 144165.047000]: [mission] RETURN: alinhado, avançando (1.32 m)
+[INFO] [1793541173.159335, 144165.097000]: [mission] teto por postura ativo no drive: v<=0.23 w<=0.50 rampa 0.52/1.51
+[INFO] [1793541183.249492, 144174.897000]: [mission] RETURN: chegou, ajustando heading final
+[INFO] [1793541183.300775, 144174.947000]: [mission] teto por postura ativo no drive: v<=0.23 w<=0.50 rampa 0.52/1.51
+[INFO] [1793541192.609935, 144183.997000]: [mission] RETURN: concluído
+[INFO] [1793541192.612310, 144183.999000]: [mission] RETURN/home: procurando os fins de curso (J4, J3, J2, J5, J1)
+[INFO] [1793541262.826002, 144252.200000]: [mission] RETURN/home: cinco switches achados — referência das juntas estabelecida
+[INFO] [1793541262.827261, 144252.201000]: [mission] postura "home" comandada: [0.0, 1.5708, -2.12058, 0.0, 0.0]
+[INFO] [1793541283.506406, 144272.302000]: [mission] RETURN/home: braço em HOME POSITION (J1/J5 em zero, J2 vertical, J3 no switch, J4 zero)
+[INFO] [1793541283.508710, 144272.304000]: State machine terminating 'RETURN':'home':'MISSION_OK'
+[INFO] [1793541283.511065, 144272.306000]: [mission] resultado: MISSION_OK
+... logging to /home/marco/.ros/log/54fc3a74-d4a6-11f1-a6cb-b025aa85b2a2/roslaunch-shiroi-3420413.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch
+[1mstarted roslaunch server http://shiroi:39031/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /chave_mission/ancora_base: True
+ * /chave_mission/estado_final: 
+ * /chave_mission/estado_inicial: HOMING
+ * /chave_mission/pausa_por_fase: False
+ * /chave_mission/search_omega: 0.35
+ * /chave_mission/standoff_distance: 0.68
+ * /chave_mission/teste_vies_parede_mm: [-13, 0, 0]
+ * /chave_mission/use_wholebody: False
+ * /chave_seccionadora_task/aproxima_lateral/modo: ik
+ * /chave_seccionadora_task/aproxima_lateral/offset_xyz_m: [-0.09, 0.003, 0.01]
+ * /chave_seccionadora_task/aproxima_lateral/tol_xyz_m: [0.04, 0.008, 0.005]
+ * /chave_seccionadora_task/arco1/arco_antecipacao_m: 0.015
+ * /chave_seccionadora_task/arco1/arco_raio_m: 0.2
+ * /chave_seccionadora_task/arco1/blade_angle_deg: 15
+ * /chave_seccionadora_task/arco1/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco1/modo: wb
+ * /chave_seccionadora_task/arco1/offset_xyz_m: [0.0, 0.0518, -0....
+ * /chave_seccionadora_task/arco1/soltura_recuo_min_m: 0.04
+ * /chave_seccionadora_task/arco1/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/arco2/arco_antecipacao_m: 0.015
+ * /chave_seccionadora_task/arco2/arco_raio_m: 0.2
+ * /chave_seccionadora_task/arco2/blade_angle_deg: 30
+ * /chave_seccionadora_task/arco2/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco2/modo: wb
+ * /chave_seccionadora_task/arco2/offset_xyz_m: [0.0, 0.1, -0.0518]
+ * /chave_seccionadora_task/arco2/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/atravessa/modo: ik
+ * /chave_seccionadora_task/atravessa/offset_xyz_m: [-0.01, 0.003, 0.01]
+ * /chave_seccionadora_task/atravessa/tol_xyz_m: [0.006, 0.006, 0....
+ * /chave_seccionadora_task/captura/modo: ik
+ * /chave_seccionadora_task/captura/offset_xyz_m: [-0.01, 0.0, -0.01]
+ * /chave_seccionadora_task/captura/tol_xyz_m: [0.006, 0.006, 0.01]
+ * /chave_seccionadora_task/desengata/modo: wb
+ * /chave_seccionadora_task/desengata/offset_xyz_m: [-0.09, 0.1, -0.0...
+ * /chave_seccionadora_task/desengata/tol_xyz_m: [0.015, 0.02, 0.02]
+ * /chave_seccionadora_task/desengata/wb_orientacao: False
+ * /chave_seccionadora_task/destrava/curso_alvo_m: 0.028
+ * /chave_seccionadora_task/destrava/curso_estagna_m: 0.01
+ * /chave_seccionadora_task/destrava/curso_margem_m: 0.002
+ * /chave_seccionadora_task/destrava/curso_min_m: 0.018
+ * /chave_seccionadora_task/destrava/curso_teto_m: 0.03
+ * /chave_seccionadora_task/destrava/modo: wb
+ * /chave_seccionadora_task/destrava/offset_xyz_m: [0.0, 0.0, -0.025]
+ * /chave_seccionadora_task/destrava/tol_xyz_m: [0.01, 0.006, 0.004]
+ * /chave_seccionadora_task/libera/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/libera/modo: wb
+ * /chave_seccionadora_task/libera/offset_xyz_m: [0.0, 0.03, -0.025]
+ * /chave_seccionadora_task/libera/tol_xyz_m: [0.04, 0.008, 0.006]
+ * /chave_seccionadora_task/orienta/modo: ik
+ * /chave_seccionadora_task/orienta/offset_xyz_m: [-0.09, 0.1, 0.0085]
+ * /chave_seccionadora_task/reassenta_sobe/tol_xyz_m: [0.03, 0.02, 0.005]
+ * /chave_seccionadora_task/saida_eixo/tol_xyz_m: [0.02, 0.02, 0.015]
+ * /chave_seccionadora_task/saida_fora/tol_xyz_m: [0.03, 0.02, 0.02]
+ * /chave_seccionadora_task/saida_sobe/tol_xyz_m: [0.03, 0.02, 0.01]
+ * /chave_seccionadora_task/target_frame: chave_olhal_link
+ * /fuzzy_wb_controller/fixed_gains: []
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    chave_mission (b166er_whole_body_control/chave_mission.py)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch http://localhost:11311
+[1mprocess[chave_mission-1]: started with pid [3420569][0m
+[1m[chave_mission-1] process has finished cleanly
+log file: /home/marco/.ros/log/54fc3a74-d4a6-11f1-a6cb-b025aa85b2a2/chave_mission-1*.log[0m
+all processes on machine have died, roslaunch will exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
