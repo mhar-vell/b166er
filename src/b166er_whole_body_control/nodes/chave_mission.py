@@ -1803,6 +1803,22 @@ class Refine(smach.State):
         rospy.loginfo('[mission] REFINE — remedindo a parede de perto (%d amostras)',
                       n_wanted)
 
+        # TAG ABAIXO DA GARRA (03 Nov 2026, RELATORIO49). Na postura de busca
+        # o eixo da câmera fica horizontal; no standoff a tag, 16 cm acima
+        # da câmera, cai na faixa de cima do quadro da fisheye, exatamente
+        # atrás da garra (fixa no quadro): a borda de cima da tag fica
+        # coberta e o detector não a reconhece. Foi assim em ~4 de cada 5
+        # REFINE das baterias de Out–Nov ("só 0 amostras da tag"), e o
+        # eixo do furo ficava com a medida da aproximação (erro de até
+        # 41 mm; acima de 20 mm, 0/5 missões). A postura 'refine' inclina
+        # o punho para a tag cair no centro do quadro. A pose da câmera
+        # vem da T265, não das juntas, então o J4 sem encoder não entra
+        # na medida.
+        if 'refine' in ctx.postures:
+            ctx.send_posture('refine')
+            _wait_posture(ctx)
+            rospy.sleep(1.0)
+
         antes = ctx.wall_pos.copy()
         if not _sample_wall(ctx, n_wanted, ctx.refine_timeout, 'REFINE'):
             # NÃO é falha: seguimos com a estimativa que já temos.
