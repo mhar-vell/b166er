@@ -464,6 +464,9 @@ class MissionContext(object):
         self.engate_parada_tol_mm = rospy.get_param('~engate_parada_tol_mm', 1.5)
         # BUSCA DA HASTE (04 Nov 2026, RELATORIO51): ver _busca_haste.
         # Passo 0 desliga.
+        # MIRA LIMITADA NO EIXO (04 Nov 2026, RELATORIO52): ver
+        # _reach_by_iterative_ik. 0 desliga.
+        self.mira_eixo_max_m = rospy.get_param('~mira_eixo_max_m', 0.002)
         self.busca_haste_passo_m = rospy.get_param('~busca_haste_passo_m', 0.005)
         self.busca_haste_max_m = rospy.get_param('~busca_haste_max_m', 0.025)
         self.busca_haste_avanco_min_m = rospy.get_param('~busca_haste_avanco_min_m', 0.003)
@@ -4159,6 +4162,22 @@ def _reach_by_iterative_ik(ctx, p_goal, phase, max_iters=None):
         # workspace. Com 0,8 converge em praticamente o mesmo número de
         # iterações e fica dentro do alcance.
         p_aim = p_aim + ctx.ik_correction_gain * err
+        # MIRA LIMITADA NO EIXO (04 Nov 2026, RELATORIO52). Com a haste
+        # encostada no arame a ponta não avança, o erro no eixo se repete e
+        # a mira além acumula ~5 mm por iteração: na 3ª o J1 empurra a
+        # haste POR CIMA do arame e a ponta salta 40 mm para dentro (3 de
+        # 15 missões com a parede 8 mm além; na eixo_p8_5 de busca_haste a
+        # missão terminou com a ponta 9 cm fora em profundidade). Ao longo
+        # do eixo a haste é o batente: mirar além dela só aperta o arame.
+        # Nas fases de entrada, a componente da mira ALÉM do alvo pelo eixo
+        # fica limitada a mira_eixo_max_m; profundidade e altura seguem
+        # compensando. Ponta aquém do alvo sem contato é a busca da haste.
+        if (phase in ctx.engate_contato_fases and ctx.wall_R is not None
+                and ctx.mira_eixo_max_m > 0):
+            eixo_w = ctx.wall_R[:, 0]
+            alem = float((p_aim - p_goal) @ eixo_w)
+            if alem > ctx.mira_eixo_max_m:
+                p_aim = p_aim - (alem - ctx.mira_eixo_max_m) * eixo_w
         it += 1
         it_desde_recuo += 1
 
