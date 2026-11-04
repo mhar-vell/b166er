@@ -462,6 +462,11 @@ class MissionContext(object):
         # 0 desliga.
         self.engate_parada_n = rospy.get_param('~engate_parada_n', 3)
         self.engate_parada_tol_mm = rospy.get_param('~engate_parada_tol_mm', 1.5)
+        # BUSCA DA HASTE (04 Nov 2026, RELATORIO51): ver _busca_haste.
+        # Passo 0 desliga.
+        self.busca_haste_passo_m = rospy.get_param('~busca_haste_passo_m', 0.005)
+        self.busca_haste_max_m = rospy.get_param('~busca_haste_max_m', 0.025)
+        self.busca_haste_avanco_min_m = rospy.get_param('~busca_haste_avanco_min_m', 0.003)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
         # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
@@ -2213,7 +2218,12 @@ class Manipulate(smach.State):
                     if not _reach_by_iterative_ik(ctx, p_p, 'atravessa_passo'):
                         rospy.logwarn('[mission] fase "atravessa": passo em X = %+.0f mm não '
                                       'fechou — seguindo para o próximo', x_p * 1000)
+            if phase == 'atravessa':
+                ctx.engate_contato_eixo_mm = None
             ok_fase = alcancar(ctx, p_tip, phase)
+            if (phase == 'atravessa' and ok_fase and ctx.busca_haste_passo_m > 0
+                    and ctx.engate_contato_eixo_mm is None):
+                _busca_haste(ctx, offset)
             # REASSENTAR (2026-09-09): destrava estagnou curto — a ponta
             # escorregou do arame. Sobe reassenta_sobe_m acima da captura,
             # refaz a captura por IK (registra o novo zero) e tenta o
@@ -3681,6 +3691,62 @@ def _rolagem_degrau(ctx, q):
     return math.degrees(math.acos(min(1.0, abs(float(T[:3, 2] @ (v / n))))))
 
 
+def _busca_haste(ctx, offset):
+    """BUSCA DA HASTE (04 Nov 2026, RELATORIO51).
+
+    Com a parede estimada aquém da real ao longo do eixo (viés −13), a
+    atravessa fecha no próprio alvo sem tocar em nada, e a haste fica
+    13–20 mm antes do arame: o arame cai perto da ponta do degrau e escapa
+    por ela no destrava (3 de 5 na bateria parada_no_eixo). No controle a
+    ponta já termina com a haste no arame (sonda: eixo 9–10,5 mm, o mesmo
+    ponto em que a haste para com a parede 8 mm além).
+
+    Depois de uma atravessa que fechou SEM contato, a ponta avança pelo
+    eixo em passos de busca_haste_passo_m, um comando de IK por passo e sem
+    mirar além (a mira acumulada é o que vira força contra o arame: com o
+    alvo 15 mm além da haste a atravessa oscilou e a haste passou do arame,
+    revertido). Quando um passo avança menos que busca_haste_avanco_min_m,
+    a haste encostou. A parede é então deslocada pelo eixo para que o alvo
+    da fase coincida com a ponta: a captura parte do contato. Medido pela
+    T265, vale na bancada.
+    """
+    if ctx.wall_R is None:
+        return
+    ctx.phases.setdefault('atravessa_busca', {'tol_xyz_m': [0.002, 0.008, 0.006]})
+    passo = float(ctx.busca_haste_passo_m)
+    x_alvo0 = float(offset[0])
+    x_prev = float(_pose_na_parede(ctx, _tooltip_now(ctx))[0])
+    x_now = x_prev
+    x_alvo = x_alvo0
+    encostou = False
+    n = 0
+    while x_alvo - x_alvo0 < float(ctx.busca_haste_max_m) - 1e-9 and not rospy.is_shutdown():
+        x_alvo += passo
+        n += 1
+        off = list(offset)
+        off[0] = x_alvo
+        p = chave_task.phase_target_position(ctx.wall_pos, ctx.wall_R, off)
+        _reach_by_iterative_ik(ctx, p, 'atravessa_busca', max_iters=1)
+        x_now = float(_pose_na_parede(ctx, _tooltip_now(ctx))[0])
+        avanco = x_now - x_prev
+        rospy.loginfo('[mission] busca da haste: passo %d, alvo X %+.0f mm, ponta X %+.1f mm '
+                      '(avançou %+.1f mm)', n, x_alvo * 1000, x_now * 1000, avanco * 1000)
+        if avanco < float(ctx.busca_haste_avanco_min_m):
+            encostou = True
+            break
+        x_prev = x_now
+    d = x_now - x_alvo0
+    ctx.wall_pos = ctx.wall_pos + d * ctx.wall_R[:, 0]
+    ctx.engate_contato_eixo_mm = -d * 1000.0
+    rospy.logwarn('[mission] busca da haste: %s depois de %d passo(s); a ponta está %+.1f mm '
+                  'além do alvo da atravessa. Parede deslocada %+.1f mm pelo eixo do furo.',
+                  'HASTE ENCOSTOU' if encostou else 'não encostou até o limite', n,
+                  d * 1000, d * 1000)
+    rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f) após a busca da haste',
+                  *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
+    ctx.status(busca_haste_mm=d * 1000, busca_haste_encostou=int(encostou))
+
+
 def _engate_por_parada(ctx, phase, hist):
     """Engate por PARADA NO EIXO (04 Nov 2026, RELATORIO50).
 
@@ -3773,7 +3839,7 @@ def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     return True
 
 
-def _reach_by_iterative_ik(ctx, p_goal, phase):
+def _reach_by_iterative_ik(ctx, p_goal, phase, max_iters=None):
     """Alcança p_goal iterando IK + medição, em vez de servo Cartesiano.
 
     Por que iterar em vez de deixar a malha Cartesiana fechar: depois de
@@ -3892,7 +3958,8 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     hist_parede = []        # erro no frame da parede de cada iteração (parada no eixo)
     prev_n_err = None
     prev_dq1 = None
-    while it_desde_recuo < ctx.ik_max_iters:
+    n_max_iters = int(max_iters) if max_iters else ctx.ik_max_iters
+    while it_desde_recuo < n_max_iters:
         if ctx.tilt_critical:
             ctx.ancora_solta()
             rospy.logerr('[mission] fase "%s": abortada por inclinação crítica',
