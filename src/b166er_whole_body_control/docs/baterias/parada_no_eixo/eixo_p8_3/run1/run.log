@@ -1,0 +1,139 @@
+[31mWARNING: disk usage in log directory [/home/marco/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+the rosdep view is empty: call 'sudo rosdep init' and 'rosdep update'
+[WARN] [1793768495.981107, 368502.574000]: [mission] SEARCH: 8 de 25 amostras descartadas como outlier (>0.15 m ou >0.20 rad da mediana)
+[WARN] [1793768496.032822, 368502.626000]: [mission] SEARCH: laser com só 11 pontos de parede (mín 30) — parede fica pela tag
+[ERROR] [1793768527.671624, 368533.375000]: [mission] APPROACH/remedida: só 0 amostras da tag
+[WARN] [1793768527.724085, 368533.427000]: [mission] APPROACH/remedida (sem tag): laser com só 13 pontos de parede (mín 30) — parede fica pela tag
+[WARN] [1793768527.725173, 368533.428000]: [mission] APPROACH/remedida: sem amostras — recuperando a tag: girando à esquerda no lugar (até 30s)
+[ERROR] [1793768558.643129, 368563.479000]: [mission] APPROACH/remedida: tag não reapareceu em 30s de giro
+[ERROR] [1793768558.645871, 368563.481000]: [mission] APPROACH: perdi a tag na etapa intermediária
+[WARN] [1793768558.651796, 368563.487000]: [mission] ABORT — parando base e recolhendo braço
+[WARN] [1793768584.393393, 368588.493000]: [mission] ABORT — voltando à pose de partida (-0.50, 1.00, 0.04 rad)
+[INFO] [1793768376.301771, 368385.927000]: garra_dx = 0.000 m (fechada)
+[INFO] [1793768376.449924, 368386.070000]: State machine starting in initial state 'HOMING' with userdata: 
+	[]
+[INFO] [1793768376.654686, 368386.272000]: [mission] pose de partida registrada: (-0.50, 1.00, 0.04 rad)
+[INFO] [1793768376.657491, 368386.275000]: [mission] HOMING: procurando os fins de curso (J4, J3, J2, J5, J1)
+[INFO] [1793768456.236615, 368463.876000]: [mission] HOMING: cinco switches achados — referência das juntas estabelecida
+[INFO] [1793768456.237814, 368463.877000]: State machine transitioning 'HOMING':'ok'-->'HOME_POSITION'
+[INFO] [1793768456.238932, 368463.878000]: [mission] postura "home" comandada: [0.0, 1.5708, -2.12058, 0.0, 0.0]
+[INFO] [1793768476.834620, 368483.979000]: [mission] HOME_POSITION: braço em HOME POSITION (J1/J5 em zero, J2 vertical, J3 no switch, J4 zero)
+[INFO] [1793768476.836875, 368483.980000]: State machine transitioning 'HOME_POSITION':'ok'-->'SEARCH'
+[INFO] [1793768476.839475, 368483.982000]: [mission] postura "search" comandada: [0.0, 1.0, -1.0, 0.0, 0.0]
+[INFO] [1793768481.669420, 368488.684000]: [mission] SEARCH — girando à procura da tag...
+[INFO] [1793768481.670505, 368488.685000]: [mission] SEARCH: amostra quando a tag estiver a raio 0.35-0.50 do quadro (vista oblíqua; omega fina 0.15 rad/s)
+[INFO] [1793768482.447532, 368489.435000]: [mission] SEARCH: tag a raio 0.91 — girando até <= 0.50
+[INFO] [1793768489.805456, 368496.586000]: [mission] SEARCH: tag a raio 0.50 — parando
+[INFO] [1793768489.806270, 368496.586000]: [mission] tag avistada — parando para medir
+[INFO] [1793768490.847911, 368497.592000]: [mission] âncora engatada (coleta do SEARCH)
+[INFO] [1793768490.850829, 368497.595000]: [mission] SEARCH: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793768495.975124, 368502.568000]: [mission] âncora solta — 8 correções de deriva
+[INFO] [1793768495.975831, 368502.569000]: [mission] SEARCH: âncora corrigiu a deriva 8 vez(es) durante a coleta
+[INFO] [1793768495.981917, 368502.575000]: [mission] SEARCH: 17 amostras — parede (0.060, 3.195, -0.005) yaw=2.706
+[INFO] [1793768496.033826, 368502.627000]: [mission] parede localizada em (0.060, 3.195, -0.005)
+[INFO] [1793768496.038357, 368502.631000]: State machine transitioning 'SEARCH':'found'-->'APPROACH'
+[INFO] [1793768496.041324, 368502.634000]: [mission] APPROACH etapa 1/2 — 1.30 m do olhal, alvo (-0.36, 1.81, 1.13 rad)
+[INFO] [1793768500.649163, 368507.136000]: [mission] APPROACH: alinhado, avançando (0.93 m)
+[INFO] [1793768500.700370, 368507.186000]: [mission] teto por postura ativo no drive: v<=0.20 w<=0.50 rampa 0.48/1.50
+[INFO] [1793768508.193327, 368514.486000]: [mission] APPROACH: chegou, ajustando heading final
+[INFO] [1793768508.243875, 368514.536000]: [mission] teto por postura ativo no drive: v<=0.19 w<=0.50 rampa 0.48/1.50
+[INFO] [1793768511.130037, 368517.337000]: [mission] APPROACH: concluído
+[INFO] [1793768512.173533, 368518.343000]: [mission] âncora engatada (coleta do APPROACH/remedida)
+[INFO] [1793768512.175625, 368518.345000]: [mission] APPROACH/remedida: coleta com dither ±0.05 rad/s (período 3.0 s)
+[INFO] [1793768527.667052, 368533.370000]: [mission] âncora solta — 29 correções de deriva
+[INFO] [1793768527.669592, 368533.373000]: [mission] APPROACH/remedida: âncora corrigiu a deriva 29 vez(es) durante a coleta
+[INFO] [1793768558.649006, 368563.484000]: State machine transitioning 'APPROACH':'failed'-->'ABORT_SAFE'
+[INFO] [1793768559.066099, 368563.889000]: [mission] ABORT/afasta: RECUANDO 0.250 m só com as rodas
+[INFO] [1793768563.701483, 368568.391000]: [mission] ABORT/afasta: concluído (0.255 m)
+[INFO] [1793768563.702421, 368568.392000]: [mission] postura "stow_home" comandada: [0.0, 1.1, -1.04, -1.7, 0.0]
+[INFO] [1793768589.581233, 368593.543000]: [mission] ABORT/retorno: alinhado, avançando (1.12 m)
+[INFO] [1793768589.633592, 368593.593000]: [mission] teto por postura ativo no drive: v<=0.26 w<=0.50 rampa 0.55/1.51
+[INFO] [1793768598.385151, 368602.093000]: [mission] ABORT/retorno: chegou, ajustando heading final
+[INFO] [1793768598.436689, 368602.143000]: [mission] teto por postura ativo no drive: v<=0.25 w<=0.50 rampa 0.55/1.51
+[INFO] [1793768605.296573, 368608.843000]: [mission] ABORT/retorno: concluído
+[INFO] [1793768605.298743, 368608.846000]: State machine terminating 'ABORT_SAFE':'aborted':'MISSION_ABORTED'
+[INFO] [1793768605.300952, 368608.848000]: [mission] resultado: MISSION_ABORTED
+... logging to /home/marco/.ros/log/54fc3a74-d4a6-11f1-a6cb-b025aa85b2a2/roslaunch-shiroi-2036890.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch
+[1mstarted roslaunch server http://shiroi:35705/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /chave_mission/ancora_base: True
+ * /chave_mission/estado_final: 
+ * /chave_mission/estado_inicial: HOMING
+ * /chave_mission/pausa_por_fase: False
+ * /chave_mission/search_omega: 0.35
+ * /chave_mission/standoff_distance: 0.68
+ * /chave_mission/teste_vies_parede_mm: [8, 0, 0]
+ * /chave_mission/use_wholebody: False
+ * /chave_seccionadora_task/aproxima_lateral/modo: ik
+ * /chave_seccionadora_task/aproxima_lateral/offset_xyz_m: [-0.09, 0.003, 0.01]
+ * /chave_seccionadora_task/aproxima_lateral/tol_xyz_m: [0.04, 0.008, 0.005]
+ * /chave_seccionadora_task/arco1/arco_antecipacao_m: 0.015
+ * /chave_seccionadora_task/arco1/arco_raio_m: 0.2
+ * /chave_seccionadora_task/arco1/blade_angle_deg: 15
+ * /chave_seccionadora_task/arco1/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco1/modo: wb
+ * /chave_seccionadora_task/arco1/offset_xyz_m: [0.0, 0.0518, -0....
+ * /chave_seccionadora_task/arco1/soltura_recuo_min_m: 0.04
+ * /chave_seccionadora_task/arco1/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/arco2/arco_antecipacao_m: 0.015
+ * /chave_seccionadora_task/arco2/arco_raio_m: 0.2
+ * /chave_seccionadora_task/arco2/blade_angle_deg: 30
+ * /chave_seccionadora_task/arco2/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/arco2/modo: wb
+ * /chave_seccionadora_task/arco2/offset_xyz_m: [0.0, 0.1, -0.0518]
+ * /chave_seccionadora_task/arco2/tol_xyz_m: [0.04, 0.01, 0.015]
+ * /chave_seccionadora_task/atravessa/modo: ik
+ * /chave_seccionadora_task/atravessa/offset_xyz_m: [-0.01, 0.003, 0.01]
+ * /chave_seccionadora_task/atravessa/tol_xyz_m: [0.006, 0.006, 0....
+ * /chave_seccionadora_task/captura/modo: ik
+ * /chave_seccionadora_task/captura/offset_xyz_m: [-0.01, 0.0, -0.01]
+ * /chave_seccionadora_task/captura/tol_xyz_m: [0.006, 0.006, 0.01]
+ * /chave_seccionadora_task/desengata/modo: wb
+ * /chave_seccionadora_task/desengata/offset_xyz_m: [-0.09, 0.1, -0.0...
+ * /chave_seccionadora_task/desengata/tol_xyz_m: [0.015, 0.02, 0.02]
+ * /chave_seccionadora_task/desengata/wb_orientacao: False
+ * /chave_seccionadora_task/destrava/curso_alvo_m: 0.028
+ * /chave_seccionadora_task/destrava/curso_estagna_m: 0.01
+ * /chave_seccionadora_task/destrava/curso_margem_m: 0.002
+ * /chave_seccionadora_task/destrava/curso_min_m: 0.018
+ * /chave_seccionadora_task/destrava/curso_ref_alvo_captura: True
+ * /chave_seccionadora_task/destrava/curso_teto_m: 0.03
+ * /chave_seccionadora_task/destrava/modo: wb
+ * /chave_seccionadora_task/destrava/offset_xyz_m: [0.0, 0.0, -0.025]
+ * /chave_seccionadora_task/destrava/tol_xyz_m: [0.01, 0.006, 0.004]
+ * /chave_seccionadora_task/libera/deriva_eixo_max_m: 0.015
+ * /chave_seccionadora_task/libera/modo: wb
+ * /chave_seccionadora_task/libera/offset_xyz_m: [0.0, 0.03, -0.025]
+ * /chave_seccionadora_task/libera/tol_xyz_m: [0.04, 0.008, 0.006]
+ * /chave_seccionadora_task/orienta/modo: ik
+ * /chave_seccionadora_task/orienta/offset_xyz_m: [-0.09, 0.1, 0.0085]
+ * /chave_seccionadora_task/reassenta_sobe/tol_xyz_m: [0.03, 0.02, 0.005]
+ * /chave_seccionadora_task/saida_eixo/tol_xyz_m: [0.02, 0.02, 0.015]
+ * /chave_seccionadora_task/saida_fora/tol_xyz_m: [0.03, 0.02, 0.02]
+ * /chave_seccionadora_task/saida_sobe/tol_xyz_m: [0.03, 0.02, 0.01]
+ * /chave_seccionadora_task/target_frame: chave_olhal_link
+ * /fuzzy_wb_controller/fixed_gains: []
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+
+NODES
+  /
+    chave_mission (b166er_whole_body_control/chave_mission.py)
+
+[1mROS_MASTER_URI=http://localhost:11311[0m
+]2;/home/marco/b166er/src/b166er_whole_body_control/launch/chave_mission.launch http://localhost:11311
+[1mprocess[chave_mission-1]: started with pid [2037045][0m
+[1m[chave_mission-1] process has finished cleanly
+log file: /home/marco/.ros/log/54fc3a74-d4a6-11f1-a6cb-b025aa85b2a2/chave_mission-1*.log[0m
+all processes on machine have died, roslaunch will exit
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
