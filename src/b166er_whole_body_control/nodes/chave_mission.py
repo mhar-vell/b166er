@@ -458,6 +458,10 @@ class MissionContext(object):
         self.engate_contato_tol_mm = rospy.get_param('~engate_contato_tol_mm', 3.0)
         self.engate_contato_max_mm = rospy.get_param('~engate_contato_max_mm', 15.0)
         self.engate_contato_eixo_mm = None     # deslocamento aplicado (HUD/relatório)
+        # PARADA NO EIXO (04 Nov 2026, RELATORIO50): ver _engate_por_parada.
+        # 0 desliga.
+        self.engate_parada_n = rospy.get_param('~engate_parada_n', 3)
+        self.engate_parada_tol_mm = rospy.get_param('~engate_parada_tol_mm', 1.5)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
         # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
@@ -3677,6 +3681,50 @@ def _rolagem_degrau(ctx, q):
     return math.degrees(math.acos(min(1.0, abs(float(T[:3, 2] @ (v / n))))))
 
 
+def _engate_por_parada(ctx, phase, hist):
+    """Engate por PARADA NO EIXO (04 Nov 2026, RELATORIO50).
+
+    Com a parede estimada além da real ao longo do eixo (viés +8 da bateria
+    refine_sem_garra), a haste encosta no arame antes do alvo e a ponta
+    para com erro de +6,2 a +7,2 mm, logo acima da tolerância de 6. O
+    engate por contato (_engate_por_contato) não fechava: o travamento
+    exige o J1 cada vez mais aquém, que só apareceu em 1 de 3 missões, e
+    a profundidade/altura dentro da tolerância NO INSTANTE da trava, mas
+    empurrando o arame a ponta escorrega de −6 a +9 mm em altura entre
+    iterações. Aqui: as últimas engate_parada_n iterações com o eixo no
+    mesmo ponto (espalhamento ≤ engate_parada_tol_mm), do lado de CÁ do
+    alvo (erro positivo, bloqueada antes dele) e a menos de
+    engate_contato_max_mm (a borda do furo bloqueia a ~16,6), com a
+    MEDIANA da profundidade e da altura dentro da tolerância. Mesma
+    correção da parede pelo eixo do engate por contato."""
+    n = int(ctx.engate_parada_n)
+    if n <= 0 or len(hist) < n or ctx.wall_R is None:
+        return False
+    tol_xyz, _ = _tolerancia_da_fase(ctx, phase)
+    if tol_xyz is None:
+        return False
+    h = np.asarray(hist[-n:], dtype=float) * 1000.0
+    eixo_mm = h[:, 0]
+    espalha = float(eixo_mm.max() - eixo_mm.min())
+    e_mm = float(np.mean(eixo_mm))
+    prof_med = float(np.median(h[:, 1]))
+    alt_med = float(np.median(h[:, 2]))
+    if not (espalha <= ctx.engate_parada_tol_mm and 0.0 < e_mm <= ctx.engate_contato_max_mm
+            and abs(prof_med) < tol_xyz[1] * 1000 and abs(alt_med) < tol_xyz[2] * 1000):
+        return False
+    ctx.wall_pos = ctx.wall_pos - (e_mm / 1000.0) * ctx.wall_R[:, 0]
+    ctx.engate_contato_eixo_mm = e_mm
+    rospy.logwarn('[mission] fase "%s": ENGATE POR PARADA NO EIXO — %d iterações com a '
+                  'ponta em %s mm do alvo (espalhamento %.1f), mediana prof/alt '
+                  '%+.1f/%+.1f mm: a haste está no arame. Parede deslocada %+.1f mm '
+                  'pelo eixo do furo; a fase fecha aqui.', phase, n,
+                  eixo_mm.round(1).tolist(), espalha, prof_med, alt_med, -e_mm)
+    rospy.loginfo('[mission] olhal estimado em (%.3f, %.3f, %.3f) após a parada',
+                  *chave_task.olhal_position(ctx.wall_pos, ctx.wall_R))
+    ctx.status(fase=phase, engate_contato_mm=e_mm, engate_parada=1)
+    return True
+
+
 def _engate_por_contato(ctx, phase, travas_eixo, e_parede):
     """Decide o engate por contato e desloca a parede pelo eixo.
 
@@ -3841,6 +3889,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
     recuos = 0
     it_desde_recuo = 0      # orçamento de iterações recomeça a cada recuo
     travas_eixo = []        # eixo (frame da parede) de cada travamento por contato
+    hist_parede = []        # erro no frame da parede de cada iteração (parada no eixo)
     prev_n_err = None
     prev_dq1 = None
     while it_desde_recuo < ctx.ik_max_iters:
@@ -3950,6 +3999,16 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
                           if recuos else '')
             return True
 
+        # PARADA NO EIXO (04 Nov 2026, RELATORIO50): ver _engate_por_parada.
+        if e_parede is not None and phase in ctx.engate_contato_fases:
+            hist_parede.append(np.asarray(e_parede, dtype=float))
+            if _engate_por_parada(ctx, phase, hist_parede):
+                n_corr = ctx.ancora_solta()
+                rospy.loginfo('[mission] fase "%s" fechada por PARADA NO EIXO em %d '
+                              'iteração(ões) e %d recuo(s)%s', phase, it + 1, recuos,
+                              (' — âncora corrigiu %d vez(es)' % n_corr) if n_corr else '')
+                return True
+
         # RECUO POR CONTATO (2026-09-30, ver MissionContext.ik_recuos_max).
         # "Não avança" = o erro caiu menos que ik_recuo_progresso_min
         # desde a iteração anterior; "J1 cada vez mais aquém" = |faltou|
@@ -4021,6 +4080,7 @@ def _reach_by_iterative_ik(ctx, p_goal, phase):
             p_aim = p_goal.copy()
             prev_n_err = None
             prev_dq1 = None
+            hist_parede = []      # a parada no eixo recomeça a contar depois do recuo
             it_desde_recuo = 0    # o recuo recomeça o orçamento de iterações
             continue          # o recuo não consome iteração
         prev_n_err = n_err
