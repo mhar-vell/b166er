@@ -400,7 +400,7 @@ class MissionContext(object):
         # receber movimentos curtos perto do olhal. Melhor esforço: um passo
         # que não fecha não aborta, a atravessa segue. [] desliga.
         self.atravessa_passos_m = [float(x) for x in rospy.get_param(
-            '~atravessa_passos_m', [-0.060, -0.035])]
+            '~atravessa_passos_m', [-0.060, -0.035, -0.020])]
         # RECUO POR CONTATO (2026-09-30). Quando entre duas iterações da
         # IK a ponta não avança e o J1 fica cada vez mais aquém do
         # pedido, o braço está empurrando algo (degrau na aba da
@@ -462,6 +462,11 @@ class MissionContext(object):
         # 0 desliga.
         self.engate_parada_n = rospy.get_param('~engate_parada_n', 3)
         self.engate_parada_tol_mm = rospy.get_param('~engate_parada_tol_mm', 1.5)
+        # Janela da parada (04 Nov 2026, RELATORIO51): com o alvo da
+        # atravessa 15 mm além da haste, ela para a ~15 mm no controle e a
+        # ~23 com a parede 8 mm além da real; a borda do furo bloquearia a
+        # ~31,6 (16,6 + 15).
+        self.engate_parada_max_mm = rospy.get_param('~engate_parada_max_mm', 26.0)
         # Só nas fases de ENTRADA no furo. Na bateria 5x5 de 30 Set o
         # recuo disparou também na 'saida_sobe' de um ABORT (J1 aquém
         # enquanto a ponta subia): recuar 20 mm pelo eixo e descer 5 mm
@@ -3709,7 +3714,7 @@ def _engate_por_parada(ctx, phase, hist):
     e_mm = float(np.mean(eixo_mm))
     prof_med = float(np.median(h[:, 1]))
     alt_med = float(np.median(h[:, 2]))
-    if not (espalha <= ctx.engate_parada_tol_mm and 0.0 < e_mm <= ctx.engate_contato_max_mm
+    if not (espalha <= ctx.engate_parada_tol_mm and 0.0 < e_mm <= ctx.engate_parada_max_mm
             and abs(prof_med) < tol_xyz[1] * 1000 and abs(alt_med) < tol_xyz[2] * 1000):
         return False
     ctx.wall_pos = ctx.wall_pos - (e_mm / 1000.0) * ctx.wall_R[:, 0]
