@@ -665,6 +665,12 @@ class MissionContext(object):
         # destrava, puxa de novo) se ~reassenta_subida.
         self.libera_subida_m       = float(rospy.get_param('~libera_subida_m', 0.008))
         self.libera_subida_janela_s = float(rospy.get_param('~libera_subida_janela_s', 0.3))
+        # SUBIDA CONFIRMADA (06 Nov 2026, RELATORIO55): ver o laço do
+        # whole-body. Janela de confirmação e subida total que caracteriza a
+        # perda. libera_subida_total_m <= libera_subida_m volta ao alarme
+        # imediato.
+        self.libera_subida_confirma_s = float(rospy.get_param('~libera_subida_confirma_s', 0.5))
+        self.libera_subida_total_m = float(rospy.get_param('~libera_subida_total_m', 0.014))
         self.reassenta_subida      = bool(rospy.get_param('~reassenta_subida', True))
         # LIBERA PUXA SEM SUBIR (29 Out 2026, RELATORIO42; o mesmo da PR #104,
         # sem o resto dela). A libera pedia altura fixa (−25 mm), mas o
@@ -3503,6 +3509,7 @@ def _reach_by_wholebody(ctx, p_goal, phase):
         hist = []
         hist_curto = None
         hist_alt = []
+        subida_alarme = None     # (t, alt de referência) do alarme em confirmação
         ctx.falha_fase = None
         while not rospy.is_shutdown():
             if ctx.tilt_critical:
@@ -3601,13 +3608,40 @@ def _reach_by_wholebody(ctx, p_goal, phase):
                 hist_alt.append((t_now, alt_now))
                 hist_alt = [h for h in hist_alt if t_now - h[0] <= ctx.libera_subida_janela_s]
                 subida = alt_now - min(h[1] for h in hist_alt)
-                if len(hist_alt) >= 3 and subida > ctx.libera_subida_m:
-                    rospy.logerr('[mission] fase "libera": ponta SUBIU %.1f mm em %.1f s — o arame '
-                                 'passou por cima do degrau (anel devolvido pela lingueta)',
-                                 subida * 1000, t_now - hist_alt[0][0])
-                    ctx.status(olhal_perdido=1)
-                    ctx.falha_fase = 'subiu'
-                    return False
+                # SUBIDA CONFIRMADA (06 Nov 2026, RELATORIO55). Depois do
+                # destrava, a mola devolve o olhal para cima e ele encosta na
+                # face de cima do degrau (F1), levando a ponta junto: pela sonda,
+                # 1,7 a 9,4 mm na soltura do gatilho em missões que abriram a
+                # chave. O alarme de 8 mm em 0,3 s pegava isso: em 15 alarmes
+                # classificados pela lingueta, 8 eram a chave abrindo e só 7
+                # perdas, e o reassentamento salvou 3 de 21 missões. O que
+                # separa os dois é a subida SEGUIR: nos falsos ela para em
+                # 7–12 mm, nas perdas vai a 16–40 mm. O alarme agora abre uma
+                # janela de libera_subida_confirma_s com a libera seguindo; só
+                # é perda se a subida total desde o início passar de
+                # libera_subida_total_m. Medido pela T265: vale na bancada.
+                if subida_alarme is None and len(hist_alt) >= 3 and subida > ctx.libera_subida_m:
+                    subida_alarme = (t_now, min(h[1] for h in hist_alt))
+                    rospy.logwarn('[mission] fase "libera": ponta subiu %.1f mm em %.1f s — '
+                                  'confirmando por %.1f s (perda só se passar de %.0f mm)',
+                                  subida * 1000, t_now - hist_alt[0][0],
+                                  ctx.libera_subida_confirma_s, ctx.libera_subida_total_m * 1000)
+                if subida_alarme is not None:
+                    total = alt_now - subida_alarme[1]
+                    if total > ctx.libera_subida_total_m:
+                        rospy.logerr('[mission] fase "libera": ponta SUBIU %.1f mm desde o alarme — '
+                                     'o arame passou por cima do degrau (anel devolvido pela '
+                                     'lingueta)', total * 1000)
+                        ctx.status(olhal_perdido=1)
+                        ctx.falha_fase = 'subiu'
+                        return False
+                    if t_now - subida_alarme[0] >= ctx.libera_subida_confirma_s:
+                        rospy.logwarn('[mission] fase "libera": subida parou em %.1f mm — é o '
+                                      'olhal encostando na face de cima do degrau; a libera '
+                                      'segue', total * 1000)
+                        ctx.status(subida_falsa_mm=total * 1000)
+                        subida_alarme = None
+                        hist_alt = []
             desc = _descida_desde_captura(ctx, phase, e_parede) if e_parede is not None else None
             if desc is not None and cfg_curso is not None:
                 # TETO DE DESCIDA (2026-09-30, ver curso_teto_m no YAML):
