@@ -904,6 +904,10 @@ class MissionContext(object):
         self.laser_min_pontos = rospy.get_param('~laser_min_pontos', 30)
         self.laser_max_correcao_m = rospy.get_param('~laser_max_correcao_m', 0.10)
         self.laser_max_dyaw_rad = rospy.get_param('~laser_max_dyaw_rad', 0.10)
+        # BUSCA DO ÂNGULO DA PAREDE (05 Nov 2026, RELATORIO54): ver
+        # _laser_busca_angulo. 0 desliga.
+        self.laser_busca_angulo_rad = rospy.get_param('~laser_busca_angulo_rad', math.radians(35.0))
+        self.laser_busca_faixa_m = rospy.get_param('~laser_busca_faixa_m', 0.40)
         self.scan = None
         rospy.Subscriber(rospy.get_param('~laser_scan_topic', '/pioneer3at/laser_hokuyo/scan'),
                          LaserScan, self._cb_scan)
@@ -2970,6 +2974,54 @@ def _sample_wall(ctx, n_wanted, timeout, tag):
     return True
 
 
+def _laser_busca_angulo(ctx, P, pos, n, u, olhal):
+    """Procura a reta da parede no scan quando a faixa da tag falha.
+
+    BUSCA DO ÂNGULO (05 Nov 2026, RELATORIO54). De longe (SEARCH, ~2,2 m)
+    a pose da tag sai às vezes com o yaw 25–32° errado (ambiguidade do PnP;
+    nas baterias de Nov: 2,58–2,72 rad contra 3,14). A faixa de
+    laser_faixa_m em torno do plano da tag então pega 1–13 pontos, a
+    correção pelo laser é recusada, a APPROACH vai a 1,3 m virada para o
+    lado errado e perde a tag (2 missões abortadas e 6 salvas pelo giro de
+    recuperação nas baterias busca_haste e parada_no_eixo).
+
+    Gira a normal da tag de −laser_busca_angulo_rad a +laser_busca_angulo_rad
+    (passo 1°), em torno da posição da tag; para cada ângulo conta os
+    pontos (fora da região da chave) numa faixa de 2 cm em cada distância
+    até ±laser_busca_faixa_m da posição. Fica com o ângulo e a distância
+    da faixa mais povoada, se ela tiver laser_min_pontos. O ajuste por PCA
+    e as recusas por resíduo continuam valendo depois disto.
+    Devolve (n, u, d, pontos, ângulo) ou None.
+    """
+    fora = np.abs((P - olhal) @ u) > ctx.laser_exclui_chave_m
+    Q = P[fora] - pos
+    if len(Q) < ctx.laser_min_pontos:
+        return None
+    melhor = None
+    lim = float(ctx.laser_busca_angulo_rad)
+    faixa = float(ctx.laser_busca_faixa_m)
+    bins = np.arange(-faixa, faixa + 1e-9, 0.02)
+    for th in np.arange(-lim, lim + 1e-9, math.radians(1.0)):
+        c, s_ = math.cos(th), math.sin(th)
+        n_t = np.array([c * n[0] - s_ * n[1], s_ * n[0] + c * n[1]])
+        dist = Q @ n_t
+        dentro = np.abs(dist) <= faixa
+        if dentro.sum() < ctx.laser_min_pontos:
+            continue
+        h, e = np.histogram(dist[dentro], bins=bins)
+        k = int(np.argmax(h))
+        cont = int(h[k] + (h[k - 1] if k > 0 else 0) + (h[k + 1] if k + 1 < len(h) else 0))
+        if melhor is None or cont > melhor[0]:
+            melhor = (cont, th, 0.5 * (e[k] + e[k + 1]), n_t)
+    if melhor is None or melhor[0] < ctx.laser_min_pontos:
+        return None
+    cont, th, d, n_t = melhor
+    u_t = np.array([n_t[1], -n_t[0]])
+    if u_t @ u < 0:
+        u_t = -u_t
+    return n_t, u_t, float(d), cont, float(th)
+
+
 def _parede_pelo_laser(ctx, tag):
     """Ajusta a reta da parede ao scan do Hokuyo e corrige a PROFUNDIDADE
     e o YAW de ctx.wall_pos/ctx.wall_R; a posição lateral fica da tag.
@@ -3015,6 +3067,25 @@ def _parede_pelo_laser(ctx, tag):
     olhal = chave_task.olhal_position(ctx.wall_pos, ctx.wall_R)[:2]
     sel = (np.abs((P - pos) @ n) < ctx.laser_faixa_m) \
         & (np.abs((P - olhal) @ u) > ctx.laser_exclui_chave_m)
+    max_corr, max_dyaw = ctx.laser_max_correcao_m, ctx.laser_max_dyaw_rad
+    if sel.sum() < ctx.laser_min_pontos and ctx.laser_busca_angulo_rad > 0:
+        # BUSCA DO ÂNGULO DA PAREDE (05 Nov 2026, RELATORIO54). Ver
+        # _laser_busca_angulo: com o yaw da tag 25–32° errado (PnP de
+        # longe) a faixa em torno do plano da tag pega 1–13 pontos e o
+        # yaw errado ficava valendo.
+        achado = _laser_busca_angulo(ctx, P, pos, n, u, olhal)
+        if achado is not None:
+            n_b, u_b, d_b, k_b, th_b = achado
+            rospy.logwarn('[mission] %s: faixa da tag com só %d pontos — BUSCA DO ÂNGULO '
+                          'pelo laser: parede a %+.1f° do yaw da tag e %+.0f mm da posição '
+                          '(%d pontos na reta)', tag, int(sel.sum()), math.degrees(th_b),
+                          d_b * 1000, k_b)
+            pos = pos + d_b * n_b
+            n, u = n_b, u_b
+            sel = (np.abs((P - pos) @ n) < ctx.laser_faixa_m) \
+                & (np.abs((P - olhal) @ u) > ctx.laser_exclui_chave_m)
+            max_corr = max(max_corr, ctx.laser_busca_faixa_m + ctx.laser_max_correcao_m)
+            max_dyaw = max(max_dyaw, ctx.laser_busca_angulo_rad + ctx.laser_max_dyaw_rad)
     if sel.sum() < ctx.laser_min_pontos:
         rospy.logwarn('[mission] %s: laser com só %d pontos de parede (mín %d) — '
                       'parede fica pela tag', tag, int(sel.sum()), ctx.laser_min_pontos)
@@ -3037,19 +3108,21 @@ def _parede_pelo_laser(ctx, tag):
         rospy.logwarn('[mission] %s: reta do laser com resíduo %.1f mm — parede fica '
                       'pela tag', tag, sigma * 1000)
         return False
-    desloc = float((c - pos) @ nl)       # > 0: parede do laser mais perto do robô
+    pos_tag = np.asarray(ctx.wall_pos[:2], dtype=float)
+    desloc = float((c - pos_tag) @ nl)   # > 0: parede do laser mais perto do robô
     if d @ u < 0:
         d = -d
     yaw_l = math.atan2(d[1], d[0])
-    yaw_t = math.atan2(u[1], u[0])
+    u_tag = (ctx.wall_R @ np.array([1.0, 0.0, 0.0]))[:2]
+    yaw_t = math.atan2(u_tag[1], u_tag[0])
     dyaw = math.atan2(math.sin(yaw_l - yaw_t), math.cos(yaw_l - yaw_t))
-    if abs(desloc) > ctx.laser_max_correcao_m or abs(dyaw) > ctx.laser_max_dyaw_rad:
+    if abs(desloc) > max_corr or abs(dyaw) > max_dyaw:
         rospy.logwarn('[mission] %s: laser discorda demais da tag (profundidade '
                       '%+.0f mm, yaw %+.1f°) — parede fica pela tag', tag,
                       desloc * 1000, math.degrees(dyaw))
         return False
     pos_novo = np.array(ctx.wall_pos, dtype=float)
-    pos_novo[:2] = pos + desloc * nl
+    pos_novo[:2] = pos_tag + desloc * nl
     cl, sl = math.cos(yaw_l), math.sin(yaw_l)
     ctx.wall_pos = pos_novo
     ctx.wall_R = np.array([[cl, -sl, 0.0], [sl, cl, 0.0], [0.0, 0.0, 1.0]])
