@@ -46,9 +46,24 @@ continua. O critério usa só a ponta medida pela T265.
 - **As outras 4 falhas são de profundidade +12 e não passam pelo alarme:** uma chave que não abriu (lâmina em 3,3°), duas perdas do olhal ao longo do eixo na libera (−31 e −32 mm) e uma captura sem fechar.
 - Houve só 2 alarmes nesta bateria, contra 3 na laser_angulo e 1 a 2 nas anteriores.
 
+## Bateria dirigida `subida_alt10` (altura +10 × 10): 8/10
+
+Marco: "pode rodar a bateria dirigida só com altura +10".
+
+| | |
+|---|---|
+| sucessos | 8/10 |
+| alarmes de subida abertos | **0** |
+| liberados / confirmados | 0 / 0 |
+
+- **Nenhum alarme disparou nas dez execuções,** então o caminho novo continua sem ser exercitado.
+- **As duas falhas não passam pelo alarme.** A execução 2 teve o destrava parado curto, em 7,3 mm, e a execução 4 não fechou a captura.
+- **Com a main atual, o alarme ficou raro:** 3 em 25 na laser_angulo, 2 em 25 na subida_confirmada e 0 em 10 aqui. Nas baterias de outubro e do começo de novembro, ele aparecia de 1 a 4 vezes por bateria.
+
 ## Conclusão
 
-**Não há evidência de efeito.** O total subiu de 17 para 19, mas nenhum alarme foi liberado, então a diferença não vem da
-mudança. **Não recomendo mergear ainda.** A PR fica como rascunho até haver dados do caminho novo. Para exercitá-lo, o
-mais direto é uma bateria dirigida só com altura +10, o viés em que os alarmes aparecem, com umas 10 execuções e cerca de
-80 minutos. A falha mais frequente desta bateria é a profundidade +12, com 4 falhas em fases variadas.
+**Não há evidência de efeito, e o problema que a mudança atacava ficou raro.** Em 35 execuções com a branch, o alarme
+abriu 2 vezes, as duas confirmadas como perda, e nenhuma foi liberada. A mudança é inofensiva, porque só altera o
+comportamento depois de um alarme, mas não tem benefício medido. **Não recomendo mergear.** A PR fica como rascunho, para
+registro. Se a subida na libera voltar a aparecer com frequência, a regra e os dados da sonda estão aqui. A falha mais
+frequente nas últimas baterias é a profundidade +12, com 4 falhas em 5 na subida_confirmada, em fases variadas.
