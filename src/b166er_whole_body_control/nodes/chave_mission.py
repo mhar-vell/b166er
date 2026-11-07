@@ -884,6 +884,12 @@ class MissionContext(object):
         self.homing_timeout = rospy.get_param('~homing_timeout', 150.0)
         self.home_afasta_m  = rospy.get_param('~home_afasta_m', 0.25)
         self.pub_home_cmd = rospy.Publisher('/b166er/arm_home_cmd', Bool, queue_size=1, latch=True)
+        # REENVIO DO HOMING (07 Nov 2026, RELATORIO60): ver _homing.
+        self.homing_reenvio_s = float(rospy.get_param('~homing_reenvio_s', 10.0))
+        self.homing_reenvios = int(rospy.get_param('~homing_reenvios', 3))
+        self.homing_mexeu_deg = float(rospy.get_param('~homing_mexeu_deg', 1.0))
+        # SÓ PARA TESTE: pula o primeiro envio para exercitar o reenvio.
+        self.ensaio_homing_perde_cmd = bool(rospy.get_param('~ensaio_homing_perde_cmd', False))
         rospy.Subscriber('/b166er/arm_homed', Bool, self._cb_homed)
         rospy.Subscriber('/b166er/tag_pixel', Point, self._cb_tag_pixel)
         # PROFUNDIDADE DA PAREDE PELO LASER (2026-09-30, RELATORIO23). A
@@ -1525,10 +1531,45 @@ def _homing(ctx, tag):
             rospy.logerr('[mission] %s: não conseguiu afastar a base', tag)
             return False
     ctx.homed = None
-    ctx.pub_home_cmd.publish(Bool(data=True))
+    if ctx.ensaio_homing_perde_cmd:
+        rospy.logwarn('[mission] %s: ENSAIO — primeiro comando de homing NÃO enviado, para '
+                      'exercitar o reenvio', tag)
+    else:
+        ctx.pub_home_cmd.publish(Bool(data=True))
     rospy.loginfo('[mission] %s: procurando os fins de curso (J4, J3, J2, J5, J1)', tag)
     t0 = rospy.Time.now(); rate = rospy.Rate(10)
+    # REENVIO DO COMANDO (07 Nov 2026, RELATORIO60). O comando é "latched",
+    # mas na diag/run3 da bateria poses_nov a conexão TCP entre a missão e o
+    # servo falhou logo depois de aberta, o servo nunca recebeu o comando e a
+    # missão esperou os 150 s com o braço parado. Se nenhuma junta se mexer
+    # mais que homing_mexeu_deg em homing_reenvio_s, recria o publicador (força
+    # uma conexão nova) e reenvia, até homing_reenvios vezes. No homing normal
+    # a primeira junta (J4) já se move em ~5 s.
+    q0 = np.array(ctx.robot_state.q_arm, dtype=float) if ctx.robot_state is not None else None
+    t_envio = t0
+    reenvios = 0
+    mexeu = False
     while not rospy.is_shutdown():
+        if not mexeu and q0 is not None and ctx.robot_state is not None:
+            dq = np.degrees(np.abs(np.array(ctx.robot_state.q_arm, dtype=float) - q0))
+            mexeu = bool(np.max(dq) > ctx.homing_mexeu_deg)
+        if (not mexeu and ctx.homed is None and reenvios < ctx.homing_reenvios
+                and (rospy.Time.now() - t_envio).to_sec() > ctx.homing_reenvio_s):
+            reenvios += 1
+            rospy.logwarn('[mission] %s: nenhuma junta se mexeu em %.0f s — recriando o publicador '
+                          'e reenviando o comando de homing (%d/%d)', tag, ctx.homing_reenvio_s,
+                          reenvios, ctx.homing_reenvios)
+            try:
+                ctx.pub_home_cmd.unregister()
+            except Exception:    # noqa: BLE001 — já desregistrado
+                pass
+            ctx.pub_home_cmd = rospy.Publisher('/b166er/arm_home_cmd', Bool, queue_size=1, latch=True)
+            t_lig = rospy.Time.now()
+            while (ctx.pub_home_cmd.get_num_connections() == 0 and not rospy.is_shutdown()
+                   and (rospy.Time.now() - t_lig).to_sec() < 3.0):
+                rospy.sleep(0.1)
+            ctx.pub_home_cmd.publish(Bool(data=True))
+            t_envio = rospy.Time.now()
         if ctx.homed is True:
             rospy.loginfo('[mission] %s: cinco switches achados — referência das juntas estabelecida', tag)
             return True
