@@ -134,7 +134,16 @@ chave_seccionadora_task:
     # prof_p12) a ponta chega a 15–25 mm, bate na curva de cima do anel, a
     # lingueta cede e o degrau passa POR CIMA do olhal. +3 põe a média no
     # centro; a aba fica a 20 mm do degrau do lado da parede.
-    offset_xyz_m: [-0.090, 0.003, 0.010]
+    # ALTURA +10 → +5 mm (06 Nov 2026, RELATORIO58). A ponta é a face de CIMA
+    # do degrau (10 mm): com +10 ele ocupava 0..+10 no furo de ±20, com 10 mm
+    # de folga em cima e 20 embaixo. A assimetria vinha da nota "a lâmina
+    # tapa a metade de baixo do furo", desatualizada desde 01 Set (a barra
+    # termina abaixo do anel). Com a parede estimada 10 mm acima da real, a
+    # sonda mediu a ponta a +17..+29 mm na entrada (mediana 21): a face de
+    # cima na borda interna do arame superior, e atravessa/passo sem fechar
+    # em 4 de 9 falhas desse viés. Com +5 o degrau fica em −5..+5, folga de
+    # ±15, e a elipse também dá ~1,4 mm a mais em profundidade.
+    offset_xyz_m: [-0.090, 0.003, 0.005]
     tol_xyz_m: [0.040, 0.008, 0.005]
 
   # ── 2. avança em X: o degrau atravessa o furo ──
@@ -194,7 +203,7 @@ chave_seccionadora_task:
     # desce com 12 mm de degrau sob o arame (20 de projeção − 8).
     # Sinal: +eixo entra no furo (o desengata SAI com −0,090).
     # y = +0.008: ver a nota em aproxima_lateral (aba da lingueta).
-    offset_xyz_m: [-0.010, 0.003, 0.010]   # prof +8 → +3 (01 Nov, RELATORIO48: ver aproxima_lateral); eixo −10 ± 4 (17 Out 2026, RELATORIO32): ver nota acima de atravessa
+    offset_xyz_m: [-0.010, 0.003, 0.005]   # alt +10 → +5 (06 Nov, RELATORIO58: ver aproxima_lateral); prof +8 → +3 (01 Nov, RELATORIO48: ver aproxima_lateral); eixo −10 ± 4 (17 Out 2026, RELATORIO32): ver nota acima de atravessa
     tol_xyz_m: [0.006, 0.006, 0.005]   # eixo ±6 (17 Out): ±4 fica abaixo do que a estimativa do J1 sem encoder dá (~1° ≈ 10 mm)
 
   # ── 3. desce e APOIA o arame sobre o degrau ──
