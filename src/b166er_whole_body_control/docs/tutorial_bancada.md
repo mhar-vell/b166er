@@ -143,9 +143,16 @@ missão, não o servo ao ligar.
 **Terminais B1–B3** (uma ponte por placa, com a porta por argumento):
 
     cd ~/b166er/src/movemaster_control/src
-    python3 Arduino_1.py /dev/arduino_1     # B1
-    python3 Arduino_2.py /dev/arduino_2     # B2
-    python3 Arduino_3.py /dev/arduino_3     # B3
+    python3 Arduino_1.py /dev/arduino_1 _baud:=115200     # B1
+    python3 Arduino_2.py /dev/arduino_2 _baud:=115200     # B2
+    python3 Arduino_3.py /dev/arduino_3 _baud:=115200     # B3
+
+**`_baud:=115200` é obrigatório com o firmware de velocidade.** Os
+`Joints*_vel` gravados em 11 Nov 2026 falam a 115200, porque a `ros_lib`
+da NUC (`~/Arduino/libraries/ros_lib/ArduinoHardware.h`) está com
+`baud_ = 115200`. Os `Arduino_*.py` usam 57600 por padrão (`~baud`):
+sem o argumento a ponte fica em "Requesting topics..." e nunca
+sincroniza. O firmware de teste (`Joints*_test`) falava a 57600.
 
 Uma coisa a acertar na bancada, que o repo ainda não resolve:
 `movemaster_hardware.launch` (incluído pelo stack) sobe UM rosserial em
