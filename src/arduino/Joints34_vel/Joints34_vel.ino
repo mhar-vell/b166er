@@ -26,15 +26,18 @@
 #define PWM_4        5
 #define ENABLE_3     A1
 #define ENABLE_4     A0
-#define LS_3A        34    // ativo em HIGH; A = lado CW, B = lado CCW
-#define LS_3B        36
+// LS_3A/LS_3B TROCADOS (17 Nov 2026, bancada): a chave que fecha com o cotovelo
+// dobrado (pino 36) é a do sentido em que o motor gira com PWM > 0. Com 34/36
+// na ordem antiga, o firmware bloqueava justamente o sentido de sair do batente.
+#define LS_3A        36    // ativo em HIGH; A = lado do PWM > 0, B = lado do PWM < 0
+#define LS_3B        34
 #define LS_4A        38
 #define LS_4B        40
 #define RELAY        14    // freio do J3: HIGH = travado
 
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
-#define DIR_SIGN_3    (+1)
-#define DIR_SIGN_4    (+1)
+#define DIR_SIGN_3    (-1)   // 17 Nov 2026: PWM > 0 dobra o cotovelo; positivo do manual/modelo = antebraço sobe
+#define DIR_SIGN_4    (-1)   // 17 Nov 2026: PWM > 0 baixa a ponta; positivo do manual/modelo = ponta sobe
 #define V_DEAD        1.5f
 #define V_MAX         60.0f
 #define PWM_MIN_3     70
