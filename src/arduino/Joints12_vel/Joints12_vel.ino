@@ -60,7 +60,8 @@
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
 #define DIR_SIGN_1    (-1)   // 17 Nov 2026: PWM > 0 gira horário visto de cima (positivo do MANUAL);
                              // o positivo do MODELO (ROS) é anti-horário → −1
-#define DIR_SIGN_2    (+1)
+#define DIR_SIGN_2    (-1)   // 18 Nov 2026: PWM > 0 leva o braço para a FRENTE (ângulo diminui);
+                             // positivo do manual/modelo = para trás/sobe a partir da vertical → −1
 #define V_DEAD        1.5f   // graus/s — abaixo disso não aciona
 #define V_MAX         60.0f  // graus/s — saturação do pedido
 #define PWM_MIN_1     60     // vence o atrito do redutor (medir)
