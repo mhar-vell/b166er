@@ -8,9 +8,14 @@
 //  o do J3 (RELAY, HIGH = travado); o J4 não tem freio. Pinos iguais aos do
 //  Joints34_test.ino (J4 girou nos dois sentidos com o código 5 em 06/10/2026).
 //
-//  Atenção ao J4: o URDF limita o esforço a 4,2 N·m e a bancada (RELATORIO11)
-//  mostrou que o punho cede no libera; PWM_MAX_4 mais baixo que o dos outros
-//  eixos de propósito — subir só com medição.
+//  Atenção ao J4: o URDF limita o esforço a 4,2 N·m e a simulação (RELATORIO11)
+//  mostrou que o punho cede no libera. PWM_MAX_4 era 180 por isso; a bancada
+//  (17 Nov 2026) mostrou que a ponta só sobe com 155–176, então o teto foi a
+//  230 para sobrar margem acima do limiar de subida.
+//
+//  PWM mínimo POR SENTIDO (18 Nov 2026): J3 e J4 carregam peso, e o limiar de
+//  subida é bem maior que o de descida. _POS vale para PWM > 0 e _NEG para
+//  PWM < 0, já depois do DIR_SIGN.
 ////////////////////////////////////////////////////////////////////////////////
 #include <ros.h>
 #include <movemaster_msg/setpoint.h>
@@ -40,10 +45,13 @@
 #define DIR_SIGN_4    (-1)   // 17 Nov 2026: PWM > 0 baixa a ponta; positivo do manual/modelo = ponta sobe
 #define V_DEAD        1.5f
 #define V_MAX         60.0f
-#define PWM_MIN_3     70
-#define PWM_MIN_4     50
+#define PWM_MIN_3_POS 70    // J3 descendo (PWM > 0): não medido — a chave presa do pino 36 bloqueia
+#define PWM_MIN_3_NEG 175   // J3 subindo (PWM < 0): 18 Nov 2026, 159 não, 179 sim (4 mm/1,5 s), 226 13 mm;
+                            // PROVISÓRIO — o motor parece fraco por contato ruim no chicote
+#define PWM_MIN_4_POS 80    // J4 ponta descendo (PWM > 0): 17 Nov 2026, 60 pouco, 80 sim
+#define PWM_MIN_4_NEG 160   // J4 ponta subindo (PWM < 0): 17 Nov 2026, 140 não, 155 pouco, 176 sim
 #define PWM_MAX_3     230
-#define PWM_MAX_4     180
+#define PWM_MAX_4     230
 #define K_PWM_3       2.6f
 #define K_PWM_4       2.1f
 #define BRAKE_HOLD_MS 150   // J3: ao zerar o comando, trava o freio JÁ e mantém o último PWM
@@ -91,10 +99,10 @@ void callback(const movemaster_msg::setpoint &m) {
 }
 ros::Subscriber<movemaster_msg::setpoint> sub("setpoints", &callback);
 
-int pwmFor(float v, int pwm_min, int pwm_max, float k) {
+int pwmFor(float v, int pwm_min_pos, int pwm_min_neg, int pwm_max, float k) {
   float a = fabs(v);
   if (a < V_DEAD) return 0;
-  int p = (int)(pwm_min + k * a);
+  int p = (int)(((v > 0) ? pwm_min_pos : pwm_min_neg) + k * a);
   if (p > pwm_max) p = pwm_max;
   return (v > 0) ? p : -p;
 }
@@ -173,8 +181,8 @@ void loop() {
     if (estop) last_pwm3 = 0;             // emergência corta o PWM na hora
     stopAll();
   } else {
-    driveJ3(pwmFor(DIR_SIGN_3 * v_cmd[0], PWM_MIN_3, PWM_MAX_3, K_PWM_3));
-    driveJ4(pwmFor(DIR_SIGN_4 * v_cmd[1], PWM_MIN_4, PWM_MAX_4, K_PWM_4));
+    driveJ3(pwmFor(DIR_SIGN_3 * v_cmd[0], PWM_MIN_3_POS, PWM_MIN_3_NEG, PWM_MAX_3, K_PWM_3));
+    driveJ4(pwmFor(DIR_SIGN_4 * v_cmd[1], PWM_MIN_4_POS, PWM_MIN_4_NEG, PWM_MAX_4, K_PWM_4));
   }
   if (millis() - t_status >= 50) {
     t_status = millis();
