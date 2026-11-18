@@ -91,23 +91,33 @@ O que o roteiro confere e o que ele pede a você:
    firmware. No `lsusb` ela aparece como *Movidius* e isso é normal —
    não é bootloader. As duas fisheyes ficam habilitadas (a câmera recusa
    uma só). Tópicos reais em `/t265/...`; a simulação usa `/camera/...`.
-5. **Firmware dos Arduinos — o item que decide o ensaio.** Hoje as três
-   placas têm o firmware de TESTE (`Joints*_test.ino`): ignora
-   `set_1..set_5` e usa `GoHome` como seletor de teste. E0 roda com ele;
-   **E0b em diante exige o firmware de VELOCIDADE** (`Joints12_vel`,
-   `Joints34_vel`, `Joints56_vel`), compilado na sua IDE e gravado por
-   você. Antes de gravar, conferir em cada `.ino`:
-   - `DIR_SIGN_x` por junta: +1 se o "CW" do `motorGo()` é o sentido
-     positivo da junta no modelo. Confere-se na bancada: comandar +5 °/s
-     e ver a estimativa (T265) crescer. Sinal errado = o servo diverge.
-   - `PWM_MIN` por junta: o menor PWM que vence o atrito.
-   - **Lacuna conhecida:** o firmware de velocidade CORTA o sentido no
-     switch, mas ainda **não publica o estado dos fins de curso** em
-     `/b166er/arm_limit_switch` (JointState, −1/0/+1 por junta, como o
-     firmware emulado da simulação). Sem isso o HOMING não sabe que
-     chegou e o estimador não ancora. É uma adição pequena nas três
-     placas (ler os pinos `LS_xA/LS_xB` e publicar); decisão sua se vai
-     no `.ino` ou numa ponte Python a partir dos pinos.
+5. **Firmware dos Arduinos — o item que decide o ensaio.** As três placas
+   têm o firmware de VELOCIDADE (`Joints12_vel`, `Joints34_vel`,
+   `Joints56_vel`), gravado em 11 Nov 2026 e conferido junta por junta na
+   bancada em 17 e 18 Nov 2026. As pontes sobem com `_baud:=115200`. O que
+   foi conferido e está no `.ino` de cada placa:
+   - **Sentido (`DIR_SIGN_x`)**: J1, J2, J3 e J4 = −1; J5 = +1. O comando
+     positivo move a junta no positivo do modelo: J1 anti-horário visto de
+     cima, J2 para trás, J3 antebraço subindo, J4 ponta subindo, J5 horário
+     olhando a ferramenta. Confere-se pela marca de caneta atravessando a
+     junta, nunca partindo do batente, onde só se tem "sensação de mexida".
+   - **Fins de curso**: as placas publicam `arm_switch_12`, `arm_switch_34`
+     e `arm_switch_5` (−1/0/+1, já no sinal do modelo), e o
+     `arm_switch_bridge.py` junta tudo em `/b166er/arm_limit_switch`. As
+     chaves do J2, do J3 e do J4 vinham trocadas no código e foram
+     corrigidas; o bloqueio foi testado com pulso em direção a cada
+     sensor. Os sensores do ombro e da cintura são indutivos (acionam com
+     qualquer metal); os do punho só com a peça do braço. **O sensor de
+     baixo do J3 (pino 36 da placa 2) está preso em acionado**: a descida
+     do cotovelo fica sempre bloqueada até o reparo. O sensor horário do J5
+     tem faixa larga: o homing deve usar a borda, não o acionamento.
+   - **Freio (J2 e J3)**: ao zerar o comando, o freio trava na hora e o
+     PWM continua por 150 ms (`BRAKE_HOLD_MS`) antes de cortar; sem isso a
+     junta caía depois de cada pulso. No fim de curso e na emergência, o
+     PWM corta na hora.
+   - **PWM mínimo**: J1 60, J2 80, J5 165; J3 e J4 por sentido (subida
+     175 e 160, descida 70 e 80), porque carregam peso. O da subida do J3 é
+     provisório: o motor parece fraco por contato ruim no chicote.
 6. **Medidas** que o roteiro pergunta e que mudam parâmetros:
    - lâmina pivô→olhal (o modelo usa 200 mm) → `arco_raio_m` em
      `config/chave_seccionadora_task.yaml` (arco1 e arco2);

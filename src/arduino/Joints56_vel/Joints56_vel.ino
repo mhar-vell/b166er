@@ -28,14 +28,15 @@
 #define PWM_6        5
 #define ENABLE_5     A1
 #define ENABLE_6     A0
-#define LS_5A        34    // ativo em HIGH; A = lado CW, B = lado CCW
+#define LS_5A        34    // ativo em HIGH; A = lado CW, B = lado CCW — 18 Nov 2026: conferido girando à mão;
+                           // o sensor horário tem faixa larga (homing pela borda, não pelo acionamento)
 #define LS_5B        36
 
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
-#define DIR_SIGN_5     (+1)
+#define DIR_SIGN_5     (+1)  // 17 Nov 2026: conferido — PWM > 0 gira horário olhando a ferramenta (positivo do manual/modelo)
 #define V_DEAD         1.5f
 #define V_MAX          60.0f
-#define PWM_MIN_5      50
+#define PWM_MIN_5      165   // 17 Nov 2026: frio, 150 não e 160 sim; em uso, 140 às vezes e 130 não
 #define PWM_MAX_5      200
 #define K_PWM_5        2.5f
 #define GRIP_PWM       255
