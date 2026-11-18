@@ -53,8 +53,8 @@
 #define ENABLE_2B    11    // J2 enable B
 #define LS_1A        34    // J1 fim de curso A (lado CW)  — ativo em HIGH
 #define LS_1B        36    // J1 fim de curso B (lado CCW)
-#define LS_2A        38    // J2 fim de curso A (lado CW)
-#define LS_2B        40    // J2 fim de curso B (lado CCW)
+#define LS_2A        40    // J2: sensor da FRENTE (lado do PWM > 0) — 18 Nov 2026, trocado na bancada
+#define LS_2B        38    // J2: sensor de TRÁS (lado do PWM < 0, positivo do modelo)
 #define RELAY        14    // freio do J2: HIGH = travado
 
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
