@@ -46,7 +46,9 @@
 #define PWM_MAX_4     180
 #define K_PWM_3       2.6f
 #define K_PWM_4       2.1f
-#define BRAKE_LOCK_MS 300
+#define BRAKE_HOLD_MS 150   // J3: ao zerar o comando, trava o freio JÁ e mantém o último PWM
+                            // por este tempo, até o freio pegar; só então corta (17 Nov 2026:
+                            // com 300 ms de freio aberto sem força, o antebraço caía).
 #define WATCHDOG_MS   500
 #define LOOP_HZ       50
 
@@ -66,6 +68,7 @@ float v_cmd[2] = {0.0f, 0.0f};     // J3, J4
 int   pwm_out[2] = {0, 0};
 unsigned long t_last_msg = 0;
 unsigned long t_j3_zero  = 0;
+int last_pwm3 = 0;
 bool estop = false;
 bool brake_locked = true;
 
@@ -96,15 +99,24 @@ int pwmFor(float v, int pwm_min, int pwm_max, float k) {
   return (v > 0) ? p : -p;
 }
 
+bool blockedJ3(int pwm) {
+  return (pwm > 0 && digitalRead(LS_3A) == HIGH) || (pwm < 0 && digitalRead(LS_3B) == HIGH);
+}
+
 void driveJ3(int pwm) {
-  if (pwm > 0 && digitalRead(LS_3A) == HIGH) pwm = 0;
-  if (pwm < 0 && digitalRead(LS_3B) == HIGH) pwm = 0;
+  if (blockedJ3(pwm)) pwm = 0;
+  if (blockedJ3(last_pwm3)) last_pwm3 = 0;  // no fim de curso, corta sem a sobreposição
   if (pwm != 0) {
     brake3(false);
     t_j3_zero = 0;
+    last_pwm3 = pwm;
   } else {
-    if (t_j3_zero == 0) t_j3_zero = millis();
-    if (millis() - t_j3_zero >= BRAKE_LOCK_MS) brake3(true);
+    brake3(true);                          // trava o freio primeiro...
+    if (last_pwm3 != 0) {
+      if (t_j3_zero == 0) t_j3_zero = millis();
+      if (millis() - t_j3_zero < BRAKE_HOLD_MS) pwm = last_pwm3;  // ...com o motor ainda segurando
+      else last_pwm3 = 0;
+    }
   }
   digitalWrite(HBRIDGE_3A, pwm > 0 ? HIGH : LOW);
   digitalWrite(HBRIDGE_3B, pwm < 0 ? HIGH : LOW);
@@ -158,6 +170,7 @@ void loop() {
   nh.spinOnce();
   bool wd = (millis() - t_last_msg) > WATCHDOG_MS;
   if (estop || wd || t_last_msg == 0) {
+    if (estop) last_pwm3 = 0;             // emergência corta o PWM na hora
     stopAll();
   } else {
     driveJ3(pwmFor(DIR_SIGN_3 * v_cmd[0], PWM_MIN_3, PWM_MAX_3, K_PWM_3));
