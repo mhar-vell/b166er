@@ -11,7 +11,7 @@
 //  pedida em graus/s e a executa em malha aberta, com:
 //    · zona morta (abaixo de V_DEAD o motor não é acionado);
 //    · PWM = PWM_MIN + K_PWM·|v|, saturado em PWM_MAX;
-//    · freio do J2 solto enquanto há comando, travado BRAKE_LOCK_MS depois
+//    · freio do J2 solto enquanto há comando; ao zerar, trava já e corta o PWM BRAKE_HOLD_MS depois
 //      de a velocidade ir a zero;
 //    · fins de curso: parar o sentido que encosta no switch (ativo em HIGH);
 //    · watchdog: sem mensagem por WATCHDOG_MS, tudo parado e freio travado;
@@ -58,7 +58,8 @@
 #define RELAY        14    // freio do J2: HIGH = travado
 
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
-#define DIR_SIGN_1    (+1)   // +1: CW = sentido positivo do J1 no modelo
+#define DIR_SIGN_1    (-1)   // 17 Nov 2026: PWM > 0 gira horário visto de cima (positivo do MANUAL);
+                             // o positivo do MODELO (ROS) é anti-horário → −1
 #define DIR_SIGN_2    (+1)
 #define V_DEAD        1.5f   // graus/s — abaixo disso não aciona
 #define V_MAX         60.0f  // graus/s — saturação do pedido
@@ -67,7 +68,9 @@
 #define PWM_MAX       230
 #define K_PWM_1       2.8f   // PWM por grau/s (PWM_MIN + K·|v|); 60°/s -> ~228
 #define K_PWM_2       2.5f
-#define BRAKE_LOCK_MS 300    // trava o freio do J2 este tempo após v = 0
+#define BRAKE_HOLD_MS 150    // J2: ao zerar o comando, trava o freio JÁ e mantém o último PWM
+                             // por este tempo, até o freio pegar; só então corta (igual ao J3,
+                             // 17 Nov 2026: com o freio aberto sem força, a junta caía).
 #define WATCHDOG_MS   500
 #define LOOP_HZ       50
 
@@ -87,6 +90,7 @@ float v_cmd[2] = {0.0f, 0.0f};     // graus/s pedidos (J1, J2)
 int   pwm_out[2] = {0, 0};         // PWM aplicado com sinal
 unsigned long t_last_msg = 0;
 unsigned long t_j2_zero  = 0;      // instante em que v2 foi a zero
+int last_pwm2 = 0;                 // último PWM ≠ 0 do J2 (sobreposição com o freio)
 bool estop = false;
 bool brake_locked = true;
 
@@ -128,15 +132,24 @@ void driveJ1(int pwm) {
   pwm_out[0] = pwm;
 }
 
+bool blockedJ2(int pwm) {
+  return (pwm > 0 && digitalRead(LS_2A) == HIGH) || (pwm < 0 && digitalRead(LS_2B) == HIGH);
+}
+
 void driveJ2(int pwm) {
-  if (pwm > 0 && digitalRead(LS_2A) == HIGH) pwm = 0;
-  if (pwm < 0 && digitalRead(LS_2B) == HIGH) pwm = 0;
+  if (blockedJ2(pwm)) pwm = 0;
+  if (blockedJ2(last_pwm2)) last_pwm2 = 0;  // no fim de curso, corta sem a sobreposição
   if (pwm != 0) {
     brake2(false);                    // solta o freio para mover
     t_j2_zero = 0;
+    last_pwm2 = pwm;
   } else {
-    if (t_j2_zero == 0) t_j2_zero = millis();
-    if (millis() - t_j2_zero >= BRAKE_LOCK_MS) brake2(true);
+    brake2(true);                     // trava o freio primeiro...
+    if (last_pwm2 != 0) {
+      if (t_j2_zero == 0) t_j2_zero = millis();
+      if (millis() - t_j2_zero < BRAKE_HOLD_MS) pwm = last_pwm2;  // ...com o motor ainda segurando
+      else last_pwm2 = 0;
+    }
   }
   // BTS7960: um PWM por sentido (igual ao motorGo do Joints12_test)
   analogWrite(PWM_2B, pwm > 0 ? pwm : 0);    // CW
@@ -184,6 +197,7 @@ void loop() {
   nh.spinOnce();
   bool wd = (millis() - t_last_msg) > WATCHDOG_MS;
   if (estop || wd || t_last_msg == 0) {
+    if (estop) last_pwm2 = 0;         // emergência corta o PWM na hora
     stopAll();
   } else {
     driveJ1(pwmFor(DIR_SIGN_1 * v_cmd[0], PWM_MIN_1, K_PWM_1));
