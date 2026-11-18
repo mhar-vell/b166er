@@ -31,8 +31,8 @@
 // na ordem antiga, o firmware bloqueava justamente o sentido de sair do batente.
 #define LS_3A        36    // ativo em HIGH; A = lado do PWM > 0, B = lado do PWM < 0
 #define LS_3B        34
-#define LS_4A        38
-#define LS_4B        40
+#define LS_4A        40    // J4: fim de curso da ponta para BAIXO (lado do PWM > 0) — 18 Nov 2026, trocado na bancada
+#define LS_4B        38    // J4: fim de curso da ponta para CIMA (lado do PWM < 0, positivo do modelo)
 #define RELAY        14    // freio do J3: HIGH = travado
 
 // ---- parâmetros (ajustar na bancada) ---------------------------------------
