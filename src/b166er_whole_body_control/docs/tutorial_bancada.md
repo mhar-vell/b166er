@@ -116,8 +116,15 @@ O que o roteiro confere e o que ele pede a você:
      junta caía depois de cada pulso. No fim de curso e na emergência, o
      PWM corta na hora.
    - **PWM mínimo**: J1 60, J2 80, J5 165; J3 e J4 por sentido (subida
-     175 e 160, descida 70 e 80), porque carregam peso. O da subida do J3 é
-     provisório: o motor parece fraco por contato ruim no chicote.
+     175 e 160, descida 70 e 80), porque carregam peso. O limiar de subida do
+     J3 não muda com a bateria; a velocidade sim (com 200, 9 mm em 1,5 s com
+     bateria fraca e 24 mm com bateria boa).
+   - **Bateria**: com bateria fraca, os sensores perdem alimentação e
+     **todas** as entradas de fim de curso sobem juntas (as cinco juntas
+     acusam batente), e o motor do J3 chega a falhar no meio do pulso; como
+     o freio solta mesmo assim, o antebraço cai. Antes de comandar o braço,
+     conferir que, no meio do curso, os fins de curso leem 0. Trocar a
+     bateria reinicia a NUC: subir as pontes de novo.
 6. **Medidas** que o roteiro pergunta e que mudam parâmetros:
    - lâmina pivô→olhal (o modelo usa 200 mm) → `arco_raio_m` em
      `config/chave_seccionadora_task.yaml` (arco1 e arco2);
