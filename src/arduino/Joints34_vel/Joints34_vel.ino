@@ -45,9 +45,10 @@
 #define DIR_SIGN_4    (-1)   // 17 Nov 2026: PWM > 0 baixa a ponta; positivo do manual/modelo = ponta sobe
 #define V_DEAD        1.5f
 #define V_MAX         60.0f
-#define PWM_MIN_3_POS 70    // J3 descendo (PWM > 0): não medido — a chave presa do pino 36 bloqueia
-#define PWM_MIN_3_NEG 175   // J3 subindo (PWM < 0): 18 Nov 2026, 159 não, 179 sim (4 mm/1,5 s), 226 13 mm;
-                            // PROVISÓRIO — o motor parece fraco por contato ruim no chicote
+#define PWM_MIN_3_POS 70    // J3 descendo (PWM > 0): não medido — o pino 36 lê sempre acionado e bloqueia
+#define PWM_MIN_3_NEG 175   // J3 subindo (PWM < 0): limiar entre 165 e 179, igual com bateria fraca
+                            // (18 Nov: 159 não, 179 → 4 mm/1,5 s) e boa (19 Nov: 165 não, 179 → 8 mm,
+                            // 199 → 24 mm). A bateria muda a velocidade, não o limiar.
 #define PWM_MIN_4_POS 80    // J4 ponta descendo (PWM > 0): 17 Nov 2026, 60 pouco, 80 sim
 #define PWM_MIN_4_NEG 160   // J4 ponta subindo (PWM < 0): 17 Nov 2026, 140 não, 155 pouco, 176 sim
 #define PWM_MAX_3     230
