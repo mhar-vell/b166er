@@ -110,6 +110,25 @@ class FirmwareEmulado:
         # 5,4°, J3 8 N·m / 200 = 2,4° — senão a junta não sobe (medido:
         # J2 parado a 3° do setpoint com 15,7 N·m = exatamente 300 × 3°).
         self._folga   = np.radians(np.array(rospy.get_param('~folga_deg', [4.0, 10.0, 6.0, 3.0, 3.0]), dtype=float))
+        # FOLGA DINÂMICA (05 Nov 2026, RELATORIO53). A folga fixa cobre a
+        # queda por gravidade (J2/J3), mas o J1 gira em torno do eixo
+        # vertical e não tem queda: os 4° dele só viravam DÍVIDA DE POSIÇÃO
+        # quando a junta ficava bloqueada (haste no arame) — o setpoint
+        # corria 4° à frente, o P de 100 N·m/rad apertava ~7 N·m contra o
+        # arame, e quando o contato escorregava a junta disparava os 4–5°
+        # de uma vez (~60 mm de ponta; sonda da mira_limitada/eixo_p8_3:
+        # J1 −9,3° → −4,5° em 0,6 s sem comando novo desse tamanho). O motor
+        # real com PWM de velocidade não guarda posição: travado fica
+        # parado, solto segue na velocidade pedida. Nas juntas listadas, a
+        # folga passa a ser o atraso dinâmico do PID na velocidade pedida
+        # (|v|·d/p) mais folga_dinamica_margem_deg, sem passar da fixa.
+        self._fd_juntas = [int(i) for i in rospy.get_param('~folga_dinamica_juntas', [0])]
+        self._fd_margem = np.radians(float(rospy.get_param('~folga_dinamica_margem_deg', 0.5)))
+        self._fd_dp = np.zeros(5)
+        for i, j in enumerate(JOINTS):
+            p_g = float(rospy.get_param('/gazebo_ros_control/pid_gains/%s/p' % j, 0.0) or 0.0)
+            d_g = float(rospy.get_param('/gazebo_ros_control/pid_gains/%s/d' % j, 0.0) or 0.0)
+            self._fd_dp[i] = d_g / p_g if p_g > 0 else 0.0
         self._q_cmd   = None
         self._t_prev  = None
         self._t_resync = None
@@ -131,6 +150,9 @@ class FirmwareEmulado:
                       '%.1f, máx %.0f, ganho %s, watchdog %.2f s, saída %s', topico,
                       self._v_min, self._v_max, self._ganho.round(2).tolist(),
                       self._watchdog, self._saida)
+        rospy.loginfo('[arm_openloop_sim] folga dinâmica nas juntas %s: d/p = %s s, margem %.1f°',
+                      [JOINTS[i] for i in self._fd_juntas], self._fd_dp.round(3).tolist(),
+                      np.degrees(self._fd_margem))
 
     def _cb_setpoint(self, m):
         if m.emergency_stop:
@@ -230,7 +252,11 @@ class FirmwareEmulado:
                     em_graca = (self._t_resync is not None
                                 and (agora - self._t_resync).to_sec() < self._resync_graca)
                     if not em_graca:
-                        self._q_cmd = np.clip(self._q_cmd, self._q_true - self._folga, self._q_true + self._folga)
+                        folga = self._folga.copy()
+                        for i in self._fd_juntas:
+                            lag = abs(np.radians(v[i])) * self._fd_dp[i] + self._fd_margem
+                            folga[i] = min(folga[i], lag)
+                        self._q_cmd = np.clip(self._q_cmd, self._q_true - folga, self._q_true + folga)
                     # o setpoint pode passar do limite nominal (até a folga): é o
                     # batente físico que para a junta, como no motor real —
                     # com o setpoint preso em 65° o P puro do J2 cedia 3,5°
