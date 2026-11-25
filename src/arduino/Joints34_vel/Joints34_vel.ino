@@ -45,7 +45,9 @@
 #define DIR_SIGN_4    (-1)   // 17 Nov 2026: PWM > 0 baixa a ponta; positivo do manual/modelo = ponta sobe
 #define V_DEAD        1.5f
 #define V_MAX         60.0f
-#define PWM_MIN_3_POS 70    // J3 descendo (PWM > 0): não medido — o pino 36 lê sempre acionado e bloqueia
+#define PWM_MIN_3_POS 70    // J3 descendo (PWM > 0): com V_DEAD o piso efetivo é ~74; 25 Nov 2026,
+                            // 74–75 → 15–20 mm em 0,5 s (+150 ms de hold), mais rápido perto da
+                            // horizontal. A gravidade domina a descida; o freio é quem segura.
 #define PWM_MIN_3_NEG 175   // J3 subindo (PWM < 0): limiar entre 165 e 179, igual com bateria fraca
                             // (18 Nov: 159 não, 179 → 4 mm/1,5 s) e boa (19 Nov: 165 não, 179 → 8 mm,
                             // 199 → 24 mm). A bateria muda a velocidade, não o limiar.
