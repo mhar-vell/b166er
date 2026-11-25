@@ -107,16 +107,19 @@ O que o roteiro confere e o que ele pede a você:
      chaves do J2, do J3 e do J4 vinham trocadas no código e foram
      corrigidas; o bloqueio foi testado com pulso em direção a cada
      sensor. Os sensores do ombro e da cintura são indutivos (acionam com
-     qualquer metal); os do punho só com a peça do braço. **O sensor de
-     baixo do J3 (pino 36 da placa 2) está preso em acionado**: a descida
-     do cotovelo fica sempre bloqueada até o reparo. O sensor horário do J5
+     qualquer metal); os do punho só com a peça do braço. Em todos, o LED
+     fica aceso sem metal e apaga com ele; o LED não é o sinal da placa.
+     O sensor de baixo do J3 (pino 36 da placa 2) parecia preso em
+     acionado: era um cabo partido, e a entrada solta flutua em alto.
+     Reparado em 25 Nov, o J3 cortou e bloqueou nos dois sensores. Se
+     uma chave parecer presa, desconfie primeiro do cabo. O sensor horário do J5
      tem faixa larga: o homing deve usar a borda, não o acionamento.
    - **Freio (J2 e J3)**: ao zerar o comando, o freio trava na hora e o
      PWM continua por 150 ms (`BRAKE_HOLD_MS`) antes de cortar; sem isso a
      junta caía depois de cada pulso. No fim de curso e na emergência, o
      PWM corta na hora.
    - **PWM mínimo**: J1 60, J2 80, J5 165; J3 e J4 por sentido (subida
-     175 e 160, descida 70 e 80), porque carregam peso. O limiar de subida do
+     175 e 160, descida 70 e 80), porque carregam peso. Descendo, a gravidade domina: no piso (~74) o J3 anda 15–20 mm em meio segundo. O limiar de subida do
      J3 não muda com a bateria; a velocidade sim (com 200, 9 mm em 1,5 s com
      bateria fraca e 24 mm com bateria boa).
    - **Bateria**: com bateria fraca, os sensores perdem alimentação e
