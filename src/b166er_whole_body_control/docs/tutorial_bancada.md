@@ -110,9 +110,12 @@ O que o roteiro confere e o que ele pede a você:
      qualquer metal); os do punho só com a peça do braço. Em todos, o LED
      fica aceso sem metal e apaga com ele; o LED não é o sinal da placa.
      O sensor de baixo do J3 (pino 36 da placa 2) parecia preso em
-     acionado: era um cabo partido, e a entrada solta flutua em alto.
-     Reparado em 25 Nov, o J3 cortou e bloqueou nos dois sensores. Se
-     uma chave parecer presa, desconfie primeiro do cabo. O sensor horário do J5
+     acionado: era um cabo partido. A shield tem pull-up nas entradas, e
+     o sensor livre leva a linha ao terra; fio partido ou sensor sem
+     energia leem "acionado" e bloqueiam a junta (RELATORIO61). Reparado
+     em 25 Nov, o J3 cortou e bloqueou nos dois sensores. Se uma chave
+     parecer presa, desconfie primeiro do cabo; se todas parecerem, da
+     bateria. O sensor horário do J5
      tem faixa larga: o homing deve usar a borda, não o acionamento.
    - **Freio (J2 e J3)**: ao zerar o comando, o freio trava na hora e o
      PWM continua por 150 ms (`BRAKE_HOLD_MS`) antes de cortar; sem isso a

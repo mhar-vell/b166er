@@ -6,10 +6,22 @@ de velocidade `Joints34_vel` (placa 2). Fotos do Marco, de 25 Nov.
 ## Resumo
 
 O fim de curso de baixo do cotovelo (J3, pino 36 da placa 2) lia sempre acionado e bloqueava toda descida da junta. O
-sensor estava bom. O fio de sinal tinha partido na crimpagem do pino do conector, que fica na traseira do robô. A
-entrada do Arduino, configurada como `INPUT` sem resistor de pull-down, ficava solta e flutuava em nível alto, que o
-firmware lê como "acionado". O Marco abriu o braço, refez a ligação do pino, e no mesmo dia o J3 cortou e bloqueou
+sensor estava bom. O fio de sinal tinha partido na crimpagem do pino do conector, que fica na traseira do robô. A shield
+dos Arduinos tem resistores nas entradas dos fins de curso (informação do Marco, 26 Nov). Com o fio partido, a entrada
+lia alto, o que o firmware trata como "acionado". Logo, o resistor puxa para 5 V (pull-up), e o sensor, quando livre,
+leva a linha ao terra. O Marco abriu o braço, refez a ligação do pino, e no mesmo dia o J3 cortou e bloqueou
 corretamente nos dois sensores.
+
+### Como a entrada funciona (deduzido dos sintomas; a confirmar com multímetro na shield)
+
+| situação | saída do sensor | linha na placa | firmware |
+|---|---|---|---|
+| sem metal (LED aceso) | conduz para o terra | 0 V | livre |
+| com metal (LED apagado) | aberta | 5 V, pelo pull-up | acionado |
+| fio partido | — | 5 V, pelo pull-up | acionado |
+| sensor sem alimentação (bateria fraca) | aberta | 5 V, pelo pull-up | acionado (todas as juntas juntas, como em 19 Nov) |
+
+O projeto é à prova de falha: fio partido ou sensor sem energia bloqueiam a junta em vez de deixá-la sem proteção.
 
 ## Linha do tempo
 
@@ -51,7 +63,7 @@ O que o Marco tentou, nesta ordem:
 
 | teste | resultado |
 |---|---|
-| J3 parado no sensor de cima | +1 (antes do reparo lia −1: o pino 36 flutuando escondia o de cima) |
+| J3 parado no sensor de cima | +1 (antes do reparo lia −1: o pino 36 em alto escondia o de cima) |
 | metal no sensor de baixo | −1 de 38,0 a 43,1 s, sem oscilação; J4 em 0 o tempo todo |
 | descida pelo motor, PWM +75 por 0,5 s | 15 mm, o freio segurou |
 | descida até o sensor de baixo | corte real: PWM a 0 sem o hold de 150 ms; leitura −1 |
@@ -63,10 +75,9 @@ Na primeira tentativa de descida, nada se mexeu: o cabo dos motores tinha ficado
 
 ## Lições
 
-- **Uma entrada solta parece um sensor acionado.** Com `INPUT` sem pull-down e sensor ativo em HIGH, um fio partido lê
-  como fim de curso preso. Quando uma chave parecer presa, desconfiar primeiro do cabo. Uma melhoria possível, a decidir,
-  é um resistor de pull-down nas entradas: assim, um fio partido leria "livre". Mas isso troca um bloqueio seguro por um
-  fim de curso que deixa de proteger, então o comportamento atual, que falha bloqueando, tem o seu valor.
+- **Um fio partido parece um sensor acionado.** Com o pull-up da shield, um fio partido lê como fim de curso preso. É de
+  propósito: a falha bloqueia a junta. Quando uma chave parecer presa, desconfiar primeiro do cabo. Quando **todas**
+  parecerem presas ao mesmo tempo, desconfiar da alimentação dos sensores, ou seja, da bateria.
 - **O LED do sensor não é o sinal da placa.** Nos sensores do braço, o LED fica aceso sem metal e apaga com metal. Ele
   mostra que o sensor funciona, não que o sinal chega.
 - **A publicação esconde um pino.** `A ? 1 : B ? −1 : 0` mostra só o sensor A quando os dois estão altos. Para
